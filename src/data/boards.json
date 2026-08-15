@@ -1,0 +1,276 @@
+{
+ "RAT_BOARD": [
+  "opportunity",
+  "market",
+  "opportunity",
+  "doodad",
+  "opportunity",
+  "charity",
+  "opportunity",
+  "paycheck",
+  "opportunity",
+  "market",
+  "opportunity",
+  "doodad",
+  "opportunity",
+  "baby",
+  "opportunity",
+  "paycheck",
+  "opportunity",
+  "market",
+  "opportunity",
+  "doodad",
+  "opportunity",
+  "downsized",
+  "opportunity",
+  "paycheck"
+ ],
+ "RAT_BOARD_SIZE": 24,
+ "FAST_BOARD": [
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "business",
+   "name": "Regional pizza chain",
+   "flavor": "Twelve ovens, one beloved recipe.",
+   "downPayment": 100000,
+   "cashFlow": 5000
+  },
+  {
+   "type": "dream",
+   "name": "Round-the-world sailing year",
+   "flavor": "Twelve months, twenty ports, zero meetings.",
+   "price": 150000
+  },
+  {
+   "type": "taxAudit"
+  },
+  {
+   "type": "business",
+   "name": "Craft-brewery stake",
+   "flavor": "The taproom line goes around the block.",
+   "downPayment": 120000,
+   "cashFlow": 6000
+  },
+  {
+   "type": "venture",
+   "name": "Miri wildcat well, Sarawak",
+   "flavor": "The field that started Malaysian oil in 1910 still hides pockets — for whoever dares to drill.",
+   "downPayment": 400000,
+   "cashFlow": 45000,
+   "threshold": 5
+  },
+  {
+   "type": "taxAudit"
+  },
+  {
+   "type": "dream",
+   "name": "Private mountain cabin",
+   "flavor": "Snow on the roof, nobody on the trail.",
+   "price": 120000
+  },
+  {
+   "type": "business",
+   "name": "Urgent-care clinic",
+   "flavor": "Open when everyone else is closed.",
+   "downPayment": 250000,
+   "cashFlow": 12500
+  },
+  {
+   "type": "venture",
+   "name": "Siberian oil wildcat",
+   "flavor": "One rig in the frozen taiga: a gusher — or a very expensive hole.",
+   "downPayment": 500000,
+   "cashFlow": 60000,
+   "threshold": 5
+  },
+  {
+   "type": "dream",
+   "name": "Found a wildlife sanctuary",
+   "flavor": "Rescued animals, rolling hills, your name on the gate.",
+   "price": 250000
+  },
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "business",
+   "name": "Marina & boatyard",
+   "flavor": "Slips rented out three seasons ahead.",
+   "downPayment": 350000,
+   "cashFlow": 17500
+  },
+  {
+   "type": "dream",
+   "name": "Vintage supercar garage",
+   "flavor": "Five cars, one lift, endless Saturdays.",
+   "price": 300000
+  },
+  {
+   "type": "business",
+   "name": "Offshore supply base, Labuan",
+   "flavor": "Every rig in the South China Sea restocks at your quay.",
+   "downPayment": 300000,
+   "cashFlow": 15000
+  },
+  {
+   "type": "downsized"
+  },
+  {
+   "type": "charity"
+  },
+  {
+   "type": "business",
+   "name": "Private parking towers",
+   "flavor": "Concrete that prints money downtown.",
+   "downPayment": 400000,
+   "cashFlow": 20000
+  },
+  {
+   "type": "dream",
+   "name": "Box seats for life",
+   "flavor": "Your team, your seats, every season.",
+   "price": 100000
+  },
+  {
+   "type": "business",
+   "name": "Assisted-living residence",
+   "flavor": "Full occupancy and a caring staff.",
+   "downPayment": 500000,
+   "cashFlow": 25000
+  },
+  {
+   "type": "lawsuit"
+  },
+  {
+   "type": "dream",
+   "name": "Learn to fly — and buy the plane",
+   "flavor": "License, hangar, and a four-seater with your initials.",
+   "price": 200000
+  },
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "business",
+   "name": "Film-studio backlot",
+   "flavor": "Sound stages booked out two years.",
+   "downPayment": 600000,
+   "cashFlow": 30000
+  },
+  {
+   "type": "dream",
+   "name": "Restore a castle ruin",
+   "flavor": "Turrets, tapestries, and a moat that finally holds water.",
+   "price": 400000
+  },
+  {
+   "type": "business",
+   "name": "Cold-chain logistics hub",
+   "flavor": "Every grocer in the region depends on your freezers.",
+   "downPayment": 450000,
+   "cashFlow": 22000
+  },
+  {
+   "type": "business",
+   "name": "Bintulu LNG train stake, Sarawak",
+   "flavor": "A slice of one of the world’s largest gas plants; tankers queue offshore.",
+   "downPayment": 800000,
+   "cashFlow": 40000
+  },
+  {
+   "type": "divorce"
+  },
+  {
+   "type": "business",
+   "name": "Regional airline feeder",
+   "flavor": "Two turboprops linking mountain towns.",
+   "downPayment": 700000,
+   "cashFlow": 32000
+  },
+  {
+   "type": "dream",
+   "name": "Open a culinary school",
+   "flavor": "Teach a thousand cooks; eat very, very well.",
+   "price": 350000
+  },
+  {
+   "type": "business",
+   "name": "Data-center wing",
+   "flavor": "Racks humming behind biometric doors.",
+   "downPayment": 900000,
+   "cashFlow": 45000
+  },
+  {
+   "type": "lawsuit"
+  },
+  {
+   "type": "dream",
+   "name": "Endow a scholarship fund",
+   "flavor": "A hundred students a year, forever.",
+   "price": 500000
+  },
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "divorce"
+  },
+  {
+   "type": "dream",
+   "name": "Private island retreat",
+   "flavor": "Your own dot on the map.",
+   "price": 600000
+  },
+  {
+   "type": "business",
+   "name": "Concert amphitheater",
+   "flavor": "Summer nights, sold-out lawns.",
+   "downPayment": 750000,
+   "cashFlow": 35000
+  },
+  {
+   "type": "venture",
+   "name": "Deep-water platform stake, Sabah",
+   "flavor": "A Kikeh-class prospect off Kota Kinabalu: vast if the reservoir holds, dry if it doesn’t.",
+   "downPayment": 700000,
+   "cashFlow": 80000,
+   "threshold": 5
+  },
+  {
+   "type": "taxAudit"
+  },
+  {
+   "type": "venture",
+   "name": "Deep-sea salvage claim",
+   "flavor": "A mapped wreck, a crane barge, and no guarantees.",
+   "downPayment": 800000,
+   "cashFlow": 90000,
+   "threshold": 5
+  },
+  {
+   "type": "dream",
+   "name": "Sail the world solo",
+   "flavor": "One boat, one horizon, one logbook.",
+   "price": 180000
+  },
+  {
+   "type": "business",
+   "name": "Fiber-to-home network",
+   "flavor": "The whole valley streams through your cables.",
+   "downPayment": 850000,
+   "cashFlow": 42000
+  },
+  {
+   "type": "lawsuit"
+  },
+  {
+   "type": "dream",
+   "name": "World-tour photo expedition",
+   "flavor": "A year of golden hours on seven continents.",
+   "price": 75000
+  }
+ ],
+ "FAST_BOARD_SIZE": 44
+}

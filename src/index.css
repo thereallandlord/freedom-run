@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --panel: #141821;
+  --panel-2: #1b2130;
+  --line: #262e3f;
+  --ink: #e7ecf5;
+  --muted: #8b95ab;
+  --accent: #10b981;
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  background:
+    radial-gradient(1100px 700px at 50% -10%, #16304a 0%, transparent 60%),
+    var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.panel { background: var(--panel); border: 1px solid var(--line); }
+.panel-2 { background: var(--panel-2); border: 1px solid var(--line); }
+
+.btn {
+  @apply rounded-lg px-3 py-2 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
+}
+.btn-primary { @apply btn bg-emerald-500 text-emerald-950 hover:bg-emerald-400; }
+.btn-ghost { @apply btn border border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink)] hover:border-emerald-500/60; }
+.btn-danger { @apply btn bg-rose-600 text-white hover:bg-rose-500; }
+
+.tabnum { font-variant-numeric: tabular-nums; }
+
+@keyframes dice-shake {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(-12deg); }
+  75% { transform: translateY(-3px) rotate(10deg); }
+}
+.dice-rolling { animation: dice-shake 0.45s ease-in-out infinite; }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.pop-in { animation: pop-in 0.18s ease-out; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #2a3345; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }

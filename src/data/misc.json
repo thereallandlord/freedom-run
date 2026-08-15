@@ -1,0 +1,73 @@
+{
+ "DOGS": [
+  {
+   "id": "dog-corgi",
+   "name": "A corgi"
+  },
+  {
+   "id": "dog-husky",
+   "name": "A husky"
+  },
+  {
+   "id": "dog-dachshund",
+   "name": "A dachshund"
+  },
+  {
+   "id": "dog-golden",
+   "name": "A golden retriever"
+  },
+  {
+   "id": "dog-pug",
+   "name": "A pug"
+  },
+  {
+   "id": "dog-shiba",
+   "name": "A shiba inu"
+  }
+ ],
+ "THEME_IDS": [
+  "system",
+  "light",
+  "dark",
+  "ocean",
+  "felt",
+  "sunrise"
+ ],
+ "BOT_DIFFICULTIES": [
+  "easy",
+  "medium",
+  "high",
+  "unreal"
+ ],
+ "TOKEN_ART": {
+  "airline-pilot": "/tokens/airline-pilot.webp",
+  "business-manager": "/tokens/business-manager.webp",
+  "custom": "/tokens/custom.webp",
+  "doctor": "/tokens/doctor.webp",
+  "engineer": "/tokens/engineer.webp",
+  "janitor": "/tokens/janitor.webp",
+  "lawyer": "/tokens/lawyer.webp",
+  "mechanic": "/tokens/mechanic.webp",
+  "nurse": "/tokens/nurse.webp",
+  "police-officer": "/tokens/police-officer.webp",
+  "secretary": "/tokens/secretary.webp",
+  "teacher": "/tokens/teacher.webp",
+  "truck-driver": "/tokens/truck-driver.webp"
+ },
+ "SPACE_ART": {
+  "baby": "/spaces/baby.webp",
+  "business": "/spaces/business.webp",
+  "cashflowDay": "/spaces/cashflowDay.webp",
+  "charity": "/spaces/charity.webp",
+  "divorce": "/spaces/divorce.webp",
+  "dog": "/spaces/dog.webp",
+  "doodad": "/spaces/doodad.webp",
+  "downsized": "/spaces/downsized.webp",
+  "dream": "/spaces/dream.webp",
+  "lawsuit": "/spaces/lawsuit.webp",
+  "market": "/spaces/market.webp",
+  "opportunity": "/spaces/opportunity.webp",
+  "paycheck": "/spaces/paycheck.webp",
+  "taxAudit": "/spaces/taxAudit.webp"
+ }
+}

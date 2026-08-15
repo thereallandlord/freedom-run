@@ -1,0 +1,14 @@
+{
+ "airline-pilot": "Пилот авиалайнера",
+ "business-manager": "Бизнес-менеджер",
+ "doctor": "Врач (MD)",
+ "engineer": "Инженер",
+ "janitor": "Уборщик",
+ "lawyer": "Юрист",
+ "mechanic": "Механик",
+ "nurse": "Медсестра",
+ "police-officer": "Полицейский",
+ "secretary": "Секретарь",
+ "teacher": "Учитель (K-12)",
+ "truck-driver": "Водитель грузовика"
+}

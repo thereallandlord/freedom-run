@@ -1,0 +1,74 @@
+import type { PayableDebt } from './types'
+
+/**
+ * События уровня кошелька. Чистые, сериализуемые, воспроизводимые —
+ * из них восстанавливается любое состояние игрока.
+ */
+export type LedgerEvent =
+  | { type: 'PAYCHECK' }
+  | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
+  | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
+  | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse' }
+  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string }
+  | { type: 'SELL_REAL_ESTATE'; assetId: string; salePrice: number }
+  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string }
+  | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number }
+  | { type: 'DOODAD'; amount: number }
+  | { type: 'FINANCE_DOODAD'; amount: number }
+  | { type: 'PET' }
+  | { type: 'DOWNSIZED' }
+  | { type: 'CHARITY' }
+  | { type: 'CHARITY_TURN_USED' }
+  | { type: 'TAKE_LOAN'; amount: number }
+  | { type: 'REPAY_LOAN'; amount: number }
+  | { type: 'PAY_OFF_DEBT'; debt: PayableDebt }
+  | { type: 'ADJUST_CASH'; amount: number }
+  | { type: 'FORCED_SALE'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
+  | { type: 'HALVE_CONSUMER_DEBT' }
+  | { type: 'DECLARE_GAME_OVER' }
+  | { type: 'ENTER_FAST_TRACK' }
+  | { type: 'CASHFLOW_DAY' }
+  | { type: 'BUY_FT_BUSINESS'; id: string; name: string; downPayment: number; cashFlow: number }
+  | { type: 'FT_STAKE_LOST'; amount: number }
+  | { type: 'FT_DOWNSIZED'; amount: number }
+  | { type: 'BUY_DREAM'; name: string; pricePaid: number }
+  | { type: 'TAX_AUDIT' }
+  | { type: 'LAWSUIT' }
+  | { type: 'DIVORCE' }
+
+/**
+ * События уровня стола. Ровно это и гоняется по сети в онлайне,
+ * и ровно это складывается в журнал для отката хода.
+ */
+export type TableEvent =
+  | { type: 'ROLL'; dice: number[] }
+  | { type: 'CHOOSE_DEAL'; size: 'small' | 'big' }
+  | { type: 'BUY_DEAL' }
+  | { type: 'BUY_STOCK_SHARES'; shares: number }
+  | { type: 'PASS_CARD' }
+  | { type: 'SELL_STOCK_LOT'; seatId: string; lotId: string; shares: number; pricePerShare: number }
+  | { type: 'ACCEPT_OFFER'; seatId: string; assetId: string }
+  | { type: 'PAY_DOODAD'; financed: boolean }
+  | { type: 'ACCEPT_CHARITY' }
+  | { type: 'DECLINE_CHARITY' }
+  | { type: 'PAY_DOWNSIZED' }
+  | { type: 'TAKE_LOAN'; amount: number }
+  | { type: 'REPAY_LOAN'; amount: number }
+  | { type: 'PAY_OFF_DEBT'; debt: PayableDebt }
+  | { type: 'ENTER_FAST_TRACK' }
+  | { type: 'BUY_FT_BUSINESS' }
+  | { type: 'TRY_VENTURE'; die: number }
+  | { type: 'BUY_DREAM' }
+  | { type: 'ACCEPT_FT_CHARITY' }
+  | { type: 'BANKRUPTCY_SELL'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
+  | { type: 'BANKRUPTCY_HALVE' }
+  | { type: 'BANKRUPTCY_RECOVER' }
+  | { type: 'BANKRUPTCY_QUIT' }
+  | { type: 'END_TURN' }
+
+export interface StampedEvent {
+  seq: number
+  at: number
+  seatId: string
+  event: TableEvent
+}

@@ -1,0 +1,86 @@
+{
+ "GRIT": {
+  "name": "Grit Robotics",
+  "range": [
+   1,
+   40
+  ]
+ },
+ "SNAIL": {
+  "name": "Snail Mail Logistics",
+  "range": [
+   5,
+   30
+  ]
+ },
+ "MYCO": {
+  "name": "MyCo Health Labs",
+  "range": [
+   5,
+   40
+  ]
+ },
+ "ZAP": {
+  "name": "Zap Scooter Share",
+  "range": [
+   1,
+   30
+  ]
+ },
+ "NEST": {
+  "name": "NestEgg Index Fund",
+  "range": [
+   10,
+   30
+  ]
+ },
+ "VLT4": {
+  "name": "Vault Savings Certificate",
+  "range": [
+   1000,
+   1000
+  ]
+ },
+ "SHIB": {
+  "name": "Shiba Inu",
+  "range": [
+   1,
+   30
+  ]
+ },
+ "PEPE": {
+  "name": "Pepe",
+  "range": [
+   1,
+   25
+  ]
+ },
+ "DOGE": {
+  "name": "Dogecoin",
+  "range": [
+   2,
+   40
+  ]
+ },
+ "BONK": {
+  "name": "Bonk",
+  "range": [
+   1,
+   20
+  ]
+ },
+ "WIF": {
+  "name": "dogwifhat",
+  "range": [
+   2,
+   35
+  ]
+ },
+ "USDR": {
+  "name": "Stablecoin Staking Vault",
+  "range": [
+   1000,
+   1000
+  ]
+ }
+}

@@ -1,0 +1,2952 @@
+{
+ "SMALL_DEALS": [
+  {
+   "kind": "stock",
+   "id": "sd-grit-1",
+   "symbol": "GRIT",
+   "title": "GRIT at rock bottom",
+   "flavor": "Warehouse-robot maker misses a quarter and the market panics. Only you may buy; everyone may sell.",
+   "price": 1,
+   "range": [
+    1,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-grit-10",
+   "symbol": "GRIT",
+   "title": "GRIT drifting",
+   "flavor": "Quiet quarter for the robot maker. Analysts shrug.",
+   "price": 10,
+   "range": [
+    1,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-grit-25",
+   "symbol": "GRIT",
+   "title": "GRIT on a run",
+   "flavor": "A big-box chain signs a pilot program. Momentum crowd piles in.",
+   "price": 25,
+   "range": [
+    1,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-grit-40",
+   "symbol": "GRIT",
+   "title": "GRIT euphoria",
+   "flavor": "Cover story: \"The Robot Decade\". Priced for perfection.",
+   "price": 40,
+   "range": [
+    1,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-snail-5",
+   "symbol": "SNAIL",
+   "title": "SNAIL slides",
+   "flavor": "The parcel carrier loses a courier contract; the price crawls to a low.",
+   "price": 5,
+   "range": [
+    5,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-snail-10",
+   "symbol": "SNAIL",
+   "title": "SNAIL steady",
+   "flavor": "Boring, dependable delivery volume. Boring, dependable price.",
+   "price": 10,
+   "range": [
+    5,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-snail-20",
+   "symbol": "SNAIL",
+   "title": "SNAIL picks up pace",
+   "flavor": "Same-day rural delivery tests well in three states.",
+   "price": 20,
+   "range": [
+    5,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-snail-30",
+   "symbol": "SNAIL",
+   "title": "SNAIL at full stretch",
+   "flavor": "Record volumes — and a price at the top of its historic range.",
+   "price": 30,
+   "range": [
+    5,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-myco-5",
+   "symbol": "MYCO",
+   "title": "MYCO trial setback",
+   "flavor": "The health-lab firm delays its flagship study. Bargain hunters circle.",
+   "price": 5,
+   "range": [
+    5,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-myco-15",
+   "symbol": "MYCO",
+   "title": "MYCO in the middle",
+   "flavor": "Mixed results, mixed feelings, middling price.",
+   "price": 15,
+   "range": [
+    5,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-myco-30",
+   "symbol": "MYCO",
+   "title": "MYCO breakout",
+   "flavor": "Early data leaks and the street loves it.",
+   "price": 30,
+   "range": [
+    5,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-zap-1",
+   "symbol": "ZAP",
+   "title": "ZAP wipeout",
+   "flavor": "Scooter-share operator recalls a battery batch. Near-bankruptcy pricing.",
+   "price": 1,
+   "range": [
+    1,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-zap-10",
+   "symbol": "ZAP",
+   "title": "ZAP recharging",
+   "flavor": "New city permits come through. The comeback story writes itself.",
+   "price": 10,
+   "range": [
+    1,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-zap-25",
+   "symbol": "ZAP",
+   "title": "ZAP mania",
+   "flavor": "Every corner has a scooter and every portfolio wants the stock.",
+   "price": 25,
+   "range": [
+    1,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-nest-10",
+   "symbol": "NEST",
+   "title": "NEST fund on sale",
+   "flavor": "Broad-market index fund dips with the economy. Long-term money smiles.",
+   "price": 10,
+   "range": [
+    10,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-nest-25",
+   "symbol": "NEST",
+   "title": "NEST fund cruising",
+   "flavor": "The index grinds higher. Nothing exciting — that is the point.",
+   "price": 25,
+   "range": [
+    10,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "sd-vlt4-a",
+   "symbol": "VLT4",
+   "title": "Vault certificate, standard rate",
+   "flavor": "A $1,000 savings certificate paying $30 a month. Sleepy and safe.",
+   "price": 1000,
+   "range": [
+    1000,
+    1000
+   ],
+   "dividendPerShare": 30
+  },
+  {
+   "kind": "stock",
+   "id": "sd-vlt4-b",
+   "symbol": "VLT4",
+   "title": "Vault certificate, promo rate",
+   "flavor": "Limited-time $1,000 certificate paying $50 a month for early savers.",
+   "price": 1000,
+   "range": [
+    1000,
+    1000
+   ],
+   "dividendPerShare": 50
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-condo-1",
+   "title": "Foreclosed 2/1 condo",
+   "flavor": "Bank wants it gone this week. Tenant already lined up.",
+   "category": "condo2br",
+   "cost": 40000,
+   "downPayment": 2000,
+   "mortgage": 38000,
+   "cashFlow": 140
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-condo-2",
+   "title": "Commuter-line condo",
+   "flavor": "Two bedrooms a block from the train. Rents itself.",
+   "category": "condo2br",
+   "cost": 46000,
+   "downPayment": 3000,
+   "mortgage": 43000,
+   "cashFlow": 180
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-condo-3",
+   "title": "Poolside condo",
+   "flavor": "HOA fees bite — cash flow is thin, but the price is right.",
+   "category": "condo2br",
+   "cost": 36000,
+   "downPayment": 1000,
+   "mortgage": 35000,
+   "cashFlow": -100
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-condo-4",
+   "title": "Estate-sale condo",
+   "flavor": "Heirs live out of state and want a fast, clean close.",
+   "category": "condo2br",
+   "cost": 42000,
+   "downPayment": 2000,
+   "mortgage": 40000,
+   "cashFlow": 220
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-condo-5",
+   "title": "Campus-edge condo",
+   "flavor": "Students every fall, like clockwork.",
+   "category": "condo2br",
+   "cost": 50000,
+   "downPayment": 4000,
+   "mortgage": 46000,
+   "cashFlow": 300
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-condo-6",
+   "title": "Downtown micro-condo",
+   "flavor": "Small square footage, big rental demand.",
+   "category": "condo2br",
+   "cost": 55000,
+   "downPayment": 5000,
+   "mortgage": 50000,
+   "cashFlow": 250
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-house-1",
+   "title": "Relocation-sale 3/2",
+   "flavor": "Owner starts a new job across the country on Monday.",
+   "category": "house3br",
+   "cost": 55000,
+   "downPayment": 3000,
+   "mortgage": 52000,
+   "cashFlow": 200
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-house-2",
+   "title": "Fixer 3/1 near school",
+   "flavor": "Cosmetic work only; families are queuing for the district.",
+   "category": "house3br",
+   "cost": 50000,
+   "downPayment": 2000,
+   "mortgage": 48000,
+   "cashFlow": 160
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-house-3",
+   "title": "Cul-de-sac 3/2",
+   "flavor": "Quiet street, long-term tenant in place for two more years.",
+   "category": "house3br",
+   "cost": 65000,
+   "downPayment": 4000,
+   "mortgage": 61000,
+   "cashFlow": 250
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-house-4",
+   "title": "Divorce-sale house",
+   "flavor": "Both sides just want it done. Priced under market.",
+   "category": "house3br",
+   "cost": 60000,
+   "downPayment": 3000,
+   "mortgage": 57000,
+   "cashFlow": 300
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-house-5",
+   "title": "Riverside rental",
+   "flavor": "Flood insurance eats the rent — until you can sell to a dreamer.",
+   "category": "house3br",
+   "cost": 58000,
+   "downPayment": 2000,
+   "mortgage": 56000,
+   "cashFlow": -150
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-house-6",
+   "title": "Garden-suburb 3/2",
+   "flavor": "Fresh paint, new roof, tenant pays on the first.",
+   "category": "house3br",
+   "cost": 75000,
+   "downPayment": 5000,
+   "mortgage": 70000,
+   "cashFlow": 350
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-duplex-1",
+   "title": "Side-by-side duplex",
+   "flavor": "Two doors, two rents, one mortgage.",
+   "category": "duplex",
+   "cost": 62000,
+   "downPayment": 3000,
+   "mortgage": 59000,
+   "cashFlow": 240
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-duplex-2",
+   "title": "Up-down duplex",
+   "flavor": "Retiring landlord sells his first-ever building.",
+   "category": "duplex",
+   "cost": 70000,
+   "downPayment": 4000,
+   "mortgage": 66000,
+   "cashFlow": 320
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-duplex-3",
+   "title": "Corner-lot duplex",
+   "flavor": "Walk to the tram stop; never vacant more than a week.",
+   "category": "duplex",
+   "cost": 80000,
+   "downPayment": 5000,
+   "mortgage": 75000,
+   "cashFlow": 400
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-duplex-4",
+   "title": "Auction duplex",
+   "flavor": "County auction special — light repairs, heavy upside.",
+   "category": "duplex",
+   "cost": 90000,
+   "downPayment": 5000,
+   "mortgage": 85000,
+   "cashFlow": 360
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-land-1",
+   "title": "10 acres of scrubland",
+   "flavor": "Nothing out there but wind. For now.",
+   "category": "land",
+   "cost": 5000,
+   "downPayment": 5000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-land-2",
+   "title": "Half-acre infill lot",
+   "flavor": "A gap in a growing street grid.",
+   "category": "land",
+   "cost": 4000,
+   "downPayment": 4000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-land-3",
+   "title": "Lakeside parcel",
+   "flavor": "Too small to farm, too pretty to ignore.",
+   "category": "land",
+   "cost": 5000,
+   "downPayment": 5000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "sd-land-4",
+   "title": "Highway-exit corner",
+   "flavor": "Rumor says a truck stop is coming.",
+   "category": "land",
+   "cost": 3000,
+   "downPayment": 3000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "business",
+   "id": "sd-biz-1",
+   "title": "Vending machine route",
+   "flavor": "Twelve machines in office lobbies. Quarters add up.",
+   "category": "localBiz",
+   "cost": 5000,
+   "downPayment": 1000,
+   "liability": 4000,
+   "cashFlow": 100
+  },
+  {
+   "kind": "business",
+   "id": "sd-biz-2",
+   "title": "Weekend market stall",
+   "flavor": "A friend runs it; you bankroll it and split the till.",
+   "category": "localBiz",
+   "cost": 3000,
+   "downPayment": 3000,
+   "liability": 0,
+   "cashFlow": 50
+  },
+  {
+   "kind": "business",
+   "id": "sd-part-1",
+   "title": "Food-truck partnership",
+   "flavor": "Your college roommate can cook. Buy a quarter of the truck.",
+   "category": "partnership",
+   "cost": 5000,
+   "downPayment": 5000,
+   "liability": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "business",
+   "id": "sd-part-2",
+   "title": "App-studio seed stake",
+   "flavor": "Two coders, one garage, zero revenue — yet.",
+   "category": "partnership",
+   "cost": 4000,
+   "downPayment": 4000,
+   "liability": 0,
+   "cashFlow": 0
+  }
+ ],
+ "BIG_DEALS": [
+  {
+   "kind": "realEstate",
+   "id": "bd-4plex-1",
+   "title": "Brickyard 4-plex",
+   "flavor": "Solid brick, boring tenants, beautiful ledger.",
+   "category": "fourplex",
+   "cost": 90000,
+   "downPayment": 8000,
+   "mortgage": 82000,
+   "cashFlow": 320
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-4plex-2",
+   "title": "Transit-corner 4-plex",
+   "flavor": "Bus line out front, waiting list out back.",
+   "category": "fourplex",
+   "cost": 110000,
+   "downPayment": 11000,
+   "mortgage": 99000,
+   "cashFlow": 450
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-4plex-3",
+   "title": "Retiree’s 4-plex",
+   "flavor": "Owner-managed for 30 years; rents are far below market.",
+   "category": "fourplex",
+   "cost": 120000,
+   "downPayment": 12000,
+   "mortgage": 108000,
+   "cashFlow": 500
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-4plex-4",
+   "title": "Storm-damage 4-plex",
+   "flavor": "Insurance fixed the roof; the discount stayed.",
+   "category": "fourplex",
+   "cost": 100000,
+   "downPayment": 10000,
+   "mortgage": 90000,
+   "cashFlow": 400
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-4plex-5",
+   "title": "Millwork-district 4-plex",
+   "flavor": "The neighborhood is turning; get in before it does.",
+   "category": "fourplex",
+   "cost": 140000,
+   "downPayment": 16000,
+   "mortgage": 124000,
+   "cashFlow": 600
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-4plex-6",
+   "title": "Twin-lot 4-plex",
+   "flavor": "Comes with a buildable side lot the seller forgot to price.",
+   "category": "fourplex",
+   "cost": 160000,
+   "downPayment": 24000,
+   "mortgage": 136000,
+   "cashFlow": 700
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-8plex-1",
+   "title": "Courtyard 8-plex",
+   "flavor": "Eight doors around a shared garden. Tenants stay for years.",
+   "category": "eightplex",
+   "cost": 160000,
+   "downPayment": 16000,
+   "mortgage": 144000,
+   "cashFlow": 700
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-8plex-2",
+   "title": "Estate-liquidation 8-plex",
+   "flavor": "The family wants probate finished by spring.",
+   "category": "eightplex",
+   "cost": 180000,
+   "downPayment": 18000,
+   "mortgage": 162000,
+   "cashFlow": 850
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-8plex-3",
+   "title": "Nurse-quarter 8-plex",
+   "flavor": "Across from the hospital. Shift workers, steady rent.",
+   "category": "eightplex",
+   "cost": 220000,
+   "downPayment": 24000,
+   "mortgage": 196000,
+   "cashFlow": 1100
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-8plex-4",
+   "title": "Refit 8-plex",
+   "flavor": "New plumbing, new wiring, new rents — old price.",
+   "category": "eightplex",
+   "cost": 240000,
+   "downPayment": 28000,
+   "mortgage": 212000,
+   "cashFlow": 1300
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-8plex-5",
+   "title": "Two-building 8-plex",
+   "flavor": "Four and four across the street from each other.",
+   "category": "eightplex",
+   "cost": 260000,
+   "downPayment": 32000,
+   "mortgage": 228000,
+   "cashFlow": 1500
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-8plex-6",
+   "title": "Riverfront 8-plex",
+   "flavor": "Views on the top floor pay for the whole building.",
+   "category": "eightplex",
+   "cost": 280000,
+   "downPayment": 40000,
+   "mortgage": 240000,
+   "cashFlow": 1700
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-apts-1",
+   "title": "12-unit walk-up",
+   "flavor": "A tired manager and twelve leases ready for market rents.",
+   "category": "aptSmall",
+   "cost": 250000,
+   "downPayment": 25000,
+   "mortgage": 225000,
+   "cashFlow": 1300
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-apts-2",
+   "title": "16-unit college block",
+   "flavor": "Two blocks from the lecture halls. Pre-leased every March.",
+   "category": "aptSmall",
+   "cost": 300000,
+   "downPayment": 32000,
+   "mortgage": 268000,
+   "cashFlow": 1600
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-apts-3",
+   "title": "18-unit garden complex",
+   "flavor": "Out-of-state owner never raised a rent in a decade.",
+   "category": "aptSmall",
+   "cost": 340000,
+   "downPayment": 40000,
+   "mortgage": 300000,
+   "cashFlow": 1900
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-apts-4",
+   "title": "20-unit brick mid-rise",
+   "flavor": "The elevator squeaks; the cash flow doesn’t.",
+   "category": "aptSmall",
+   "cost": 380000,
+   "downPayment": 48000,
+   "mortgage": 332000,
+   "cashFlow": 2200
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-apts-5",
+   "title": "24-unit bank repo",
+   "flavor": "The lender is not in the landlord business. You could be.",
+   "category": "aptSmall",
+   "cost": 420000,
+   "downPayment": 55000,
+   "mortgage": 365000,
+   "cashFlow": 2600
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-apts-6",
+   "title": "14-unit conversion",
+   "flavor": "Old schoolhouse, new lofts, long waiting list.",
+   "category": "aptSmall",
+   "cost": 280000,
+   "downPayment": 30000,
+   "mortgage": 250000,
+   "cashFlow": 1400
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-aptl-1",
+   "title": "30-unit portfolio piece",
+   "flavor": "A fund is rebalancing and needs this off the books.",
+   "category": "aptLarge",
+   "cost": 350000,
+   "downPayment": 40000,
+   "mortgage": 310000,
+   "cashFlow": 1800
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-aptl-2",
+   "title": "36-unit twin towers",
+   "flavor": "Two mirrored buildings, one on-site manager.",
+   "category": "aptLarge",
+   "cost": 420000,
+   "downPayment": 48000,
+   "mortgage": 372000,
+   "cashFlow": 2300
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-aptl-3",
+   "title": "44-unit rail-yard lofts",
+   "flavor": "The neighborhood got cool faster than the seller noticed.",
+   "category": "aptLarge",
+   "cost": 480000,
+   "downPayment": 52000,
+   "mortgage": 428000,
+   "cashFlow": 2800
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-aptl-4",
+   "title": "52-unit sunbelt complex",
+   "flavor": "Pools, palms, and fifty-two rent checks.",
+   "category": "aptLarge",
+   "cost": 520000,
+   "downPayment": 56000,
+   "mortgage": 464000,
+   "cashFlow": 3100
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-aptl-5",
+   "title": "60-unit distressed sale",
+   "flavor": "Partnership dissolved in court; the judge wants a sale.",
+   "category": "aptLarge",
+   "cost": 550000,
+   "downPayment": 60000,
+   "mortgage": 490000,
+   "cashFlow": 3400
+  },
+  {
+   "kind": "realEstate",
+   "id": "bd-aptl-6",
+   "title": "40-unit garden estate",
+   "flavor": "Long leases, low turnover, lovely numbers.",
+   "category": "aptLarge",
+   "cost": 450000,
+   "downPayment": 50000,
+   "mortgage": 400000,
+   "cashFlow": 2500
+  },
+  {
+   "kind": "business",
+   "id": "bd-fran-1",
+   "title": "Burger franchise, tier-2 corner",
+   "flavor": "A national brand on a growing intersection. The manual runs itself.",
+   "category": "franchise",
+   "cost": 120000,
+   "downPayment": 20000,
+   "liability": 100000,
+   "cashFlow": 800
+  },
+  {
+   "kind": "business",
+   "id": "bd-fran-2",
+   "title": "Coffee franchise, station kiosk",
+   "flavor": "Commuters queue before the shutters open.",
+   "category": "franchise",
+   "cost": 90000,
+   "downPayment": 15000,
+   "liability": 75000,
+   "cashFlow": 600
+  },
+  {
+   "kind": "business",
+   "id": "bd-fran-3",
+   "title": "Gym franchise, strip mall",
+   "flavor": "January pays for the year.",
+   "category": "franchise",
+   "cost": 180000,
+   "downPayment": 30000,
+   "liability": 150000,
+   "cashFlow": 1200
+  },
+  {
+   "kind": "business",
+   "id": "bd-fran-4",
+   "title": "Tax-prep franchise pair",
+   "flavor": "Two storefronts, one busy season, zero drama.",
+   "category": "franchise",
+   "cost": 150000,
+   "downPayment": 25000,
+   "liability": 125000,
+   "cashFlow": 1000
+  },
+  {
+   "kind": "business",
+   "id": "bd-fran-5",
+   "title": "Sandwich franchise flagship",
+   "flavor": "Best foot traffic in the food court.",
+   "category": "franchise",
+   "cost": 240000,
+   "downPayment": 45000,
+   "liability": 195000,
+   "cashFlow": 1900
+  },
+  {
+   "kind": "business",
+   "id": "bd-fran-6",
+   "title": "Childcare franchise campus",
+   "flavor": "Licensed, staffed, and full through next year.",
+   "category": "franchise",
+   "cost": 320000,
+   "downPayment": 75000,
+   "liability": 245000,
+   "cashFlow": 2800
+  },
+  {
+   "kind": "business",
+   "id": "bd-biz-1",
+   "title": "Automated car wash",
+   "flavor": "Machines wash, cameras watch, card readers collect.",
+   "category": "localBiz",
+   "cost": 180000,
+   "downPayment": 35000,
+   "liability": 145000,
+   "cashFlow": 1500
+  },
+  {
+   "kind": "business",
+   "id": "bd-biz-2",
+   "title": "Self-storage yard",
+   "flavor": "Rows of orange doors and almost no payroll.",
+   "category": "localBiz",
+   "cost": 220000,
+   "downPayment": 40000,
+   "liability": 180000,
+   "cashFlow": 1800
+  },
+  {
+   "kind": "business",
+   "id": "bd-biz-3",
+   "title": "Coin laundry, double location",
+   "flavor": "Quarters by the bucket in two neighborhoods.",
+   "category": "localBiz",
+   "cost": 130000,
+   "downPayment": 22000,
+   "liability": 108000,
+   "cashFlow": 900
+  },
+  {
+   "kind": "business",
+   "id": "bd-biz-4",
+   "title": "Billboard mini-network",
+   "flavor": "Six boards on two highways, leased through next year.",
+   "category": "localBiz",
+   "cost": 100000,
+   "downPayment": 18000,
+   "liability": 82000,
+   "cashFlow": 750
+  },
+  {
+   "kind": "business",
+   "id": "bd-part-1",
+   "title": "Limited partnership: mini-mall",
+   "flavor": "You put up capital; the operator does the rest. Paper asset, real checks.",
+   "category": "partnership",
+   "cost": 60000,
+   "downPayment": 12000,
+   "liability": 48000,
+   "cashFlow": 500
+  },
+  {
+   "kind": "business",
+   "id": "bd-part-2",
+   "title": "Limited partnership: drilling fund",
+   "flavor": "High risk, high distributions while the wells flow.",
+   "category": "partnership",
+   "cost": 80000,
+   "downPayment": 16000,
+   "liability": 64000,
+   "cashFlow": 700
+  }
+ ],
+ "OFFSHORE_SMALL_DEALS": [
+  {
+   "kind": "stock",
+   "id": "oc-shib-1",
+   "symbol": "SHIB",
+   "title": "SHIB rug-pull panic",
+   "flavor": "A copycat token rugged and the whole kennel gets sold off. Only you may buy; everyone may sell.",
+   "price": 1,
+   "range": [
+    1,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-shib-8",
+   "symbol": "SHIB",
+   "title": "SHIB sideways",
+   "flavor": "The chart is a flatline; the community calls it accumulation.",
+   "price": 8,
+   "range": [
+    1,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-shib-20",
+   "symbol": "SHIB",
+   "title": "SHIB influencer pump",
+   "flavor": "A celebrity posts one dog photo. Volume goes vertical.",
+   "price": 20,
+   "range": [
+    1,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-shib-30",
+   "symbol": "SHIB",
+   "title": "SHIB to the moon",
+   "flavor": "Number go up. Everyone is a genius. Priced for the moon landing.",
+   "price": 30,
+   "range": [
+    1,
+    30
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-pepe-1",
+   "symbol": "PEPE",
+   "title": "PEPE bear market",
+   "flavor": "The meme is dead, they say. Memes have nine lives.",
+   "price": 1,
+   "range": [
+    1,
+    25
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-pepe-10",
+   "symbol": "PEPE",
+   "title": "PEPE meme season",
+   "flavor": "Feels good, man — the timeline is green again.",
+   "price": 10,
+   "range": [
+    1,
+    25
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-pepe-18",
+   "symbol": "PEPE",
+   "title": "PEPE viral again",
+   "flavor": "A fresh template sweeps the internet; the token tags along.",
+   "price": 18,
+   "range": [
+    1,
+    25
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-pepe-25",
+   "symbol": "PEPE",
+   "title": "PEPE euphoria",
+   "flavor": "Top of the range, top of the timeline.",
+   "price": 25,
+   "range": [
+    1,
+    25
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-doge-2",
+   "symbol": "DOGE",
+   "title": "DOGE forgotten",
+   "flavor": "The original meme coin naps between cycles. Much quiet.",
+   "price": 2,
+   "range": [
+    2,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-doge-15",
+   "symbol": "DOGE",
+   "title": "DOGE tweet bump",
+   "flavor": "A billionaire posts a shiba in a hard hat. Up 40% by lunch.",
+   "price": 15,
+   "range": [
+    2,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-doge-40",
+   "symbol": "DOGE",
+   "title": "DOGE mania",
+   "flavor": "Taxi drivers give price targets. Historic top territory.",
+   "price": 40,
+   "range": [
+    2,
+    40
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-bonk-1",
+   "symbol": "BONK",
+   "title": "BONK dust",
+   "flavor": "Down 95% from the top. The faithful call it a gift.",
+   "price": 1,
+   "range": [
+    1,
+    20
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-bonk-6",
+   "symbol": "BONK",
+   "title": "BONK drifting",
+   "flavor": "Airdropped, dumped, forgotten — and quietly building.",
+   "price": 6,
+   "range": [
+    1,
+    20
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-bonk-20",
+   "symbol": "BONK",
+   "title": "BONK exchange listing",
+   "flavor": "A top exchange lists it and the dog gets its day.",
+   "price": 20,
+   "range": [
+    1,
+    20
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-wif-5",
+   "symbol": "WIF",
+   "title": "WIF quiet accumulation",
+   "flavor": "Just a dog wif a hat, waiting for its moment.",
+   "price": 5,
+   "range": [
+    2,
+    35
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-wif-35",
+   "symbol": "WIF",
+   "title": "WIF hat season",
+   "flavor": "The hat stays on. All-time-high territory.",
+   "price": 35,
+   "range": [
+    2,
+    35
+   ]
+  },
+  {
+   "kind": "stock",
+   "id": "oc-usdr-a",
+   "symbol": "USDR",
+   "title": "Stablecoin vault, standard APY",
+   "flavor": "A $1,000 stablecoin position staking $30 a month. The boring corner of crypto.",
+   "price": 1000,
+   "range": [
+    1000,
+    1000
+   ],
+   "dividendPerShare": 30
+  },
+  {
+   "kind": "stock",
+   "id": "oc-usdr-b",
+   "symbol": "USDR",
+   "title": "Stablecoin vault, promo APY",
+   "flavor": "A launch-promo vault paying $50 a month per $1,000 staked. Read the fine print twice.",
+   "price": 1000,
+   "range": [
+    1000,
+    1000
+   ],
+   "dividendPerShare": 50
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-1",
+   "title": "Pocitos studio, Montevideo",
+   "flavor": "Two blocks from the Rambla; nurses and students split the lease.",
+   "category": "aptMVD",
+   "cost": 38000,
+   "downPayment": 2000,
+   "mortgage": 36000,
+   "cashFlow": 220
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-2",
+   "title": "Ciudad Vieja loft, Montevideo",
+   "flavor": "Colonial beams, port cranes in the window, weekend markets below.",
+   "category": "aptMVD",
+   "cost": 32000,
+   "downPayment": 1000,
+   "mortgage": 31000,
+   "cashFlow": 180
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-3",
+   "title": "Cordón student flat, Montevideo",
+   "flavor": "Three universities within walking distance; the leases never lapse.",
+   "category": "aptMVD",
+   "cost": 28000,
+   "downPayment": 1000,
+   "mortgage": 27000,
+   "cashFlow": 160
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-4",
+   "title": "Carrasco garden flat, Montevideo",
+   "flavor": "Tree-lined embassy streets; corporate tenants pay on the first.",
+   "category": "aptMVD",
+   "cost": 48000,
+   "downPayment": 4000,
+   "mortgage": 44000,
+   "cashFlow": 260
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-5",
+   "title": "Tres Cruces transit flat, Montevideo",
+   "flavor": "Every long-distance bus stops downstairs; crews need beds, not balconies.",
+   "category": "aptMVD",
+   "cost": 26000,
+   "downPayment": 1000,
+   "mortgage": 25000,
+   "cashFlow": 150
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-6",
+   "title": "Punta Carretas tower unit, Montevideo",
+   "flavor": "Mall and fortress views; the tower rose faster than tenants.",
+   "category": "aptMVD",
+   "cost": 45000,
+   "downPayment": 3000,
+   "mortgage": 42000,
+   "cashFlow": -150
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-7",
+   "title": "Palermo walk-up, Montevideo",
+   "flavor": "Café terraces below, Art Deco façades above; young professionals queue.",
+   "category": "aptMVD",
+   "cost": 40000,
+   "downPayment": 3000,
+   "mortgage": 37000,
+   "cashFlow": 240
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-8",
+   "title": "Centro shophouse flat, Montevideo",
+   "flavor": "Above the pedestrian Avenida 18; lunch crowds keep the street loud.",
+   "category": "aptMVD",
+   "cost": 30000,
+   "downPayment": 2000,
+   "mortgage": 28000,
+   "cashFlow": 200
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-9",
+   "title": "Malvín seafront flat, Montevideo",
+   "flavor": "Rambla sunsets and quiet weeknights; families renew every year.",
+   "category": "aptMVD",
+   "cost": 42000,
+   "downPayment": 2000,
+   "mortgage": 40000,
+   "cashFlow": 180
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-mvd-10",
+   "title": "Prado park-view flat, Montevideo",
+   "flavor": "Museums and rose gardens next door; retirees never leave.",
+   "category": "aptMVD",
+   "cost": 34000,
+   "downPayment": 2000,
+   "mortgage": 32000,
+   "cashFlow": 190
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-1",
+   "title": "Peninsula studio, Punta del Este",
+   "flavor": "Between Playa Brava and Mansa; January books itself.",
+   "category": "aptPDE",
+   "cost": 55000,
+   "downPayment": 4000,
+   "mortgage": 51000,
+   "cashFlow": 250
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-2",
+   "title": "Gorlero walk-up, Punta del Este",
+   "flavor": "Main strip nightlife below; summer rates beat annual leases.",
+   "category": "aptPDE",
+   "cost": 48000,
+   "downPayment": 3000,
+   "mortgage": 45000,
+   "cashFlow": 230
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-3",
+   "title": "La Mansa sea-view condo",
+   "flavor": "Calm-water side; families from Buenos Aires fill December.",
+   "category": "aptPDE",
+   "cost": 62000,
+   "downPayment": 5000,
+   "mortgage": 57000,
+   "cashFlow": 270
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-4",
+   "title": "Brava tower unit, Punta del Este",
+   "flavor": "Surf and wind; three new towers chased the same view — yours waits for a tenant.",
+   "category": "aptPDE",
+   "cost": 52000,
+   "downPayment": 2000,
+   "mortgage": 50000,
+   "cashFlow": -120
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-5",
+   "title": "Aidy Grill flat, Punta del Este",
+   "flavor": "Restaurant row at the door; chefs and waitstaff share the building.",
+   "category": "aptPDE",
+   "cost": 44000,
+   "downPayment": 3000,
+   "mortgage": 41000,
+   "cashFlow": 200
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-6",
+   "title": "San Rafael park flat, Punta del Este",
+   "flavor": "Golf greens and pines; winter is quiet, summer is sold out.",
+   "category": "aptPDE",
+   "cost": 46000,
+   "downPayment": 3000,
+   "mortgage": 43000,
+   "cashFlow": 210
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-7",
+   "title": "La Barra loft, Punta del Este",
+   "flavor": "Bridge traffic and beach clubs; artists and influencers pay weekly.",
+   "category": "aptPDE",
+   "cost": 58000,
+   "downPayment": 5000,
+   "mortgage": 53000,
+   "cashFlow": 260
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-pde-8",
+   "title": "Punta Ballena cliff studio",
+   "flavor": "Casapueblo silhouette in the window; the Atlantic fills the rest.",
+   "category": "aptPDE",
+   "cost": 50000,
+   "downPayment": 4000,
+   "mortgage": 46000,
+   "cashFlow": 240
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-vil-1",
+   "title": "La Barra beach cottage",
+   "flavor": "Eucalyptus shade, sand in the hall, January bookings full.",
+   "category": "villaPDE",
+   "cost": 85000,
+   "downPayment": 12000,
+   "mortgage": 73000,
+   "cashFlow": 400
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-vil-2",
+   "title": "Cantegril garden house",
+   "flavor": "Club membership next door sells the address by itself.",
+   "category": "villaPDE",
+   "cost": 95000,
+   "downPayment": 14000,
+   "mortgage": 81000,
+   "cashFlow": 450
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-vil-3",
+   "title": "Manantiales weekender",
+   "flavor": "Halfway to José Ignacio; the beach path is the amenity.",
+   "category": "villaPDE",
+   "cost": 78000,
+   "downPayment": 10000,
+   "mortgage": 68000,
+   "cashFlow": 350
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-vil-4",
+   "title": "Pinares pine-lot house",
+   "flavor": "Quiet pines, short walk to Brava; winter CF is a hope, not a plan.",
+   "category": "villaPDE",
+   "cost": 70000,
+   "downPayment": 8000,
+   "mortgage": 62000,
+   "cashFlow": -80
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-1",
+   "title": "5 ha of Colonia pasture",
+   "flavor": "Green fence posts and horizon. The dairy trucks pass twice a day.",
+   "category": "landUY",
+   "cost": 3000,
+   "downPayment": 3000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-2",
+   "title": "10 ha off Ruta 5, Florida",
+   "flavor": "Dairy country asphalt reached this kilometre last year.",
+   "category": "landUY",
+   "cost": 5000,
+   "downPayment": 5000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-3",
+   "title": "Rocha coast scrub lot",
+   "flavor": "Dunes and wind; beach cabins creep closer every summer.",
+   "category": "landUY",
+   "cost": 4000,
+   "downPayment": 4000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-4",
+   "title": "20 ha, no road, Tacuarembó",
+   "flavor": "Priced by the map, not by the mud.",
+   "category": "landUY",
+   "cost": 2000,
+   "downPayment": 2000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-5",
+   "title": "Citrus corner, Salto",
+   "flavor": "Orange groves and hot springs tourism share the valley.",
+   "category": "landUY",
+   "cost": 5000,
+   "downPayment": 5000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-6",
+   "title": "Border lot, Rivera",
+   "flavor": "Free-shop traffic parks on anything flat.",
+   "category": "landUY",
+   "cost": 5000,
+   "downPayment": 5000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-7",
+   "title": "Hillside hectare, Maldonado",
+   "flavor": "Punta del Este lights glow on the horizon at night.",
+   "category": "landUY",
+   "cost": 6000,
+   "downPayment": 6000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-land-8",
+   "title": "Lagoon-edge plot, Castillos",
+   "flavor": "Birdwatchers already know the access track.",
+   "category": "landUY",
+   "cost": 4000,
+   "downPayment": 4000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-dair-1",
+   "title": "20-cow starter herd, San José",
+   "flavor": "A neighbour milks them; you bank the co-op cheque.",
+   "category": "dairyUY",
+   "cost": 35000,
+   "downPayment": 8000,
+   "mortgage": 27000,
+   "cashFlow": 280
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-dair-2",
+   "title": "Heifer lot, Canelones",
+   "flavor": "Young stock growing into production; the silage is already paid.",
+   "category": "dairyUY",
+   "cost": 28000,
+   "downPayment": 6000,
+   "mortgage": 22000,
+   "cashFlow": 200
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-dair-3",
+   "title": "Milk-share barn, Florida",
+   "flavor": "Half the tank goes to Conaprole; half the rent comes to you.",
+   "category": "dairyUY",
+   "cost": 42000,
+   "downPayment": 9000,
+   "mortgage": 33000,
+   "cashFlow": 320
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-dair-4",
+   "title": "Pasture lease with 40 head, Colonia",
+   "flavor": "The lease runs through next spring; the cows stay put.",
+   "category": "dairyUY",
+   "cost": 48000,
+   "downPayment": 10000,
+   "mortgage": 38000,
+   "cashFlow": 350
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-dair-5",
+   "title": "Cheese-room cottage dairy, Colonia",
+   "flavor": "Tourists buy wheels at the gate; the milk never leaves the farm.",
+   "category": "dairyUY",
+   "cost": 55000,
+   "downPayment": 12000,
+   "mortgage": 43000,
+   "cashFlow": 400
+  },
+  {
+   "kind": "realEstate",
+   "id": "os-dair-6",
+   "title": "Dry-cow holding pens, Durazno",
+   "flavor": "Not milking yet — but the next calving season is sold forward.",
+   "category": "dairyUY",
+   "cost": 30000,
+   "downPayment": 5000,
+   "mortgage": 25000,
+   "cashFlow": 150
+  }
+ ],
+ "OFFSHORE_BIG_DEALS": [
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-1",
+   "title": "Six-flat walk-up, Cordón",
+   "flavor": "Student cafés below push rents up every semester.",
+   "category": "aptMVD",
+   "cost": 95000,
+   "downPayment": 9000,
+   "mortgage": 86000,
+   "cashFlow": 420
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-2",
+   "title": "Ciudad Vieja boutique block",
+   "flavor": "Twelve keys above the port market, one caretaker below.",
+   "category": "aptMVD",
+   "cost": 120000,
+   "downPayment": 12000,
+   "mortgage": 108000,
+   "cashFlow": 550
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-3",
+   "title": "Pocitos serviced floor",
+   "flavor": "Eight furnished flats leased whole to a tech campus.",
+   "category": "aptMVD",
+   "cost": 150000,
+   "downPayment": 15000,
+   "mortgage": 135000,
+   "cashFlow": 700
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-4",
+   "title": "Rambla boutique block, Montevideo",
+   "flavor": "The seafront lease pays the mortgage by itself on summer weekends.",
+   "category": "aptMVD",
+   "cost": 180000,
+   "downPayment": 18000,
+   "mortgage": 162000,
+   "cashFlow": 850
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-5",
+   "title": "Eight-flat block, Palermo",
+   "flavor": "New coworking space across the street; a waiting list is forming.",
+   "category": "aptMVD",
+   "cost": 200000,
+   "downPayment": 22000,
+   "mortgage": 178000,
+   "cashFlow": 1000
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-6",
+   "title": "Punta Carretas tower floor",
+   "flavor": "The mall district overbuilt; the discount didn’t.",
+   "category": "aptMVD",
+   "cost": 90000,
+   "downPayment": 8000,
+   "mortgage": 82000,
+   "cashFlow": 300
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-7",
+   "title": "Carrasco embassy block",
+   "flavor": "Diplomatic leases: paid in full, on the first.",
+   "category": "aptMVD",
+   "cost": 280000,
+   "downPayment": 34000,
+   "mortgage": 246000,
+   "cashFlow": 1500
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-8",
+   "title": "Airport-corridor block, Carrasco",
+   "flavor": "Crew contracts with two airlines on three-year terms.",
+   "category": "aptMVD",
+   "cost": 240000,
+   "downPayment": 28000,
+   "mortgage": 212000,
+   "cashFlow": 1200
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-9",
+   "title": "Student block near Udelar",
+   "flavor": "Two campuses within bus distance; never a vacancy.",
+   "category": "aptMVD",
+   "cost": 130000,
+   "downPayment": 13000,
+   "mortgage": 117000,
+   "cashFlow": 600
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-10",
+   "title": "Independencia square heritage floor",
+   "flavor": "Six flats along the colonial arcade facing the square.",
+   "category": "aptMVD",
+   "cost": 105000,
+   "downPayment": 10000,
+   "mortgage": 95000,
+   "cashFlow": 480
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-mvd-11",
+   "title": "Malvín seafront floor",
+   "flavor": "Rambla joggers at dawn, skyline lights at dusk.",
+   "category": "aptMVD",
+   "cost": 160000,
+   "downPayment": 16000,
+   "mortgage": 144000,
+   "cashFlow": 750
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-1",
+   "title": "Serviced floor, Gorlero",
+   "flavor": "Six suites over the shopping strip; January never stops.",
+   "category": "aptPDE",
+   "cost": 260000,
+   "downPayment": 30000,
+   "mortgage": 230000,
+   "cashFlow": 1300
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-2",
+   "title": "Peninsula tower floor",
+   "flavor": "Brava on one side, Mansa on the other; the view sells itself.",
+   "category": "aptPDE",
+   "cost": 220000,
+   "downPayment": 24000,
+   "mortgage": 196000,
+   "cashFlow": 1100
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-3",
+   "title": "Condo block, Aidy Grill",
+   "flavor": "Restaurant row and beach access; corporate summer leases only.",
+   "category": "aptPDE",
+   "cost": 320000,
+   "downPayment": 38000,
+   "mortgage": 282000,
+   "cashFlow": 1700
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-4",
+   "title": "Brava oversupply floor",
+   "flavor": "Towers outnumbered tenants last winter; the discount is the amenity.",
+   "category": "aptPDE",
+   "cost": 180000,
+   "downPayment": 18000,
+   "mortgage": 162000,
+   "cashFlow": 700
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-5",
+   "title": "La Barra block",
+   "flavor": "Six flats over the bridge road; influencers renew weekly in season.",
+   "category": "aptPDE",
+   "cost": 140000,
+   "downPayment": 14000,
+   "mortgage": 126000,
+   "cashFlow": 650
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-6",
+   "title": "San Rafael beachfront block",
+   "flavor": "Golf and pines; the man-made calm finally has year-round bookings.",
+   "category": "aptPDE",
+   "cost": 200000,
+   "downPayment": 22000,
+   "mortgage": 178000,
+   "cashFlow": 950
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-7",
+   "title": "Porto tower serviced floor",
+   "flavor": "Marina berths downstairs; every yacht club member has a key upstairs.",
+   "category": "aptPDE",
+   "cost": 290000,
+   "downPayment": 34000,
+   "mortgage": 256000,
+   "cashFlow": 1500
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-8",
+   "title": "Punta Shopping corridor block",
+   "flavor": "Mall traffic fills short-lets; winter still needs a discount.",
+   "category": "aptPDE",
+   "cost": 170000,
+   "downPayment": 17000,
+   "mortgage": 153000,
+   "cashFlow": 800
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-9",
+   "title": "La Mansa family towers",
+   "flavor": "Forty beds in the calm-water catchment of two schools.",
+   "category": "aptPDE",
+   "cost": 210000,
+   "downPayment": 24000,
+   "mortgage": 186000,
+   "cashFlow": 1000
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-pde-10",
+   "title": "Roosevelt avenue floor",
+   "flavor": "Retail below, serviced flats above, casino lights down the road.",
+   "category": "aptPDE",
+   "cost": 190000,
+   "downPayment": 20000,
+   "mortgage": 170000,
+   "cashFlow": 900
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-1",
+   "title": "José Ignacio beach villa",
+   "flavor": "Dunes, glass walls, and a waiting list of January guests.",
+   "category": "villaPDE",
+   "cost": 380000,
+   "downPayment": 55000,
+   "mortgage": 325000,
+   "cashFlow": 1800
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-2",
+   "title": "La Barra compound",
+   "flavor": "Three cottages on one lot; the beach path is private.",
+   "category": "villaPDE",
+   "cost": 320000,
+   "downPayment": 45000,
+   "mortgage": 275000,
+   "cashFlow": 1500
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-3",
+   "title": "Cantegril estate villa",
+   "flavor": "Club greens out the kitchen window; the membership sells the house.",
+   "category": "villaPDE",
+   "cost": 420000,
+   "downPayment": 60000,
+   "mortgage": 360000,
+   "cashFlow": 2000
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-4",
+   "title": "Punta Ballena cliff house",
+   "flavor": "Casapueblo’s neighbour; the Atlantic is the backyard.",
+   "category": "villaPDE",
+   "cost": 350000,
+   "downPayment": 50000,
+   "mortgage": 300000,
+   "cashFlow": 1600
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-5",
+   "title": "Manantiales modern villa",
+   "flavor": "Architect-designed box on the sand; magazine shoots pay the winter.",
+   "category": "villaPDE",
+   "cost": 300000,
+   "downPayment": 42000,
+   "mortgage": 258000,
+   "cashFlow": 1400
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-6",
+   "title": "Beverly Hills Punta villa",
+   "flavor": "Quiet pines, high hedges; Argentine families book years ahead.",
+   "category": "villaPDE",
+   "cost": 280000,
+   "downPayment": 38000,
+   "mortgage": 242000,
+   "cashFlow": 1300
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-7",
+   "title": "Laguna del Sauce lakefront house",
+   "flavor": "Airport ten minutes away; water-skis in the shed.",
+   "category": "villaPDE",
+   "cost": 240000,
+   "downPayment": 32000,
+   "mortgage": 208000,
+   "cashFlow": 1100
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-vil-8",
+   "title": "Trophy empty villa, José Ignacio",
+   "flavor": "Priced like art, rented like hope — CF waits for the right summer.",
+   "category": "villaPDE",
+   "cost": 450000,
+   "downPayment": 70000,
+   "mortgage": 380000,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-1",
+   "title": "120 ha soy lease, Soriano",
+   "flavor": "A neighbour farms it; you bank the rent.",
+   "category": "landUY",
+   "cost": 60000,
+   "downPayment": 12000,
+   "mortgage": 48000,
+   "cashFlow": 400
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-2",
+   "title": "300 ha with cattle lease, Paysandú",
+   "flavor": "The lease runs through next dry season.",
+   "category": "landUY",
+   "cost": 90000,
+   "downPayment": 15000,
+   "mortgage": 75000,
+   "cashFlow": 500
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-3",
+   "title": "River-port acreage, Nueva Palmira",
+   "flavor": "Grain barges queue here when the river runs high.",
+   "category": "landUY",
+   "cost": 130000,
+   "downPayment": 20000,
+   "mortgage": 110000,
+   "cashFlow": 600
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-4",
+   "title": "500 ha, Artigas frontier",
+   "flavor": "The road is coming — the surveyor already came.",
+   "category": "landUY",
+   "cost": 75000,
+   "downPayment": 10000,
+   "mortgage": 65000,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-5",
+   "title": "Citrus estate, Salto",
+   "flavor": "Juice contracts with the border packers.",
+   "category": "landUY",
+   "cost": 110000,
+   "downPayment": 16000,
+   "mortgage": 94000,
+   "cashFlow": 550
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-6",
+   "title": "1,000 ha, no fences, Tacuarembó",
+   "flavor": "Priced like scrub; mapped like pasture.",
+   "category": "landUY",
+   "cost": 100000,
+   "downPayment": 12000,
+   "mortgage": 88000,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-7",
+   "title": "Eucalyptus plantation, Rivera",
+   "flavor": "The pulp crews come with the deed.",
+   "category": "landUY",
+   "cost": 140000,
+   "downPayment": 22000,
+   "mortgage": 118000,
+   "cashFlow": 700
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-8",
+   "title": "Feedlot acreage, Durazno",
+   "flavor": "The crossroads of every cattle truck in the interior.",
+   "category": "landUY",
+   "cost": 160000,
+   "downPayment": 26000,
+   "mortgage": 134000,
+   "cashFlow": 850
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-9",
+   "title": "Lagoon-front acres, Rocha",
+   "flavor": "Punta del Este money builds closer every year.",
+   "category": "landUY",
+   "cost": 85000,
+   "downPayment": 14000,
+   "mortgage": 71000,
+   "cashFlow": 0
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-land-10",
+   "title": "Ruta 9 corridor acres, Maldonado",
+   "flavor": "Highway frontage between the beach towns; a fabricator rents the flat half.",
+   "category": "landUY",
+   "cost": 120000,
+   "downPayment": 18000,
+   "mortgage": 102000,
+   "cashFlow": 600
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-1",
+   "title": "200-cow dairy, Colonia",
+   "flavor": "Conaprole collects the milk; you collect the monthly.",
+   "category": "dairyUY",
+   "cost": 180000,
+   "downPayment": 28000,
+   "mortgage": 152000,
+   "cashFlow": 900
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-2",
+   "title": "Holstein herd expansion, San José",
+   "flavor": "Four hundred head, free-stall barn, and a full silage clamp.",
+   "category": "dairyUY",
+   "cost": 220000,
+   "downPayment": 35000,
+   "mortgage": 185000,
+   "cashFlow": 1100
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-3",
+   "title": "Milk-cooperative contract farm, Florida",
+   "flavor": "The co-op guarantee outlasts any single milk-price cycle.",
+   "category": "dairyUY",
+   "cost": 160000,
+   "downPayment": 24000,
+   "mortgage": 136000,
+   "cashFlow": 800
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-4",
+   "title": "Cheese-plant offtake estancia, Colonia",
+   "flavor": "Artisan wheels and export bricks share the same milk line.",
+   "category": "dairyUY",
+   "cost": 250000,
+   "downPayment": 40000,
+   "mortgage": 210000,
+   "cashFlow": 1250
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-5",
+   "title": "Feedlot and finishing yard, Paysandú",
+   "flavor": "Cattle arrive thin and leave as export cuts.",
+   "category": "dairyUY",
+   "cost": 200000,
+   "downPayment": 30000,
+   "mortgage": 170000,
+   "cashFlow": 1000
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-6",
+   "title": "1,000-head cattle estancia, Tacuarembó",
+   "flavor": "A working ranch with Herefords to the horizon.",
+   "category": "dairyUY",
+   "cost": 280000,
+   "downPayment": 42000,
+   "mortgage": 238000,
+   "cashFlow": 1400
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-7",
+   "title": "Rotary milking parlor, Canelones",
+   "flavor": "Sixty stalls turn with the clock; night shifts keep the tank full.",
+   "category": "dairyUY",
+   "cost": 190000,
+   "downPayment": 28000,
+   "mortgage": 162000,
+   "cashFlow": 950
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-8",
+   "title": "Organic dairy co-op share, Colonia",
+   "flavor": "Premium milk price, premium paperwork, honest monthly CF.",
+   "category": "dairyUY",
+   "cost": 150000,
+   "downPayment": 22000,
+   "mortgage": 128000,
+   "cashFlow": 750
+  },
+  {
+   "kind": "realEstate",
+   "id": "ob-dair-9",
+   "title": "Breeding-stock farm, Florida",
+   "flavor": "Prize Holstein bulls and heifers priced like jewellery.",
+   "category": "dairyUY",
+   "cost": 240000,
+   "downPayment": 36000,
+   "mortgage": 204000,
+   "cashFlow": 1150
+  }
+ ],
+ "MARKET_CARDS": [
+  {
+   "kind": "sellOffer",
+   "id": "mk-condo-hot",
+   "title": "Condo bidding war",
+   "flavor": "Downtown employers are hiring; buyers offer 135% of what you paid for 2-bedroom condos.",
+   "category": "condo2br",
+   "multiplierPct": 135
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-condo-flat",
+   "title": "Condo buyer, fair price",
+   "flavor": "A first-time buyer offers exactly what 2-bedroom condos cost.",
+   "category": "condo2br",
+   "multiplierPct": 100
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-condo-cold",
+   "title": "Condo glut",
+   "flavor": "Three new towers opened at once. A vulture fund bids 65% of cost for 2-bedroom condos.",
+   "category": "condo2br",
+   "multiplierPct": 65
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-house-hot",
+   "title": "Family-home frenzy",
+   "flavor": "A school ranking went viral. Families pay 140% of cost for 3-bedroom houses.",
+   "category": "house3br",
+   "multiplierPct": 140
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-house-flat",
+   "title": "House buyer, market price",
+   "flavor": "A relocation service offers 105% of cost for 3-bedroom houses.",
+   "category": "house3br",
+   "multiplierPct": 105
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-house-cold",
+   "title": "Rates spike, houses stall",
+   "flavor": "Mortgages got expensive overnight. An investor bids 70% of cost for 3-bedroom houses.",
+   "category": "house3br",
+   "multiplierPct": 70
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-duplex-hot",
+   "title": "House-hackers want duplexes",
+   "flavor": "Live in one, rent the other — buyers pay 130% of cost for duplexes.",
+   "category": "duplex",
+   "multiplierPct": 130
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-duplex-mid",
+   "title": "Duplex offer",
+   "flavor": "A landlord expanding her portfolio offers 110% of cost for duplexes.",
+   "category": "duplex",
+   "multiplierPct": 110
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-4plex-hot",
+   "title": "Small-multifamily boom",
+   "flavor": "Out-of-town money discovers 4-plexes: offers at 145% of cost.",
+   "category": "fourplex",
+   "multiplierPct": 145
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-4plex-mid",
+   "title": "4-plex exchange buyer",
+   "flavor": "A seller on a tax deadline needs your 4-plex at 115% of cost.",
+   "category": "fourplex",
+   "multiplierPct": 115
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-4plex-cold",
+   "title": "Insurance shock",
+   "flavor": "Premiums doubled regionally; a cash buyer offers 75% of cost for 4-plexes.",
+   "category": "fourplex",
+   "multiplierPct": 75
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-8plex-hot",
+   "title": "Syndicators chase 8-plexes",
+   "flavor": "A syndication needs doors before quarter-end: 150% of cost for 8-plexes.",
+   "category": "eightplex",
+   "multiplierPct": 150
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-8plex-mid",
+   "title": "8-plex offer",
+   "flavor": "A family office offers 120% of cost for 8-plexes.",
+   "category": "eightplex",
+   "multiplierPct": 120
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-8plex-cold",
+   "title": "Rent freeze proposal",
+   "flavor": "A ballot measure spooks landlords; 80% of cost offered for 8-plexes.",
+   "category": "eightplex",
+   "multiplierPct": 80
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-apts-hot",
+   "title": "Institutions buy small buildings",
+   "flavor": "A pension fund pays 140% of cost for small apartment buildings.",
+   "category": "aptSmall",
+   "multiplierPct": 140
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-apts-mid",
+   "title": "Apartment buyer",
+   "flavor": "A regional operator offers 115% of cost for small apartment buildings.",
+   "category": "aptSmall",
+   "multiplierPct": 115
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-aptl-hot",
+   "title": "Complex feeding frenzy",
+   "flavor": "REITs bid against each other: 145% of cost for large apartment complexes.",
+   "category": "aptLarge",
+   "multiplierPct": 145
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-aptl-mid",
+   "title": "Complex offer",
+   "flavor": "A REIT tenders 118% of cost for large apartment complexes.",
+   "category": "aptLarge",
+   "multiplierPct": 118
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-land-road",
+   "title": "The highway is coming",
+   "flavor": "Surveyors confirmed the new interchange. A developer pays 300% of cost for land.",
+   "category": "land",
+   "multiplierPct": 300
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-land-mall",
+   "title": "Big-box site hunt",
+   "flavor": "A retailer quietly assembles parcels at 500% of cost for land.",
+   "category": "land",
+   "multiplierPct": 500
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-fran-hot",
+   "title": "Franchise roll-up",
+   "flavor": "A private-equity group buys franchises at 160% of cost.",
+   "category": "franchise",
+   "multiplierPct": 160
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-fran-mid",
+   "title": "Franchise buyer",
+   "flavor": "An operator-owner offers 110% of cost for franchises.",
+   "category": "franchise",
+   "multiplierPct": 110
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-localbiz",
+   "title": "Main-street consolidation",
+   "flavor": "A local chain absorbs small businesses at 140% of cost.",
+   "category": "localBiz",
+   "multiplierPct": 140
+  },
+  {
+   "kind": "sellOffer",
+   "id": "mk-partner",
+   "title": "Partnership buyout",
+   "flavor": "The general partner buys out limited partners at 150% of cost.",
+   "category": "partnership",
+   "multiplierPct": 150
+  },
+  {
+   "kind": "stockPrice",
+   "id": "mk-grit-40",
+   "title": "GRIT hits an all-time high",
+   "flavor": "The robot maker lands a defense contract. Everyone may sell GRIT at $40.",
+   "symbol": "GRIT",
+   "price": 40
+  },
+  {
+   "kind": "stockPrice",
+   "id": "mk-grit-5",
+   "title": "GRIT recall panic",
+   "flavor": "A gripper-arm recall goes public. GRIT trades at $5 — sell if you must.",
+   "symbol": "GRIT",
+   "price": 5
+  },
+  {
+   "kind": "stockPrice",
+   "id": "mk-snail-30",
+   "title": "SNAIL takeover rumor",
+   "flavor": "A logistics giant is sniffing around. SNAIL quoted at $30.",
+   "symbol": "SNAIL",
+   "price": 30
+  },
+  {
+   "kind": "stockPrice",
+   "id": "mk-myco-40",
+   "title": "MYCO approval day",
+   "flavor": "The flagship treatment clears its final hurdle. MYCO at $40.",
+   "symbol": "MYCO",
+   "price": 40
+  },
+  {
+   "kind": "stockPrice",
+   "id": "mk-zap-30",
+   "title": "ZAP goes national",
+   "flavor": "Two hundred new cities in one press release. ZAP at $30.",
+   "symbol": "ZAP",
+   "price": 30
+  },
+  {
+   "kind": "stockPrice",
+   "id": "mk-nest-30",
+   "title": "NEST at a record",
+   "flavor": "The whole index is up. NEST fund quoted at $30.",
+   "symbol": "NEST",
+   "price": 30
+  },
+  {
+   "kind": "stockSplit",
+   "id": "mk-split-grit",
+   "title": "GRIT splits 2-for-1",
+   "flavor": "The board wants a friendlier ticker price. Your GRIT share count doubles.",
+   "symbol": "GRIT",
+   "direction": "split"
+  },
+  {
+   "kind": "stockSplit",
+   "id": "mk-split-zap",
+   "title": "ZAP splits 2-for-1",
+   "flavor": "Retail investors cheer; your ZAP share count doubles.",
+   "symbol": "ZAP",
+   "direction": "split"
+  },
+  {
+   "kind": "stockSplit",
+   "id": "mk-split-snail",
+   "title": "SNAIL splits 2-for-1",
+   "flavor": "Slow and steady — and now twice as many shares.",
+   "symbol": "SNAIL",
+   "direction": "split"
+  },
+  {
+   "kind": "stockSplit",
+   "id": "mk-reverse-myco",
+   "title": "MYCO reverse split",
+   "flavor": "Listing rules force a 1-for-2 consolidation. Your MYCO share count halves.",
+   "symbol": "MYCO",
+   "direction": "reverse"
+  },
+  {
+   "kind": "windfall",
+   "id": "mk-windfall-refund",
+   "title": "Surprise tax refund",
+   "flavor": "The revenue office recalculated. Every player collects $500.",
+   "flatAmount": 500
+  },
+  {
+   "kind": "windfall",
+   "id": "mk-windfall-rents",
+   "title": "Rents reset upward",
+   "flavor": "Citywide leases renew higher: collect $250 for each rental property you own.",
+   "amountPerRealEstate": 250
+  }
+ ],
+ "OFFSHORE_MARKET_CARDS": [
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-wave",
+   "title": "Montevideo investment wave",
+   "flavor": "Regional funds discover the Rambla: 170% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 170
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-tram",
+   "title": "New transit corridor opens",
+   "flavor": "Stations lift whole neighbourhoods: 185% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 185
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-rambla",
+   "title": "Rambla promenade upgrade",
+   "flavor": "The capital’s seafront packs out; operators pay 150% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 150
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-tech",
+   "title": "Tech campus relocates",
+   "flavor": "A software park signs long leases; buyers pay 140% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 140
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-visa",
+   "title": "Residency program boom",
+   "flavor": "Remote workers bid for long stays: 125% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 125
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-fair",
+   "title": "Local developer consolidates",
+   "flavor": "A Montevideo builder offers a clean 105% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 105
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-peso",
+   "title": "Peso slides",
+   "flavor": "Local owners cash out to dollar buyers at 90% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 90
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-mvd-glut",
+   "title": "Rental glut winter",
+   "flavor": "Empty towers after the boom; a fund bids 65% of cost for Montevideo apartments.",
+   "category": "aptMVD",
+   "multiplierPct": 65
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-pde-season",
+   "title": "Record summer season",
+   "flavor": "Every short-let is booked: 175% of cost for Punta del Este apartments.",
+   "category": "aptPDE",
+   "multiplierPct": 175
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-pde-brazil",
+   "title": "Brazilian tourist wave",
+   "flavor": "Charters fill the peninsula; foreign buyers pay 160% of cost for Punta del Este apartments.",
+   "category": "aptPDE",
+   "multiplierPct": 160
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-pde-events",
+   "title": "Film festival and regatta week",
+   "flavor": "Event demand spikes: 150% of cost for Punta del Este apartments.",
+   "category": "aptPDE",
+   "multiplierPct": 150
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-pde-reit",
+   "title": "Beach REIT tender",
+   "flavor": "A listed trust tenders 110% of cost for Punta del Este apartments.",
+   "category": "aptPDE",
+   "multiplierPct": 110
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-pde-off",
+   "title": "Off-season collapse",
+   "flavor": "July silence on Gorlero; owners accept 75% of cost for Punta del Este apartments.",
+   "category": "aptPDE",
+   "multiplierPct": 75
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-pde-build",
+   "title": "Tower construction glut",
+   "flavor": "Cranes outnumber tenants; a vulture fund bids 60% of cost for Punta del Este apartments.",
+   "category": "aptPDE",
+   "multiplierPct": 60
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-vil-celeb",
+   "title": "Celebrity beach-house hunt",
+   "flavor": "Names you know want keys by Christmas: 200% of cost for Punta del Este villas.",
+   "category": "villaPDE",
+   "multiplierPct": 200
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-vil-luxury",
+   "title": "Luxury REIT scrapes the coast",
+   "flavor": "Institutional money pays 160% of cost for Punta del Este villas.",
+   "category": "villaPDE",
+   "multiplierPct": 160
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-vil-fair",
+   "title": "Neighbour compounds buy",
+   "flavor": "The villa next door rounds out the block at 120% of cost for Punta del Este villas.",
+   "category": "villaPDE",
+   "multiplierPct": 120
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-vil-storm",
+   "title": "Atlantic storm season",
+   "flavor": "Dune damage and cancelled summers; a fund bids 70% of cost for Punta del Este villas.",
+   "category": "villaPDE",
+   "multiplierPct": 70
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-hwy",
+   "title": "Highway corridor confirmed",
+   "flavor": "The route is drawn on the official map: 400% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 400
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-port",
+   "title": "Grain port expansion",
+   "flavor": "Exporters assemble parcels at 350% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 350
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-soy",
+   "title": "Soy price spike",
+   "flavor": "Brokers lease anything green and buy what they lease: 250% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 250
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-forest",
+   "title": "Pulp mill timber rush",
+   "flavor": "Eucalyptus contracts reprice the north: 220% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 220
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-beach",
+   "title": "Coastal resort site hunt",
+   "flavor": "Rocha money assembles dunes at 300% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 300
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-fair",
+   "title": "Neighbouring estancia offer",
+   "flavor": "The rancher next door rounds out his map at 120% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 120
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-drought",
+   "title": "Interior drought",
+   "flavor": "Dust where grass should be; a fund bids 70% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 70
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-land-flood",
+   "title": "River flood year",
+   "flavor": "Bottomland under water; distressed buyers pay 65% of cost for Uruguay land.",
+   "category": "landUY",
+   "multiplierPct": 65
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-dair-milk",
+   "title": "Milk-price rally",
+   "flavor": "Co-ops outbid each other for tankers — and for the farms under them: 220% of cost for Uruguay dairy and cattle.",
+   "category": "dairyUY",
+   "multiplierPct": 220
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-dair-export",
+   "title": "Export quota opens",
+   "flavor": "China and EU offtake signed: 200% of cost for Uruguay dairy and cattle.",
+   "category": "dairyUY",
+   "multiplierPct": 200
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-dair-herd",
+   "title": "Herd expansion frenzy",
+   "flavor": "Ranchers need productive cows before spring: 180% of cost for Uruguay dairy and cattle.",
+   "category": "dairyUY",
+   "multiplierPct": 180
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-dair-coop",
+   "title": "Co-op consolidation",
+   "flavor": "Conaprole-scale buyers tender 140% of cost for Uruguay dairy and cattle.",
+   "category": "dairyUY",
+   "multiplierPct": 140
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-dair-fair",
+   "title": "Neighbour dairy offer",
+   "flavor": "The farm next door wants your herd at 115% of cost for Uruguay dairy and cattle.",
+   "category": "dairyUY",
+   "multiplierPct": 115
+  },
+  {
+   "kind": "sellOffer",
+   "id": "om-dair-scare",
+   "title": "Herd-health scare",
+   "flavor": "Markets panic on a false alarm; a fund bids 60% of cost for Uruguay dairy and cattle.",
+   "category": "dairyUY",
+   "multiplierPct": 60
+  },
+  {
+   "kind": "stockPrice",
+   "id": "om-shib-30",
+   "title": "SHIB all-time high",
+   "flavor": "The dog leads the whole market. Everyone may sell SHIB at $30.",
+   "symbol": "SHIB",
+   "price": 30
+  },
+  {
+   "kind": "stockPrice",
+   "id": "om-shib-2",
+   "title": "SHIB flash crash",
+   "flavor": "A whale market-sells into thin books. SHIB trades at $2 — sell if you must.",
+   "symbol": "SHIB",
+   "price": 2
+  },
+  {
+   "kind": "stockPrice",
+   "id": "om-pepe-25",
+   "title": "PEPE tops the charts",
+   "flavor": "Rarest bull market. Everyone may sell PEPE at $25.",
+   "symbol": "PEPE",
+   "price": 25
+  },
+  {
+   "kind": "stockPrice",
+   "id": "om-doge-40",
+   "title": "DOGE hits a record",
+   "flavor": "The original meme prints a new high. DOGE quoted at $40.",
+   "symbol": "DOGE",
+   "price": 40
+  },
+  {
+   "kind": "stockPrice",
+   "id": "om-bonk-20",
+   "title": "BONK breakout",
+   "flavor": "Listings everywhere at once. BONK quoted at $20.",
+   "symbol": "BONK",
+   "price": 20
+  },
+  {
+   "kind": "stockPrice",
+   "id": "om-wif-35",
+   "title": "WIF all-time high",
+   "flavor": "The hat is priced in. WIF quoted at $35.",
+   "symbol": "WIF",
+   "price": 35
+  },
+  {
+   "kind": "stockSplit",
+   "id": "om-air-shib",
+   "title": "SHIB holder airdrop",
+   "flavor": "A loyalty airdrop lands: your SHIB bag doubles.",
+   "symbol": "SHIB",
+   "direction": "split"
+  },
+  {
+   "kind": "stockSplit",
+   "id": "om-air-bonk",
+   "title": "BONK community airdrop",
+   "flavor": "The community round pays holders: your BONK doubles.",
+   "symbol": "BONK",
+   "direction": "split"
+  },
+  {
+   "kind": "stockSplit",
+   "id": "om-air-doge",
+   "title": "DOGE tip-bot refund",
+   "flavor": "An ancient tip bot returns everyone’s coins: your DOGE doubles.",
+   "symbol": "DOGE",
+   "direction": "split"
+  },
+  {
+   "kind": "stockSplit",
+   "id": "om-mig-pepe",
+   "title": "PEPE v2 migration",
+   "flavor": "The contract migrates 1-for-2 and burns the rest. Your PEPE halves.",
+   "symbol": "PEPE",
+   "direction": "reverse"
+  },
+  {
+   "kind": "windfall",
+   "id": "om-wind-wallet",
+   "title": "Forgotten wallet recovered",
+   "flavor": "An old seed phrase finally works. Every player collects $500.",
+   "flatAmount": 500
+  },
+  {
+   "kind": "windfall",
+   "id": "om-wind-rents",
+   "title": "Overseas rents audited upward",
+   "flavor": "The property managers report higher rents: collect $250 for each property you own.",
+   "amountPerRealEstate": 250
+  }
+ ],
+ "DOODADS": [
+  {
+   "id": "dd-01",
+   "title": "Artisan coffee habit",
+   "flavor": "A month of single-origin pour-overs.",
+   "amount": 60,
+   "financeable": false
+  },
+  {
+   "id": "dd-02",
+   "title": "Streaming stack renewal",
+   "flavor": "Five services, zero time to watch them.",
+   "amount": 80,
+   "financeable": false
+  },
+  {
+   "id": "dd-03",
+   "title": "Parking fine",
+   "flavor": "The sign was very small.",
+   "amount": 50,
+   "financeable": false
+  },
+  {
+   "id": "dd-04",
+   "title": "Birthday dinner out",
+   "flavor": "You grabbed the check before anyone could argue.",
+   "amount": 120,
+   "financeable": false
+  },
+  {
+   "id": "dd-05",
+   "title": "Limited-edition sneakers",
+   "flavor": "They were limited. You were quick.",
+   "amount": 180,
+   "financeable": false
+  },
+  {
+   "id": "dd-06",
+   "title": "Concert weekend",
+   "flavor": "Two tickets, one overpriced hoodie.",
+   "amount": 220,
+   "financeable": false
+  },
+  {
+   "id": "dd-07",
+   "title": "New winter tires",
+   "flavor": "Safety first, savings second.",
+   "amount": 350,
+   "financeable": false
+  },
+  {
+   "id": "dd-08",
+   "title": "Dental filling",
+   "flavor": "The candy jar sends its regards.",
+   "amount": 240,
+   "financeable": false
+  },
+  {
+   "id": "dd-09",
+   "title": "Fancy gym onboarding",
+   "flavor": "Initiation fee plus a smoothie you didn’t need.",
+   "amount": 150,
+   "financeable": false
+  },
+  {
+   "id": "dd-10",
+   "title": "Kid’s birthday bash",
+   "flavor": "A bouncy castle has a surprising day rate.",
+   "amount": 250,
+   "financeable": false
+  },
+  {
+   "id": "dd-11",
+   "title": "Barista-grade espresso machine",
+   "flavor": "It has more pressure gauges than your car.",
+   "amount": 400,
+   "financeable": true
+  },
+  {
+   "id": "dd-12",
+   "title": "Weekend city break",
+   "flavor": "Flash sale flights, full-price everything else.",
+   "amount": 380,
+   "financeable": false
+  },
+  {
+   "id": "dd-13",
+   "title": "Phone screen replacement",
+   "flavor": "It only fell once.",
+   "amount": 190,
+   "financeable": false
+  },
+  {
+   "id": "dd-14",
+   "title": "Designer sunglasses",
+   "flavor": "Lost within a month, statistically.",
+   "amount": 160,
+   "financeable": false
+  },
+  {
+   "id": "dd-15",
+   "title": "Smart-home gadget spree",
+   "flavor": "The lights now require a firmware update.",
+   "amount": 300,
+   "financeable": false
+  },
+  {
+   "id": "dd-16",
+   "title": "Pet emergency visit",
+   "flavor": "The sock has been recovered.",
+   "amount": 320,
+   "financeable": false
+  },
+  {
+   "id": "dd-17",
+   "title": "New gaming console",
+   "flavor": "For the kids. Obviously.",
+   "amount": 500,
+   "financeable": true
+  },
+  {
+   "id": "dd-18",
+   "title": "Car detail & tune-up",
+   "flavor": "It purrs now. Your wallet whimpers.",
+   "amount": 280,
+   "financeable": false
+  },
+  {
+   "id": "dd-19",
+   "title": "Golf clubs upgrade",
+   "flavor": "The slice, unfortunately, transfers.",
+   "amount": 600,
+   "financeable": true
+  },
+  {
+   "id": "dd-20",
+   "title": "Anniversary jewelry",
+   "flavor": "Worth every penny. All 45,000 of them.",
+   "amount": 450,
+   "financeable": true
+  },
+  {
+   "id": "dd-21",
+   "title": "Boutique haircut & spa day",
+   "flavor": "Self-care, premium tier.",
+   "amount": 140,
+   "financeable": false
+  },
+  {
+   "id": "dd-22",
+   "title": "Little-league season fees",
+   "flavor": "Uniform, travel, and a raffle you lost.",
+   "amount": 210,
+   "financeable": false
+  },
+  {
+   "id": "dd-23",
+   "title": "New office chair",
+   "flavor": "Your back unionized.",
+   "amount": 330,
+   "financeable": false
+  },
+  {
+   "id": "dd-24",
+   "title": "Craft-kit subscription binge",
+   "flavor": "You are now the owner of a kiln.",
+   "amount": 260,
+   "financeable": false
+  },
+  {
+   "id": "dd-25",
+   "title": "Drone with camera",
+   "flavor": "Neighborhood cinematography awaits.",
+   "amount": 550,
+   "financeable": true
+  },
+  {
+   "id": "dd-26",
+   "title": "Holiday gift blitz",
+   "flavor": "Everyone was extra nice this year.",
+   "amount": 480,
+   "financeable": true
+  },
+  {
+   "id": "dd-27",
+   "title": "Speeding ticket + course",
+   "flavor": "The defensive-driving video was 4 hours long.",
+   "amount": 230,
+   "financeable": false
+  },
+  {
+   "id": "dd-28",
+   "title": "Mystery plumbing leak",
+   "flavor": "The drip was louder at 3 a.m.",
+   "amount": 310,
+   "financeable": false
+  },
+  {
+   "id": "dd-29",
+   "title": "Tailored suit",
+   "flavor": "For interviews, weddings, and feeling fancy.",
+   "amount": 520,
+   "financeable": true
+  },
+  {
+   "id": "dd-30",
+   "title": "E-bike impulse buy",
+   "flavor": "It was raining and the bus was late.",
+   "amount": 800,
+   "financeable": true
+  },
+  {
+   "id": "dd-31",
+   "title": "Fantasy-league buy-in",
+   "flavor": "This is your year. Again.",
+   "amount": 100,
+   "financeable": false
+  },
+  {
+   "id": "dd-32",
+   "title": "Premium headphones",
+   "flavor": "Noise cancelling, budget cancelling.",
+   "amount": 350,
+   "financeable": false
+  },
+  {
+   "id": "dd-33",
+   "title": "Weekend fishing charter",
+   "flavor": "The big one got away; the invoice did not.",
+   "amount": 420,
+   "financeable": true
+  },
+  {
+   "id": "dd-34",
+   "title": "House-plant collection",
+   "flavor": "The rare one needs its own humidifier.",
+   "amount": 130,
+   "financeable": false
+  },
+  {
+   "id": "dd-35",
+   "title": "Karaoke night, your treat",
+   "flavor": "You booked the private room. Twice.",
+   "amount": 170,
+   "financeable": false
+  },
+  {
+   "id": "dd-36",
+   "title": "New mattress",
+   "flavor": "Sleep is an investment, right?",
+   "amount": 700,
+   "financeable": true
+  },
+  {
+   "id": "dd-37",
+   "title": "Ski-day splurge",
+   "flavor": "Lift ticket, lesson, and lodge nachos.",
+   "amount": 290,
+   "financeable": false
+  },
+  {
+   "id": "dd-38",
+   "title": "Charity gala ticket",
+   "flavor": "Black tie, open heart, closed wallet.",
+   "amount": 200,
+   "financeable": false
+  },
+  {
+   "id": "dd-39",
+   "title": "Air conditioner repair",
+   "flavor": "It broke during the heat wave, naturally.",
+   "amount": 370,
+   "financeable": false
+  },
+  {
+   "id": "dd-40",
+   "title": "Collector board game haul",
+   "flavor": "The shelf of shame grows by three boxes.",
+   "amount": 150,
+   "financeable": false
+  }
+ ]
+}
