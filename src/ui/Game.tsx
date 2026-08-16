@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import type { Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { currentSeat, diceCountFor } from '../engine/table'
-import { fastTrackIncome, isOutOfRatRace, monthlyCashFlow, netWorth, passiveIncome } from '../engine/ledger'
+import {
+  RULES,
+  fastTrackIncome,
+  isOutOfRatRace,
+  monthlyCashFlow,
+  netWorth,
+  passiveIncome,
+} from '../engine/ledger'
 import { Board } from './Board'
 import { PlayerPanel, money, signed, tone } from './PlayerPanel'
 import { CardModal } from './CardModal'
@@ -37,7 +44,10 @@ function Scoreboard({
             <span className="font-semibold">{s.name}</span>
             <span className="tabnum text-[var(--muted)]">{money(s.ledger.cash)}</span>
             <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>
-            {s.track === 'fast' && <span className="text-[10px] text-emerald-400">свобода</span>}
+            {s.won && <span className="text-[10px]">🏆</span>}
+            {!s.won && s.track === 'fast' && (
+              <span className="text-[10px] text-emerald-400">свобода</span>
+            )}
             {s.skipTurns > 0 && <span className="text-[10px] text-amber-400">−{s.skipTurns}</span>}
           </button>
         )
@@ -78,6 +88,11 @@ function WinScreen({ table, onNew, onUndo }: { table: Table; onNew: () => void; 
         <h2 className="mt-3 text-2xl font-black">
           {winner ? `${winner.name} побеждает!` : 'Все обанкротились'}
         </h2>
+        {table.seats.filter((s) => s.won).length > 1 && (
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            Цели достигли: {table.seats.filter((s) => s.won).map((s) => s.name).join(', ')}
+          </p>
+        )}
         {winner?.ledger.winReason === 'dream' && winner.ledger.fastTrack?.dream && (
           <p className="mt-1 text-sm text-[var(--muted)]">
             Купил мечту «{winner.ledger.fastTrack.dream.name}» за{' '}
@@ -97,6 +112,7 @@ function WinScreen({ table, onNew, onUndo }: { table: Table; onNew: () => void; 
                 <span className="text-[var(--muted)]">{i + 1}.</span>
                 <span className="size-2.5 rounded-full" style={{ background: s.color }} />
                 {s.name}
+                {s.won && <span className="text-xs text-emerald-400">🏆</span>}
                 {s.outOfGame && <span className="text-xs text-rose-400">(банкрот)</span>}
               </span>
               <span className="tabnum text-[var(--muted)]">
@@ -153,7 +169,7 @@ export function Game({
         <h1 className="text-lg font-black tracking-tight">Freedom Run</h1>
         <div className="ml-auto flex items-center gap-1.5">
           <button onClick={() => setBankOpen(true)} className="btn-ghost text-xs" disabled={seat.isBot}>
-            🏦 Банк
+            {RULES.loansEnabled ? '🏦 Банк' : '💼 Финансы'}
           </button>
           <button onClick={undo} className="btn-ghost text-xs" title="Откатить последнее событие">
             ↩️ Отменить
@@ -163,6 +179,21 @@ export function Game({
           </button>
         </div>
       </header>
+
+      {table.winnerId && table.phase !== 'finished' && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
+          <span>
+            🏆 <b>{table.seats.find((s) => s.id === table.winnerId)?.name}</b> уже победил — остальные
+            доигрывают, как в живой игре.
+          </span>
+          <button
+            onClick={() => dispatch({ type: 'FINISH_GAME' })}
+            className="btn-ghost ml-auto text-xs"
+          >
+            Завершить партию
+          </button>
+        </div>
+      )}
 
       <div className="mb-3">
         <Scoreboard table={table} viewId={viewId} onView={setViewId} />

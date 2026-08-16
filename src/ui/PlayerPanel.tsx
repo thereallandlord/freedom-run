@@ -9,15 +9,24 @@ import {
   petExpenses,
   totalExpenses,
   totalIncome,
-  FAST_TRACK_WIN_TARGET,
+  fastTrackTarget,
+  RULES,
 } from '../engine/ledger'
 import { professionName } from '../engine/data'
 
 export function money(n: number) {
+  if (RULES.currency === 'RUB') {
+    const s = Math.abs(Math.round(n)).toLocaleString('ru-RU')
+    return n < 0 ? `−${s} ₽` : `${s} ₽`
+  }
   const s = Math.abs(Math.round(n)).toLocaleString('en-US')
   return n < 0 ? `−$${s}` : `$${s}`
 }
 export function signed(n: number) {
+  if (RULES.currency === 'RUB') {
+    const s = Math.abs(Math.round(n)).toLocaleString('ru-RU')
+    return n < 0 ? `−${s} ₽` : `+${s} ₽`
+  }
   const s = Math.abs(Math.round(n)).toLocaleString('en-US')
   return n < 0 ? `−$${s}` : `+$${s}`
 }
@@ -94,12 +103,12 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
       {onFast ? (
         <Section title="Цель Полосы свободы">
           <Row label="Новый доход собран" value={money(fastTrackProgress(l))} />
-          <Row label="Нужно для победы" value={money(FAST_TRACK_WIN_TARGET)} dim />
+          <Row label="Нужно для победы" value={money(fastTrackTarget())} dim />
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all"
               style={{
-                width: `${Math.min(100, (fastTrackProgress(l) / FAST_TRACK_WIN_TARGET) * 100)}%`,
+                width: `${Math.min(100, (fastTrackProgress(l) / fastTrackTarget()) * 100)}%`,
               }}
             />
           </div>
@@ -119,10 +128,20 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
               <Row key={d.symbol} label={`Дивиденды ${d.symbol}`} value={money(d.amount)} dim />
             ))}
             {l.realEstate.map((a) => (
-              <Row key={a.id} label={a.name} value={signed(a.cashFlow)} dim />
+              <Row
+                key={a.id}
+                label={a.investorShare ? `${a.name} (50% инвестору)` : a.name}
+                value={signed(Math.round(a.cashFlow * (1 - (a.investorShare ?? 0))))}
+                dim
+              />
             ))}
             {l.businesses.map((a) => (
-              <Row key={a.id} label={a.name} value={signed(a.cashFlow)} dim />
+              <Row
+                key={a.id}
+                label={a.investorShare ? `${a.name} (50% инвестору)` : a.name}
+                value={signed(Math.round(a.cashFlow * (1 - (a.investorShare ?? 0))))}
+                dim
+              />
             ))}
             <div className="mt-1 border-t border-[var(--line)] pt-1">
               <Row label="Пассивный доход" value={money(passive)} />
@@ -133,16 +152,16 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
           <Section title="Расходы">
             <Row label="Налоги" value={money(l.expenses.taxes)} dim />
             {l.expenses.homeMortgagePayment > 0 && (
-              <Row label="Ипотека" value={money(l.expenses.homeMortgagePayment)} dim />
+              <Row label={RULES.loansEnabled ? "Ипотека" : "Рассрочка за жильё"} value={money(l.expenses.homeMortgagePayment)} dim />
             )}
             {l.expenses.schoolLoanPayment > 0 && (
-              <Row label="Учебный кредит" value={money(l.expenses.schoolLoanPayment)} dim />
+              <Row label={RULES.loansEnabled ? "Учебный кредит" : "Оплата обучения"} value={money(l.expenses.schoolLoanPayment)} dim />
             )}
             {l.expenses.carPayment > 0 && (
-              <Row label="Автокредит" value={money(l.expenses.carPayment)} dim />
+              <Row label={RULES.loansEnabled ? "Автокредит" : "Рассрочка за машину"} value={money(l.expenses.carPayment)} dim />
             )}
             {l.expenses.creditCardPayment > 0 && (
-              <Row label="Кредитки" value={money(l.expenses.creditCardPayment)} dim />
+              <Row label={RULES.loansEnabled ? "Кредитки" : "Долг за технику"} value={money(l.expenses.creditCardPayment)} dim />
             )}
             {l.expenses.retailPayment > 0 && (
               <Row label="Рассрочка" value={money(l.expenses.retailPayment)} dim />
@@ -166,9 +185,24 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
                 : 'panel-2 text-[var(--muted)]'
             }`}
           >
-            {isOutOfRatRace(l)
-              ? '🎉 Пассивный доход перерос расходы — можно уходить из Круга!'
-              : `До выхода из Круга: ещё ${money(expenses - passive + 1)} пассивного дохода`}
+            {isOutOfRatRace(l) ? (
+              '🎉 Пассивный доход перерос расходы — можно уходить из Круга!'
+            ) : (
+              <>
+                <div className="mb-1">
+                  <div>Цель: пассивный доход выше расходов</div>
+                  <div className="tabnum mt-0.5 text-[var(--ink)]">
+                    {money(passive)} <span className="text-[var(--muted)]">из</span> {money(expenses)}
+                  </div>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all"
+                    style={{ width: `${Math.min(100, (passive / Math.max(1, expenses)) * 100)}%` }}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

@@ -1,7 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Dropdown } from './Dropdown'
-import { PROFESSIONS, TOKEN_COLORS, dreamSpaces, professionName } from '../engine/data'
-import { professionMonthlyCashFlow } from '../engine/ledger'
+import {
+  TOKEN_COLORS,
+  dreamSpaces,
+  professionName,
+  professionsFor,
+  setActiveTheme,
+  setFastBoardTheme,
+} from '../engine/data'
+import { RULES, professionMonthlyCashFlow, setRules } from '../engine/ledger'
 import { randomSeed } from '../engine/rng'
 import type { SeatSetup, TableSetup } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
@@ -17,31 +24,58 @@ const BOT_LABEL: Record<BotDifficulty, string> = {
   unreal: 'Нереальный',
 }
 
-function money(n: number) {
-  return '$' + n.toLocaleString('en-US')
+function money(n: number, rub: boolean) {
+  return rub ? n.toLocaleString('ru-RU') + ' ₽' : '$' + n.toLocaleString('en-US')
 }
 
 export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
-  const dreams = useMemo(() => dreamSpaces(), [])
-  const [theme, setTheme] = useState<DeckTheme>('offshore')
+  const [theme, setTheme] = useState<DeckTheme>('ru')
+
+  // Поле Полосы и набор профессий зависят от темы — переключаем до чтения списков.
+  const { dreams, professions, isRub } = useMemo(() => {
+    setActiveTheme(theme)
+    setFastBoardTheme(theme)
+    setRules(
+      theme === 'ru'
+        ? { currency: 'RUB', fastTrackMultiplier: 50, fastTrackTarget: 1_000_000, loansEnabled: false }
+        : { currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true },
+    )
+    return { dreams: dreamSpaces(), professions: professionsFor(theme), isRub: RULES.currency === 'RUB' }
+  }, [theme])
+
   const [seats, setSeats] = useState<SeatSetup[]>([
-    { name: 'Игрок 1', professionId: 'engineer', dreamSpace: dreams[0].index, isBot: false, botDifficulty: 'medium' },
-    { name: 'Игрок 2', professionId: 'teacher', dreamSpace: dreams[1].index, isBot: true, botDifficulty: 'medium' },
+    { name: 'Игрок 1', professionId: 'engineer', dreamSpace: 2, isBot: false, botDifficulty: 'medium' },
+    { name: 'Игрок 2', professionId: 'teacher', dreamSpace: 7, isBot: true, botDifficulty: 'medium' },
   ])
+
+  // Смена темы меняет и профессии, и мечты — подставляем валидные значения.
+  useEffect(() => {
+    setSeats((prev) =>
+      prev.map((s, i) => ({
+        ...s,
+        professionId: professions.some((p) => p.id === s.professionId)
+          ? s.professionId
+          : professions[i % professions.length].id,
+        dreamSpace: dreams.some((d) => d.index === s.dreamSpace)
+          ? s.dreamSpace
+          : dreams[i % dreams.length].index,
+      })),
+    )
+  }, [professions, dreams])
 
   const professionOptions = useMemo(
     () =>
-      PROFESSIONS.map((p) => ({
+      professions.map((p) => ({
         value: p.id,
         label: professionName(p, 'ru'),
-        hint: money(professionMonthlyCashFlow(p)) + '/мес',
+        hint: money(professionMonthlyCashFlow(p), isRub) + '/мес',
       })),
-    [],
+    [professions, isRub],
   )
 
   const dreamOptions = useMemo(
-    () => dreams.map((d) => ({ value: d.index, label: d.name, hint: money(d.price) })),
-    [dreams],
+    () => dreams.map((d) => ({ value: d.index, label: d.name, hint: money(d.price, isRub) })),
+    [dreams, isRub],
   )
 
   const update = (i: number, patch: Partial<SeatSetup>) =>
@@ -52,7 +86,7 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
       ...s,
       {
         name: `Игрок ${s.length + 1}`,
-        professionId: PROFESSIONS[s.length % PROFESSIONS.length].id,
+        professionId: professions[s.length % professions.length].id,
         dreamSpace: dreams[s.length % dreams.length].index,
         isBot: true,
         botDifficulty: 'medium',
@@ -60,7 +94,7 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
     ])
 
   const randomize = (i: number) => {
-    const p = PROFESSIONS[Math.floor(Math.random() * PROFESSIONS.length)]
+    const p = professions[Math.floor(Math.random() * professions.length)]
     update(i, { professionId: p.id })
   }
 
@@ -77,10 +111,11 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
           Колода сделок
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid gap-2 sm:grid-cols-3">
           {(
             [
-              ['offshore', 'Активы в Уругвае', 'квартиры, земля, фермы, мемкоины'],
+              ['ru', '🇷🇺 Россия · халяль', 'рубли, рассрочка вместо кредитов, партнёрский бизнес'],
+              ['offshore', 'Уругвай', 'квартиры, земля, фермы, мемкоины'],
               ['classic', 'Классическая', 'кондо, франшизы, акции'],
             ] as const
           ).map(([id, title, hint]) => (

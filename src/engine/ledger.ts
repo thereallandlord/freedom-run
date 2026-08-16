@@ -1,7 +1,29 @@
 import type { Ledger, Profession } from './types'
 
-/** Сколько нового дохода в месяц нужно собрать на Полосе свободы для победы. */
-export const FAST_TRACK_WIN_TARGET = 150_000
+/**
+ * Правила режима. РУ-режим: рубли, без процентных кредитов (халяль),
+ * реалистичный выкуп при выходе из Круга.
+ */
+export interface Rules {
+  currency: 'USD' | 'RUB'
+  /** Выкуп при входе на Полосу свободы = пассивный доход × множитель. */
+  fastTrackMultiplier: number
+  /** Сколько нового дохода в месяц нужно собрать на Полосе для победы. */
+  fastTrackTarget: number
+  /** Банковские кредиты под процент доступны (false = халяль-режим). */
+  loansEnabled: boolean
+}
+
+export const RULES: Rules = {
+  currency: 'USD',
+  fastTrackMultiplier: 100,
+  fastTrackTarget: 150_000,
+  loansEnabled: true,
+}
+
+export function setRules(patch: Partial<Rules>) {
+  Object.assign(RULES, patch)
+}
 
 /** Потолок питомцев в семье. */
 export const MAX_PETS = 3
@@ -19,11 +41,16 @@ export function dividendLines(l: Ledger): { symbol: string; amount: number }[] {
   return [...map.entries()].map(([symbol, amount]) => ({ symbol, amount }))
 }
 
+/** Доля потока, достающаяся игроку (инвестор забирает свою часть). */
+export function ownShare(a: { cashFlow: number; investorShare?: number }): number {
+  return Math.round(a.cashFlow * (1 - (a.investorShare ?? 0)))
+}
+
 /** Аренда + дивиденды + поток бизнесов. Именно это должно перерасти расходы. */
 export function passiveIncome(l: Ledger): number {
   const stocks = l.stocks.reduce((s, lot) => s + lot.shares * lot.dividendPerShareMonthly, 0)
-  const realEstate = l.realEstate.reduce((s, a) => s + a.cashFlow, 0)
-  const businesses = l.businesses.reduce((s, a) => s + a.cashFlow, 0)
+  const realEstate = l.realEstate.reduce((s, a) => s + ownShare(a), 0)
+  const businesses = l.businesses.reduce((s, a) => s + ownShare(a), 0)
   return stocks + realEstate + businesses
 }
 
@@ -77,6 +104,10 @@ export function isOutOfRatRace(l: Ledger): boolean {
 /** Новый доход, собранный на Полосе свободы. */
 export function fastTrackProgress(l: Ledger): number {
   return l.fastTrack ? l.fastTrack.businesses.reduce((s, b) => s + b.cashFlow, 0) : 0
+}
+
+export function fastTrackTarget(): number {
+  return RULES.fastTrackTarget
 }
 
 export function fastTrackIncome(l: Ledger): number {

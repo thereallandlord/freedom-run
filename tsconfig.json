@@ -14,5 +14,5 @@
     "noUnusedLocals": false
   },
   "include": ["src"],
-  "exclude": ["src/engine/selftest.ts", "src/engine/dumpgame.ts"]
+  "exclude": ["src/engine/selftest.ts", "src/engine/dumpgame.ts", "src/engine/mechtest.ts"]
 }

@@ -59,6 +59,7 @@ export interface RealEstateAsset {
   mortgage: number
   cashFlow: number
   category: string
+  investorShare?: number
 }
 
 export interface BusinessAsset {
@@ -69,6 +70,11 @@ export interface BusinessAsset {
   liability: number
   cashFlow: number
   category: string
+  /** Доля инвестора в потоке и выручке (0–1). Хозяин получает (1 − share). */
+  investorShare?: number
+  /** Партнёрский бизнес: прирост потока на каждый день зарплаты, до потолка. */
+  growthPerPayday?: number
+  growthCap?: number
 }
 
 export interface FtBusiness {
@@ -141,6 +147,9 @@ export interface BusinessCard {
   downPayment: number
   liability: number
   cashFlow: number
+  /** Партнёрский бизнес: поток растёт со временем. */
+  growthPerPayday?: number
+  growthCap?: number
 }
 
 export type DealCard = StockCard | RealEstateCard | BusinessCard
@@ -179,9 +188,19 @@ export interface WindfallCard {
   flavor: string
   flatAmount?: number
   amountPerRealEstate?: number
+  /** Выплата только владельцам партнёрского бизнеса (автопромоушен и т.п.). */
+  amountPerPartnership?: number
 }
 
-export type MarketCard = SellOfferCard | StockPriceCard | StockSplitCard | WindfallCard
+export interface PayRaiseCard {
+  kind: 'payRaise'
+  id: string
+  title: string
+  flavor: string
+  amount: number
+}
+
+export type MarketCard = SellOfferCard | StockPriceCard | StockSplitCard | WindfallCard | PayRaiseCard
 
 export interface DoodadCard {
   id: string
@@ -230,6 +249,8 @@ export interface Seat {
   dreamSpace: number
   skipTurns: number
   outOfGame: boolean
+  /** Уже победил — выходит из очереди ходов, остальные доигрывают. */
+  won: boolean
   isBot: boolean
   botDifficulty: BotDifficulty
   /** Пожертвование на Полосе свободы: даёт 3 кубика до конца партии. */
@@ -263,7 +284,7 @@ export interface Table {
   seed: number
   /** Счётчик обращений к ГПСЧ — состояние генератора живёт в самом столе. */
   rngCursor: number
-  deckTheme: 'classic' | 'offshore'
+  deckTheme: 'classic' | 'offshore' | 'ru'
   seats: Seat[]
   turnIndex: number
   phase: TablePhase

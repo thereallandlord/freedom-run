@@ -2,8 +2,8 @@ import type { Ledger } from './types'
 import { DEBT_TO_PAYMENT } from './types'
 import type { LedgerEvent } from './events'
 import {
-  FAST_TRACK_WIN_TARGET,
   MAX_PETS,
+  RULES,
   fastTrackProgress,
   monthlyCashFlow,
   passiveIncome,
@@ -37,8 +37,19 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
   const l = clone(prev)
 
   switch (e.type) {
-    case 'PAYCHECK':
+    case 'PAYCHECK': {
+      // Партнёрский бизнес растёт: структура приводит людей между зарплатами.
+      for (const b of l.businesses) {
+        if (b.growthPerPayday && b.cashFlow < (b.growthCap ?? Infinity)) {
+          b.cashFlow = Math.min(b.growthCap ?? Infinity, b.cashFlow + b.growthPerPayday)
+        }
+      }
       l.cash += monthlyCashFlow(l)
+      return l
+    }
+
+    case 'SALARY_RAISE':
+      l.salary += e.amount
       return l
 
     case 'BUY_STOCK':
@@ -73,7 +84,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     }
 
     case 'BUY_REAL_ESTATE':
-      l.cash -= e.downPayment
+      // С инвестором первый взнос платит он, за это забирает долю потока.
+      l.cash -= e.investorShare ? 0 : e.downPayment
       l.realEstate.push({
         id: e.id,
         name: e.name,
@@ -82,19 +94,21 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         mortgage: e.mortgage,
         cashFlow: e.cashFlow,
         category: e.category,
+        investorShare: e.investorShare,
       })
       return l
 
     case 'SELL_REAL_ESTATE': {
       const a = l.realEstate.find((x) => x.id === e.assetId)
       if (!a) return prev
-      l.cash += e.salePrice - a.mortgage
+      const net = e.salePrice - a.mortgage
+      l.cash += a.investorShare ? Math.round(net * (1 - a.investorShare)) : net
       l.realEstate = l.realEstate.filter((x) => x.id !== e.assetId)
       return l
     }
 
     case 'BUY_BUSINESS':
-      l.cash -= e.downPayment
+      l.cash -= e.investorShare ? 0 : e.downPayment
       l.businesses.push({
         id: e.id,
         name: e.name,
@@ -103,13 +117,17 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         liability: e.liability,
         cashFlow: e.cashFlow,
         category: e.category,
+        investorShare: e.investorShare,
+        growthPerPayday: e.growthPerPayday,
+        growthCap: e.growthCap,
       })
       return l
 
     case 'SELL_BUSINESS': {
       const a = l.businesses.find((x) => x.id === e.assetId)
       if (!a) return prev
-      l.cash += e.salePrice - a.liability
+      const net = e.salePrice - a.liability
+      l.cash += a.investorShare ? Math.round(net * (1 - a.investorShare)) : net
       l.businesses = l.businesses.filter((x) => x.id !== e.assetId)
       return l
     }
@@ -120,10 +138,19 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.cash -= e.amount
       return l
 
-    /** Повесить трату на кредитку: +3% к месячному платежу. */
+    /**
+     * Трата в долг. Кредитный режим: +3%/мес на кредитку навсегда.
+     * Халяль-режим: беспроцентная рассрочка — 10 равных платежей,
+     * долг гасится досрочно целиком через PAY_OFF_DEBT.
+     */
     case 'FINANCE_DOODAD':
-      l.liabilities.creditCards += e.amount
-      l.expenses.creditCardPayment += Math.ceil(0.03 * e.amount)
+      if (RULES.loansEnabled) {
+        l.liabilities.creditCards += e.amount
+        l.expenses.creditCardPayment += Math.ceil(0.03 * e.amount)
+      } else {
+        l.liabilities.retailDebt += e.amount
+        l.expenses.retailPayment += Math.ceil(e.amount / 10)
+      }
       return l
 
     case 'PET':
@@ -207,15 +234,18 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.phase = 'gameOver'
       return l
 
-    /** Выкуп при выходе из Круга: сто месяцев пассивного дохода. */
+    /**
+     * Выкуп при выходе из Круга: активы выкупаются как готовый бизнес —
+     * N месячных потоков (в RU-режиме 50: реалистичная оценка ~4 года прибыли).
+     */
     case 'ENTER_FAST_TRACK': {
       if (l.phase !== 'ratRace') return prev
-      const buyout = 100 * passiveIncome(l)
+      const buyout = RULES.fastTrackMultiplier * passiveIncome(l)
       l.cash += buyout
       l.phase = 'fastTrack'
       l.fastTrack = {
         beginningIncome: buyout,
-        goalIncome: buyout + FAST_TRACK_WIN_TARGET,
+        goalIncome: buyout + RULES.fastTrackTarget,
         businesses: [],
       }
       return l
@@ -235,7 +265,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         downPayment: e.downPayment,
         cashFlow: e.cashFlow,
       })
-      if (fastTrackProgress(l) >= FAST_TRACK_WIN_TARGET) {
+      if (fastTrackProgress(l) >= RULES.fastTrackTarget) {
         l.phase = 'won'
         l.winReason = 'cashflowGoal'
       }
@@ -254,8 +284,9 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.cash -= Math.ceil(l.cash / 2)
       return l
 
+    /** Развод: половина наличных уходит, не всё («при разводе половину получать»). */
     case 'DIVORCE':
-      l.cash = 0
+      l.cash -= Math.ceil(l.cash / 2)
       return l
 
     default:

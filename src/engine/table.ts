@@ -13,7 +13,6 @@ import type {
 import type { LedgerEvent, TableEvent } from './events'
 import { applyEvent } from './applyEvent'
 import {
-  FAST_TRACK_WIN_TARGET,
   createLedger,
   fastTrackIncome,
   fastTrackProgress,
@@ -24,20 +23,23 @@ import {
   totalIncome,
 } from './ledger'
 import {
-  DOODADS,
-  FAST_BOARD,
-  FAST_BOARD_SIZE,
-  PROFESSIONS,
   RAT_BOARD,
   RAT_BOARD_SIZE,
   TOKEN_COLORS,
   bigDeals,
+  doodads,
+  fastBoard,
+  fastBoardSize,
   marketCards,
+  professionsFor,
+  setActiveTheme,
+  setFastBoardTheme,
   smallDeals,
   localizedCardTitle,
   localizedSpaceName,
   type DeckTheme,
 } from './data'
+import { RULES, setRules } from './ledger'
 import { shuffleIndices } from './rng'
 
 export interface SeatSetup {
@@ -58,8 +60,17 @@ export interface TableSetup {
 
 export function createTable(setup: TableSetup): Table {
   const theme = setup.deckTheme
+  // Правила режима: RU = рубли, халяль (без кредитов), реалистичный выкуп.
+  setActiveTheme(theme)
+  setFastBoardTheme(theme)
+  if (theme === 'ru') {
+    setRules({ currency: 'RUB', fastTrackMultiplier: 50, fastTrackTarget: 1_000_000, loansEnabled: false })
+  } else {
+    setRules({ currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true })
+  }
+  const pool = professionsFor(theme)
   const seats: Seat[] = setup.seats.map((s, i) => {
-    const profession = PROFESSIONS.find((p) => p.id === s.professionId) ?? PROFESSIONS[0]
+    const profession = pool.find((p) => p.id === s.professionId) ?? pool[0]
     return {
       id: `seat-${i}`,
       name: s.name,
@@ -70,6 +81,7 @@ export function createTable(setup: TableSetup): Table {
       dreamSpace: s.dreamSpace,
       skipTurns: 0,
       outOfGame: false,
+      won: false,
       isBot: s.isBot,
       botDifficulty: s.botDifficulty,
       ftCharity: false,
@@ -88,7 +100,7 @@ export function createTable(setup: TableSetup): Table {
       small: { order: shuffleIndices(smallDeals(theme).length, setup.seed + 1), next: 0 },
       big: { order: shuffleIndices(bigDeals(theme).length, setup.seed + 2), next: 0 },
       market: { order: shuffleIndices(marketCards(theme).length, setup.seed + 3), next: 0 },
-      doodad: { order: shuffleIndices(DOODADS.length, setup.seed + 4), next: 0 },
+      doodad: { order: shuffleIndices(doodads(theme).length, setup.seed + 4), next: 0 },
     },
     lastRoll: null,
     dreamBumps: {},
@@ -129,6 +141,10 @@ function log(t: Table, seatId: string | null, text: string) {
 }
 
 function money(n: number): string {
+  if (RULES.currency === 'RUB') {
+    const s = Math.abs(Math.round(n)).toLocaleString('ru-RU')
+    return n < 0 ? `−${s} ₽` : `${s} ₽`
+  }
   const s = Math.abs(n).toLocaleString('en-US')
   return n < 0 ? `−$${s}` : `$${s}`
 }
@@ -149,10 +165,16 @@ function seatLedgerEvent(t: Table, seatId: string, e: LedgerEvent) {
   const i = t.seats.findIndex((s) => s.id === seatId)
   if (i < 0) return
   t.seats[i] = { ...t.seats[i], ledger: applyEvent(t.seats[i].ledger, e) }
-  if (t.seats[i].ledger.phase === 'won') {
-    t.winnerId = t.seats[i].id
-    t.phase = 'finished'
-    t.pending = { kind: 'gameOver' }
+  if (t.seats[i].ledger.phase === 'won' && !t.seats[i].won) {
+    t.seats[i] = { ...t.seats[i], won: true }
+    t.winnerId ??= t.seats[i].id
+    log(t, seatId, `🏆 ${t.seats[i].name} достиг цели!`)
+    // Остальные доигрывают — как в живой игре. Финиш, когда активных не осталось.
+    const active = t.seats.filter((s) => !s.outOfGame && !s.won)
+    if (active.length === 0) {
+      t.phase = 'finished'
+      t.pending = { kind: 'gameOver' }
+    }
   }
 }
 
@@ -198,7 +220,7 @@ export function sellOfferPrice(cost: number, multiplierPct: number): number {
 }
 
 export function dreamPriceAt(t: Table, spaceIndex: number): number {
-  const s = FAST_BOARD[spaceIndex]
+  const s = fastBoard()[spaceIndex]
   if (s.type !== 'dream') return 0
   return s.price * (1 + (t.dreamBumps[spaceIndex] ?? 0))
 }
@@ -209,6 +231,15 @@ export function charityCost(l: Ledger): number {
 
 export function ftCharityCost(l: Ledger): number {
   return Math.ceil(0.1 * fastTrackIncome(l))
+}
+
+/** Хватает ли игроку на сделку — наличными или через инвестора. */
+export function dealAffordable(t: Table, card: import('./types').DealCard, deckSize: 'small' | 'big'): boolean {
+  const l = currentSeat(t).ledger
+  if (card.kind === 'stock') return l.cash >= card.price // хотя бы одна акция
+  if (l.cash >= card.downPayment) return true
+  // Инвестор подхватывает крупную недвижимость в халяль-режиме.
+  return !RULES.loansEnabled && deckSize === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
 }
 
 export function canRecover(l: Ledger): boolean {
@@ -227,12 +258,12 @@ export function hasConsumerDebt(l: Ledger): boolean {
 
 function advance(t: Table, seatIdx: number, steps: number) {
   const seat = t.seats[seatIdx]
-  const size = seat.track === 'rat' ? RAT_BOARD_SIZE : FAST_BOARD_SIZE
+  const size = seat.track === 'rat' ? RAT_BOARD_SIZE : fastBoardSize()
   let payouts = 0
   for (let i = 1; i <= steps; i++) {
     const pos = (seat.position + i) % size
     const isPayday =
-      seat.track === 'rat' ? RAT_BOARD[pos] === 'paycheck' : FAST_BOARD[pos].type === 'cashflowDay'
+      seat.track === 'rat' ? RAT_BOARD[pos] === 'paycheck' : fastBoard()[pos].type === 'cashflowDay'
     if (isPayday) payouts++
   }
   t.seats[seatIdx] = { ...seat, position: (seat.position + steps) % size }
@@ -271,21 +302,32 @@ function resolveLanding(t: Table, seatIdx: number) {
         t.phase = 'resolving'
         return
       case 'market': {
-        const idx = draw(t, 'market', marketCards(t.deckTheme).length)
-        const card = marketCards(t.deckTheme)[idx]
-        applyMarketAuto(t, card)
-        if (card.kind === 'windfall' || card.kind === 'stockSplit') {
-          t.pending = { kind: 'market', card }
-          t.phase = 'resolving'
-        } else {
-          t.pending = { kind: 'market', card }
-          t.phase = 'resolving'
+        const deck = marketCards(t.deckTheme)
+        // Пустой рынок — сгоревший ход. Ищем карту, которая хоть кого-то касается;
+        // не нашли за 4 попытки — превращаем клетку в «возможность».
+        let card = null as import('./types').MarketCard | null
+        for (let tries = 0; tries < 4; tries++) {
+          const candidate = deck[draw(t, 'market', deck.length)]
+          if (marketCardIsLive(t, candidate)) {
+            card = candidate
+            break
+          }
         }
+        if (!card) {
+          log(t, seat.id, 'Рынок пуст — вместо него возможность')
+          t.pending = { kind: 'chooseDeal' }
+          t.phase = 'resolving'
+          return
+        }
+        applyMarketAuto(t, card)
+        t.pending = { kind: 'market', card }
+        t.phase = 'resolving'
         return
       }
       case 'doodad': {
-        const idx = draw(t, 'doodad', DOODADS.length)
-        t.pending = { kind: 'doodad', card: DOODADS[idx] }
+        const deck = doodads(t.deckTheme)
+        const idx = draw(t, 'doodad', deck.length)
+        t.pending = { kind: 'doodad', card: deck[idx] }
         t.phase = 'resolving'
         return
       }
@@ -311,7 +353,7 @@ function resolveLanding(t: Table, seatIdx: number) {
   }
 
   // ─── Полоса свободы ───
-  const space = FAST_BOARD[seat.position]
+  const space = fastBoard()[seat.position]
   switch (space.type) {
     case 'cashflowDay':
       t.phase = 'turnEnd'
@@ -379,7 +421,27 @@ function resolveLanding(t: Table, seatIdx: number) {
   }
 }
 
-/** Сплиты и разовые выплаты применяются сразу ко всем — решать нечего. */
+/** Есть ли в карте рынка хоть какое-то живое действие для стола. */
+function marketCardIsLive(t: Table, card: MarketCard): boolean {
+  switch (card.kind) {
+    case 'sellOffer':
+      return marketMatches(t, card.category).length > 0
+    case 'stockPrice':
+      return stockHolders(t, card.symbol).length > 0
+    case 'stockSplit':
+      return t.seats.some(
+        (s) => !s.outOfGame && s.track === 'rat' && s.ledger.stocks.some((l) => l.symbol === card.symbol.toUpperCase()),
+      )
+    case 'windfall':
+      if (card.amountPerPartnership)
+        return t.seats.some((s) => !s.outOfGame && s.ledger.businesses.some((b) => b.category === 'partnership'))
+      return true
+    case 'payRaise':
+      return true
+  }
+}
+
+/** Сплиты, выплаты и повышения применяются сразу — решать нечего. */
 function applyMarketAuto(t: Table, card: MarketCard) {
   if (card.kind === 'stockSplit') {
     for (const s of t.seats) {
@@ -392,23 +454,38 @@ function applyMarketAuto(t: Table, card: MarketCard) {
       if (s.outOfGame || s.track === 'fast') continue
       let amount = card.flatAmount ?? 0
       if (card.amountPerRealEstate) amount += card.amountPerRealEstate * s.ledger.realEstate.length
-      if (amount > 0) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount })
+      if (card.amountPerPartnership)
+        amount += card.amountPerPartnership * s.ledger.businesses.filter((b) => b.category === 'partnership').length
+      if (amount > 0) {
+        seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount })
+        log(t, s.id, `${card.title}: +${money(amount)}`)
+      }
     }
-    log(t, null, `Разовая выплата: ${card.title}`)
+  } else if (card.kind === 'payRaise') {
+    const seat = currentSeat(t)
+    seatLedgerEvent(t, seat.id, { type: 'SALARY_RAISE', amount: card.amount })
+    log(t, seat.id, `Повышение: зарплата +${money(card.amount)}/мес`)
   }
 }
 
 // ─── Переход хода ─────────────────────────────────────────────────────
 
 function nextTurn(t: Table) {
-  const alive = t.seats.filter((s) => !s.outOfGame)
+  // Победители выходят из очереди — доигрывают только остальные.
+  const alive = t.seats.filter((s) => !s.outOfGame && !s.won)
   if (alive.length === 0) {
     t.phase = 'finished'
     t.pending = { kind: 'gameOver' }
     return
   }
-  if (alive.length === 1 && t.seats.length > 1) {
-    t.winnerId = alive[0].id
+  if (alive.length === 1 && t.seats.filter((s) => !s.outOfGame).length > 1 && t.winnerId) {
+    // Остался один играющий при уже известном победителе — партия окончена.
+    t.phase = 'finished'
+    t.pending = { kind: 'gameOver' }
+    return
+  }
+  if (alive.length === 1 && t.seats.length > 1 && t.seats.every((s) => s.outOfGame || s.id === alive[0].id)) {
+    t.winnerId ??= alive[0].id
     t.phase = 'finished'
     t.pending = { kind: 'gameOver' }
     return
@@ -419,7 +496,7 @@ function nextTurn(t: Table) {
   while (guard++ < t.seats.length * 5) {
     i = (i + 1) % t.seats.length
     const s = t.seats[i]
-    if (s.outOfGame) continue
+    if (s.outOfGame || s.won) continue
     if (s.skipTurns > 0) {
       t.seats[i] = { ...s, skipTurns: s.skipTurns - 1 }
       const left = s.skipTurns - 1
@@ -465,8 +542,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'CHOOSE_DEAL': {
       if (t.pending?.kind !== 'chooseDeal') return prev
       const list = event.size === 'small' ? smallDeals(t.deckTheme) : bigDeals(t.deckTheme)
-      const idx = draw(t, event.size, list.length)
-      t.pending = { kind: 'deal', deck: event.size, card: list[idx] }
+      // Сделка не по карману = сгоревший ход. До 4 перетягов ищем ту, на которую
+      // хватает наличных (или инвестора на крупную в халяль-режиме).
+      let card = list[draw(t, event.size, list.length)]
+      for (let tries = 0; tries < 4 && !dealAffordable(t, card, event.size); tries++) {
+        card = list[draw(t, event.size, list.length)]
+      }
+      t.pending = { kind: 'deal', deck: event.size, card }
       return t
     }
 
@@ -474,7 +556,11 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (t.pending?.kind !== 'deal') return prev
       const card = t.pending.card
       if (card.kind === 'stock') return prev
-      if (l.cash < card.downPayment) return prev
+
+      // Инвестор: вносит первый взнос целиком, забирает половину потока и выручки.
+      const withInvestor = !!event.withInvestor && !RULES.loansEnabled && card.kind !== 'business'
+      const investorShare = withInvestor ? 0.5 : undefined
+      if (!withInvestor && l.cash < card.downPayment) return prev
 
       if (card.kind === 'realEstate') {
         seatLedgerEvent(t, seat.id, {
@@ -486,6 +572,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           mortgage: card.mortgage,
           cashFlow: card.cashFlow,
           category: card.category,
+          investorShare,
         })
       } else {
         seatLedgerEvent(t, seat.id, {
@@ -497,9 +584,17 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           liability: card.liability,
           cashFlow: card.cashFlow,
           category: card.category,
+          growthPerPayday: (card as any).growthPerPayday,
+          growthCap: (card as any).growthCap,
         })
       }
-      log(t, seat.id, `Купил: ${localizedCardTitle(card)} за ${money(card.downPayment)} (${money(card.cashFlow)}/мес)`)
+      log(
+        t,
+        seat.id,
+        withInvestor
+          ? `Купил с инвестором: ${localizedCardTitle(card)} (инвестору 50% потока)`
+          : `Купил: ${localizedCardTitle(card)} за ${money(card.downPayment)} (${money(card.cashFlow)}/мес)`,
+      )
       t.pending = null
       t.phase = 'turnEnd'
       return t
@@ -511,10 +606,14 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (card.kind !== 'stock') return prev
       const shares = Math.floor(event.shares)
       if (shares <= 0) return prev
-      const total = shares * card.price
-      if (l.cash < total) return prev
 
-      seatLedgerEvent(t, seat.id, {
+      // Рынок для всех: пока карта на столе, купить может любой игрок Круга.
+      const buyer = event.seatId ? t.seats.find((x) => x.id === event.seatId) : seat
+      if (!buyer || buyer.outOfGame || buyer.track === 'fast') return prev
+      const total = shares * card.price
+      if (buyer.ledger.cash < total) return prev
+
+      seatLedgerEvent(t, buyer.id, {
         type: 'BUY_STOCK',
         id: `${card.symbol}-${t.log.length}`,
         symbol: card.symbol,
@@ -522,9 +621,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         costPerShare: card.price,
         dividendPerShareMonthly: card.dividendPerShare ?? 0,
       })
-      log(t, seat.id, `Купил ${shares} × ${card.symbol} по ${money(card.price)}`)
-      t.pending = null
-      t.phase = 'turnEnd'
+      log(t, buyer.id, `${buyer.name} купил ${shares} × ${card.symbol} по ${money(card.price)}`)
+      // Ход закрывает только активный игрок; чужая покупка карту не снимает.
+      if (buyer.id === seat.id) {
+        t.pending = null
+        t.phase = 'turnEnd'
+      }
       return t
     }
 
@@ -573,9 +675,18 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (t.pending?.kind !== 'doodad') return prev
       const card: DoodadCard = t.pending.card
       if (event.financed) {
-        if (!card.financeable) return prev
+        // В халяль-режиме неподъёмная трата всегда уходит в рассрочку —
+        // кредитов нет, а застрять на карточке нельзя.
+        const forced = !RULES.loansEnabled && l.cash < card.amount
+        if (!card.financeable && !forced) return prev
         seatLedgerEvent(t, seat.id, { type: 'FINANCE_DOODAD', amount: card.amount })
-        log(t, seat.id, `«${card.title}» на кредитку: +${money(Math.ceil(0.03 * card.amount))}/мес`)
+        log(
+          t,
+          seat.id,
+          RULES.loansEnabled
+            ? `«${card.title}» на кредитку: +${money(Math.ceil(0.03 * card.amount))}/мес`
+            : `«${card.title}» в рассрочку: ${money(Math.ceil(card.amount / 10))}/мес × 10`,
+        )
       } else {
         if (l.cash < card.amount) return prev
         seatLedgerEvent(t, seat.id, { type: 'DOODAD', amount: card.amount })
@@ -607,16 +718,25 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'PAY_DOWNSIZED': {
       if (t.pending?.kind !== 'downsized') return prev
       const cost = totalExpenses(l)
-      if (l.cash < cost) return prev
+      // В кредитном режиме нехватку закрывают займом; в халяль-режиме
+      // платим в минус — дальше штатное банкротство.
+      if (RULES.loansEnabled && l.cash < cost) return prev
       seatLedgerEvent(t, seat.id, { type: 'DOWNSIZED' })
       t.seats[seatIdx] = { ...t.seats[seatIdx], skipTurns: 2 }
       log(t, seat.id, `Увольнение: заплатил ${money(cost)}, пропуск 2 ходов`)
-      t.pending = null
-      t.phase = 'turnEnd'
+      if (t.seats[seatIdx].ledger.cash < 0) {
+        t.pending = { kind: 'bankruptcy' }
+        t.phase = 'resolving'
+        log(t, seat.id, 'Наличные ушли в минус — банкротство')
+      } else {
+        t.pending = null
+        t.phase = 'turnEnd'
+      }
       return t
     }
 
     case 'TAKE_LOAN': {
+      if (!RULES.loansEnabled) return prev
       if (seat.track === 'fast') return prev
       const amount = Math.round(event.amount / 1000) * 1000
       if (amount < 1000) return prev
@@ -657,7 +777,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'BUY_FT_BUSINESS': {
       if (t.pending?.kind !== 'ftBusiness') return prev
       const spaceIdx = t.pending.space
-      const space = FAST_BOARD[spaceIdx]
+      const space = fastBoard()[spaceIdx]
       if (space.type !== 'business') return prev
       if (l.cash < space.downPayment) return prev
       const name = localizedSpaceName(spaceIdx)
@@ -680,7 +800,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'TRY_VENTURE': {
       if (t.pending?.kind !== 'ftVenture') return prev
       const spaceIdx = t.pending.space
-      const space = FAST_BOARD[spaceIdx]
+      const space = fastBoard()[spaceIdx]
       if (space.type !== 'venture') return prev
       if (l.cash < space.downPayment) return prev
       const die = event.die
@@ -710,7 +830,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'BUY_DREAM': {
       if (t.pending?.kind !== 'ftDream') return prev
       const spaceIdx = t.pending.space
-      const space = FAST_BOARD[spaceIdx]
+      const space = fastBoard()[spaceIdx]
       if (space.type !== 'dream') return prev
       const price = dreamPriceAt(t, spaceIdx)
       if (l.cash < price) return prev
@@ -777,6 +897,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (t.pending.kind === 'doodad' || t.pending.kind === 'bankruptcy') return prev
       t.pending = null
       t.phase = 'turnEnd'
+      return t
+    }
+
+    /** Досрочно завершить партию — победители уже известны, остальные согласились. */
+    case 'FINISH_GAME': {
+      t.phase = 'finished'
+      t.pending = { kind: 'gameOver' }
       return t
     }
 

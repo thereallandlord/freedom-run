@@ -1,4 +1,4 @@
-import { FAST_BOARD, RAT_BOARD } from '../engine/data'
+import { fastBoard, RAT_BOARD } from '../engine/data'
 import type { Seat, Table } from '../engine/types'
 
 const RAT_STYLE: Record<string, { icon: string; color: string }> = {
@@ -53,7 +53,7 @@ export function Board({ table }: { table: Table }) {
     <div className="relative mx-auto aspect-square w-full max-w-[min(460px,58vh)]">
       {/* Полоса свободы — внешний круг */}
       <div className="absolute inset-0 rounded-full border border-[var(--line)] bg-white/[0.015]" />
-      {FAST_BOARD.map((space, i) => {
+      {fastBoard().map((space, i) => {
         const st = FAST_STYLE[space.type]
         const here = table.seats.filter((s) => s.track === 'fast' && s.position === i && !s.outOfGame)
         const isDream = space.type === 'dream'
@@ -63,7 +63,7 @@ export function Board({ table }: { table: Table }) {
           <div
             key={`f${i}`}
             className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={polar(i, FAST_BOARD.length, 46)}
+            style={polar(i, fastBoard().length, 46)}
             title={'name' in space ? space.name : space.type}
           >
             <div

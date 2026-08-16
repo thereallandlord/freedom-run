@@ -14,11 +14,12 @@ import {
   sellOfferPrice,
 } from './table'
 import {
+  RULES,
   isOutOfRatRace,
   monthlyCashFlow,
   totalExpenses,
 } from './ledger'
-import { FAST_BOARD } from './data'
+import { fastBoard } from './data'
 
 export interface BotProfile {
   buyDealChance: number
@@ -129,12 +130,17 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
       const need = card.downPayment
       if (l.cash - need < cashBuffer(seat, p)) {
-        // Плечо: добираем кредитом, если профиль это позволяет.
-        if (p.leverage && seat.track === 'rat' && card.cashFlow > 0) {
-          const short = need + cashBuffer(seat, p) - l.cash
-          const loan = Math.ceil(short / 1000) * 1000
-          // Кредит стоит 10% в месяц — берём, только если сделка это отбивает.
-          if (loan > 0 && card.cashFlow > loan / 10) return { type: 'TAKE_LOAN', amount: loan }
+        if (RULES.loansEnabled) {
+          // Плечо: добираем кредитом, если профиль это позволяет.
+          if (p.leverage && seat.track === 'rat' && card.cashFlow > 0) {
+            const short = need + cashBuffer(seat, p) - l.cash
+            const loan = Math.ceil(short / 1000) * 1000
+            // Кредит стоит 10% в месяц — берём, только если сделка это отбивает.
+            if (loan > 0 && card.cashFlow > loan / 10) return { type: 'TAKE_LOAN', amount: loan }
+          }
+        } else if (p.leverage && card.kind === 'realEstate' && card.cashFlow > 0 && l.cash < need) {
+          // Халяль-режим: агрессивные боты зовут инвестора на крупную недвижимость.
+          return { type: 'BUY_DEAL', withInvestor: true }
         }
         return { type: 'PASS_CARD' }
       }
@@ -177,7 +183,7 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     case 'doodad': {
       const card = pending.card
       if (l.cash >= card.amount) return { type: 'PAY_DOODAD', financed: false }
-      if (card.financeable) return { type: 'PAY_DOODAD', financed: true }
+      if (card.financeable || !RULES.loansEnabled) return { type: 'PAY_DOODAD', financed: true }
       const loan = Math.ceil((card.amount - l.cash) / 1000) * 1000
       if (seat.track === 'rat' && loan > 0) return { type: 'TAKE_LOAN', amount: loan }
       return { type: 'PAY_DOODAD', financed: false }
@@ -199,7 +205,7 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
     case 'downsized': {
       const cost = totalExpenses(l)
-      if (l.cash < cost) {
+      if (l.cash < cost && RULES.loansEnabled) {
         const loan = Math.ceil((cost - l.cash) / 1000) * 1000
         return { type: 'TAKE_LOAN', amount: loan }
       }
@@ -207,14 +213,14 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     }
 
     case 'ftBusiness': {
-      const space = FAST_BOARD[pending.space]
+      const space = fastBoard()[pending.space]
       if (space.type !== 'business') return { type: 'END_TURN' }
       if (l.cash >= space.downPayment * p.laneBuyCashMultiple) return { type: 'BUY_FT_BUSINESS' }
       return { type: 'PASS_CARD' }
     }
 
     case 'ftVenture': {
-      const space = FAST_BOARD[pending.space]
+      const space = fastBoard()[pending.space]
       if (space.type !== 'venture') return { type: 'END_TURN' }
       if (p.ventureCashFraction <= 0) return { type: 'PASS_CARD' }
       if (l.cash * p.ventureCashFraction >= space.downPayment) {

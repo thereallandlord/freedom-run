@@ -1,0 +1,1662 @@
+{
+ "SMALL_DEALS_RU": [
+  {
+   "id": "sd-grit-100",
+   "kind": "stock",
+   "symbol": "GRIT",
+   "title": "GRIT — «Кремень Роботикс»",
+   "flavor": "Роботы опять никому не нужны, акция по цене пирожка. Это дно? Или под дном есть подвал?",
+   "price": 100,
+   "range": [
+    100,
+    4000
+   ]
+  },
+  {
+   "id": "sd-grit-2000",
+   "kind": "stock",
+   "symbol": "GRIT",
+   "title": "GRIT — «Кремень Роботикс»",
+   "flavor": "Завод получил заказ на роботов-дворников. Половина пути наверх — или половина пути вниз?",
+   "price": 2000,
+   "range": [
+    100,
+    4000
+   ]
+  },
+  {
+   "id": "sd-grit-4000",
+   "kind": "stock",
+   "symbol": "GRIT",
+   "title": "GRIT — «Кремень Роботикс»",
+   "flavor": "Про «Кремень» снял ролик каждый блогер, купили все — от таксиста до тёщи. Кто будет покупать дальше?",
+   "price": 4000,
+   "range": [
+    100,
+    4000
+   ]
+  },
+  {
+   "id": "sd-zap-100",
+   "kind": "stock",
+   "symbol": "ZAP",
+   "title": "ZAP — самокаты «Жух!»",
+   "flavor": "Зима. Самокаты спят в гараже, акции — в сугробе. А весна, между прочим, приходит каждый год.",
+   "price": 100,
+   "range": [
+    100,
+    3000
+   ]
+  },
+  {
+   "id": "sd-zap-2800",
+   "kind": "stock",
+   "symbol": "ZAP",
+   "title": "ZAP — самокаты «Жух!»",
+   "flavor": "Апрель, весь город катается, акции на пике. Осень, между прочим, тоже приходит каждый год.",
+   "price": 2800,
+   "range": [
+    100,
+    3000
+   ]
+  },
+  {
+   "id": "sd-myco-500",
+   "kind": "stock",
+   "symbol": "MYCO",
+   "title": "MYCO — биотех «МикоЛаб»",
+   "flavor": "Провалили испытания чудо-лекарства. Учёные не сдаются, инвесторы — уже. Дёшево, потому что страшно.",
+   "price": 500,
+   "range": [
+    500,
+    4000
+   ]
+  },
+  {
+   "id": "sd-snail-500",
+   "kind": "stock",
+   "symbol": "SNAIL",
+   "title": "SNAIL — логистика «Улитка»",
+   "flavor": "Потеряли три фуры посылок, нашли две. Акции уползли на дно — но возит «Улитка» всё равно полстраны.",
+   "price": 500,
+   "range": [
+    500,
+    3000
+   ]
+  },
+  {
+   "id": "sd-nest-1000",
+   "kind": "stock",
+   "symbol": "NEST",
+   "title": "NEST — фонд «Гнездо»",
+   "flavor": "Скучный фонд: доля в сотне компаний, каждый месяц — доля прибыли. Скучно — это когда спишь спокойно.",
+   "price": 1000,
+   "range": [
+    1000,
+    3000
+   ],
+   "dividendPerShare": 15
+  },
+  {
+   "id": "sd-nest-2900",
+   "kind": "stock",
+   "symbol": "NEST",
+   "title": "NEST — фонд «Гнездо»",
+   "flavor": "Фонд на историческом максимуме. Выплаты с прибыли щедрые, но и цена — как на витрине.",
+   "price": 2900,
+   "range": [
+    1000,
+    3000
+   ],
+   "dividendPerShare": 30
+  },
+  {
+   "id": "sd-shib-40",
+   "kind": "stock",
+   "symbol": "SHIB",
+   "title": "SHIB — монета с собакой",
+   "flavor": "Куда улетит — не знает никто. Даже собака. Особенно собака.",
+   "price": 40,
+   "range": [
+    10,
+    4000
+   ],
+   "hideRange": true
+  },
+  {
+   "id": "sd-wif-2500",
+   "kind": "stock",
+   "symbol": "WIF",
+   "title": "WIF — пёс в шапке",
+   "flavor": "Полгода назад стоил сто рублей. Куда дальше — знает только шапка, а она молчит.",
+   "price": 2500,
+   "range": [
+    10,
+    4000
+   ],
+   "hideRange": true
+  },
+  {
+   "id": "sd-doge-500",
+   "kind": "stock",
+   "symbol": "DOGE",
+   "title": "DOGE — дедушка мем-монет",
+   "flavor": "Пережил всех, кто его хоронил. Дохода не платит, гарантий не даёт, зато весело.",
+   "price": 500,
+   "range": [
+    10,
+    4000
+   ]
+  },
+  {
+   "id": "sd-gold-6000",
+   "kind": "stock",
+   "symbol": "GOLD",
+   "title": "GOLD — золото, грамм",
+   "flavor": "Не шумит, не растёт по сто процентов в год. Зато когда на рынке шторм — все бегут сюда.",
+   "price": 6000,
+   "range": [
+    5000,
+    9000
+   ]
+  },
+  {
+   "id": "sd-sukuk-sklad",
+   "kind": "stock",
+   "symbol": "SUKUK",
+   "title": "SUKUK — арендный сертификат",
+   "flavor": "Пай в складе, который сдан в аренду. Каждый месяц — ваша доля арендной платы. Не разгонишься, но и не прогоришь.",
+   "price": 100000,
+   "range": [
+    100000,
+    100000
+   ],
+   "dividendPerShare": 1200
+  },
+  {
+   "id": "sd-room-ufa-chernikovka",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Комната 13 м², Уфа, Черниковка",
+   "flavor": "Соседка тётя Фаня следит за подъездом лучше любой камеры. Жилец уже найден — студент нефтяного. Рассрочка от продавца.",
+   "cost": 1100000,
+   "downPayment": 50000,
+   "mortgage": 1050000,
+   "cashFlow": 5000
+  },
+  {
+   "id": "sd-room-ufa-sipailovo",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Комната 18 м², Уфа, Сипайлово",
+   "flavor": "Хозяйка уезжает к дочери в Питер и отдаёт в рассрочку. Ремонт «бабушкин люкс», зато окна во двор.",
+   "cost": 1400000,
+   "downPayment": 70000,
+   "mortgage": 1330000,
+   "cashFlow": 7000
+  },
+  {
+   "id": "sd-studio-ufa-dema",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия 25 м², Уфа, Дёма",
+   "flavor": "Застройщику надо закрыть квартал до Нового года — даёт рассрочку с копеечным взносом. Арендаторы в Дёме стоят в очереди.",
+   "cost": 3000000,
+   "downPayment": 90000,
+   "mortgage": 2910000,
+   "cashFlow": 12000
+  },
+  {
+   "id": "sd-studio-ufa-inors",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия 28 м², Уфа, Инорс",
+   "flavor": "Новый дом, блестящий лифт. Только аренда пока меньше платежа по рассрочке. «Потом подорожает» — любимая сказка продавца.",
+   "cost": 3400000,
+   "downPayment": 110000,
+   "mortgage": 3290000,
+   "cashFlow": -3000
+  },
+  {
+   "id": "sd-room-kzn-aviastroit",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Комната 15 м², Казань, Авиастроительный",
+   "flavor": "Рядом завод и метро. Жильцы — вахтовики, платят день в день, вопросов не задают.",
+   "cost": 1700000,
+   "downPayment": 85000,
+   "mortgage": 1615000,
+   "cashFlow": 8000
+  },
+  {
+   "id": "sd-room-kzn-derbyshki",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Комната 12 м², Казань, Дербышки",
+   "flavor": "Тихий зелёный район. Двенадцать метров, зато свои. Хозяин спешит на дачу — рассрочка без торга.",
+   "cost": 1500000,
+   "downPayment": 60000,
+   "mortgage": 1440000,
+   "cashFlow": 6000
+  },
+  {
+   "id": "sd-studio-kzn-salavat-kupere",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия 24 м², Казань, Салават Купере",
+   "flavor": "Полгорода купило студии «под сдачу» в этом же дворе. Угадайте, куда поехали цены на аренду.",
+   "cost": 4100000,
+   "downPayment": 130000,
+   "mortgage": 3970000,
+   "cashFlow": -4000
+  },
+  {
+   "id": "sd-studio-kzn-azino",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия 26 м², Казань, Азино",
+   "flavor": "Съёмщик — программист: тихий, платит вперёд, попросил только интернет побыстрее. Рассрочка от застройщика.",
+   "cost": 4300000,
+   "downPayment": 130000,
+   "mortgage": 4170000,
+   "cashFlow": 12000
+  },
+  {
+   "id": "sd-room-chelny-ges",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Комната 14 м², Наб. Челны, посёлок ГЭС",
+   "flavor": "Дешевле только гараж. Но в гараже жить нельзя, а тут можно — и жилец уже стоит на пороге.",
+   "cost": 800000,
+   "downPayment": 40000,
+   "mortgage": 760000,
+   "cashFlow": 4000
+  },
+  {
+   "id": "sd-studio-chelny-zyab",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия 23 м², Наб. Челны, ЗЯБ",
+   "flavor": "Возле КАМАЗа всегда кто-то работает, и ему надо где-то жить. Взнос по рассрочке — как за холодильник.",
+   "cost": 2400000,
+   "downPayment": 80000,
+   "mortgage": 2320000,
+   "cashFlow": 10000
+  },
+  {
+   "id": "sd-room-chelny-rodnya",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Комната 16 м², Наб. Челны, Новый город",
+   "flavor": "Сдали двоюродному брату жены. Платит «как получится». Получается не каждый месяц.",
+   "cost": 900000,
+   "downPayment": 45000,
+   "mortgage": 855000,
+   "cashFlow": -2000
+  },
+  {
+   "id": "sd-studio-ufa-zaton",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия 22 м², Уфа, Затон",
+   "flavor": "Затон уже не окраина: мост построили, цены проснулись. Успеть, пока не проснулся застройщик.",
+   "cost": 2800000,
+   "downPayment": 110000,
+   "mortgage": 2690000,
+   "cashFlow": 11000
+  },
+  {
+   "id": "sd-room-ufa-center",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Комната 16 м², Уфа, центр",
+   "flavor": "Старый фонд, потолки три метра, за стеной — пианино. Сдаётся быстрее, чем успеваешь повесить объявление.",
+   "cost": 1600000,
+   "downPayment": 80000,
+   "mortgage": 1520000,
+   "cashFlow": 9000
+  },
+  {
+   "id": "sd-apt-kzn-kirovsky",
+   "kind": "realEstate",
+   "category": "aptKZN",
+   "title": "Однушка 33 м², Казань, Кировский район",
+   "flavor": "«Однушка в Казани — это всегда плюс», — сказал продавец. Платёж по рассрочке с ним не согласен.",
+   "cost": 4500000,
+   "downPayment": 150000,
+   "mortgage": 4350000,
+   "cashFlow": -4000
+  },
+  {
+   "id": "sd-apt-kzn-yudino",
+   "kind": "realEstate",
+   "category": "aptKZN",
+   "title": "Однушка 30 м², Казань, Юдино",
+   "flavor": "Электричка до центра — двадцать минут. Съёмщики — молодая пара, мечтают о такой же, но своей.",
+   "cost": 4200000,
+   "downPayment": 140000,
+   "mortgage": 4060000,
+   "cashFlow": 12000
+  },
+  {
+   "id": "sd-parking-ufa",
+   "kind": "realEstate",
+   "category": "parking",
+   "title": "Машиноместо, Уфа, тёплый паркинг",
+   "flavor": "Зимой за тёплый паркинг уфимец отдаст последнее. Проверено морозом в минус тридцать пять.",
+   "cost": 600000,
+   "downPayment": 30000,
+   "mortgage": 570000,
+   "cashFlow": 3000
+  },
+  {
+   "id": "sd-parking-kzn",
+   "kind": "realEstate",
+   "category": "parking",
+   "title": "Машиноместо, Казань, подземный паркинг",
+   "flavor": "Паркинг у делового центра: машин больше, чем мест. Очередь из арендаторов уже выстроилась.",
+   "cost": 900000,
+   "downPayment": 45000,
+   "mortgage": 855000,
+   "cashFlow": 5000
+  },
+  {
+   "id": "sd-kladovka-kzn",
+   "kind": "realEstate",
+   "category": "parking",
+   "title": "Кладовка 4 м², Казань, цоколь ЖК",
+   "flavor": "Четыре метра, а хранят лыжи, коляску и шины половины подъезда. Сдаётся быстрее квартир.",
+   "cost": 500000,
+   "downPayment": 25000,
+   "mortgage": 475000,
+   "cashFlow": 3000
+  },
+  {
+   "id": "sd-kladovka-ufa",
+   "kind": "realEstate",
+   "category": "parking",
+   "title": "Кладовка 5 м², Уфа, новый ЖК",
+   "flavor": "Квартиры теперь строят без кладовок, а вещи у людей остались. Ваши пять метров решают их проблему.",
+   "cost": 500000,
+   "downPayment": 20000,
+   "mortgage": 480000,
+   "cashFlow": 2000
+  },
+  {
+   "id": "sd-parking-chelny",
+   "kind": "realEstate",
+   "category": "parking",
+   "title": "Машиноместо, Наб. Челны",
+   "flavor": "Во дворе паркуются бесплатно. Но зимой, когда трактор завалит выезд, все вспоминают про паркинг.",
+   "cost": 500000,
+   "downPayment": 25000,
+   "mortgage": 475000,
+   "cashFlow": 3000
+  },
+  {
+   "id": "sd-land-iglino",
+   "kind": "realEstate",
+   "category": "land",
+   "title": "Участок 8 соток, Иглино (под Уфой)",
+   "flavor": "Газ обещают к выборам. К каким — не уточняют. Зато асфальт уже положили. За наличные, без рассрочки.",
+   "cost": 400000,
+   "downPayment": 400000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "id": "sd-land-laishevo",
+   "kind": "realEstate",
+   "category": "land",
+   "title": "Участок 10 соток, Лаишево (под Казанью)",
+   "flavor": "До Волги пешком. Казанцы скупают всё, что у воды, — про этот берег пока знают не все.",
+   "cost": 700000,
+   "downPayment": 700000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "id": "sd-land-tukaevo",
+   "kind": "realEstate",
+   "category": "land",
+   "title": "Участок 6 соток, Тукаевский район (у Челнов)",
+   "flavor": "Сосед уже поставил баню — значит, место живое. Дохода нет, расчёт на перепродажу.",
+   "cost": 250000,
+   "downPayment": 250000,
+   "mortgage": 0,
+   "cashFlow": 0
+  },
+  {
+   "id": "sd-land-m12",
+   "kind": "realEstate",
+   "category": "land",
+   "title": "Участок у съезда с М-12, Пестречинский район",
+   "flavor": "Трасса гудит — цена растёт. Купил, подождал, продал. Главное — не влюбиться и не построить дом.",
+   "cost": 900000,
+   "downPayment": 900000,
+   "mortgage": 0,
+   "cashFlow": 0
+  }
+ ],
+ "BIG_DEALS_RU": [
+  {
+   "id": "big-re-kzn-azino",
+   "kind": "realEstate",
+   "category": "aptKZN",
+   "title": "Однушка в Азино (Казань)",
+   "text": "Хозяйка уезжает к дочери и торопится. Рассрочка от продавца без переплат, жильцы уже внутри и платят вовремя.",
+   "cost": 6500000,
+   "downPayment": 500000,
+   "mortgage": 6000000,
+   "cashFlow": 32000
+  },
+  {
+   "id": "big-re-kzn-pobedy",
+   "kind": "realEstate",
+   "category": "aptKZN",
+   "title": "Двушка у метро «Проспект Победы»",
+   "text": "Пять минут до метро, рядом садик и халяль-кафе. Застройщик даёт рассрочку — забирай, пока сосед не забрал.",
+   "cost": 9000000,
+   "downPayment": 700000,
+   "mortgage": 8300000,
+   "cashFlow": 45000
+  },
+  {
+   "id": "big-re-kzn-itpark",
+   "kind": "realEstate",
+   "category": "aptKZN",
+   "title": "Студия у ИТ-парка (Казань)",
+   "text": "Айтишники стоят в очереди на съём. Маленькая, зато сдаётся быстрее, чем остывает чай.",
+   "cost": 5000000,
+   "downPayment": 400000,
+   "mortgage": 4600000,
+   "cashFlow": 25000
+  },
+  {
+   "id": "big-re-msk-butovo",
+   "kind": "realEstate",
+   "category": "aptMSK",
+   "title": "Однушка в Бутово (Москва)",
+   "text": "Москва начинается с Бутово. Тихий двор, метро рядом, арендатор — серьёзный бухгалтер. Остаток — в рассрочку.",
+   "cost": 12000000,
+   "downPayment": 1000000,
+   "mortgage": 11000000,
+   "cashFlow": 55000
+  },
+  {
+   "id": "big-re-msk-ttk",
+   "kind": "realEstate",
+   "category": "aptMSK",
+   "title": "Двушка у ТТК (Москва)",
+   "text": "Владелец расширяет своё дело и продаёт с рассрочкой. Аренда дорогая, спрос вечный — Москва же.",
+   "cost": 22000000,
+   "downPayment": 1800000,
+   "mortgage": 20200000,
+   "cashFlow": 95000
+  },
+  {
+   "id": "big-re-msk-city",
+   "kind": "realEstate",
+   "category": "aptMSK",
+   "title": "Апартаменты в башне у «Сити»",
+   "text": "Вид — миллион, статус — два. Но взносы башни и коммуналка съедают всё: после платежа рассрочки уходишь в минус. Зато красиво в сторис.",
+   "cost": 30000000,
+   "downPayment": 2000000,
+   "mortgage": 28000000,
+   "cashFlow": -5000
+  },
+  {
+   "id": "big-re-spb-kupchino",
+   "kind": "realEstate",
+   "category": "aptSPB",
+   "title": "Однушка в Купчино (Питер)",
+   "text": "Классика Питера: серый дом, тёплые батареи, надёжный жилец. Продавец даёт рассрочку — торопится на дачу.",
+   "cost": 8000000,
+   "downPayment": 600000,
+   "mortgage": 7400000,
+   "cashFlow": 38000
+  },
+  {
+   "id": "big-re-spb-vasilevsky",
+   "kind": "realEstate",
+   "category": "aptSPB",
+   "title": "Двушка на Васильевском",
+   "text": "Белые ночи, туристы, студенты — жильё пустым не стоит. Рассрочка от продавца, первый взнос скромный.",
+   "cost": 14000000,
+   "downPayment": 1200000,
+   "mortgage": 12800000,
+   "cashFlow": 62000
+  },
+  {
+   "id": "big-re-dxb-jvc",
+   "kind": "realEstate",
+   "category": "aptDXB",
+   "title": "Студия в Дубае (район JVC)",
+   "text": "Застройщик даёт рассрочку до самых ключей. Аренда в дирхамах — поток в рублях радует глаз.",
+   "cost": 18000000,
+   "downPayment": 1500000,
+   "mortgage": 16500000,
+   "cashFlow": 90000
+  },
+  {
+   "id": "big-re-dxb-marina",
+   "kind": "realEstate",
+   "category": "aptDXB",
+   "title": "Апартаменты у Дубай-Марины",
+   "text": "Туристы платят круглый год, управляющая компания всё делает сама. Вход дорогой, зато поток — как набережная в пятницу вечером.",
+   "cost": 28000000,
+   "downPayment": 2000000,
+   "mortgage": 26000000,
+   "cashFlow": 115000
+  },
+  {
+   "id": "big-re-tur-alanya",
+   "kind": "realEstate",
+   "category": "aptTUR",
+   "title": "Квартира 1+1 в Алании",
+   "text": "Море через дорогу, зимовщики из России записываются в очередь. Застройщик даёт рассрочку — осталось две квартиры.",
+   "cost": 7500000,
+   "downPayment": 600000,
+   "mortgage": 6900000,
+   "cashFlow": 42000
+  },
+  {
+   "id": "big-re-tur-istanbul",
+   "kind": "realEstate",
+   "category": "aptTUR",
+   "title": "Квартира в новом районе Стамбула",
+   "text": "Район растёт, но пока полупустой: жильцы меняются, управляющий берёт своё. После платежа рассрочки — небольшой минус. Ставка на рост.",
+   "cost": 11000000,
+   "downPayment": 900000,
+   "mortgage": 10100000,
+   "cashFlow": -4000
+  },
+  {
+   "id": "big-re-house-zubovo",
+   "kind": "realEstate",
+   "category": "houseRF",
+   "title": "Дом в Зубово (пригород Уфы)",
+   "text": "Семья с тремя детьми готова снимать годами — им нужен двор и мангал. Продавец согласен на рассрочку.",
+   "cost": 12000000,
+   "downPayment": 1000000,
+   "mortgage": 11000000,
+   "cashFlow": 50000
+  },
+  {
+   "id": "big-re-house-kama",
+   "kind": "realEstate",
+   "category": "houseRF",
+   "title": "Дом у Камы под посуточную сдачу",
+   "text": "Баня, причал, беседка. Летом бронь на месяц вперёд, зимой — корпоративы. Хозяин устал от гостей и даёт рассрочку.",
+   "cost": 15000000,
+   "downPayment": 1300000,
+   "mortgage": 13700000,
+   "cashFlow": 75000
+  },
+  {
+   "id": "big-re-chelny-studio",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия в Набережных Челнах",
+   "text": "Рядом завод — вахтовики снимают без торга. Взнос маленький, рассрочка от застройщика честная.",
+   "cost": 4000000,
+   "downPayment": 300000,
+   "mortgage": 3700000,
+   "cashFlow": 20000
+  },
+  {
+   "id": "big-re-ufa-arena-studio",
+   "kind": "realEstate",
+   "category": "roomUFA",
+   "title": "Студия у «Уфа-Арены»",
+   "text": "Студенты и болельщики — очередь из желающих снять. Продавец переезжает в Казань и даёт рассрочку.",
+   "cost": 4500000,
+   "downPayment": 400000,
+   "mortgage": 4100000,
+   "cashFlow": 24000
+  },
+  {
+   "id": "big-biz-bakery-ufa",
+   "kind": "business",
+   "category": "bizFood",
+   "title": "Пекарня в Уфе",
+   "text": "Запах свежего хлеба продаёт сам. Печи, тандыр и обученная смена — хозяин уходит на покой, остаток в рассрочку.",
+   "cost": 3500000,
+   "downPayment": 500000,
+   "liability": 3000000,
+   "cashFlow": 60000
+  },
+  {
+   "id": "big-biz-halal-cafe-kzn",
+   "kind": "business",
+   "category": "bizFood",
+   "title": "Халяль-кафе в Казани",
+   "text": "Место у мечети, обеды разлетаются к часу дня. Повар остаётся, рецепты в подарок, остаток — в рассрочку.",
+   "cost": 6000000,
+   "downPayment": 800000,
+   "liability": 5200000,
+   "cashFlow": 90000
+  },
+  {
+   "id": "big-biz-carwash-chelny",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Автомойка самообслуживания (Челны)",
+   "text": "Шесть постов, работают круглые сутки и зарплату не просят. Продавец уезжает и отдаёт остаток в рассрочку.",
+   "cost": 8000000,
+   "downPayment": 1000000,
+   "liability": 7000000,
+   "cashFlow": 100000
+  },
+  {
+   "id": "big-biz-darkstore-msk",
+   "kind": "business",
+   "category": "bizFood",
+   "title": "Дарк-стор в Москве",
+   "text": "Склад, курьеры и город, который хочет есть ночью. Заказы растут каждый месяц, остаток — в рассрочку.",
+   "cost": 12000000,
+   "downPayment": 1500000,
+   "liability": 10500000,
+   "cashFlow": 150000
+  },
+  {
+   "id": "big-biz-pvz-ufa",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Пункт выдачи заказов (Уфа)",
+   "text": "Люди заказывают всё подряд — выдавать кому-то надо. Аренда копеечная, район растёт. Рассрочка от владельца.",
+   "cost": 1500000,
+   "downPayment": 300000,
+   "liability": 1200000,
+   "cashFlow": 25000
+  },
+  {
+   "id": "big-biz-barbershop-kzn",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Барбершоп в Казани",
+   "text": "Кресла заняты, борода в моде десять лет и сдаваться не собирается. Мастера остаются, остаток — в рассрочку.",
+   "cost": 2500000,
+   "downPayment": 400000,
+   "liability": 2100000,
+   "cashFlow": 45000
+  },
+  {
+   "id": "big-biz-kids-center-ufa",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Детский центр в Уфе",
+   "text": "Родители готовы платить за час тишины. Группы набраны до лета, лицензия есть, владелица даёт рассрочку.",
+   "cost": 4000000,
+   "downPayment": 600000,
+   "liability": 3400000,
+   "cashFlow": 65000
+  },
+  {
+   "id": "big-biz-shaurma-spb",
+   "kind": "business",
+   "category": "bizFood",
+   "title": "Сеть шаурмы в Питере (3 точки)",
+   "text": "Шаурма в Питере — твёрдая валюта. Три точки у метро, очередь и после полуночи. Владелец уходит в стройку, остаток — в рассрочку.",
+   "cost": 9000000,
+   "downPayment": 1200000,
+   "liability": 7800000,
+   "cashFlow": 130000
+  },
+  {
+   "id": "big-biz-print-kzn",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Типография в Казани",
+   "text": "Печатает меню, коробки и свадебные приглашения — а свадьбы в Казани не кончаются никогда. Остаток в рассрочку.",
+   "cost": 5000000,
+   "downPayment": 700000,
+   "liability": 4300000,
+   "cashFlow": 70000
+  },
+  {
+   "id": "big-biz-online-store",
+   "kind": "business",
+   "category": "bizDigital",
+   "title": "Интернет-магазин подарков",
+   "text": "Сайт, склад у поставщика и постоянные покупатели. Работает из любой точки, где ловит интернет. Остаток — в рассрочку.",
+   "cost": 3000000,
+   "downPayment": 500000,
+   "liability": 2500000,
+   "cashFlow": 55000
+  },
+  {
+   "id": "big-biz-scooters-kzn",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Прокат самокатов (Казань)",
+   "text": "Сто самокатов, приложение и набережная. Летом — золотая жила, зимой — склад, но в среднем по году поток уверенный. Остаток — в рассрочку.",
+   "cost": 7000000,
+   "downPayment": 900000,
+   "liability": 6100000,
+   "cashFlow": 85000
+  },
+  {
+   "id": "big-partner-start-basic",
+   "kind": "business",
+   "category": "partnership",
+   "title": "Партнёрская программа: стартовый пакет",
+   "text": "Купил продукцию на пробу — получил место в партнёрской программе. Привёл людей — компания платит процент с их товарооборота. Само не растёт: командой надо заниматься.",
+   "cost": 28900,
+   "downPayment": 28900,
+   "liability": 0,
+   "cashFlow": 3000,
+   "growthPerPayday": 1500,
+   "growthCap": 40000
+  },
+  {
+   "id": "big-partner-start-team",
+   "kind": "business",
+   "category": "partnership",
+   "title": "Стартовый пакет + первая команда",
+   "text": "Трое знакомых уже покупают продукцию каждый месяц. Дальше — встречи, чай и разговоры: процент с товарооборота растёт, только если растёт команда.",
+   "cost": 28900,
+   "downPayment": 28900,
+   "liability": 0,
+   "cashFlow": 4000,
+   "growthPerPayday": 2000,
+   "growthCap": 50000
+  },
+  {
+   "id": "big-partner-start-online",
+   "kind": "business",
+   "category": "partnership",
+   "title": "Стартовый пакет: команда через блог",
+   "text": "Ведёшь блог — люди приходят сами. Компания платит процент с товарооборота команды. Работает, пока работаешь ты: бросишь — приток остановится.",
+   "cost": 28900,
+   "downPayment": 28900,
+   "liability": 0,
+   "cashFlow": 3000,
+   "growthPerPayday": 2500,
+   "growthCap": 60000
+  },
+  {
+   "id": "big-partner-expand",
+   "kind": "business",
+   "category": "partnership",
+   "title": "Расширенный пакет партнёра",
+   "text": "Полный набор продукции и старший наставник в придачу. Процент с товарооборота выше, но и спрос с тебя больше: команду надо учить, а не только звать.",
+   "cost": 86700,
+   "downPayment": 86700,
+   "liability": 0,
+   "cashFlow": 5000,
+   "growthPerPayday": 3000,
+   "growthCap": 70000
+  },
+  {
+   "id": "big-partner-expand-leader",
+   "kind": "business",
+   "category": "partnership",
+   "title": "Расширенный пакет: путь наставника",
+   "text": "Заходишь сразу всерьёз: обучаешь новичков, компания платит процент с товарооборота всей команды. Чем больше помогаешь людям — тем толще конверт в день зарплаты.",
+   "cost": 86700,
+   "downPayment": 86700,
+   "liability": 0,
+   "cashFlow": 6000,
+   "growthPerPayday": 4000,
+   "growthCap": 90000
+  }
+ ],
+ "MARKET_CARDS_RU": [
+  {
+   "id": "mkt-sell-room-ufa",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "roomUFA",
+   "multiplierPct": 130,
+   "title": "Комнатный ажиотаж в Уфе",
+   "text": "Застройщик расселяет старый квартал под новый ЖК и скупает ВСЕ комнаты и студии. Даёт 130% от цены. Держал комнату — пришло твоё время."
+  },
+  {
+   "id": "mkt-sell-apt-kzn",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "aptKZN",
+   "multiplierPct": 140,
+   "title": "Казань принимает всех",
+   "text": "Большой форум, отели забиты до крыши. Инвесторы хватают квартиры под посуточную сдачу и дают 140% любому владельцу жилья в Казани."
+  },
+  {
+   "id": "mkt-sell-apt-msk",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "aptMSK",
+   "multiplierPct": 125,
+   "title": "Москва не резиновая, но дорогая",
+   "text": "Крупная компания перевозит сотрудников в столицу и выкупает жильё пачками. За московскую квартиру дают 125% — и даже не торгуются."
+  },
+  {
+   "id": "mkt-sell-apt-spb",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "aptSPB",
+   "multiplierPct": 135,
+   "title": "Питер вдохновляет",
+   "text": "Сериал про Питер порвал все рейтинги — романтики скупают квартиры с видом на дворы-колодцы. За питерское жильё дают 135%. Сырость в подарок."
+  },
+  {
+   "id": "mkt-sell-apt-dxb",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "aptDXB",
+   "multiplierPct": 65,
+   "title": "Паника в Дубае",
+   "text": "Война на Ближнем Востоке. Инвесторы бегут, перекупщики дают всего 65% за квартиры в Дубае. Кто-то теряет всё, а кто-то покупает дно."
+  },
+  {
+   "id": "mkt-sell-apt-tur",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "aptTUR",
+   "multiplierPct": 180,
+   "title": "Турецкий бум",
+   "text": "Лира просела, туристы прибывают — иностранцы сметают жильё на побережье. За квартиру в Стамбуле или Алании дают 180%. Чай за счёт покупателя."
+  },
+  {
+   "id": "mkt-sell-parking",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "parking",
+   "multiplierPct": 200,
+   "title": "Во дворе не встать",
+   "text": "Город убрал парковки с улиц. Машиноместа и кладовки теперь на вес золота — дают 200%. Кто смеялся над «бетонной клеткой», больше не смеётся."
+  },
+  {
+   "id": "mkt-sell-land",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "land",
+   "multiplierPct": 400,
+   "title": "Земельная лихорадка",
+   "text": "Слух: рядом с твоим участком проведут скоростную трассу и построят технопарк. Спекулянты дают 400% за землю. Слух, правда, никто не проверял."
+  },
+  {
+   "id": "mkt-sell-house-rf",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "houseRF",
+   "multiplierPct": 160,
+   "title": "Все на удалёнку — все за город",
+   "text": "Горожане устали от лифтов и соседа с перфоратором. Мода на свой дом: за дома в России дают 160%. Огород можешь забрать с собой."
+  },
+  {
+   "id": "mkt-sell-biz-food",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "bizFood",
+   "multiplierPct": 250,
+   "title": "Федеральная сеть проголодалась",
+   "text": "Крупная сеть общепита скупает местные точки: халяль-кафе, пекарни, шаурмичные. За бизнес на еде дают 250%. Рецепты просят в комплекте."
+  },
+  {
+   "id": "mkt-sell-biz-service",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "bizService",
+   "multiplierPct": 300,
+   "title": "Агрегатор всё съест",
+   "text": "Онлайн-агрегатор скупает сервисы: барбершопы, автомойки, клининг. Платит 300% — деньги инвесторов жгут карман. Второй раз звонить не будут."
+  },
+  {
+   "id": "mkt-sell-partnership",
+   "deck": "market",
+   "kind": "sellOffer",
+   "category": "partnership",
+   "multiplierPct": 150,
+   "title": "Лидер укрупняется",
+   "text": "Крупный лидер собирает команду мечты и перекупает партнёрские структуры целиком. За твой партнёрский бизнес дают 150%. Уходить или расти дальше?"
+  },
+  {
+   "id": "mkt-price-grit-peak",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "GRIT",
+   "price": 4000,
+   "title": "Робот станцевал — рынок упал в обморок",
+   "text": "Робот GRIT станцевал лезгинку на выставке, ролик разлетелся по всему интернету. Акции на пике: 4000 ₽."
+  },
+  {
+   "id": "mkt-price-grit-dip",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "GRIT",
+   "price": 100,
+   "title": "Робот споткнулся",
+   "text": "Робот GRIT упал со сцены прямо на презентации. Инвесторы упали следом. Цена — 100 ₽. Дно или трамплин?"
+  },
+  {
+   "id": "mkt-price-snail-dip",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "SNAIL",
+   "price": 500,
+   "title": "SNAIL оправдывает название",
+   "text": "Логисты SNAIL потеряли фуру с грузом. Нашли. Через месяц. Акции ползут по дну: 500 ₽."
+  },
+  {
+   "id": "mkt-price-myco-peak",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "MYCO",
+   "price": 4000,
+   "title": "Грибной прорыв",
+   "text": "Биотех MYCO запатентовал грибной белок — спортсмены и мамы в восторге. Акции на пике: 4000 ₽."
+  },
+  {
+   "id": "mkt-price-zap-dip",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "ZAP",
+   "price": 100,
+   "title": "Самокаты загнали в угол",
+   "text": "Центр города закрыли для самокатов. ZAP по 100 ₽ — дешевле одной поездки на самокате."
+  },
+  {
+   "id": "mkt-price-nest-peak",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "NEST",
+   "price": 3000,
+   "divPerShare": 25,
+   "title": "NEST свил гнездо на максимуме",
+   "text": "Индексный фонд NEST на пике: 3000 ₽ за пай, плюс 25 ₽ в месяц дивидендами — с прибыли компаний, всё чисто."
+  },
+  {
+   "id": "mkt-price-pepe-moon",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "PEPE",
+   "price": 4000,
+   "hideRange": true,
+   "title": "Лягушка улетела",
+   "text": "PEPE по 4000 ₽. Почему? Никто не знает. Куда дальше? Тем более никто не знает."
+  },
+  {
+   "id": "mkt-price-doge-floor",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "DOGE",
+   "price": 10,
+   "hideRange": true,
+   "title": "Собака устала",
+   "text": "Про DOGE все забыли. Цена — 10 ₽. Куда улетит завтра — неизвестно даже самой собаке."
+  },
+  {
+   "id": "mkt-price-gold-peak",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "GOLD",
+   "price": 9000,
+   "title": "Тихая гавань переполнена",
+   "text": "Мир штормит — все бегут в золото. 9000 ₽ за грамм-лот. Блестит, но не забывай: и золото бывает дорогим."
+  },
+  {
+   "id": "mkt-price-sukuk-issue",
+   "deck": "market",
+   "kind": "stockPrice",
+   "symbol": "SUKUK",
+   "price": 100000,
+   "incomePerUnit": 1300,
+   "title": "Новый выпуск арендных сертификатов",
+   "text": "Пай — 100 000 ₽, арендный доход — 1300 ₽ в месяц. Скучно? Зато халяль, и платят стабильно, как дворник метёт."
+  },
+  {
+   "id": "mkt-split-shib",
+   "deck": "market",
+   "kind": "stockSplit",
+   "symbol": "SHIB",
+   "direction": "split",
+   "title": "SHIB делится",
+   "text": "Сплит SHIB: каждая монета превращается в две. Монет вдвое больше — богатства ли вдвое больше, это уже как посмотреть."
+  },
+  {
+   "id": "mkt-split-bonk",
+   "deck": "market",
+   "kind": "stockSplit",
+   "symbol": "BONK",
+   "direction": "split",
+   "title": "BONK размножился",
+   "text": "Сплит BONK: держателям удваивают монеты. В чатах праздник, у экономистов вопросы."
+  },
+  {
+   "id": "mkt-split-wif",
+   "deck": "market",
+   "kind": "stockSplit",
+   "symbol": "WIF",
+   "direction": "reverse",
+   "title": "WIF склеили",
+   "text": "Обратный сплит WIF: десять монет склеивают в одну. Звучит солидно, пахнет паникой."
+  },
+  {
+   "id": "mkt-split-doge",
+   "deck": "market",
+   "kind": "stockSplit",
+   "symbol": "DOGE",
+   "direction": "reverse",
+   "title": "Собаку собрали в кучу",
+   "text": "Обратный сплит DOGE: сто старых монет — одна новая. Собака стала реже встречаться, но не стала породистее."
+  },
+  {
+   "id": "mkt-wind-tax-refund",
+   "deck": "market",
+   "kind": "windfall",
+   "flatAmount": 15000,
+   "scope": "all",
+   "title": "Налоговый вычет",
+   "text": "Государство вспомнило про людей: вычеты одобрены всем. Каждый игрок получает 15 000 ₽. Да, так бывает."
+  },
+  {
+   "id": "mkt-wind-cashback",
+   "deck": "market",
+   "kind": "windfall",
+   "flatAmount": 8000,
+   "scope": "self",
+   "title": "Кэшбек года",
+   "text": "Банк подвёл итоги года — тебе упало 8000 ₽ кэшбека. Мелочь, а приятно. Только не спусти на новый чехол для телефона."
+  },
+  {
+   "id": "mkt-wind-rent-review",
+   "deck": "market",
+   "kind": "windfall",
+   "amountPerRealEstate": 10000,
+   "scope": "all",
+   "title": "Рента пересмотрена",
+   "text": "Рынок аренды подрос. Жильцы поворчали — и согласились. Каждый твой объект недвижимости приносит разово по 10 000 ₽."
+  },
+  {
+   "id": "mkt-wind-autopromo",
+   "deck": "market",
+   "kind": "windfall",
+   "amountPerPartnership": 150000,
+   "scope": "all",
+   "title": "Автопромоушен закрыт!",
+   "text": "Структура сделала объём — автопромоушен закрыт! Владельцы партнёрского бизнеса получают по 150 000 ₽ бонуса. Команда решает."
+  },
+  {
+   "id": "mkt-raise-promotion",
+   "deck": "market",
+   "kind": "payRaise",
+   "amount": 15000,
+   "title": "Вас повысили",
+   "text": "Начальник ушёл на пенсию, кресло — твоё. Совещаний больше, но и зарплата выросла: +15 000 ₽ в месяц."
+  },
+  {
+   "id": "mkt-raise-new-job",
+   "deck": "market",
+   "kind": "payRaise",
+   "amount": 25000,
+   "title": "Сменил работу",
+   "text": "Тебя переманили туда, где платят. Старый начальник обиделся, зато оклад вырос на 25 000 ₽ в месяц."
+  },
+  {
+   "id": "mkt-raise-bonus-to-salary",
+   "deck": "market",
+   "kind": "payRaise",
+   "amount": 10000,
+   "title": "Премия стала окладом",
+   "text": "Ты так стабильно перевыполнял план, что премию вшили в оклад. +10 000 ₽ в месяц — теперь навсегда."
+  },
+  {
+   "id": "mkt-raise-side-hustle",
+   "deck": "market",
+   "kind": "payRaise",
+   "amount": 8000,
+   "title": "Подработка стала постоянной",
+   "text": "Заказчику надоело звонить по мелочи — оформил тебя насовсем. +8000 ₽ в месяц каждый месяц."
+  }
+ ],
+ "DOODADS_RU": [
+  {
+   "id": "dd-shtraf-kamera",
+   "title": "Письмо счастья",
+   "flavor": "Камера поймала по дороге на дачу. Заплатил быстро — половина суммы, но всё равно обидно.",
+   "amount": 1500,
+   "financeable": false
+  },
+  {
+   "id": "dd-sabantuy-gostintsy",
+   "title": "Гостинцы на Сабантуй",
+   "flavor": "Чак-чак, эчпочмаки и мешок конфет. Без них на майдан приходить неприлично.",
+   "amount": 2000,
+   "financeable": false
+  },
+  {
+   "id": "dd-utrennik-v-sadike",
+   "title": "Утренник в садике",
+   "flavor": "Торт, шарики и костюм зайчика. Зайчик, кстати, — ты.",
+   "amount": 2000,
+   "financeable": false
+  },
+  {
+   "id": "dd-prostuda-apteka",
+   "title": "Вся семья простыла",
+   "flavor": "В аптеке уже здороваются по имени. Плохой знак.",
+   "amount": 3000,
+   "financeable": false
+  },
+  {
+   "id": "dd-detsad-doplata",
+   "title": "Доплата за детский сад",
+   "flavor": "Кружок лепки, бассейн и «фонд группы». Отказаться нельзя согласиться.",
+   "amount": 3000,
+   "financeable": false
+  },
+  {
+   "id": "dd-smesitel-potek",
+   "title": "Потёк смеситель",
+   "flavor": "Сантехник пришёл, поцокал языком. Цоканье оказалось платным.",
+   "amount": 3000,
+   "financeable": false
+  },
+  {
+   "id": "dd-sbor-na-mechet",
+   "title": "Сбор на ремонт мечети",
+   "flavor": "Сосед с ведомостью уже у двери. Доброе дело — не в убыток.",
+   "amount": 3000,
+   "financeable": false
+  },
+  {
+   "id": "dd-botinki-rebenku",
+   "title": "Ботинки ребёнку",
+   "flavor": "Нога выросла за лето на два размера. Кормить меньше — не вариант.",
+   "amount": 3000,
+   "financeable": false
+  },
+  {
+   "id": "dd-shinomontazh",
+   "title": "Переобувка машины",
+   "flavor": "Снег выпал внезапно. Как и каждый год. Очередь на шиномонтаж — до вечера.",
+   "amount": 4000,
+   "financeable": false
+  },
+  {
+   "id": "dd-sbory-k-shkole",
+   "title": "Сборы к школе",
+   "flavor": "Список от учителя — на два листа. Мелким почерком.",
+   "amount": 4000,
+   "financeable": false
+  },
+  {
+   "id": "dd-gosti-iz-derevni",
+   "title": "Гости из деревни",
+   "flavor": "Родня приехала «на денёк». Третий день холодильник держится из последних сил.",
+   "amount": 4000,
+   "financeable": false
+  },
+  {
+   "id": "dd-kursy-korana-detyam",
+   "title": "Курсы чтения Корана",
+   "flavor": "Учитель хвалит: таджвид у сына уже лучше, чем у папы.",
+   "amount": 4000,
+   "financeable": false
+  },
+  {
+   "id": "dd-evakuator",
+   "title": "Эвакуатор",
+   "flavor": "Припарковался «на минутку». Минутка обошлась дорого.",
+   "amount": 5000,
+   "financeable": false
+  },
+  {
+   "id": "dd-kot-zabolel",
+   "title": "Кот заболел",
+   "flavor": "Ветеринар говорит — переел. Кот молчит и не раскаивается.",
+   "amount": 5000,
+   "financeable": false
+  },
+  {
+   "id": "dd-podarok-na-nikah",
+   "title": "Подарок на никах",
+   "flavor": "Друг женится! Меньше положить нельзя — родня считает.",
+   "amount": 5000,
+   "financeable": false
+  },
+  {
+   "id": "dd-uraza-bayram-podarki",
+   "title": "Подарки на Ураза-байрам",
+   "flavor": "Детям — обновки, племянникам — конверты. Всем радость, тебе — расходы.",
+   "amount": 5000,
+   "financeable": false
+  },
+  {
+   "id": "dd-stiralka-slomalas",
+   "title": "Стиралка сломалась",
+   "flavor": "Мастер сказал «подшипник». Прозвучало как приговор.",
+   "amount": 6000,
+   "financeable": false
+  },
+  {
+   "id": "dd-den-rozhdeniya-v-kafe",
+   "title": "День рождения в кафе",
+   "flavor": "Позвал «только своих». Своих оказалось семнадцать.",
+   "amount": 6000,
+   "financeable": false
+  },
+  {
+   "id": "dd-razbil-ekran",
+   "title": "Разбил экран телефона",
+   "flavor": "Чехол купил ещё год назад. Лежит в ящике, целёхонький.",
+   "amount": 6000,
+   "financeable": false
+  },
+  {
+   "id": "dd-repetitor-matematika",
+   "title": "Репетитор по математике",
+   "flavor": "После третьей двойки решили: пора. Репетитор дешевле, чем пересдача. Наверное.",
+   "amount": 6000,
+   "financeable": false
+  },
+  {
+   "id": "dd-stomatolog-plomba",
+   "title": "Стоматолог",
+   "flavor": "Зуб ныл месяц — терпел. Дотерпелся до «будем спасать».",
+   "amount": 7000,
+   "financeable": false
+  },
+  {
+   "id": "dd-akvapark-s-detmi",
+   "title": "Аквапарк с детьми",
+   "flavor": "Обещал ещё зимой. Дети помнят всё.",
+   "amount": 7000,
+   "financeable": false
+  },
+  {
+   "id": "dd-godovshchina-svadby",
+   "title": "Годовщина свадьбы",
+   "flavor": "Букет, ужин и «да ничего не надо, что ты». Надо.",
+   "amount": 7000,
+   "financeable": false
+  },
+  {
+   "id": "dd-iftar-na-rodnyu",
+   "title": "Ифтар на всю родню",
+   "flavor": "Позвал гостей на ифтар. Баракат — в дом, плов — на двадцать человек.",
+   "amount": 8000,
+   "financeable": false
+  },
+  {
+   "id": "dd-kurtka-na-zimu",
+   "title": "Куртка на зиму",
+   "flavor": "Старая ещё ничего, но жена сказала: «стыдно перед людьми».",
+   "amount": 8000,
+   "financeable": false
+  },
+  {
+   "id": "dd-zamena-akkumulyatora",
+   "title": "Замена аккумулятора",
+   "flavor": "В минус тридцать машина не завелась. Прикуривать у соседа надоело на третий раз.",
+   "amount": 8000,
+   "financeable": false
+  },
+  {
+   "id": "dd-novye-ochki",
+   "title": "Новые очки",
+   "flavor": "Окулист спросил: «Как вы вообще ездите?» Лучше бы не спрашивал.",
+   "amount": 9000,
+   "financeable": false
+  },
+  {
+   "id": "dd-noutbuk-zalili",
+   "title": "Ноутбук залили чаем",
+   "flavor": "Дочка делала уроки с чаем. Чай победил.",
+   "amount": 10000,
+   "financeable": false
+  },
+  {
+   "id": "dd-puhovik-zhene",
+   "title": "Пуховик жене",
+   "flavor": "«Мне ничего не надо» продержалось до первого мороза.",
+   "amount": 12000,
+   "financeable": true
+  },
+  {
+   "id": "dd-samokat-synu",
+   "title": "Самокат сыну",
+   "flavor": "У всех во дворе есть. Быть «не как все» сын отказался наотрез.",
+   "amount": 12000,
+   "financeable": true
+  },
+  {
+   "id": "dd-kostyum-na-vypusknoy",
+   "title": "Костюм на выпускной",
+   "flavor": "Наденет один раз. Зато на фото — навсегда.",
+   "amount": 12000,
+   "financeable": true
+  },
+  {
+   "id": "dd-velosiped-dochke",
+   "title": "Велосипед дочке",
+   "flavor": "Обещал за пятёрки в четверти. Пятёрки предъявлены. Крыть нечем.",
+   "amount": 14000,
+   "financeable": true
+  },
+  {
+   "id": "dd-telefon-rebenku",
+   "title": "Телефон ребёнку",
+   "flavor": "«У всех в классе уже есть» — аргумент железный, проверен поколениями.",
+   "amount": 15000,
+   "financeable": true
+  },
+  {
+   "id": "dd-koronka-na-zub",
+   "title": "Коронка на зуб",
+   "flavor": "Врач показал прайс — зуб сразу заболел меньше. Но было поздно.",
+   "amount": 15000,
+   "financeable": true
+  },
+  {
+   "id": "dd-baran-na-kurban",
+   "title": "Баран на Курбан-байрам",
+   "flavor": "Выбрал самого справного. Мясо — себе, родне и нуждающимся, всё по сунне.",
+   "amount": 18000,
+   "financeable": true
+  },
+  {
+   "id": "dd-abonement-v-zal",
+   "title": "Годовой абонемент в зал",
+   "flavor": "С понедельника — новая жизнь. Абонемент — свидетель старой.",
+   "amount": 20000,
+   "financeable": true
+  },
+  {
+   "id": "dd-putevka-v-lager",
+   "title": "Путёвка в лагерь",
+   "flavor": "Три недели тишины дома. Если подумать — почти даром.",
+   "amount": 25000,
+   "financeable": true
+  },
+  {
+   "id": "dd-televizor-sgorel",
+   "title": "Телевизор приказал долго жить",
+   "flavor": "Не пережил финал по борьбе. Дед без телевизора с внуками сидеть отказывается.",
+   "amount": 28000,
+   "financeable": true
+  }
+ ],
+ "FAST_BOARD_RU": [
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-coffee-ufa",
+   "name": "Халяль-кофейня у Соборной мечети, Уфа",
+   "flavor": "Пятничный поток гостей стабильнее курса рубля. Бариста Марат по совместительству охранник и психолог.",
+   "downPayment": 2500000,
+   "cashFlow": 85000
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-hajj-family",
+   "name": "Хадж всей семьёй",
+   "flavor": "Мекка, Медина, родители и дети — все вместе. Мечта, ради которой всё и затевалось.",
+   "price": 3000000
+  },
+  {
+   "type": "taxAudit"
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-echpochmak-kzn",
+   "name": "Сеть пекарен «Эчпочмак и точка», Казань",
+   "flavor": "Три угла, три очереди, ноль свободных столиков. Тесто по пятницам месит сам основатель.",
+   "downPayment": 3500000,
+   "cashFlow": 110000
+  },
+  {
+   "type": "venture",
+   "id": "fast-venture-drill-siberia",
+   "name": "Доля в буровой под Сургутом",
+   "flavor": "Партнёры зовут в скважину. Морозы минус сорок, доходы плюс шестьсот.",
+   "downPayment": 8000000,
+   "cashFlow": 600000,
+   "threshold": 5
+  },
+  {
+   "type": "taxAudit"
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-supercar",
+   "name": "Суперкар с панорамной крышей",
+   "flavor": "Разгон до сотни быстрее, чем сосед успеет спросить «почём брал?».",
+   "price": 25000000
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-carwash-ufa",
+   "name": "Автомойки самообслуживания, Уфа",
+   "flavor": "Зима девять месяцев, грязь не кончается никогда. Деньги капают вместе с пеной.",
+   "downPayment": 4000000,
+   "cashFlow": 130000
+  },
+  {
+   "type": "venture",
+   "id": "fast-venture-yamal-crew",
+   "name": "Вахтовый подряд на Ямале",
+   "flavor": "Бригада просится под ваше крыло: техника и харчи с вас, прибыль пополам. Север шутить не любит.",
+   "downPayment": 4000000,
+   "cashFlow": 300000,
+   "threshold": 5
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-sochi-house",
+   "name": "Дом у моря в Сочи",
+   "flavor": "Шум волн вместо будильника. Родня приедет «на недельку» — навсегда.",
+   "price": 40000000
+  },
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-halal-cafe-kzn",
+   "name": "Сеть халяль-кафе «Казан»",
+   "flavor": "Плов как у бабушки, наценка как в Москве. Владелец переезжает и продаёт долю.",
+   "downPayment": 6000000,
+   "cashFlow": 190000
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-build-mosque",
+   "name": "Построить мечеть",
+   "flavor": "Имя не на табличке, а в сердцах целого района. Доброе дело, которое работает вечно.",
+   "price": 30000000
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-sewing-chelny",
+   "name": "Швейный цех спецодежды, Наб. Челны",
+   "flavor": "Заводы рядом, роба нужна всем и всегда. Заказы расписаны до зимы.",
+   "downPayment": 3000000,
+   "cashFlow": 100000
+  },
+  {
+   "type": "lawsuit"
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-orphan-fund",
+   "name": "Фонд стипендий для сирот",
+   "flavor": "Сто ребят выучатся и встанут на ноги. Вложение, у которого нет цены выхода.",
+   "price": 20000000
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-it-artel-innopolis",
+   "name": "ИТ-артель в Иннополисе",
+   "flavor": "Пишут учёт для ферм и мясокомбинатов. Клиенты платят вовремя — большая редкость.",
+   "downPayment": 5000000,
+   "cashFlow": 160000
+  },
+  {
+   "type": "divorce"
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-water-rodnik",
+   "name": "Доставка воды «Родник», Казань",
+   "flavor": "Офисы пьют как не в себя. Два фургона и водитель Ильдар в комплекте.",
+   "downPayment": 2500000,
+   "cashFlow": 80000
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-world-trip",
+   "name": "Кругосветка с семьёй",
+   "flavor": "Год без школы и планёрок. География вживую, а не по учебнику.",
+   "price": 8000000
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-glamping-altai",
+   "name": "Глэмпинг на Алтае",
+   "flavor": "Шатры с видом на горы. Москвичи платят за «отдых без связи» больше, чем за связь.",
+   "downPayment": 7000000,
+   "cashFlow": 220000
+  },
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-frozen-food-chelny",
+   "name": "Завод халяль-полуфабрикатов, Наб. Челны",
+   "flavor": "Пельмени и манты улетают со склада быстрее, чем варятся. Сертификат — в рамке на стене.",
+   "downPayment": 10000000,
+   "cashFlow": 280000
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-apple-garden",
+   "name": "Свой яблоневый сад",
+   "flavor": "Ряды антоновки до горизонта. Осенью — ящики яблок всем соседям, даром.",
+   "price": 6000000
+  },
+  {
+   "type": "lawsuit"
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-dental-kzn",
+   "name": "Стоматология «Жемчуг», Казань",
+   "flavor": "Три кресла, запись на месяц вперёд. За улыбку платят охотно — особенно перед никахом.",
+   "downPayment": 12000000,
+   "cashFlow": 380000
+  },
+  {
+   "type": "venture",
+   "id": "fast-venture-startup-airat",
+   "name": "Стартап друга Айрата",
+   "flavor": "Приложение для поиска халяль-кафе. Айрат клянётся: «Это новый единорог, брат!» Ну-ну.",
+   "downPayment": 3000000,
+   "cashFlow": 250000,
+   "threshold": 5
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-animal-shelter",
+   "name": "Приют для животных",
+   "flavor": "Триста хвостов обретут дом. Дивиденды выплачиваются мурлыканьем.",
+   "price": 10000000
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-autoservice-ufa",
+   "name": "Сеть автосервисов, Уфа",
+   "flavor": "Русская дорога сама приводит клиентов. Мастера честные: лишнего не откручивают.",
+   "downPayment": 8000000,
+   "cashFlow": 210000
+  },
+  {
+   "type": "downsized"
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-media-studio",
+   "name": "Собственная медиастудия",
+   "flavor": "Свет, камера, свои передачи. Больше никто не скажет «нам такое не подходит».",
+   "price": 12000000
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-madrasa-school",
+   "name": "Частная школа-медресе (складчина), Казань",
+   "flavor": "Дети учат Коран и таблицу умножения одинаково бодро. Очередь на два года вперёд.",
+   "downPayment": 4500000,
+   "cashFlow": 140000
+  },
+  {
+   "type": "cashflowDay"
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-altai-cabin",
+   "name": "Домик в горах Алтая",
+   "flavor": "Банька, кедры, связи нет — и слава Богу.",
+   "price": 9000000
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-logistics-chelny",
+   "name": "Логистическая компания, Наб. Челны",
+   "flavor": "Десять фур возят груз от Казани до Дубая. Дальнобойщики не курят — экономия и на этом.",
+   "downPayment": 13000000,
+   "cashFlow": 420000
+  },
+  {
+   "type": "lawsuit"
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-goat-farm-bashkiria",
+   "name": "Козья ферма с сыроварней, Башкирия",
+   "flavor": "Сыр разбирают рестораны Казани и Уфы. Козы работают без выходных и не просят отпускных.",
+   "downPayment": 5500000,
+   "cashFlow": 170000
+  },
+  {
+   "type": "charity"
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-small-plane",
+   "name": "Малый самолёт и лицензия пилота",
+   "flavor": "Уфа — Казань за час, над пробками. Штурвал свой, небо общее.",
+   "price": 18000000
+  },
+  {
+   "type": "venture",
+   "id": "fast-venture-export-uae",
+   "name": "Экспорт халяль-мяса в Эмираты",
+   "flavor": "Контракт с сетью в Дубае. Если самолёт долетит и печати сойдутся — озолотитесь.",
+   "downPayment": 6000000,
+   "cashFlow": 450000,
+   "threshold": 5
+  },
+  {
+   "type": "business",
+   "id": "fast-biz-meat-shops-kzn",
+   "name": "Сеть мясных лавок «Халяль», Казань",
+   "flavor": "Пять точек на рынках. Мясник Рустам режет правильно — очередь стоит с утра.",
+   "downPayment": 9000000,
+   "cashFlow": 290000
+  },
+  {
+   "type": "divorce"
+  },
+  {
+   "type": "dream",
+   "id": "fast-dream-village-library",
+   "name": "Библиотека-фонд в родном селе",
+   "flavor": "Там, где вы бегали босиком, дети будут читать до ночи. Земляки запомнят.",
+   "price": 5000000
+  }
+ ]
+}

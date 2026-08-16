@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { PayableDebt, Seat } from '../engine/types'
 import { DEBT_TO_PAYMENT } from '../engine/types'
 import type { TableEvent } from '../engine/events'
+import { RULES } from '../engine/ledger'
 import { money } from './PlayerPanel'
 
 const DEBT_LABEL: Record<PayableDebt, string> = {
@@ -22,9 +23,13 @@ export function BankModal({
   onClose: () => void
 }) {
   const l = seat.ledger
-  const [loan, setLoan] = useState(1000)
-  const [repay, setRepay] = useState(1000)
+  const step = RULES.currency === 'RUB' ? 10_000 : 1000
+  const [loan, setLoan] = useState(step)
+  const [repay, setRepay] = useState(step)
+  const [confirmDebt, setConfirmDebt] = useState<PayableDebt | null>(null)
   const onFast = seat.track === 'fast'
+  // Халяль-режим: процентных займов нет, остаётся только досрочное погашение.
+  const noLoans = !RULES.loansEnabled
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/85 p-4" onClick={onClose}>
@@ -33,7 +38,7 @@ export function BankModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold">🏦 Банк — {seat.name}</h2>
+          <h2 className="text-lg font-bold">{noLoans ? '💼 Финансы' : '🏦 Банк'} — {seat.name}</h2>
           <button onClick={onClose} className="text-[var(--muted)] hover:text-[var(--ink)]">
             ✕
           </button>
@@ -44,20 +49,24 @@ export function BankModal({
           <span className="tabnum text-lg font-bold">{money(l.cash)}</span>
         </div>
 
-        {onFast ? (
-          <p className="text-sm text-[var(--muted)]">На Полосе свободы кредитов нет.</p>
+        {onFast || noLoans ? (
+          <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+            {noLoans
+              ? 'Процентных кредитов в этой игре нет. Крупное берётся в рассрочку прямо в сделке или с инвестором.'
+              : 'На Полосе свободы кредитов нет.'}
+          </p>
         ) : (
           <>
             <div className="mb-4">
               <div className="mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
-                Занять — $100/мес за каждую $1 000
+                Занять — 10% в месяц от суммы
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="range"
-                  min={1000}
-                  max={100000}
-                  step={1000}
+                  min={step}
+                  max={step * 100}
+                  step={step}
                   value={loan}
                   onChange={(e) => setLoan(Number(e.target.value))}
                   className="flex-1 accent-emerald-500"
@@ -80,9 +89,9 @@ export function BankModal({
                 <div className="flex items-center gap-2">
                   <input
                     type="range"
-                    min={1000}
-                    max={Math.max(1000, Math.min(l.liabilities.bankLoan, Math.floor(l.cash / 1000) * 1000))}
-                    step={1000}
+                    min={step}
+                    max={Math.max(step, Math.min(l.liabilities.bankLoan, Math.floor(l.cash / step) * step))}
+                    step={step}
                     value={repay}
                     onChange={(e) => setRepay(Number(e.target.value))}
                     className="flex-1 accent-emerald-500"
@@ -102,7 +111,7 @@ export function BankModal({
         )}
 
         <div>
-          <div className="mb-1.5 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+          <div className="mb-1.5 mt-4 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
             Закрыть долг целиком — платёж исчезает
           </div>
           <div className="space-y-1.5">
@@ -110,18 +119,30 @@ export function BankModal({
               const balance = l.liabilities[debt]
               if (balance <= 0) return null
               const payment = l.expenses[DEBT_TO_PAYMENT[debt]]
+              const armed = confirmDebt === debt
               return (
                 <button
                   key={debt}
                   disabled={l.cash < balance}
-                  onClick={() => dispatch({ type: 'PAY_OFF_DEBT', debt })}
-                  className="panel-2 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] disabled:opacity-40"
+                  onClick={() => {
+                    if (armed) {
+                      dispatch({ type: 'PAY_OFF_DEBT', debt })
+                      setConfirmDebt(null)
+                    } else {
+                      setConfirmDebt(debt)
+                    }
+                  }}
+                  className={`panel-2 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] disabled:opacity-40 ${
+                    armed ? 'border-amber-500 bg-amber-500/10' : ''
+                  }`}
                 >
                   <span>
-                    {DEBT_LABEL[debt]}
-                    <span className="ml-2 text-[var(--muted)]">−{money(payment)}/мес</span>
+                    {armed ? `Точно погасить? Спишется ${money(balance)}` : DEBT_LABEL[debt]}
+                    {!armed && <span className="ml-2 text-[var(--muted)]">−{money(payment)}/мес</span>}
                   </span>
-                  <span className="tabnum font-semibold">{money(balance)}</span>
+                  <span className="tabnum font-semibold">
+                    {armed ? 'Да, погасить' : money(balance)}
+                  </span>
                 </button>
               )
             })}

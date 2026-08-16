@@ -5,3 +5,4 @@ dist
 .dump*.mjs
 .selftest.mjs
 tsconfig.tsbuildinfo
+.mech.mjs

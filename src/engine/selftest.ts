@@ -5,7 +5,8 @@
 import { createTable, applyTableEvent, currentSeat, type TableSetup } from './table'
 import { decideBotEvent } from './bots'
 import { mulberry32 } from './rng'
-import { PROFESSIONS, dreamSpaces } from './data'
+import { PROFESSIONS, dreamSpaces, professionsFor, setActiveTheme, setFastBoardTheme } from './data'
+import { RULES, setRules } from './ledger'
 import {
   monthlyCashFlow,
   netWorth,
@@ -18,15 +19,21 @@ import type { BotDifficulty } from './types'
 
 const MAX_EVENTS = 20000
 
-function buildSetup(seed: number, difficulties: BotDifficulty[]): TableSetup {
+type Theme = 'classic' | 'offshore' | 'ru'
+
+function buildSetup(seed: number, difficulties: BotDifficulty[], theme: Theme): TableSetup {
+  // Поле и профессии зависят от темы — переключаем до чтения списков.
+  setActiveTheme(theme)
+  setFastBoardTheme(theme)
   const dreams = dreamSpaces()
+  const pool = professionsFor(theme)
   const rnd = mulberry32(seed)
   return {
     seed,
-    deckTheme: seed % 2 === 0 ? 'offshore' : 'classic',
+    deckTheme: theme,
     seats: difficulties.map((d, i) => ({
       name: `Бот ${i + 1}`,
-      professionId: PROFESSIONS[Math.floor(rnd() * PROFESSIONS.length)].id,
+      professionId: pool[Math.floor(rnd() * pool.length)].id,
       dreamSpace: dreams[Math.floor(rnd() * dreams.length)].index,
       isBot: true,
       botDifficulty: d,
@@ -45,14 +52,16 @@ interface Result {
   stalled: boolean
 }
 
-function playGame(seed: number, difficulties: BotDifficulty[]): Result {
-  const setup = buildSetup(seed, difficulties)
+function playGame(seed: number, difficulties: BotDifficulty[], theme: Theme): Result {
+  const setup = buildSetup(seed, difficulties, theme)
   let t = createTable(setup)
   const rnd = mulberry32(seed ^ 0x5f356495)
   let events = 0
   let stuck = 0
 
-  while (t.phase !== 'finished' && events < MAX_EVENTS) {
+  // Партия ботов меряется до ПЕРВОЙ победы: дальше живая игра продолжается
+  // для людей, а ботам мериться уже нечем.
+  while (t.phase !== 'finished' && !t.winnerId && events < MAX_EVENTS) {
     const before = t
     const ev = decideBotEvent(t, rnd)
     if (!ev) break
@@ -121,42 +130,48 @@ function checkFormulas() {
 
 // ─── Запуск ───────────────────────────────────────────────────────────
 
-console.log('\n=== Формулы против живой игры ===')
+console.log('\n=== Формулы против живой игры (классика) ===')
+setRules({ currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true })
 const formulasOk = checkFormulas()
 
-console.log('\n=== 40 партий ботов ===')
 const mixes: BotDifficulty[][] = [
   ['easy', 'medium'],
   ['medium', 'high'],
   ['high', 'unreal'],
   ['easy', 'medium', 'high', 'unreal'],
 ]
-const results: Result[] = []
-for (let i = 0; i < 40; i++) {
-  results.push(playGame(1000 + i * 37, mixes[i % mixes.length]))
+
+let anyStalled = 0
+for (const theme of ['classic', 'offshore', 'ru'] as Theme[]) {
+  console.log(`\n=== 30 партий ботов · тема «${theme}» ===`)
+  const results: Result[] = []
+  for (let i = 0; i < 30; i++) {
+    results.push(playGame(1000 + i * 37, mixes[i % mixes.length], theme))
+  }
+
+  const stalled = results.filter((r) => r.stalled)
+  anyStalled += stalled.length
+  const won = results.filter((r) => r.winner)
+  const avgTurns = Math.round(results.reduce((s, r) => s + r.turns, 0) / results.length)
+  const avgEvents = Math.round(results.reduce((s, r) => s + r.events, 0) / results.length)
+  const escapedGames = results.filter((r) => r.escaped > 0).length
+  const bankrupt = results.reduce((s, r) => s + r.bankrupt, 0)
+  const byReason: Record<string, number> = {}
+  for (const r of won) byReason[r.winReason ?? 'последний выживший'] = (byReason[r.winReason ?? 'последний выживший'] ?? 0) + 1
+  const byDiff: Record<string, number> = {}
+  for (const r of won) {
+    const d = r.winner!.match(/\((\w+)\)/)?.[1] ?? '?'
+    byDiff[d] = (byDiff[d] ?? 0) + 1
+  }
+
+  console.log(`  зависших:          ${stalled.length}`)
+  console.log(`  с победителем:     ${won.length} / ${results.length}`)
+  console.log(`  вышли из Круга:    ${escapedGames} партий · банкротов ${bankrupt}`)
+  console.log(`  средняя длина:     ${avgTurns} ходов / ${avgEvents} событий`)
+  console.log(`  победы по типу:    ${JSON.stringify(byReason)}`)
+  console.log(`  победы по уровню:  ${JSON.stringify(byDiff)}`)
 }
 
-const stalled = results.filter((r) => r.stalled)
-const won = results.filter((r) => r.winner)
-const avgTurns = Math.round(results.reduce((s, r) => s + r.turns, 0) / results.length)
-const avgEvents = Math.round(results.reduce((s, r) => s + r.events, 0) / results.length)
-const escapedGames = results.filter((r) => r.escaped > 0).length
-const byReason: Record<string, number> = {}
-for (const r of won) byReason[r.winReason ?? '?'] = (byReason[r.winReason ?? '?'] ?? 0) + 1
-const byDiff: Record<string, number> = {}
-for (const r of won) {
-  const d = r.winner!.match(/\((\w+)\)/)?.[1] ?? '?'
-  byDiff[d] = (byDiff[d] ?? 0) + 1
-}
-
-console.log(`  партий:            ${results.length}`)
-console.log(`  зависших:          ${stalled.length}`)
-console.log(`  с победителем:     ${won.length}`)
-console.log(`  вышли из Круга:    ${escapedGames} партий`)
-console.log(`  средняя длина:     ${avgTurns} ходов / ${avgEvents} событий`)
-console.log(`  победы по типу:    ${JSON.stringify(byReason)}`)
-console.log(`  победы по уровню:  ${JSON.stringify(byDiff)}`)
-
-const pass = formulasOk && stalled.length === 0
+const pass = formulasOk && anyStalled === 0
 console.log(`\n${pass ? '✅ ДВИЖОК ЖИВОЙ' : '❌ ЕСТЬ ПРОБЛЕМЫ'}\n`)
 if (!pass) process.exit(1)

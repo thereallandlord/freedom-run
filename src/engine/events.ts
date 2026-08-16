@@ -6,12 +6,13 @@ import type { PayableDebt } from './types'
  */
 export type LedgerEvent =
   | { type: 'PAYCHECK' }
+  | { type: 'SALARY_RAISE'; amount: number }
   | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse' }
-  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string }
+  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number }
   | { type: 'SELL_REAL_ESTATE'; assetId: string; salePrice: number }
-  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string }
+  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number }
   | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number }
   | { type: 'DOODAD'; amount: number }
   | { type: 'FINANCE_DOODAD'; amount: number }
@@ -43,8 +44,8 @@ export type LedgerEvent =
 export type TableEvent =
   | { type: 'ROLL'; dice: number[] }
   | { type: 'CHOOSE_DEAL'; size: 'small' | 'big' }
-  | { type: 'BUY_DEAL' }
-  | { type: 'BUY_STOCK_SHARES'; shares: number }
+  | { type: 'BUY_DEAL'; withInvestor?: boolean }
+  | { type: 'BUY_STOCK_SHARES'; shares: number; seatId?: string }
   | { type: 'PASS_CARD' }
   | { type: 'SELL_STOCK_LOT'; seatId: string; lotId: string; shares: number; pricePerShare: number }
   | { type: 'ACCEPT_OFFER'; seatId: string; assetId: string }
@@ -65,6 +66,7 @@ export type TableEvent =
   | { type: 'BANKRUPTCY_RECOVER' }
   | { type: 'BANKRUPTCY_QUIT' }
   | { type: 'END_TURN' }
+  | { type: 'FINISH_GAME' }
 
 export interface StampedEvent {
   seq: number

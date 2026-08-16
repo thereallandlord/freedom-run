@@ -12,8 +12,8 @@ import {
   hasConsumerDebt,
   hasSellableAssets,
 } from '../engine/table'
-import { monthlyCashFlow, totalExpenses } from '../engine/ledger'
-import { FAST_BOARD, cardText, fastSpaceText } from '../engine/data'
+import { RULES, monthlyCashFlow, totalExpenses } from '../engine/ledger'
+import { fastBoard, cardText, fastSpaceText } from '../engine/data'
 import { money, signed, tone } from './PlayerPanel'
 
 function Shell({
@@ -77,11 +77,15 @@ export function CardModal({
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => dispatch({ type: 'CHOOSE_DEAL', size: 'small' })} className="btn-ghost py-3">
               <div className="text-base">Малая</div>
-              <div className="text-[11px] text-[var(--muted)]">взнос до $5 000</div>
+              <div className="text-[11px] text-[var(--muted)]">
+                {RULES.currency === 'RUB' ? 'взнос до 150 000 ₽' : 'взнос до $5 000'}
+              </div>
             </button>
             <button onClick={() => dispatch({ type: 'CHOOSE_DEAL', size: 'big' })} className="btn-ghost py-3">
               <div className="text-base">Крупная</div>
-              <div className="text-[11px] text-[var(--muted)]">от $8 000</div>
+              <div className="text-[11px] text-[var(--muted)]">
+                {RULES.currency === 'RUB' ? 'от 200 000 ₽' : 'от $8 000'}
+              </div>
             </button>
           </div>
         </Shell>
@@ -101,7 +105,11 @@ export function CardModal({
             <div className="panel-2 space-y-1 rounded-lg p-3">
               <Stat label="Тикер" value={s.symbol} />
               <Stat label="Цена сегодня" value={money(s.price)} strong />
-              <Stat label="Диапазон" value={`${money(s.range[0])} – ${money(s.range[1])}`} />
+              {(s as any).hideRange ? (
+                <Stat label="Диапазон" value="никто не знает 🎲" />
+              ) : (
+                <Stat label="Диапазон" value={`${money(s.range[0])} – ${money(s.range[1])}`} />
+              )}
               {!!s.dividendPerShare && (
                 <Stat label="Дивиденд" value={`${money(s.dividendPerShare)}/шт/мес`} />
               )}
@@ -136,6 +144,33 @@ export function CardModal({
                 Пропустить
               </button>
             </div>
+
+            {table.seats.filter((x) => !x.outOfGame && x.track === 'rat' && x.id !== seat.id && x.ledger.cash >= s.price).length > 0 && (
+              <div className="panel-2 rounded-lg p-2">
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                  Купить по этой цене может любой игрок Круга
+                </div>
+                {table.seats
+                  .filter((x) => !x.outOfGame && x.track === 'rat' && x.id !== seat.id && x.ledger.cash >= s.price)
+                  .map((x) => {
+                    const canBuy = Math.floor(x.ledger.cash / s.price)
+                    return (
+                      <button
+                        key={x.id}
+                        onClick={() =>
+                          dispatch({ type: 'BUY_STOCK_SHARES', shares: canBuy, seatId: x.id })
+                        }
+                        className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[var(--panel)]"
+                      >
+                        <span>
+                          <span style={{ color: x.color }}>●</span> {x.name} — взять {canBuy} шт
+                        </span>
+                        <span className="tabnum text-[var(--muted)]">{money(canBuy * s.price)}</span>
+                      </button>
+                    )
+                  })}
+              </div>
+            )}
 
             {holders.length > 0 && (
               <div className="panel-2 rounded-lg p-2">
@@ -177,13 +212,34 @@ export function CardModal({
 
       const debt = card.kind === 'realEstate' ? card.mortgage : card.liability
       const affordable = l.cash >= card.downPayment
+      const halal = !RULES.loansEnabled
+      const growth = (card as any).growthPerPayday as number | undefined
+      // Инвестор входит долей: платит взнос, забирает половину потока и выручки.
+      const investorAvailable =
+        halal && !affordable && p.deck === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
       return (
-        <Shell badge={badge} title={txt.title} flavor={txt.flavor}>
+        <Shell
+          badge={card.category === 'partnership' ? 'Партнёрский бизнес' : badge}
+          title={txt.title}
+          flavor={txt.flavor}
+          accent={card.category === 'partnership' ? '#22c55e' : '#10b981'}
+        >
           <div className="panel-2 space-y-1 rounded-lg p-3">
             <Stat label="Стоимость" value={money(card.cost)} />
             <Stat label="Первый взнос" value={money(card.downPayment)} strong />
-            <Stat label={card.kind === 'realEstate' ? 'Ипотека' : 'Обязательство'} value={money(debt)} />
+            {debt > 0 && (
+              <Stat
+                label={halal ? 'Рассрочка (без процентов)' : card.kind === 'realEstate' ? 'Ипотека' : 'Обязательство'}
+                value={money(debt)}
+              />
+            )}
             <Stat label="Денежный поток" value={signed(card.cashFlow)} strong />
+            {growth ? (
+              <Stat
+                label="Рост структуры"
+                value={`+${money(growth)}/мес за каждую зарплату, до ${money((card as any).growthCap ?? 0)}`}
+              />
+            ) : null}
             <Stat label="Ваши наличные" value={money(l.cash)} />
           </div>
           <div className="flex gap-2">
@@ -194,9 +250,19 @@ export function CardModal({
               Пропустить
             </button>
           </div>
-          {!affordable && (
+          {investorAvailable && (
+            <button
+              onClick={() => dispatch({ type: 'BUY_DEAL', withInvestor: true })}
+              className="btn-ghost w-full border-emerald-500/50"
+            >
+              🤝 Войти с инвестором — он платит взнос, забирает 50% потока
+            </button>
+          )}
+          {!affordable && !investorAvailable && (
             <p className="text-center text-xs text-amber-400">
-              Не хватает наличных — возьмите кредит в банке
+              {halal
+                ? 'Не хватает наличных — накопите или дождитесь сделки по карману'
+                : 'Не хватает наличных — возьмите кредит в банке'}
             </p>
           )}
         </Shell>
@@ -323,12 +389,14 @@ export function CardModal({
             >
               Заплатить {money(card.amount)}
             </button>
-            {card.financeable && (
+            {(card.financeable || (!RULES.loansEnabled && l.cash < card.amount)) && (
               <button onClick={() => dispatch({ type: 'PAY_DOODAD', financed: true })} className="btn-ghost">
-                На кредитку (+{money(monthly)}/мес навсегда)
+                {RULES.loansEnabled
+                  ? `На кредитку (+${money(monthly)}/мес навсегда)`
+                  : `В рассрочку — ${money(Math.ceil(card.amount / 10))}/мес × 10`}
               </button>
             )}
-            {l.cash < card.amount && !card.financeable && (
+            {l.cash < card.amount && !card.financeable && RULES.loansEnabled && (
               <p className="text-center text-xs text-amber-400">
                 Только наличными — возьмите кредит в банке
               </p>
@@ -373,21 +441,25 @@ export function CardModal({
             <Stat label="Ваши наличные" value={money(l.cash)} />
           </div>
           <button
-            disabled={l.cash < cost}
+            disabled={l.cash < cost && RULES.loansEnabled}
             onClick={() => dispatch({ type: 'PAY_DOWNSIZED' })}
             className="btn-danger w-full"
           >
             Заплатить {money(cost)} и пропустить 2 хода
           </button>
           {l.cash < cost && (
-            <p className="text-center text-xs text-amber-400">Не хватает — возьмите кредит в банке</p>
+            <p className="text-center text-xs text-amber-400">
+              {RULES.loansEnabled
+                ? 'Не хватает — возьмите кредит в банке'
+                : 'Наличных не хватает — уйдёте в минус и попадёте в банкротство'}
+            </p>
           )}
         </Shell>
       )
     }
 
     case 'ftBusiness': {
-      const space = FAST_BOARD[p.space]
+      const space = fastBoard()[p.space]
       if (space.type !== 'business') return null
       const txt = fastSpaceText(p.space, locale)
       return (
@@ -414,7 +486,7 @@ export function CardModal({
     }
 
     case 'ftVenture': {
-      const space = FAST_BOARD[p.space]
+      const space = fastBoard()[p.space]
       if (space.type !== 'venture') return null
       const txt = fastSpaceText(p.space, locale)
       return (
@@ -443,7 +515,7 @@ export function CardModal({
     }
 
     case 'ftDream': {
-      const space = FAST_BOARD[p.space]
+      const space = fastBoard()[p.space]
       if (space.type !== 'dream') return null
       const price = dreamPriceAt(table, p.space)
       const bumps = table.dreamBumps[p.space] ?? 0
