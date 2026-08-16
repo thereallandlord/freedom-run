@@ -39,7 +39,7 @@ import {
   localizedSpaceName,
   type DeckTheme,
 } from './data'
-import { RULES, setRules } from './ledger'
+import { RULES, setRules, installmentPrice, installmentMonthly } from './ledger'
 import { shuffleIndices } from './rng'
 
 export interface SeatSetup {
@@ -606,11 +606,33 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const card = t.pending.card
       if (card.kind === 'stock') return prev
 
-      // Инвестор: вносит первый взнос целиком, забирает половину потока и выручки.
+      const kind = card.kind === 'realEstate' ? 'realEstate' : 'business'
+      // Партнёр входит долей: складываемся, доход и убыток делим в тех же долях.
       const withInvestor = !!event.withInvestor && !RULES.loansEnabled && card.kind !== 'business'
       const investorShare = withInvestor ? 0.5 : undefined
-      const owed = Math.round(card.downPayment * (1 - (investorShare ?? 0)))
+
+      /*
+       * Две цены, и выбрать надо одну прямо сейчас — «решу потом» это
+       * недействительная сделка («две сделки в одной»).
+       *   налом       — платишь всю цену, доход весь твой, долгов нет
+       *   в рассрочку — платишь взнос, остаток с наценкой ЗА ТОВАР зафиксирован
+       *                 навсегда, платёж по нему съедает часть дохода
+       */
+      const fullPrice = card.cost
+      const instTotal = installmentPrice(card.cost, kind)
+      const instDebt = Math.max(0, instTotal - card.downPayment)
+      const monthly = installmentMonthly(instDebt)
+
+      const payCash = !!event.payCash
+      const owed = payCash
+        ? Math.round(fullPrice * (1 - (investorShare ?? 0)))
+        : Math.round(card.downPayment * (1 - (investorShare ?? 0)))
       if (l.cash < owed) return prev
+
+      // В колоде поток записан УЖЕ за вычетом платежа по рассрочке.
+      // Налом платежа нет — доход выше ровно на его величину.
+      const flow = payCash ? card.cashFlow + monthly : card.cashFlow
+      const debt = payCash ? 0 : instDebt
 
       if (card.kind === 'realEstate') {
         seatLedgerEvent(t, seat.id, {
@@ -618,11 +640,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           id: `${card.id}-${t.log.length}`,
           name: localizedCardTitle(card),
           cost: card.cost,
-          downPayment: card.downPayment,
-          mortgage: card.mortgage,
-          cashFlow: card.cashFlow,
+          downPayment: payCash ? fullPrice : card.downPayment,
+          mortgage: debt,
+          cashFlow: flow,
           category: card.category,
           investorShare,
+          installmentMonthly: payCash ? 0 : monthly,
         })
       } else {
         seatLedgerEvent(t, seat.id, {
@@ -630,20 +653,23 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           id: `${card.id}-${t.log.length}`,
           name: localizedCardTitle(card),
           cost: card.cost,
-          downPayment: card.downPayment,
-          liability: card.liability,
-          cashFlow: card.cashFlow,
+          downPayment: payCash ? fullPrice : card.downPayment,
+          liability: debt,
+          cashFlow: flow,
           category: card.category,
           growthPerPayday: (card as any).growthPerPayday,
           growthCap: (card as any).growthCap,
+          installmentMonthly: payCash ? 0 : monthly,
         })
       }
       log(
         t,
         seat.id,
         withInvestor
-          ? `Вошёл в долю: ${localizedCardTitle(card)} — свои ${money(Math.round(card.downPayment / 2))}, половина дохода партнёру`
-          : `Купил: ${localizedCardTitle(card)} за ${money(card.downPayment)} (${money(card.cashFlow)}/мес)`,
+          ? `Вошёл в долю: ${localizedCardTitle(card)} — свои ${money(owed)}, доход и убыток пополам`
+          : payCash
+            ? `Купил налом: ${localizedCardTitle(card)} за ${money(fullPrice)} (${money(flow)}/мес, долгов нет)`
+            : `Купил в рассрочку: ${localizedCardTitle(card)} — взнос ${money(card.downPayment)}, остаток ${money(debt)} фиксирован (${money(flow)}/мес)`,
       )
       t.pending = null
       t.phase = 'turnEnd'
@@ -797,6 +823,27 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (amount < step || l.cash < amount || l.liabilities.bankLoan < amount) return prev
       seatLedgerEvent(t, seat.id, { type: 'REPAY_LOAN', amount })
       log(t, seat.id, `Погасил кредит на ${money(amount)}`)
+      return t
+    }
+
+    /** Закрыть рассрочку досрочно. Скидка — жест продавца, заранее не обещана. */
+    case 'PAYOFF_ASSET': {
+      const re = l.realEstate.find((x) => x.id === event.assetId)
+      const biz = l.businesses.find((x) => x.id === event.assetId)
+      const asset = re ?? biz
+      if (!asset) return prev
+      const debt = re ? re.mortgage : (biz as any).liability
+      if (debt <= 0) return prev
+      const pay = Math.round(debt * (1 - event.discountPct / 100))
+      if (l.cash < pay) return prev
+      seatLedgerEvent(t, seat.id, { type: 'PAYOFF_ASSET', assetId: event.assetId, discountPct: event.discountPct })
+      log(
+        t,
+        seat.id,
+        event.discountPct > 0
+          ? `Закрыл рассрочку по «${asset.name}» досрочно: ${money(pay)}, продавец скинул ${event.discountPct}%`
+          : `Закрыл рассрочку по «${asset.name}»: ${money(pay)}`,
+      )
       return t
     }
 

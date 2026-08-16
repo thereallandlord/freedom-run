@@ -60,6 +60,8 @@ export interface RealEstateAsset {
   cashFlow: number
   category: string
   investorShare?: number
+  /** Платёж по рассрочке, уже вычтенный из cashFlow. Ноль — куплено налом. */
+  installmentMonthly?: number
 }
 
 export interface BusinessAsset {
@@ -75,6 +77,7 @@ export interface BusinessAsset {
   /** Партнёрский бизнес: прирост потока на каждый день зарплаты, до потолка. */
   growthPerPayday?: number
   growthCap?: number
+  installmentMonthly?: number
 }
 
 export interface FtBusiness {

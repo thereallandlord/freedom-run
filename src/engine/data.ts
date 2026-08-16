@@ -27,6 +27,30 @@ export function professionsFor(theme: DeckTheme): Profession[] {
   return theme === 'ru' ? PROFESSIONS_RU : PROFESSIONS
 }
 
+/**
+ * Случайная профессия из уровня, близкого к уже занятым местам.
+ * Иначе за столом оказываются топ-менеджер на 500к и продавец на 90к,
+ * и партия теряет смысл ещё до первого броска.
+ */
+export function randomProfessionNear(
+  theme: DeckTheme,
+  takenIds: string[],
+  rnd: () => number = Math.random,
+): Profession {
+  const pool = [...professionsFor(theme)].sort((a, b) => a.salary - b.salary)
+  const taken = takenIds
+    .map((id) => pool.findIndex((p) => p.id === id))
+    .filter((i) => i >= 0)
+  if (!taken.length) return pool[Math.floor(rnd() * pool.length)]
+
+  // Окно вокруг среднего уровня стола: ±2 ступени по зарплате.
+  const centre = Math.round(taken.reduce((s, i) => s + i, 0) / taken.length)
+  const from = Math.max(0, centre - 2)
+  const to = Math.min(pool.length - 1, centre + 2)
+  const window = pool.slice(from, to + 1)
+  return window[Math.floor(rnd() * window.length)]
+}
+
 export const RAT_BOARD = boardsJson.RAT_BOARD as RatSpace[]
 export const RAT_BOARD_SIZE = RAT_BOARD.length
 

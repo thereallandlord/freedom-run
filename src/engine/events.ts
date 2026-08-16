@@ -10,9 +10,9 @@ export type LedgerEvent =
   | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse' }
-  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number }
+  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number }
   | { type: 'SELL_REAL_ESTATE'; assetId: string; salePrice: number }
-  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number }
+  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number }
   | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number }
   | { type: 'DOODAD'; amount: number }
   | { type: 'FINANCE_DOODAD'; amount: number }
@@ -22,7 +22,9 @@ export type LedgerEvent =
   | { type: 'CHARITY_TURN_USED' }
   | { type: 'TAKE_LOAN'; amount: number }
   | { type: 'REPAY_LOAN'; amount: number }
+  | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
   | { type: 'PAY_OFF_DEBT'; debt: PayableDebt }
+  | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
   | { type: 'ADJUST_CASH'; amount: number }
   | { type: 'FORCED_SALE'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
   | { type: 'HALVE_CONSUMER_DEBT' }
@@ -44,7 +46,7 @@ export type LedgerEvent =
 export type TableEvent =
   | { type: 'ROLL'; dice: number[] }
   | { type: 'CHOOSE_DEAL'; size: 'small' | 'big' }
-  | { type: 'BUY_DEAL'; withInvestor?: boolean }
+  | { type: 'BUY_DEAL'; withInvestor?: boolean; payCash?: boolean }
   | { type: 'BUY_STOCK_SHARES'; shares: number; seatId?: string }
   | { type: 'PASS_CARD' }
   | { type: 'SELL_STOCK_LOT'; seatId: string; lotId: string; shares: number; pricePerShare: number }
@@ -55,6 +57,7 @@ export type TableEvent =
   | { type: 'PAY_DOWNSIZED' }
   | { type: 'TAKE_LOAN'; amount: number }
   | { type: 'REPAY_LOAN'; amount: number }
+  | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
   | { type: 'PAY_OFF_DEBT'; debt: PayableDebt }
   | { type: 'ENTER_FAST_TRACK' }
   | { type: 'BUY_FT_BUSINESS' }

@@ -12,9 +12,10 @@ import {
   hasConsumerDebt,
   hasSellableAssets,
 } from '../engine/table'
-import { RULES, monthlyCashFlow, totalExpenses } from '../engine/ledger'
+import { RULES, monthlyCashFlow, totalExpenses, installmentPrice, installmentMonthly } from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText } from '../engine/data'
 import { money, signed, tone } from './PlayerPanel'
+import { HalalNote } from './HalalNote'
 
 /** Картинка карточки: иконка по типу актива поверх фирменного градиента. */
 const CARD_ART: Record<string, string> = {
@@ -236,13 +237,20 @@ export function CardModal({
         )
       }
 
-      const debt = card.kind === 'realEstate' ? card.mortgage : card.liability
-      const affordable = l.cash >= card.downPayment
       const halal = !RULES.loansEnabled
       const growth = (card as any).growthPerPayday as number | undefined
-      // Инвестор входит долей: платит взнос, забирает половину потока и выручки.
+      const kind = card.kind === 'realEstate' ? 'realEstate' : 'business'
+
+      // Две цены: налом дороже на входе, но доход весь твой и долгов нет.
+      const instTotal = installmentPrice(card.cost, kind)
+      const instDebt = Math.max(0, instTotal - card.downPayment)
+      const monthly = installmentMonthly(instDebt)
+      const flowCash = card.cashFlow + monthly
+
+      const canCash = l.cash >= card.cost
+      const canInstallment = l.cash >= card.downPayment
       const investorAvailable =
-        halal && !affordable && p.deck === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
+        halal && !canInstallment && p.deck === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
       return (
         <Shell
           badge={card.category === 'partnership' ? 'Партнёрский бизнес' : badge}
@@ -252,15 +260,6 @@ export function CardModal({
           art={CARD_ART[card.category] ?? (card.kind === 'business' ? '🏭' : '🏠')}
         >
           <div className="panel-2 space-y-1 rounded-lg p-3">
-            <Stat label="Стоимость" value={money(card.cost)} />
-            <Stat label="Первый взнос" value={money(card.downPayment)} strong />
-            {debt > 0 && (
-              <Stat
-                label={halal ? 'Рассрочка (без процентов)' : card.kind === 'realEstate' ? 'Ипотека' : 'Обязательство'}
-                value={money(debt)}
-              />
-            )}
-            <Stat label="Денежный поток" value={signed(card.cashFlow)} strong />
             {growth ? (
               <Stat
                 label="Рост структуры"
@@ -269,26 +268,59 @@ export function CardModal({
             ) : null}
             <Stat label="Ваши наличные" value={money(l.cash)} />
           </div>
-          <div className="flex gap-2">
-            <button disabled={!affordable} onClick={() => dispatch({ type: 'BUY_DEAL' })} className="btn-primary flex-1">
-              Купить за {money(card.downPayment)}
+
+          {/* Выбрать надо одну цену прямо сейчас — это требование действительности сделки. */}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              disabled={!canCash}
+              onClick={() => dispatch({ type: 'BUY_DEAL', payCash: true })}
+              className={`rounded-xl border p-3 text-left transition disabled:opacity-40 ${
+                canCash ? 'border-emerald-500/60 bg-emerald-500/10 hover:bg-emerald-500/15' : 'border-[var(--line)]'
+              }`}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">Налом</div>
+              <div className="tabnum mt-0.5 text-lg font-black">{money(card.cost)}</div>
+              <div className="tabnum mt-1 text-[13px] text-emerald-400">{signed(flowCash)}/мес</div>
+              <div className="mt-0.5 text-[11px] text-[var(--muted)]">долгов нет, доход весь ваш</div>
             </button>
-            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost">
-              Пропустить
+
+            <button
+              disabled={!canInstallment}
+              onClick={() => dispatch({ type: 'BUY_DEAL' })}
+              className={`rounded-xl border p-3 text-left transition disabled:opacity-40 ${
+                canInstallment ? 'border-[var(--line)] bg-[var(--panel-2)] hover:border-emerald-500/50' : 'border-[var(--line)]'
+              }`}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                В рассрочку · {money(instTotal)}
+              </div>
+              <div className="tabnum mt-0.5 text-lg font-black">{money(card.downPayment)}</div>
+              <div className={`tabnum mt-1 text-[13px] ${tone(card.cashFlow)}`}>{signed(card.cashFlow)}/мес</div>
+              <div className="mt-0.5 text-[11px] text-[var(--muted)]">
+                остаток {money(instDebt)} · платёж {money(monthly)}/мес
+              </div>
             </button>
           </div>
+
           {investorAvailable && (
             <button
               onClick={() => dispatch({ type: 'BUY_DEAL', withInvestor: true })}
               className="btn-ghost w-full border-emerald-500/50"
             >
-              🤝 Войти с инвестором — он платит взнос, забирает 50% потока
+              🤝 Войти в долю с партнёром — пополам взнос, пополам доход и убыток
             </button>
           )}
-          {!affordable && !investorAvailable && (
+
+          <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost w-full">
+            Пропустить
+          </button>
+
+          {halal && <HalalNote topic={investorAvailable ? 'musharaka' : 'murabaha'} />}
+
+          {!canInstallment && !investorAvailable && (
             <p className="text-center text-xs text-amber-400">
               {halal
-                ? 'Не хватает наличных — накопите или дождитесь сделки по карману'
+                ? 'Не хватает даже на взнос — накопите или дождитесь сделки по карману'
                 : 'Не хватает наличных — возьмите кредит в банке'}
             </p>
           )}

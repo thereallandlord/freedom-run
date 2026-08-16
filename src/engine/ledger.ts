@@ -20,6 +20,14 @@ export interface Rules {
    *       нужно 4–8 покупок, партия ~210 ходов. 🔴 Дефолт: Камиль выбрал длину.
    */
   yieldScale: number
+  /**
+   * Наценка за рассрочку по классам активов. Дозволена единогласно
+   * (резолюция Академии фикха ОИС № 51): «сроку принадлежит доля цены».
+   * 🔴 Привязана к ТОВАРУ и фиксируется в момент сделки — от срока и просрочки не растёт.
+   */
+  installmentMarkup: { realEstate: number; business: number }
+  /** На сколько месяцев расписывается рассрочка. */
+  installmentTerm: number
 }
 
 export const RULES: Rules = {
@@ -28,6 +36,8 @@ export const RULES: Rules = {
   fastTrackTarget: 150_000,
   loansEnabled: true,
   yieldScale: 1,
+  installmentMarkup: { realEstate: 1.25, business: 1.2 },
+  installmentTerm: 120,
 }
 
 export function setRules(patch: Partial<Rules>) {
@@ -117,6 +127,16 @@ export function fastTrackProgress(l: Ledger): number {
 
 export function fastTrackTarget(): number {
   return RULES.fastTrackTarget
+}
+
+/** Цена вещи при покупке в рассрочку: цена налом плюс наценка за товар. */
+export function installmentPrice(cost: number, kind: 'realEstate' | 'business'): number {
+  return Math.round((cost * RULES.installmentMarkup[kind]) / 1000) * 1000
+}
+
+/** Ежемесячный платёж по рассрочке — тело, разложенное на срок. Процентов нет. */
+export function installmentMonthly(debt: number): number {
+  return Math.round(debt / RULES.installmentTerm / 100) * 100
 }
 
 export function fastTrackIncome(l: Ledger): number {

@@ -5,6 +5,7 @@ import {
   dreamSpaces,
   professionName,
   professionsFor,
+  randomProfessionNear,
   setActiveTheme,
   setFastBoardTheme,
 } from '../engine/data'
@@ -94,8 +95,20 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
     ])
 
   const randomize = (i: number) => {
-    const p = professions[Math.floor(Math.random() * professions.length)]
-    update(i, { professionId: p.id })
+    // Держим уровень стола: случайная профессия берётся рядом с уже занятыми.
+    const taken = seats.filter((_, idx) => idx !== i).map((s) => s.professionId)
+    update(i, { professionId: randomProfessionNear(theme, taken).id })
+  }
+
+  const randomizeAll = () => {
+    const taken: string[] = []
+    setSeats((prev) =>
+      prev.map((s) => {
+        const p = randomProfessionNear(theme, taken)
+        taken.push(p.id)
+        return { ...s, professionId: p.id }
+      }),
+    )
   }
 
   return (
@@ -228,6 +241,9 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
             ＋ Добавить игрока
           </button>
         )}
+        <button onClick={randomizeAll} className="btn-ghost" title="Случайные профессии одного уровня">
+          🎲 Всем случайные
+        </button>
         <button
           onClick={() =>
             onStart({ seed: randomSeed(), deckTheme: theme, seats })

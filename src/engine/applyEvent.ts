@@ -109,6 +109,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         cashFlow: e.cashFlow,
         category: e.category,
         investorShare: e.investorShare,
+        installmentMonthly: e.installmentMonthly,
       })
       return l
 
@@ -137,6 +138,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         investorShare: e.investorShare,
         growthPerPayday: e.growthPerPayday,
         growthCap: e.growthCap,
+        installmentMonthly: e.installmentMonthly,
       })
       return l
 
@@ -215,6 +217,29 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.cash -= balance
       l.liabilities[e.debt] = 0
       l.expenses[DEBT_TO_PAYMENT[e.debt]] = 0
+      return l
+    }
+
+    /**
+     * Досрочно закрыть рассрочку. Сумма долга сама по себе не уменьшается —
+     * скидка возможна только как жест продавца по факту (ضع وتعجل), а не как
+     * обещанная заранее экономия. Тем рассрочка и отличается от кредита.
+     */
+    case 'PAYOFF_ASSET': {
+      const re = l.realEstate.find((x) => x.id === e.assetId)
+      const biz = l.businesses.find((x) => x.id === e.assetId)
+      const a = re ?? biz
+      if (!a) return prev
+      const debt = re ? re.mortgage : (biz as any).liability
+      if (debt <= 0) return prev
+      const pay = Math.round(debt * (1 - e.discountPct / 100))
+      if (l.cash < pay) return prev
+      l.cash -= pay
+      // Платёж по рассрочке больше не съедает доход — поток актива вырастает.
+      a.cashFlow += a.installmentMonthly ?? 0
+      a.installmentMonthly = 0
+      if (re) re.mortgage = 0
+      else (biz as any).liability = 0
       return l
     }
 
