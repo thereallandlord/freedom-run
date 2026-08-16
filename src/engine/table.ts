@@ -64,9 +64,21 @@ export function createTable(setup: TableSetup): Table {
   setActiveTheme(theme)
   setFastBoardTheme(theme)
   if (theme === 'ru') {
-    setRules({ currency: 'RUB', fastTrackMultiplier: 50, fastTrackTarget: 1_000_000, loansEnabled: false })
+    setRules({
+      currency: 'RUB',
+      fastTrackMultiplier: 50,
+      fastTrackTarget: 1_000_000,
+      loansEnabled: false,
+      yieldScale: 0.3,
+    })
   } else {
-    setRules({ currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true })
+    setRules({
+      currency: 'USD',
+      fastTrackMultiplier: 100,
+      fastTrackTarget: 150_000,
+      loansEnabled: true,
+      yieldScale: 1,
+    })
   }
   const pool = professionsFor(theme)
   const seats: Seat[] = setup.seats.map((s, i) => {
@@ -178,6 +190,13 @@ function seatLedgerEvent(t: Table, seatId: string, e: LedgerEvent) {
   }
 }
 
+/** Карта сделки в масштабе режима: партнёрский бизнес не трогаем — у него своя экономика. */
+function scaled(card: DealCard): DealCard {
+  if (RULES.yieldScale === 1 || card.kind === 'stock') return card
+  if ((card as any).category === 'partnership') return card
+  return { ...card, cashFlow: Math.round((card.cashFlow * RULES.yieldScale) / 100) * 100 }
+}
+
 export function dealCardAt(t: Table, deck: 'small' | 'big', index: number): DealCard {
   const list = deck === 'small' ? smallDeals(t.deckTheme) : bigDeals(t.deckTheme)
   return list[index]
@@ -262,8 +281,14 @@ export function dealAffordable(t: Table, card: import('./types').DealCard, deckS
   const l = currentSeat(t).ledger
   if (card.kind === 'stock') return l.cash >= card.price // хотя бы одна акция
   if (l.cash >= card.downPayment) return true
-  // Инвестор подхватывает крупную недвижимость в халяль-режиме.
-  return !RULES.loansEnabled && deckSize === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
+  // С партнёром хватит половины взноса — но не нуля.
+  return (
+    !RULES.loansEnabled &&
+    deckSize === 'big' &&
+    card.kind === 'realEstate' &&
+    card.cashFlow > 0 &&
+    l.cash >= Math.round(card.downPayment / 2)
+  )
 }
 
 export function canRecover(l: Ledger): boolean {
@@ -568,9 +593,9 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const list = event.size === 'small' ? smallDeals(t.deckTheme) : bigDeals(t.deckTheme)
       // Сделка не по карману = сгоревший ход. До 4 перетягов ищем ту, на которую
       // хватает наличных (или инвестора на крупную в халяль-режиме).
-      let card = list[draw(t, event.size, list.length)]
+      let card = scaled(list[draw(t, event.size, list.length)])
       for (let tries = 0; tries < 4 && !dealAffordable(t, card, event.size); tries++) {
-        card = list[draw(t, event.size, list.length)]
+        card = scaled(list[draw(t, event.size, list.length)])
       }
       t.pending = { kind: 'deal', deck: event.size, card }
       return t
@@ -584,7 +609,8 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       // Инвестор: вносит первый взнос целиком, забирает половину потока и выручки.
       const withInvestor = !!event.withInvestor && !RULES.loansEnabled && card.kind !== 'business'
       const investorShare = withInvestor ? 0.5 : undefined
-      if (!withInvestor && l.cash < card.downPayment) return prev
+      const owed = Math.round(card.downPayment * (1 - (investorShare ?? 0)))
+      if (l.cash < owed) return prev
 
       if (card.kind === 'realEstate') {
         seatLedgerEvent(t, seat.id, {
@@ -616,7 +642,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         t,
         seat.id,
         withInvestor
-          ? `Купил с инвестором: ${localizedCardTitle(card)} (инвестору 50% потока)`
+          ? `Вошёл в долю: ${localizedCardTitle(card)} — свои ${money(Math.round(card.downPayment / 2))}, половина дохода партнёру`
           : `Купил: ${localizedCardTitle(card)} за ${money(card.downPayment)} (${money(card.cashFlow)}/мес)`,
       )
       t.pending = null
@@ -760,18 +786,25 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     }
 
     case 'TAKE_LOAN': {
-      if (!RULES.loansEnabled) return prev
       if (seat.track === 'fast') return prev
-      const amount = Math.round(event.amount / 1000) * 1000
-      if (amount < 1000) return prev
+      const step = RULES.currency === 'RUB' ? 10_000 : 1000
+      const amount = Math.round(event.amount / step) * step
+      if (amount < step) return prev
       seatLedgerEvent(t, seat.id, { type: 'TAKE_LOAN', amount })
-      log(t, seat.id, `Взял кредит ${money(amount)} (+${money(amount / 10)}/мес)`)
+      log(
+        t,
+        seat.id,
+        RULES.loansEnabled
+          ? `Взял кредит ${money(amount)} (+${money(amount / 10)}/мес)`
+          : `Беспроцентный заём ${money(amount)} — вернёт ровно столько же, ${money(amount / 10)}/мес`,
+      )
       return t
     }
 
     case 'REPAY_LOAN': {
-      const amount = Math.round(event.amount / 1000) * 1000
-      if (amount < 1000 || l.cash < amount || l.liabilities.bankLoan < amount) return prev
+      const step = RULES.currency === 'RUB' ? 10_000 : 1000
+      const amount = Math.round(event.amount / step) * step
+      if (amount < step || l.cash < amount || l.liabilities.bankLoan < amount) return prev
       seatLedgerEvent(t, seat.id, { type: 'REPAY_LOAN', amount })
       log(t, seat.id, `Погасил кредит на ${money(amount)}`)
       return t

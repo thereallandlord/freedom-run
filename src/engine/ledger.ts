@@ -12,6 +12,14 @@ export interface Rules {
   fastTrackTarget: number
   /** Банковские кредиты под процент доступны (false = халяль-режим). */
   loansEnabled: boolean
+  /**
+   * Масштаб доходности активов.
+   * 1.0 — реальные рыночные цифры (недвижимость 3–6% годовых, бизнес 18–26%):
+   *       честно, но одна удачная сделка выносит из Рутины, партия ~110 ходов.
+   * 0.3 — игровой баланс: сделка даёт 15–30% от расходов, как в классике,
+   *       нужно 4–8 покупок, партия ~210 ходов. 🔴 Дефолт: Камиль выбрал длину.
+   */
+  yieldScale: number
 }
 
 export const RULES: Rules = {
@@ -19,6 +27,7 @@ export const RULES: Rules = {
   fastTrackMultiplier: 100,
   fastTrackTarget: 150_000,
   loansEnabled: true,
+  yieldScale: 1,
 }
 
 export function setRules(patch: Partial<Rules>) {

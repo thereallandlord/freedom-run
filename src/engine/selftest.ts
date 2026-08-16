@@ -131,7 +131,7 @@ function checkFormulas() {
 // ─── Запуск ───────────────────────────────────────────────────────────
 
 console.log('\n=== Формулы против живой игры (классика) ===')
-setRules({ currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true })
+setRules({ currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true, yieldScale: 1 })
 const formulasOk = checkFormulas()
 
 const mixes: BotDifficulty[][] = [

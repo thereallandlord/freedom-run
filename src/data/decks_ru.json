@@ -182,7 +182,7 @@
    "cost": 1100000,
    "downPayment": 50000,
    "mortgage": 1050000,
-   "cashFlow": 5000
+   "cashFlow": 3500
   },
   {
    "id": "sd-room-ufa-sipailovo",
@@ -193,7 +193,7 @@
    "cost": 1400000,
    "downPayment": 70000,
    "mortgage": 1330000,
-   "cashFlow": 7000
+   "cashFlow": 4000
   },
   {
    "id": "sd-studio-ufa-dema",
@@ -204,7 +204,7 @@
    "cost": 3000000,
    "downPayment": 90000,
    "mortgage": 2910000,
-   "cashFlow": 12000
+   "cashFlow": 12500
   },
   {
    "id": "sd-studio-ufa-inors",
@@ -226,7 +226,7 @@
    "cost": 1700000,
    "downPayment": 85000,
    "mortgage": 1615000,
-   "cashFlow": 8000
+   "cashFlow": 6500
   },
   {
    "id": "sd-room-kzn-derbyshki",
@@ -237,7 +237,7 @@
    "cost": 1500000,
    "downPayment": 60000,
    "mortgage": 1440000,
-   "cashFlow": 6000
+   "cashFlow": 5000
   },
   {
    "id": "sd-studio-kzn-salavat-kupere",
@@ -248,7 +248,7 @@
    "cost": 4100000,
    "downPayment": 130000,
    "mortgage": 3970000,
-   "cashFlow": -4000
+   "cashFlow": -3500
   },
   {
    "id": "sd-studio-kzn-azino",
@@ -259,7 +259,7 @@
    "cost": 4300000,
    "downPayment": 130000,
    "mortgage": 4170000,
-   "cashFlow": 12000
+   "cashFlow": 16000
   },
   {
    "id": "sd-room-chelny-ges",
@@ -270,7 +270,7 @@
    "cost": 800000,
    "downPayment": 40000,
    "mortgage": 760000,
-   "cashFlow": 4000
+   "cashFlow": 2000
   },
   {
    "id": "sd-studio-chelny-zyab",
@@ -281,7 +281,7 @@
    "cost": 2400000,
    "downPayment": 80000,
    "mortgage": 2320000,
-   "cashFlow": 10000
+   "cashFlow": 8500
   },
   {
    "id": "sd-room-chelny-rodnya",
@@ -292,7 +292,7 @@
    "cost": 900000,
    "downPayment": 45000,
    "mortgage": 855000,
-   "cashFlow": -2000
+   "cashFlow": -1000
   },
   {
    "id": "sd-studio-ufa-zaton",
@@ -303,7 +303,7 @@
    "cost": 2800000,
    "downPayment": 110000,
    "mortgage": 2690000,
-   "cashFlow": 11000
+   "cashFlow": 7500
   },
   {
    "id": "sd-room-ufa-center",
@@ -314,7 +314,7 @@
    "cost": 1600000,
    "downPayment": 80000,
    "mortgage": 1520000,
-   "cashFlow": 9000
+   "cashFlow": 5500
   },
   {
    "id": "sd-apt-kzn-kirovsky",
@@ -325,7 +325,7 @@
    "cost": 4500000,
    "downPayment": 150000,
    "mortgage": 4350000,
-   "cashFlow": -4000
+   "cashFlow": -7500
   },
   {
    "id": "sd-apt-kzn-yudino",
@@ -347,7 +347,7 @@
    "cost": 600000,
    "downPayment": 30000,
    "mortgage": 570000,
-   "cashFlow": 3000
+   "cashFlow": 2000
   },
   {
    "id": "sd-parking-kzn",
@@ -358,7 +358,7 @@
    "cost": 900000,
    "downPayment": 45000,
    "mortgage": 855000,
-   "cashFlow": 5000
+   "cashFlow": 3500
   },
   {
    "id": "sd-kladovka-kzn",
@@ -369,7 +369,7 @@
    "cost": 500000,
    "downPayment": 25000,
    "mortgage": 475000,
-   "cashFlow": 3000
+   "cashFlow": 2500
   },
   {
    "id": "sd-kladovka-ufa",
@@ -391,7 +391,7 @@
    "cost": 500000,
    "downPayment": 25000,
    "mortgage": 475000,
-   "cashFlow": 3000
+   "cashFlow": 1500
   },
   {
    "id": "sd-land-iglino",
@@ -448,7 +448,7 @@
    "cost": 6500000,
    "downPayment": 500000,
    "mortgage": 6000000,
-   "cashFlow": 32000
+   "cashFlow": 31000
   },
   {
    "id": "big-re-kzn-pobedy",
@@ -459,7 +459,7 @@
    "cost": 9000000,
    "downPayment": 700000,
    "mortgage": 8300000,
-   "cashFlow": 45000
+   "cashFlow": 23500
   },
   {
    "id": "big-re-kzn-itpark",
@@ -470,7 +470,7 @@
    "cost": 5000000,
    "downPayment": 400000,
    "mortgage": 4600000,
-   "cashFlow": 25000
+   "cashFlow": 22500
   },
   {
    "id": "big-re-msk-butovo",
@@ -481,7 +481,7 @@
    "cost": 12000000,
    "downPayment": 1000000,
    "mortgage": 11000000,
-   "cashFlow": 55000
+   "cashFlow": 38000
   },
   {
    "id": "big-re-msk-ttk",
@@ -492,7 +492,7 @@
    "cost": 22000000,
    "downPayment": 1800000,
    "mortgage": 20200000,
-   "cashFlow": 95000
+   "cashFlow": 62500
   },
   {
    "id": "big-re-msk-city",
@@ -503,7 +503,7 @@
    "cost": 30000000,
    "downPayment": 2000000,
    "mortgage": 28000000,
-   "cashFlow": -5000
+   "cashFlow": -27500
   },
   {
    "id": "big-re-spb-kupchino",
@@ -514,7 +514,7 @@
    "cost": 8000000,
    "downPayment": 600000,
    "mortgage": 7400000,
-   "cashFlow": 38000
+   "cashFlow": 25500
   },
   {
    "id": "big-re-spb-vasilevsky",
@@ -525,7 +525,7 @@
    "cost": 14000000,
    "downPayment": 1200000,
    "mortgage": 12800000,
-   "cashFlow": 62000
+   "cashFlow": 61500
   },
   {
    "id": "big-re-dxb-jvc",
@@ -536,7 +536,7 @@
    "cost": 18000000,
    "downPayment": 1500000,
    "mortgage": 16500000,
-   "cashFlow": 90000
+   "cashFlow": 52500
   },
   {
    "id": "big-re-dxb-marina",
@@ -547,7 +547,7 @@
    "cost": 28000000,
    "downPayment": 2000000,
    "mortgage": 26000000,
-   "cashFlow": 115000
+   "cashFlow": 107500
   },
   {
    "id": "big-re-tur-alanya",
@@ -558,7 +558,7 @@
    "cost": 7500000,
    "downPayment": 600000,
    "mortgage": 6900000,
-   "cashFlow": 42000
+   "cashFlow": 30000
   },
   {
    "id": "big-re-tur-istanbul",
@@ -569,7 +569,7 @@
    "cost": 11000000,
    "downPayment": 900000,
    "mortgage": 10100000,
-   "cashFlow": -4000
+   "cashFlow": -13000
   },
   {
    "id": "big-re-house-zubovo",
@@ -580,7 +580,7 @@
    "cost": 12000000,
    "downPayment": 1000000,
    "mortgage": 11000000,
-   "cashFlow": 50000
+   "cashFlow": 45000
   },
   {
    "id": "big-re-house-kama",
@@ -591,7 +591,7 @@
    "cost": 15000000,
    "downPayment": 1300000,
    "mortgage": 13700000,
-   "cashFlow": 75000
+   "cashFlow": 39500
   },
   {
    "id": "big-re-chelny-studio",
@@ -602,7 +602,7 @@
    "cost": 4000000,
    "downPayment": 300000,
    "mortgage": 3700000,
-   "cashFlow": 20000
+   "cashFlow": 10500
   },
   {
    "id": "big-re-ufa-arena-studio",
@@ -613,7 +613,7 @@
    "cost": 4500000,
    "downPayment": 400000,
    "mortgage": 4100000,
-   "cashFlow": 24000
+   "cashFlow": 13500
   },
   {
    "id": "big-biz-bakery-ufa",
@@ -624,7 +624,7 @@
    "cost": 3500000,
    "downPayment": 500000,
    "liability": 3000000,
-   "cashFlow": 60000
+   "cashFlow": 70500
   },
   {
    "id": "big-biz-halal-cafe-kzn",
@@ -635,7 +635,7 @@
    "cost": 6000000,
    "downPayment": 800000,
    "liability": 5200000,
-   "cashFlow": 90000
+   "cashFlow": 103000
   },
   {
    "id": "big-biz-carwash-chelny",
@@ -646,7 +646,7 @@
    "cost": 8000000,
    "downPayment": 1000000,
    "liability": 7000000,
-   "cashFlow": 100000
+   "cashFlow": 126000
   },
   {
    "id": "big-biz-darkstore-msk",
@@ -657,7 +657,7 @@
    "cost": 12000000,
    "downPayment": 1500000,
    "liability": 10500000,
-   "cashFlow": 150000
+   "cashFlow": 228500
   },
   {
    "id": "big-biz-pvz-ufa",
@@ -668,7 +668,7 @@
    "cost": 1500000,
    "downPayment": 300000,
    "liability": 1200000,
-   "cashFlow": 25000
+   "cashFlow": 26000
   },
   {
    "id": "big-biz-barbershop-kzn",
@@ -679,7 +679,7 @@
    "cost": 2500000,
    "downPayment": 400000,
    "liability": 2100000,
-   "cashFlow": 45000
+   "cashFlow": 39000
   },
   {
    "id": "big-biz-kids-center-ufa",
@@ -690,7 +690,7 @@
    "cost": 4000000,
    "downPayment": 600000,
    "liability": 3400000,
-   "cashFlow": 65000
+   "cashFlow": 86000
   },
   {
    "id": "big-biz-shaurma-spb",
@@ -701,7 +701,7 @@
    "cost": 9000000,
    "downPayment": 1200000,
    "liability": 7800000,
-   "cashFlow": 130000
+   "cashFlow": 183500
   },
   {
    "id": "big-biz-print-kzn",
@@ -712,7 +712,7 @@
    "cost": 5000000,
    "downPayment": 700000,
    "liability": 4300000,
-   "cashFlow": 70000
+   "cashFlow": 74500
   },
   {
    "id": "big-biz-online-store",
@@ -723,7 +723,7 @@
    "cost": 3000000,
    "downPayment": 500000,
    "liability": 2500000,
-   "cashFlow": 55000
+   "cashFlow": 56500
   },
   {
    "id": "big-biz-scooters-kzn",
@@ -734,7 +734,7 @@
    "cost": 7000000,
    "downPayment": 900000,
    "liability": 6100000,
-   "cashFlow": 85000
+   "cashFlow": 128000
   },
   {
    "id": "big-partner-start-basic",
@@ -745,9 +745,9 @@
    "cost": 28900,
    "downPayment": 28900,
    "liability": 0,
-   "cashFlow": 3000,
-   "growthPerPayday": 1500,
-   "growthCap": 40000
+   "cashFlow": 1700,
+   "growthPerPayday": 400,
+   "growthCap": 9000
   },
   {
    "id": "big-partner-start-team",
@@ -758,9 +758,9 @@
    "cost": 28900,
    "downPayment": 28900,
    "liability": 0,
-   "cashFlow": 4000,
-   "growthPerPayday": 2000,
-   "growthCap": 50000
+   "cashFlow": 1700,
+   "growthPerPayday": 400,
+   "growthCap": 9000
   },
   {
    "id": "big-partner-start-online",
@@ -771,9 +771,9 @@
    "cost": 28900,
    "downPayment": 28900,
    "liability": 0,
-   "cashFlow": 3000,
-   "growthPerPayday": 2500,
-   "growthCap": 60000
+   "cashFlow": 1700,
+   "growthPerPayday": 400,
+   "growthCap": 9000
   },
   {
    "id": "big-partner-expand",
@@ -784,9 +784,9 @@
    "cost": 86700,
    "downPayment": 86700,
    "liability": 0,
-   "cashFlow": 5000,
-   "growthPerPayday": 3000,
-   "growthCap": 70000
+   "cashFlow": 5200,
+   "growthPerPayday": 900,
+   "growthCap": 22000
   },
   {
    "id": "big-partner-expand-leader",
@@ -797,9 +797,9 @@
    "cost": 86700,
    "downPayment": 86700,
    "liability": 0,
-   "cashFlow": 6000,
-   "growthPerPayday": 4000,
-   "growthCap": 90000
+   "cashFlow": 5200,
+   "growthPerPayday": 900,
+   "growthCap": 22000
   }
  ],
  "MARKET_CARDS_RU": [

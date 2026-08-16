@@ -37,8 +37,8 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
     setFastBoardTheme(theme)
     setRules(
       theme === 'ru'
-        ? { currency: 'RUB', fastTrackMultiplier: 50, fastTrackTarget: 1_000_000, loansEnabled: false }
-        : { currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true },
+        ? { currency: 'RUB', fastTrackMultiplier: 50, fastTrackTarget: 1_000_000, loansEnabled: false, yieldScale: 0.3 }
+        : { currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true, yieldScale: 1 },
     )
     return { dreams: dreamSpaces(), professions: professionsFor(theme), isRub: RULES.currency === 'RUB' }
   }, [theme])

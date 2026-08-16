@@ -45,6 +45,20 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         }
       }
       l.cash += monthlyCashFlow(l)
+
+      /*
+       * Беспроцентный заём гасится сам: платёж уменьшает тело долга.
+       * Процентный кредит так себя не ведёт — там платёж это плата за деньги,
+       * и тело гасится только отдельным погашением.
+       */
+      if (!RULES.loansEnabled && l.liabilities.bankLoan > 0) {
+        const pay = Math.min(l.expenses.bankLoanPayment, l.liabilities.bankLoan)
+        l.liabilities.bankLoan -= pay
+        if (l.liabilities.bankLoan <= 0) {
+          l.liabilities.bankLoan = 0
+          l.expenses.bankLoanPayment = 0
+        }
+      }
       return l
     }
 
@@ -84,8 +98,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     }
 
     case 'BUY_REAL_ESTATE':
-      // С инвестором первый взнос платит он, за это забирает долю потока.
-      l.cash -= e.investorShare ? 0 : e.downPayment
+      // Мушарака: каждый вносит свою долю и в той же доле получает доход.
+      l.cash -= Math.round(e.downPayment * (1 - (e.investorShare ?? 0)))
       l.realEstate.push({
         id: e.id,
         name: e.name,
@@ -108,7 +122,10 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     }
 
     case 'BUY_BUSINESS':
-      l.cash -= e.investorShare ? 0 : e.downPayment
+      // Партнёрских кабинетов держат считанные штуки — иначе это принтер денег.
+      if (e.category === 'partnership' && l.businesses.filter((b) => b.category === 'partnership').length >= 3)
+        return prev
+      l.cash -= Math.round(e.downPayment * (1 - (e.investorShare ?? 0)))
       l.businesses.push({
         id: e.id,
         name: e.name,
@@ -172,7 +189,11 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.charityTurnsLeft = Math.max(0, l.charityTurnsLeft - 1)
       return l
 
-    /** Каждая $1 000 кредита стоит $100 в месяц. */
+    /**
+     * Заём. Процентный режим: платёж 10% в месяц — это плата за деньги, вечная.
+     * Халяль-режим (кард хасан): возвращаешь РОВНО столько же, десятью равными
+     * платежами — платёж гасит тело долга и исчезает вместе с ним.
+     */
     case 'TAKE_LOAN':
       l.cash += e.amount
       l.liabilities.bankLoan += e.amount

@@ -98,8 +98,9 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
   const pending = t.pending
   if (!pending) {
     if (t.phase === 'turnEnd') {
-      if (p.repayIdle && l.liabilities.bankLoan >= 1000 && l.cash >= 1000 + cashBuffer(seat, p)) {
-        return { type: 'REPAY_LOAN', amount: 1000 }
+      const step = RULES.currency === 'RUB' ? 10_000 : 1000
+      if (p.repayIdle && l.liabilities.bankLoan >= step && l.cash >= step + cashBuffer(seat, p)) {
+        return { type: 'REPAY_LOAN', amount: step }
       }
       return { type: 'END_TURN' }
     }
@@ -130,16 +131,20 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
       const need = card.downPayment
       if (l.cash - need < cashBuffer(seat, p)) {
-        if (RULES.loansEnabled) {
-          // Плечо: добираем кредитом, если профиль это позволяет.
-          if (p.leverage && seat.track === 'rat' && card.cashFlow > 0) {
-            const short = need + cashBuffer(seat, p) - l.cash
-            const loan = Math.ceil(short / 1000) * 1000
-            // Кредит стоит 10% в месяц — берём, только если сделка это отбивает.
-            if (loan > 0 && card.cashFlow > loan / 10) return { type: 'TAKE_LOAN', amount: loan }
-          }
-        } else if (p.leverage && card.kind === 'realEstate' && card.cashFlow > 0 && l.cash < need) {
-          // Халяль-режим: агрессивные боты зовут инвестора на крупную недвижимость.
+        const step = RULES.currency === 'RUB' ? 10_000 : 1000
+        if (p.leverage && seat.track === 'rat' && card.cashFlow > 0) {
+          const short = need + cashBuffer(seat, p) - l.cash
+          const loan = Math.ceil(short / step) * step
+          // Платёж по займу обязан отбиваться потоком сделки — в обоих режимах.
+          if (loan > 0 && card.cashFlow > loan / 10) return { type: 'TAKE_LOAN', amount: loan }
+        }
+        if (
+          !RULES.loansEnabled &&
+          card.kind === 'realEstate' &&
+          card.cashFlow > 0 &&
+          l.cash - Math.round(need / 2) >= cashBuffer(seat, p)
+        ) {
+          // Партнёр на половину взноса — когда на целый не хватает, а на половину да.
           return { type: 'BUY_DEAL', withInvestor: true }
         }
         return { type: 'PASS_CARD' }
@@ -183,10 +188,11 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     case 'doodad': {
       const card = pending.card
       if (l.cash >= card.amount) return { type: 'PAY_DOODAD', financed: false }
-      if (card.financeable || !RULES.loansEnabled) return { type: 'PAY_DOODAD', financed: true }
-      const loan = Math.ceil((card.amount - l.cash) / 1000) * 1000
+      if (card.financeable) return { type: 'PAY_DOODAD', financed: true }
+      const step = RULES.currency === 'RUB' ? 10_000 : 1000
+      const loan = Math.ceil((card.amount - l.cash) / step) * step
       if (seat.track === 'rat' && loan > 0) return { type: 'TAKE_LOAN', amount: loan }
-      return { type: 'PAY_DOODAD', financed: false }
+      return { type: 'PAY_DOODAD', financed: !RULES.loansEnabled }
     }
 
     case 'charity': {
@@ -205,8 +211,9 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
     case 'downsized': {
       const cost = totalExpenses(l)
-      if (l.cash < cost && RULES.loansEnabled) {
-        const loan = Math.ceil((cost - l.cash) / 1000) * 1000
+      if (l.cash < cost) {
+        const step = RULES.currency === 'RUB' ? 10_000 : 1000
+        const loan = Math.ceil((cost - l.cash) / step) * step
         return { type: 'TAKE_LOAN', amount: loan }
       }
       return { type: 'PAY_DOWNSIZED' }
