@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { ROOM_CODE_LENGTH, isValidRoomCode, normalizeRoomCode } from '../engine/room'
-import { artByDeck } from './cardArt'
+import { DECKS, DeckCard } from './DeckCard'
 import { Wordmark } from './Wordmark'
 
 /**
@@ -55,22 +55,6 @@ function Art({
   )
 }
 
-/** Русское согласование: 1 карта · 2 карты · 5 карт. */
-function cardsWord(n: number): string {
-  const t = n % 100
-  if (t >= 11 && t <= 14) return 'карт'
-  switch (n % 10) {
-    case 1:
-      return 'карта'
-    case 2:
-    case 3:
-    case 4:
-      return 'карты'
-    default:
-      return 'карт'
-  }
-}
-
 /** Стрелка «дальше» — одна на все кнопки. */
 function ArrowRight() {
   return (
@@ -80,66 +64,6 @@ function ArrowRight() {
     </svg>
   )
 }
-
-/**
- * Колода как СТОПКА КАРТ: обложка в портретной пропорции (у настоящей карты
- * она портретная — пейзажный кадр читается как фотография, а не как колода),
- * плюс две подложки сзади. Подложки рисует CSS, лишних картинок не нужно —
- * иллюстрации карт есть только у российской колоды.
- */
-function DeckStack({ src, selected }: { src: string | null; selected: boolean }) {
-  return (
-    <span className="relative block aspect-[3/4] w-full max-w-[172px]">
-      <span
-        aria-hidden
-        className={`absolute inset-x-[9%] top-[5%] block h-full rounded-[11px] border border-line bg-panel2 transition duration-200 ${
-          selected ? 'rotate-[5deg]' : 'rotate-[3.5deg] group-hover:rotate-[5deg]'
-        }`}
-      />
-      <span
-        aria-hidden
-        className={`absolute inset-x-[4.5%] top-[2.5%] block h-full rounded-[11px] border border-line bg-panel transition duration-200 ${
-          selected ? '-rotate-[3deg]' : '-rotate-[1.5deg] group-hover:-rotate-[3deg]'
-        }`}
-      />
-      <span
-        className={`absolute inset-0 block overflow-hidden rounded-[11px] border bg-panel2 transition duration-200 ${
-          selected ? 'border-accent shadow-[0_10px_24px_-14px_rgb(4_124_84/0.55)]' : 'border-line'
-        }`}
-      >
-        {src ? (
-          <img src={src} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
-        ) : (
-          <span className="block size-full bg-panel2" />
-        )}
-      </span>
-    </span>
-  )
-}
-
-const DECKS = [
-  {
-    id: 'ru' as const,
-    name: 'Россия · халяль',
-    currency: '₽',
-    cards: 142,
-    about: 'Наши зарплаты и объекты. Рассрочка и партнёрство вместо процентных кредитов.',
-  },
-  {
-    id: 'offshore' as const,
-    name: 'Уругвай',
-    currency: '$',
-    cards: 186,
-    about: 'Квартиры у океана, земля и фермы. Мемкоины — для тех, кто любит риск.',
-  },
-  {
-    id: 'classic' as const,
-    name: 'Классическая',
-    currency: '$',
-    cards: 154,
-    about: 'Оригинальные карты: кондо, франшизы, акции. Как в настольной коробке.',
-  },
-]
 
 /** Иконки шагов — рисованные, а не эмодзи: эмодзи в интерфейсе выглядят заглушкой. */
 const ICON_CLS = 'size-[17px] block'
@@ -354,18 +278,10 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
               {DECKS.map((d) => (
                 <div key={d.id} className="group">
-                  <DeckStack src={artByDeck(d.id)} selected={d.id === 'ru'} />
-                  <div className="mt-3.5 flex items-baseline gap-2">
-                    <span
-                      className={`text-sm font-bold ${d.id === 'ru' ? 'text-accent' : ''}`}
-                    >
-                      {d.name}
-                    </span>
-                    <span className="tabnum text-[11px] font-semibold text-muted">
-                      {d.currency} · {d.cards} {cardsWord(d.cards)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[12.5px] leading-snug text-muted">{d.about}</p>
+                  <DeckCard deck={d} selected={d.id === 'ru'} />
+                  <p className="mt-3 max-w-[188px] text-[12.5px] leading-snug text-muted">
+                    {d.about}
+                  </p>
                 </div>
               ))}
             </div>

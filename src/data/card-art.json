@@ -191,5 +191,10 @@
   "taxAudit": "/cards/space-taxAudit.webp",
   "lawsuit": "/cards/space-lawsuit.webp",
   "divorce": "/cards/space-divorce.webp"
+ },
+ "byDeckCard": {
+  "ru": "/cards/deck-ru-card.webp",
+  "offshore": "/cards/deck-offshore-card.webp",
+  "classic": "/cards/deck-classic-card.webp"
  }
 }

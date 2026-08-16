@@ -14,7 +14,7 @@ import { randomSeed } from '../engine/rng'
 import type { SeatSetup, TableSetup } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
 import { ROOM_MAX_PLAYERS } from '../engine/room'
-import { artByDeck } from './cardArt'
+import { DECKS, DeckCard } from './DeckCard'
 import { Wordmark } from './Wordmark'
 import type { DeckTheme } from '../engine/data'
 
@@ -127,41 +127,20 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
           Колода сделок
         </div>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {(
-            [
-              ['ru', 'Россия · халяль', 'рубли, рассрочка вместо кредитов, партнёрский бизнес'],
-              ['offshore', 'Уругвай', 'квартиры, земля, фермы, мемкоины'],
-              ['classic', 'Классическая', 'кондо, франшизы, акции'],
-            ] as const
-          ).map(([id, title, hint]) => {
-            const cover = artByDeck(id)
-            return (
-              <button
-                key={id}
-                onClick={() => setTheme(id)}
-                className={`overflow-hidden rounded-xl border text-left transition ${
-                  theme === id
-                    ? 'border-accent bg-accent/[0.07]'
-                    : 'border-[var(--line)] hover:border-accent/50'
-                }`}
-              >
-                {cover && (
-                  <img
-                    src={cover}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="block h-20 w-full object-cover"
-                  />
-                )}
-                <div className="p-3">
-                  <div className="text-sm font-bold">{title}</div>
-                  <div className="mt-0.5 text-[11px] leading-snug text-[var(--muted)]">{hint}</div>
-                </div>
-              </button>
-            )
-          })}
+        <div className="grid gap-4 sm:grid-cols-3">
+          {DECKS.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => setTheme(d.id)}
+              aria-pressed={theme === d.id}
+              className="group rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <DeckCard deck={d} selected={theme === d.id} />
+              <p className="mt-3 max-w-[188px] text-[12px] leading-snug text-[var(--muted)]">
+                {d.about}
+              </p>
+            </button>
+          ))}
         </div>
       </div>
 
