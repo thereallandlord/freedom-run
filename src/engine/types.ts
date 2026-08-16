@@ -215,6 +215,23 @@ export interface DoodadCard {
 
 export type DeckName = 'small' | 'big' | 'market' | 'doodad'
 
+/** Мировое событие: приходит по таймеру, а не по ходу, и задевает всех. */
+export type WorldEffect =
+  | { kind: 'assetPrice'; categories: string[]; pct: number }
+  | { kind: 'assetFlow'; categories: string[]; pct: number }
+  | { kind: 'stockPrice'; symbols: string[]; pct: number }
+  | { kind: 'cashAll'; amount: number }
+  | { kind: 'expenseAll'; pct: number }
+  | { kind: 'salaryAll'; pct: number }
+
+export interface WorldEvent {
+  id: string
+  title: string
+  flavor: string
+  effect: WorldEffect
+  severity: 'мягкое' | 'заметное' | 'сильное'
+}
+
 // ─── Поля ─────────────────────────────────────────────────────────────
 
 export type RatSpace =
@@ -302,4 +319,17 @@ export interface Table {
   log: LogEntry[]
   winnerId: string | null
   turnCounter: number
+  /** Порядок мировых событий и сколько уже сыграно. */
+  worldDeck: { order: number[]; next: number }
+  /** Множители рынка, накопленные мировыми событиями. */
+  market: {
+    /** Цена класса активов при продаже: категория → множитель. */
+    price: Record<string, number>
+    /** Доход класса активов: категория → множитель. */
+    flow: Record<string, number>
+    /** Котировки тикеров: символ → множитель. */
+    stock: Record<string, number>
+  }
+  /** Последнее мировое событие — чтобы показать его всем. */
+  lastWorldEvent: { id: string; at: number } | null
 }

@@ -70,6 +70,7 @@ export type TableEvent =
   | { type: 'BANKRUPTCY_QUIT' }
   | { type: 'END_TURN' }
   | { type: 'FINISH_GAME' }
+  | { type: 'WORLD_EVENT'; index: number }
 
 export interface StampedEvent {
   seq: number

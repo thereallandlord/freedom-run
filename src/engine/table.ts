@@ -25,6 +25,7 @@ import {
 import {
   RAT_BOARD,
   RAT_BOARD_SIZE,
+  WORLD_EVENTS,
   TOKEN_COLORS,
   bigDeals,
   doodads,
@@ -120,7 +121,73 @@ export function createTable(setup: TableSetup): Table {
     log: [],
     winnerId: null,
     turnCounter: 0,
+    worldDeck: { order: shuffleIndices(WORLD_EVENTS.length, setup.seed + 5), next: 0 },
+    market: { price: {}, flow: {}, stock: {} },
+    lastWorldEvent: null,
   }
+}
+
+/**
+ * Мировое событие. Приходит по таймеру реального времени, а не по чьему-то ходу,
+ * и задевает всех сразу — так в игру попадает настоящий рынок.
+ */
+export function applyWorldEvent(prev: Table, index: number): Table {
+  const t = cloneTable(prev)
+  const ev = WORLD_EVENTS[index]
+  if (!ev) return prev
+  const e = ev.effect
+  const mul = (pct: number) => 1 + pct / 100
+
+  switch (e.kind) {
+    case 'assetPrice':
+      for (const c of e.categories) t.market.price[c] = (t.market.price[c] ?? 1) * mul(e.pct)
+      break
+    case 'assetFlow':
+      // Доход активов меняется сразу и у всех, кто ими владеет.
+      for (const c of e.categories) t.market.flow[c] = (t.market.flow[c] ?? 1) * mul(e.pct)
+      t.seats = t.seats.map((s) => {
+        if (s.outOfGame) return s
+        const l = { ...s.ledger }
+        const touch = <T extends { category: string; cashFlow: number }>(a: T): T =>
+          e.categories.includes(a.category)
+            ? { ...a, cashFlow: Math.round((a.cashFlow * mul(e.pct)) / 100) * 100 }
+            : a
+        l.realEstate = l.realEstate.map(touch)
+        l.businesses = l.businesses.map(touch)
+        return { ...s, ledger: l }
+      })
+      break
+    case 'stockPrice':
+      for (const sym of e.symbols) t.market.stock[sym] = (t.market.stock[sym] ?? 1) * mul(e.pct)
+      break
+    case 'cashAll':
+      for (const s of t.seats) if (!s.outOfGame) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: e.amount })
+      break
+    case 'expenseAll':
+      t.seats = t.seats.map((s) => {
+        if (s.outOfGame) return s
+        const x = { ...s.ledger, expenses: { ...s.ledger.expenses } }
+        x.expenses.otherExpenses = Math.round((x.expenses.otherExpenses * mul(e.pct)) / 100) * 100
+        return { ...s, ledger: x }
+      })
+      break
+    case 'salaryAll':
+      t.seats = t.seats.map((s) =>
+        s.outOfGame ? s : { ...s, ledger: { ...s.ledger, salary: Math.round((s.ledger.salary * mul(e.pct)) / 100) * 100 } },
+      )
+      break
+  }
+
+  t.lastWorldEvent = { id: ev.id, at: t.log.length }
+  log(t, null, `🌍 ${ev.title}`)
+  return t
+}
+
+/** Взять следующее мировое событие из перетасованной колоды. */
+export function nextWorldEventIndex(t: Table): number {
+  const d = t.worldDeck
+  if (d.next >= d.order.length) return d.order[0] ?? 0
+  return d.order[d.next]
 }
 
 // ─── Вспомогательные ──────────────────────────────────────────────────
@@ -141,6 +208,8 @@ function cloneTable(t: Table): Table {
     },
     dreamBumps: { ...t.dreamBumps },
     ftOwnership: { ...t.ftOwnership },
+    worldDeck: { ...t.worldDeck },
+    market: { price: { ...t.market.price }, flow: { ...t.market.flow }, stock: { ...t.market.stock } },
     log: [...t.log],
     pending: t.pending ? ({ ...t.pending } as Pending) : null,
     lastRoll: t.lastRoll ? [...t.lastRoll] : null,
@@ -258,8 +327,8 @@ export function stockHolders(t: Table, symbol: string): Seat[] {
   )
 }
 
-export function sellOfferPrice(cost: number, multiplierPct: number): number {
-  return Math.round((cost * multiplierPct) / 100)
+export function sellOfferPrice(cost: number, multiplierPct: number, marketMul = 1): number {
+  return Math.round((cost * multiplierPct * marketMul) / 100)
 }
 
 export function dreamPriceAt(t: Table, spaceIndex: number): number {
@@ -737,7 +806,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const asset = re ?? biz
       if (!asset || asset.category !== card.category) return prev
 
-      const price = sellOfferPrice(asset.cost, card.multiplierPct)
+      const price = sellOfferPrice(asset.cost, card.multiplierPct, t.market.price[asset.category] ?? 1)
       if (re) {
         seatLedgerEvent(t, event.seatId, { type: 'SELL_REAL_ESTATE', assetId: event.assetId, salePrice: price })
       } else {
@@ -992,6 +1061,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       t.pending = null
       t.phase = 'turnEnd'
       return t
+    }
+
+    case 'WORLD_EVENT': {
+      const t2 = applyWorldEvent(t, event.index)
+      t2.worldDeck = { ...t2.worldDeck, next: t2.worldDeck.next + 1 }
+      return t2
     }
 
     /** Досрочно завершить партию — победители уже известны, остальные согласились. */

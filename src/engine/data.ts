@@ -5,6 +5,7 @@ import professionsRuJson from '../data/professions_ru.json'
 import boardsJson from '../data/boards.json'
 import tickersJson from '../data/tickers.json'
 import miscJson from '../data/misc.json'
+import eventsRuJson from '../data/events_ru.json'
 import ruCards from '../data/ru.cards.json'
 import ruProfessions from '../data/ru.professions.json'
 import ruFastSpaces from '../data/ru.misc2.json'
@@ -73,6 +74,7 @@ export function fastBoardSize(): number {
 }
 export const TICKERS = tickersJson as unknown as Record<string, { name: string; range: [number, number] }>
 export const PETS = miscJson.DOGS as { id: string; name: string }[]
+export const WORLD_EVENTS = (eventsRuJson as any).WORLD_EVENTS_RU as import('./types').WorldEvent[]
 
 const D = decksJson as any
 const DRU = decksRuJson as any

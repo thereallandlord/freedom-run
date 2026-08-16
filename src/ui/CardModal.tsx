@@ -347,7 +347,7 @@ export function CardModal({
               <div className="space-y-1">
                 {matches.map((m) =>
                   m.assets.map((a) => {
-                    const price = sellOfferPrice(a.cost, card.multiplierPct)
+                    const price = sellOfferPrice(a.cost, card.multiplierPct, table.market.price[card.category] ?? 1)
                     return (
                       <button
                         key={a.id}

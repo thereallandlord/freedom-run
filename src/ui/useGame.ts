@@ -1,12 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
-import { applyTableEvent, createTable, currentSeat, replayTable, type TableSetup } from '../engine/table'
+import {
+  applyTableEvent,
+  createTable,
+  currentSeat,
+  nextWorldEventIndex,
+  replayTable,
+  type TableSetup,
+} from '../engine/table'
 import { randomSeed } from '../engine/rng'
 import { decideBotEvent } from '../engine/bots'
 import { mulberry32 } from '../engine/rng'
 
-const STORAGE_KEY = 'freedom-run:save:v1'
+const STORAGE_KEY = 'freedom-run:save:v2'
+/** Раз во сколько минут реального времени мир двигается сам. */
+const WORLD_EVENT_MIN = 12
 
 interface Save {
   setup: TableSetup
@@ -97,6 +106,24 @@ export function useGame() {
     },
     [dispatch],
   )
+
+  /*
+   * Мировые события идут по ЧАСАМ, а не по ходам: раз в WORLD_EVENT_MIN минут
+   * рынок двигается сам, независимо от того, чей сейчас ход.
+   */
+  useEffect(() => {
+    if (!table || table.phase === 'finished') return
+    const id = window.setInterval(() => {
+      setTable((prev) => {
+        if (!prev || prev.phase === 'finished') return prev
+        const ev = { type: 'WORLD_EVENT' as const, index: nextWorldEventIndex(prev) }
+        const next = applyTableEvent(prev, ev)
+        if (next !== prev) setEvents((evs) => [...evs, ev])
+        return next
+      })
+    }, WORLD_EVENT_MIN * 60_000)
+    return () => window.clearInterval(id)
+  }, [table?.phase])
 
   // ─── Водитель ботов ───
   useEffect(() => {
