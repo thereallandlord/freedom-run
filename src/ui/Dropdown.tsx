@@ -57,7 +57,7 @@ export function Dropdown<T extends string | number>({
       </button>
 
       {open && (
-        <div className="pop-in absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-1 shadow-2xl shadow-black/60">
+        <div className="pop-in absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-1 shadow-[var(--shadow-pop)]">
           {options.map((o) => (
             <button
               key={String(o.value)}

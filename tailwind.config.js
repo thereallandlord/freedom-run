@@ -25,7 +25,7 @@ export default {
         muted: ch('--c-muted'),
         accent: {
           DEFAULT: ch('--c-accent'),
-          soft: ch('--c-accent-soft'),
+          hover: ch('--c-accent-hover'),
           ink: ch('--c-accent-ink'),
         },
         good: ch('--c-good'),

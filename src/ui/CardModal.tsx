@@ -14,8 +14,12 @@ import {
 } from '../engine/table'
 import { RULES, monthlyCashFlow, totalExpenses, installmentPrice, installmentMonthly } from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText } from '../engine/data'
+import { loanOutstanding } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
 import { HalalNote } from './HalalNote'
+import { DealTradeActions } from './DealTradeActions'
+import { artByDream, artById, artBySpace, artByTicker } from './cardArt'
+import { debtsOf, seatOf } from './tradeHelpers'
 
 /** Картинка карточки: иконка по типу актива поверх фирменного градиента. */
 const CARD_ART: Record<string, string> = {
@@ -26,7 +30,28 @@ const CARD_ART: Record<string, string> = {
   franchise: '🍔', localBiz: '🏪', dairyUY: '🐄', villaPDE: '🏝️', landUY: '🌾', aptMVD: '🏢', aptPDE: '🌊',
 }
 
-function CardArt({ icon, accent }: { icon: string; accent: string }) {
+function CardArt({ icon, accent, photo }: { icon: string; accent: string; photo?: string | null }) {
+  /*
+   * Картинка есть почти у каждой карточки, но не у всех — служебные клетки и
+   * новые карты могут быть ещё не нарисованы. Поэтому эмодзи не выкидываем:
+   * это честный запасной вариант, а не заглушка «загружается».
+   */
+  if (photo) {
+    return (
+      <div
+        className="mb-3 overflow-hidden rounded-xl border"
+        style={{ borderColor: `${accent}33` }}
+      >
+        <img
+          src={photo}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="block h-32 w-full object-cover sm:h-36"
+        />
+      </div>
+    )
+  }
   return (
     <div
       className="mb-3 grid h-24 place-items-center overflow-hidden rounded-xl border text-5xl"
@@ -47,6 +72,7 @@ function Shell({
   children,
   accent = '#10b981',
   art,
+  photo,
 }: {
   badge: string
   title: string
@@ -54,11 +80,12 @@ function Shell({
   children: React.ReactNode
   accent?: string
   art?: string
+  photo?: string | null
 }) {
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4">
-      <div className="card-fly-in panel max-h-[92vh] w-full max-w-md overflow-auto rounded-2xl p-5 shadow-2xl shadow-black/70">
-        {art && <CardArt icon={art} accent={accent} />}
+      <div className="card-fly-in panel max-h-[92vh] w-full max-w-md overflow-auto rounded-2xl p-5 shadow-[var(--shadow-pop)]">
+        {art && <CardArt icon={art} accent={accent} photo={photo} />}
         <div
           className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
           style={{ background: `${accent}22`, color: accent }}
@@ -128,7 +155,14 @@ export function CardModal({
         const max = Math.floor(l.cash / s.price)
         const holders = stockHolders(table, s.symbol)
         return (
-          <Shell badge={badge} title={txt.title} flavor={txt.flavor} accent="#38bdf8" art="📈">
+          <Shell
+            badge={badge}
+            title={txt.title}
+            flavor={txt.flavor}
+            accent="#38bdf8"
+            art="📈"
+            photo={artByTicker((card as any).symbol) ?? artById(card.id)}
+          >
             <div className="panel-2 space-y-1 rounded-lg p-3">
               <Stat label="Тикер" value={s.symbol} />
               <Stat label="Цена сегодня" value={money(s.price)} strong />
@@ -258,6 +292,7 @@ export function CardModal({
           flavor={txt.flavor}
           accent={card.category === 'partnership' ? '#22c55e' : '#10b981'}
           art={CARD_ART[card.category] ?? (card.kind === 'business' ? '🏭' : '🏠')}
+          photo={artById(card.id) ?? artByTicker((card as any).symbol)}
         >
           <div className="panel-2 space-y-1 rounded-lg p-3">
             {growth ? (
@@ -311,6 +346,9 @@ export function CardModal({
             </button>
           )}
 
+          {/* Сделку можно не только купить: право на неё продаётся, а вход делится с партнёром. */}
+          <DealTradeActions table={table} seat={seat} card={card} dispatch={dispatch} />
+
           <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost w-full">
             Пропустить
           </button>
@@ -335,7 +373,14 @@ export function CardModal({
       if (card.kind === 'sellOffer') {
         const matches = marketMatches(table, card.category)
         return (
-          <Shell badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8" art="🤝">
+          <Shell
+            badge="Рынок"
+            title={txt.title}
+            flavor={txt.flavor}
+            accent="#38bdf8"
+            art="🤝"
+            photo={artById(card.id) ?? artBySpace('market')}
+          >
             <div className="panel-2 rounded-lg p-3">
               <Stat label="Покупатель даёт" value={`${card.multiplierPct}% от стоимости`} strong />
             </div>
@@ -435,7 +480,14 @@ export function CardModal({
       const txt = cardText(card, locale)
       const monthly = Math.ceil(0.03 * card.amount)
       return (
-        <Shell badge="Трата" title={txt.title} flavor={txt.flavor} accent="#fb7185" art="🛍️">
+        <Shell
+          badge="Трата"
+          title={txt.title}
+          flavor={txt.flavor}
+          accent="#fb7185"
+          art="🛍️"
+          photo={artById(card.id) ?? artBySpace('doodad')}
+        >
           <div className="panel-2 rounded-lg p-3">
             <Stat label="К оплате" value={money(card.amount)} strong />
             <Stat label="Ваши наличные" value={money(l.cash)} />
@@ -468,7 +520,13 @@ export function CardModal({
     case 'charity': {
       const cost = charityCost(l)
       return (
-        <Shell badge="Благотворительность" title="Пожертвовать 10% дохода?" accent="#f59e0b" art="❤️">
+        <Shell
+          badge="Благотворительность"
+          title="Пожертвовать 10% дохода?"
+          accent="#f59e0b"
+          art="❤️"
+          photo={artBySpace('charity')}
+        >
           <p className="text-sm text-[var(--muted)]">
             Отдайте {money(cost)} — и следующие 3 хода сможете бросать два кубика вместо одного.
           </p>
@@ -491,7 +549,13 @@ export function CardModal({
     case 'downsized': {
       const cost = totalExpenses(l)
       return (
-        <Shell badge="Увольнение" title="Вы временно потеряли работу" accent="#64748b" art="📉">
+        <Shell
+          badge="Увольнение"
+          title="Вы временно потеряли работу"
+          accent="#64748b"
+          art="📉"
+          photo={artBySpace('downsized')}
+        >
           <p className="text-sm text-[var(--muted)]">
             Оплатите полный месяц расходов и пропустите 2 хода. Бонус благотворительности сгорает.
           </p>
@@ -516,7 +580,13 @@ export function CardModal({
       if (space.type !== 'business') return null
       const txt = fastSpaceText(p.space, locale)
       return (
-        <Shell badge="Инвестиция Полосы" title={txt?.name ?? space.name} flavor={txt?.flavor} art="🏢">
+        <Shell
+          badge="Инвестиция Полосы"
+          title={txt?.name ?? space.name}
+          flavor={txt?.flavor}
+          art="🏢"
+          photo={artById((space as any).id)}
+        >
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Взнос" value={money(space.downPayment)} strong />
             <Stat label="Добавит дохода" value={`${signed(space.cashFlow)}/мес`} strong />
@@ -543,7 +613,14 @@ export function CardModal({
       if (space.type !== 'venture') return null
       const txt = fastSpaceText(p.space, locale)
       return (
-        <Shell badge="Рисковый проект" title={txt?.name ?? space.name} flavor={txt?.flavor} accent="#f97316" art="🛢️">
+        <Shell
+          badge="Рисковый проект"
+          title={txt?.name ?? space.name}
+          flavor={txt?.flavor}
+          accent="#f97316"
+          art="🛢️"
+          photo={artById((space as any).id)}
+        >
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Ставка (невозвратная)" value={money(space.downPayment)} strong />
             <Stat label="При удаче" value={`${signed(space.cashFlow)}/мес`} strong />
@@ -573,17 +650,59 @@ export function CardModal({
       const price = dreamPriceAt(table, p.space)
       const bumps = table.dreamBumps[p.space] ?? 0
       const txt = fastSpaceText(p.space, locale)
+      // 🔒 С долгом перед игроком победа не засчитывается — иначе выигрышной
+      // стратегией стало бы «занять у всех и уйти». Говорим это прямо, а не гасим кнопку.
+      const owed = loanOutstanding(table.loans, seat.id)
+      const creditors = debtsOf(table.loans, seat.id)
+        .map((ln) => seatOf(table, ln.lenderId)?.name ?? 'игрок')
+        .join(', ')
       return (
-        <Shell badge="Ваша мечта" title={txt?.name ?? space.name} flavor={txt?.flavor} accent="#f472b6" art="⭐">
+        <Shell
+          badge="Ваша мечта"
+          title={txt?.name ?? space.name}
+          flavor={txt?.flavor}
+          accent="#f472b6"
+          art="⭐"
+          photo={artByDream(space.name)}
+        >
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Базовая цена" value={money(space.price)} />
             {bumps > 0 && <Stat label={`Соперники поднимали ×${bumps}`} value={money(price)} strong />}
             <Stat label="Цена сейчас" value={money(price)} strong />
             <Stat label="Ваши наличные" value={money(l.cash)} />
           </div>
+
+          {owed > 0 && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-[13px] leading-snug">
+              <div className="font-bold">🔒 Сначала рассчитайтесь с людьми</div>
+              <p className="mt-1 text-[var(--muted)]">
+                До победы закрыть {money(owed)} — {creditors}. Долг перед игроком победу не
+                пропускает: рассрочка за актив здесь ни при чём, речь о деньгах, которые вас
+                выручили.
+              </p>
+              <button
+                disabled={l.cash < owed + price}
+                onClick={() => {
+                  for (const ln of debtsOf(table.loans, seat.id)) {
+                    dispatch({ type: 'REPAY_PLAYER_LOAN', loanId: ln.id, amount: ln.amount - ln.repaid })
+                  }
+                  dispatch({ type: 'BUY_DREAM' })
+                }}
+                className="btn-primary mt-2 w-full"
+              >
+                Погасить {money(owed)} и купить мечту
+              </button>
+              {l.cash < owed + price && (
+                <p className="mt-1.5 text-center text-[12px] text-amber-400">
+                  На всё сразу не хватает {money(owed + price - l.cash)}.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button
-              disabled={l.cash < price}
+              disabled={l.cash < price || owed > 0}
               onClick={() => dispatch({ type: 'BUY_DREAM' })}
               className="btn-primary flex-1"
             >
@@ -600,7 +719,13 @@ export function CardModal({
     case 'ftCharity': {
       const cost = ftCharityCost(l)
       return (
-        <Shell badge="Благотворительность" title="Пожертвовать 10% дохода свободы?" accent="#f59e0b">
+        <Shell
+          badge="Благотворительность"
+          title="Пожертвовать 10% дохода свободы?"
+          accent="#f59e0b"
+          art="❤️"
+          photo={artBySpace('charity')}
+        >
           <p className="text-sm text-[var(--muted)]">
             Отдайте {money(cost)} — и до конца партии будете бросать три кубика.
           </p>

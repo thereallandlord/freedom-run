@@ -14,6 +14,11 @@ import { Board } from './Board'
 import { PlayerPanel, money, signed, tone } from './PlayerPanel'
 import { CardModal } from './CardModal'
 import { BankModal } from './BankModal'
+import { TradesModal } from './TradesModal'
+import { OfferInbox } from './OfferInbox'
+import { liveOffers, offerResponders, playerDebt } from './tradeHelpers'
+import type { Offer } from '../engine/trades'
+import { WorldEvents } from './WorldEvents'
 
 function Scoreboard({
   table,
@@ -25,7 +30,7 @@ function Scoreboard({
   onView: (id: string) => void
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
       {table.seats.map((s, i) => {
         const active = i === table.turnIndex
         const flow = s.track === 'fast' ? fastTrackIncome(s.ledger) : monthlyCashFlow(s.ledger)
@@ -33,7 +38,7 @@ function Scoreboard({
           <button
             key={s.id}
             onClick={() => onView(s.id)}
-            className={`panel-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition ${
+            className={`panel-2 flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition ${
               viewId === s.id ? 'border-emerald-500/70' : ''
             } ${s.outOfGame ? 'opacity-40' : ''}`}
           >
@@ -91,24 +96,50 @@ function MoneyToast({ table }: { table: Table }) {
   )
 }
 
-function Log({ table }: { table: Table }) {
-  const end = useRef<HTMLDivElement>(null)
+/**
+ * Ответ бота на предложение сделки. Согласие движок пишет в журнал сам,
+ * а отказ — это просто исчезнувшее предложение, и без строки он выглядел бы
+ * как «ничего не произошло».
+ */
+function TradeToast({ table }: { table: Table }) {
+  const [note, setNote] = useState<{ text: string; key: number } | null>(null)
+  const seen = useRef<{ offers: Offer[]; logLen: number }>({
+    offers: table.offers,
+    logLen: table.log.length,
+  })
+
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'nearest' })
-  }, [table.log.length])
+    const prev = seen.current
+    seen.current = { offers: table.offers, logLen: table.log.length }
+    const gone = prev.offers.filter((o) => !table.offers.some((x) => x.id === o.id))
+    if (!gone.length) return
+    // Интересны только те, где решал бот: свой отказ человек и так видел.
+    const byBot = gone.find((o) => {
+      const r = offerResponders(table, o)
+      return r.length > 0 && r.every((s) => s.isBot)
+    })
+    if (!byBot) return
+    const who = offerResponders(table, byBot).map((s) => s.name).join(', ')
+    const accepted = table.log.length > prev.logLen
+    setNote({
+      text: accepted ? table.log[table.log.length - 1].text : `🤖 ${who}: пас — предложение снято`,
+      key: Date.now(),
+    })
+  }, [table])
+
+  useEffect(() => {
+    if (!note) return
+    const id = window.setTimeout(() => setNote(null), 3200)
+    return () => window.clearTimeout(id)
+  }, [note])
+
+  if (!note) return null
   return (
-    <div className="panel h-40 overflow-auto rounded-xl p-2.5 text-[12px] leading-relaxed lg:h-[calc(100vh-9.5rem)]">
-      {table.log.length === 0 && <div className="text-[var(--muted)]">Партия началась.</div>}
-      {table.log.map((e, i) => {
-        const seat = table.seats.find((s) => s.id === e.seatId)
-        return (
-          <div key={i} className="py-[1px]">
-            {seat && <span style={{ color: seat.color }}>● </span>}
-            <span className={seat ? '' : 'text-[var(--muted)]'}>{e.text}</span>
-          </div>
-        )
-      })}
-      <div ref={end} />
+    <div
+      key={note.key}
+      className="pop-in pointer-events-none absolute left-1/2 top-3 z-20 max-w-[90%] -translate-x-1/2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 py-1.5 text-center text-sm font-semibold shadow-[var(--shadow-pop)]"
+    >
+      {note.text}
     </div>
   )
 }
@@ -193,6 +224,7 @@ export function Game({
   undo,
   reset,
   rematch,
+  topRight,
 }: {
   table: Table
   dispatch: (e: TableEvent) => void
@@ -201,14 +233,24 @@ export function Game({
   undo: () => void
   reset: () => void
   rematch: () => void
+  topRight?: React.ReactNode
 }) {
   const seat = currentSeat(table)
   const [viewId, setViewId] = useState(seat.id)
   const [bankOpen, setBankOpen] = useState(false)
+  const [tradesOpen, setTradesOpen] = useState(false)
+  /** Предложения, которые отложили кнопкой «Позже» — не лезут снова сами. */
+  const [hiddenOffers, setHiddenOffers] = useState<string[]>([])
   const viewed = table.seats.find((s) => s.id === viewId) ?? seat
 
   // Панель следует за активным игроком, пока её не переключили вручную.
   useEffect(() => setViewId(seat.id), [seat.id])
+
+  const myDebt = playerDebt(table, seat.id)
+  // Сначала показываем то, где ответ за человеком; предложения ботам — фоном.
+  const openOffers = liveOffers(table).filter((o) => !hiddenOffers.includes(o.id))
+  const inbox =
+    openOffers.find((o) => offerResponders(table, o).some((s) => !s.isBot)) ?? openOffers[0] ?? null
 
   const diceOptions = diceCountFor(seat)
   const canRoll = table.phase === 'awaitingRoll' && !seat.isBot && !rolling
@@ -217,17 +259,33 @@ export function Game({
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
-      <header className="mb-3 flex flex-wrap items-center gap-3">
-        <h1 className="text-lg font-black tracking-tight">Freedom Run</h1>
+      <header className="mb-3 flex items-center gap-2">
+        <h1 className="text-base font-black tracking-tight sm:text-lg">Freedom Run</h1>
         <div className="ml-auto flex items-center gap-1.5">
-          <button onClick={() => setBankOpen(true)} className="btn-ghost text-xs" disabled={seat.isBot}>
-            {RULES.loansEnabled ? '🏦 Банк' : '💼 Финансы'}
+          {topRight}
+          <button
+            onClick={() => setTradesOpen(true)}
+            className="btn-ghost text-xs"
+            disabled={seat.isBot}
+            title="Сделки между игроками"
+          >
+            🤝<span className="ml-1 hidden sm:inline">Сделки</span>
+            {myDebt > 0 && <span className="ml-1 text-[10px] text-amber-400">●</span>}
+          </button>
+          <button
+            onClick={() => setBankOpen(true)}
+            className="btn-ghost text-xs"
+            disabled={seat.isBot}
+            title={RULES.loansEnabled ? 'Банк' : 'Финансы'}
+          >
+            {RULES.loansEnabled ? '🏦' : '💼'}
+            <span className="ml-1 hidden sm:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
           </button>
           <button onClick={undo} className="btn-ghost text-xs" title="Откатить последнее событие">
-            ↩️ Отменить
+            ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
           </button>
-          <button onClick={reset} className="btn-ghost text-xs">
-            🔄 Заново
+          <button onClick={reset} className="btn-ghost text-xs" title="Начать заново">
+            🔄<span className="ml-1 hidden sm:inline">Заново</span>
           </button>
         </div>
       </header>
@@ -251,7 +309,9 @@ export function Game({
         <Scoreboard table={table} viewId={viewId} onView={setViewId} />
       </div>
 
-      <div className="grid items-start gap-3 lg:grid-cols-[300px_minmax(0,1fr)_260px]">
+      <WorldEvents table={table} />
+
+      <div className="grid items-start gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="order-2 max-h-[calc(100vh-9.5rem)] overflow-auto lg:order-1">
           <PlayerPanel seat={viewed} />
         </div>
@@ -259,6 +319,7 @@ export function Game({
         <div className="order-1 lg:order-2">
           <div className="panel relative rounded-2xl p-4">
             <MoneyToast table={table} />
+            <TradeToast table={table} />
             <Board table={table} />
 
             <div className="mt-4 flex flex-col items-center gap-2">
@@ -300,13 +361,26 @@ export function Game({
                   или остаться и бросить кубик
                 </button>
               )}
+
+              {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — это загадка. */}
+              {myDebt > 0 && !seat.isBot && (
+                <div className="flex w-full max-w-sm flex-wrap items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-center text-[12px] leading-snug">
+                  <span>
+                    🔒 Долг перед игроками <span className="tabnum font-semibold">{money(myDebt)}</span> —
+                    пока не вернёте, мечту купить нельзя.
+                  </span>
+                  <button
+                    onClick={() => setTradesOpen(true)}
+                    className="btn-ghost px-2 py-1 text-[11px]"
+                  >
+                    Рассчитаться
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="order-3">
-          <Log table={table} />
-        </div>
       </div>
 
       {table.pending &&
@@ -315,6 +389,23 @@ export function Game({
           <CardModal table={table} seat={seat} dispatch={dispatch} />
         )}
       {bankOpen && <BankModal seat={seat} dispatch={dispatch} onClose={() => setBankOpen(false)} />}
+      {tradesOpen && !seat.isBot && (
+        <TradesModal
+          table={table}
+          seat={seat}
+          dispatch={dispatch}
+          onClose={() => setTradesOpen(false)}
+          onOpenOffer={(id) => setHiddenOffers((h) => h.filter((x) => x !== id))}
+        />
+      )}
+      {inbox && table.phase !== 'finished' && (
+        <OfferInbox
+          table={table}
+          offer={inbox}
+          dispatch={dispatch}
+          onHide={() => setHiddenOffers((h) => [...h, inbox.id])}
+        />
+      )}
       {table.phase === 'finished' && (
         <WinScreen table={table} onNew={reset} onUndo={undo} onRematch={rematch} />
       )}

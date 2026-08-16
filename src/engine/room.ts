@@ -203,10 +203,15 @@ export function isValidRoomCode(code: string): boolean {
   return code.length === ROOM_CODE_LENGTH && [...code].every((c) => ROOM_CODE_ALPHABET.includes(c))
 }
 
-/** Ссылка-приглашение. База приходит снаружи — движок про location не знает. */
+/**
+ * Ссылка-приглашение. База приходит снаружи — движок про location не знает.
+ * Путь не трогаем: игра может лежать не в корне (GitHub Pages, /preview.html),
+ * и лишний слэш перед '?' ломает такой адрес.
+ */
 export function inviteLink(code: string, base: string): string {
-  const clean = base.replace(/[?#].*$/, '').replace(/\/+$/, '')
-  return `${clean}/?room=${code}`
+  const clean = base.replace(/[?#].*$/, '')
+  const withPath = /^[a-z][a-z0-9+.-]*:\/\/[^/]*$/i.test(clean) ? `${clean}/` : clean
+  return `${withPath}?room=${code}`
 }
 
 export function readRoomCodeFromUrl(search: string): string | null {
@@ -310,7 +315,7 @@ function nameTaken(room: RoomState, name: string, exceptId?: string): boolean {
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   deckTheme: 'ru',
-  maxPlayers: 6,
+  maxPlayers: 10,
   allowSpectators: true,
   hostCanUndo: true,
   onDisconnect: 'ask',
@@ -376,7 +381,8 @@ export function joinAsPlayer(room: RoomState, draft: PlayerDraft, now = Date.now
   if (existing) return updatePlayer(room, draft.id, { ...draft, name })
 
   if (room.players.length >= room.settings.maxPlayers) return fail('ROOM_FULL')
-  if (nameTaken(room, name)) return fail('NAME_TAKEN')
+  // Себя не считаем: зритель, садящийся за стол, иначе спорил бы со своим же именем.
+  if (nameTaken(room, name, draft.id)) return fail('NAME_TAKEN')
 
   const color = ROOM_COLOR_VALUES.includes(draft.color) ? draft.color : nextFreeColor(room)
   if (takenColors(room).includes(color)) return fail('COLOR_TAKEN')

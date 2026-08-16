@@ -97,7 +97,7 @@ export function Board({ table }: { table: Table }) {
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[min(470px,58vh)]">
       {/* Полоса свободы — внешняя дорожка скруглённым прямоугольником */}
-      <div className="absolute inset-0 rounded-[13%] border border-[var(--line)] bg-white/[0.015]" />
+      <div className="absolute inset-0 rounded-[13%] border border-[var(--line)] bg-[var(--panel-2)]" />
       {board.map((space, i) => {
         const st = FAST_STYLE[space.type]
         const here = table.seats.filter((s) => s.track === 'fast' && s.position === i && !s.outOfGame)

@@ -74,9 +74,11 @@ export type TableEvent =
   | { type: 'WORLD_EVENT'; index: number }
   // ─── Сделки между игроками ───
   | { type: 'OFFER_CARD'; amount: number; toId?: string }
-  | { type: 'OFFER_COINVEST'; amount: number; share: number }
+  | { type: 'OFFER_COINVEST'; amount: number; share: number; toId?: string }
   | { type: 'OFFER_ASSET'; assetId: string; amount: number; toId?: string }
   | { type: 'OFFER_LOAN'; toId: string; amount: number }
+  /** Заём просят чаще, чем предлагают: fromId — тот, у КОГО просят. */
+  | { type: 'ASK_LOAN'; fromId: string; amount: number }
   | { type: 'BID_OFFER'; offerId: string; seatId: string; amount: number }
   | { type: 'ACCEPT_OFFER_TRADE'; offerId: string; seatId: string }
   | { type: 'CANCEL_OFFER'; offerId: string }

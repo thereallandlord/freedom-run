@@ -13,10 +13,11 @@ import { RULES, professionMonthlyCashFlow, setRules } from '../engine/ledger'
 import { randomSeed } from '../engine/rng'
 import type { SeatSetup, TableSetup } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
+import { ROOM_MAX_PLAYERS } from '../engine/room'
 import type { DeckTheme } from '../engine/data'
 
 const MIN_PLAYERS = 2
-const MAX_PLAYERS = 6
+const MAX_PLAYERS = ROOM_MAX_PLAYERS
 
 const BOT_LABEL: Record<BotDifficulty, string> = {
   easy: 'Лёгкий',

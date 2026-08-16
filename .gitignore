@@ -9,3 +9,7 @@ tsconfig.tsbuildinfo
 .sweep.mjs
 .diag.mjs
 .calib.mjs
+
+# локальные ключи, в репозиторий не едут
+.env
+.env.local

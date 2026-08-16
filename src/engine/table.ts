@@ -1144,6 +1144,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           id: `of-${t.log.length}`,
           kind: 'coInvest',
           fromId: seat.id,
+          toId: event.toId,
           amount: Math.max(0, Math.round(event.amount)),
           share,
           expiresAtTurn: t.turnCounter + 1,
@@ -1201,6 +1202,33 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         },
       ]
       log(t, seat.id, `Предлагает ${to.name} беспроцентный заём ${money(amount)}`)
+      return t
+    }
+
+    /*
+     * Обратная сторона займа: в жизни просит тот, кому нужно, а не предлагает
+     * тот, у кого есть. Предложение записывается на будущего кредитора
+     * (fromId) — он же его и принимает, деньги идут тем же путём, что и в
+     * OFFER_LOAN. Согласие остаётся за владельцем денег.
+     */
+    case 'ASK_LOAN': {
+      const lender = t.seats.find((x) => x.id === event.fromId)
+      if (!lender || lender.outOfGame || lender.id === seat.id) return prev
+      const amount = Math.max(0, Math.round(event.amount))
+      if (amount <= 0) return prev
+      t.offers = [
+        ...t.offers,
+        {
+          id: `of-${t.log.length}`,
+          kind: 'loan',
+          fromId: lender.id,
+          toId: seat.id,
+          amount,
+          expiresAtTurn: t.turnCounter + 2,
+          bids: [],
+        },
+      ]
+      log(t, seat.id, `${seat.name} просит у ${lender.name} ${money(amount)} без надбавки`)
       return t
     }
 

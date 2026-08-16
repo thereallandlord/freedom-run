@@ -12,10 +12,12 @@ import {
 import { randomSeed } from '../engine/rng'
 import { decideBotEvent } from '../engine/bots'
 import { mulberry32 } from '../engine/rng'
+import { botOfferReply } from './tradeHelpers'
+import { scheduleWorldEvent } from './worldClock'
 
 const STORAGE_KEY = 'freedom-run:save:v2'
 /** Раз во сколько минут реального времени мир двигается сам. */
-const WORLD_EVENT_MIN = 12
+export const WORLD_EVENT_MIN = 12
 
 interface Save {
   setup: TableSetup
@@ -28,6 +30,8 @@ export function useGame() {
   const [table, setTable] = useState<Table | null>(null)
   const [rolling, setRolling] = useState(false)
   const botTimer = useRef<number | null>(null)
+  /** Отдельный таймер: на предложение бот отвечает и вне своего хода. */
+  const offerTimer = useRef<number | null>(null)
 
   // ─── Сохранение: храним только сетап и журнал событий ───
   useEffect(() => {
@@ -110,10 +114,19 @@ export function useGame() {
   /*
    * Мировые события идут по ЧАСАМ, а не по ходам: раз в WORLD_EVENT_MIN минут
    * рынок двигается сам, независимо от того, чей сейчас ход.
+   *
+   * Отсчёт заводится один раз на всю партию. Раньше он висел на фазе хода
+   * и перезапускался каждым броском — до конца интервала дело почти не
+   * доходило. Срок следующего события уезжает в worldClock: его показывает
+   * индикатор рынка.
    */
+  const worldClockOn = !!table && table.phase !== 'finished'
   useEffect(() => {
-    if (!table || table.phase === 'finished') return
+    if (!worldClockOn) return
+    const period = WORLD_EVENT_MIN * 60_000
+    scheduleWorldEvent(period)
     const id = window.setInterval(() => {
+      scheduleWorldEvent(period)
       setTable((prev) => {
         if (!prev || prev.phase === 'finished') return prev
         const ev = { type: 'WORLD_EVENT' as const, index: nextWorldEventIndex(prev) }
@@ -121,9 +134,9 @@ export function useGame() {
         if (next !== prev) setEvents((evs) => [...evs, ev])
         return next
       })
-    }, WORLD_EVENT_MIN * 60_000)
+    }, period)
     return () => window.clearInterval(id)
-  }, [table?.phase])
+  }, [worldClockOn])
 
   // ─── Водитель ботов ───
   useEffect(() => {
@@ -153,6 +166,38 @@ export function useGame() {
 
     return () => {
       if (botTimer.current) window.clearTimeout(botTimer.current)
+    }
+  }, [table, events.length])
+
+  /*
+   * Ответ бота на сделку между игроками. Отдельно от главного водителя:
+   * предложение приходит боту, когда ход НЕ его, и тот эффект молчит.
+   * Решение считает движок (botAcceptsOffer) — здесь только пауза, чтобы
+   * стол не выглядел роботизированным, и защита от зависшего предложения.
+   */
+  useEffect(() => {
+    if (!table || table.phase === 'finished') return
+    const reply = botOfferReply(table)
+    if (!reply) return
+
+    offerTimer.current = window.setTimeout(() => {
+      setTable((prev) => {
+        if (!prev) return prev
+        const next = applyTableEvent(prev, reply.event)
+        if (next !== prev) {
+          setEvents((evs) => [...evs, reply.event])
+          return next
+        }
+        // Движок отклонил согласие (цена уже не та, денег не хватило) — снимаем
+        // предложение, иначе человек будет ждать ответа, которого не будет.
+        const off = applyTableEvent(prev, reply.fallback)
+        if (off !== prev) setEvents((evs) => [...evs, reply.fallback])
+        return off
+      })
+    }, 1200)
+
+    return () => {
+      if (offerTimer.current) window.clearTimeout(offerTimer.current)
     }
   }, [table, events.length])
 

@@ -48,8 +48,16 @@ export function randomProfessionNear(
   const centre = Math.round(taken.reduce((s, i) => s + i, 0) / taken.length)
   const from = Math.max(0, centre - 2)
   const to = Math.min(pool.length - 1, centre + 2)
-  const window = pool.slice(from, to + 1)
-  return window[Math.floor(rnd() * window.length)]
+  // Одинаковая профессия у двоих за столом выглядит как недоработка,
+  // поэтому занятые из окна убираем — и расширяем его, если не осталось никого.
+  const taken_ids = new Set(takenIds)
+  const free = (a: number, b: number) =>
+    pool.slice(a, b + 1).filter((p) => !taken_ids.has(p.id))
+  const window = free(from, to)
+  if (window.length) return window[Math.floor(rnd() * window.length)]
+  const wide = free(0, pool.length - 1)
+  if (wide.length) return wide[Math.floor(rnd() * wide.length)]
+  return pool[Math.floor(rnd() * pool.length)]
 }
 
 export const RAT_BOARD = boardsJson.RAT_BOARD as RatSpace[]
