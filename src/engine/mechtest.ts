@@ -26,10 +26,19 @@ check('кредиты выключены', RULES.loansEnabled === false)
 check('выкуп ×50', RULES.fastTrackMultiplier === 50)
 check('цель Полосы 1 млн', RULES.fastTrackTarget === 1_000_000)
 
-console.log('\n=== Кредит недоступен ===')
-const beforeLoan = t.seats[0].ledger.cash
-t = applyTableEvent(t, { type: 'TAKE_LOAN', amount: 100000 })
-check('TAKE_LOAN отклонён', t.seats[0].ledger.cash === beforeLoan)
+console.log('\n=== Заём есть, но беспроцентный (кард хасан) ===')
+{
+  let l = t.seats[0].ledger
+  const before = l.cash
+  l = applyEvent(l, { type: 'TAKE_LOAN', amount: 100_000 })
+  check('деньги пришли', l.cash === before + 100_000)
+  check('платёж = 1/10', l.expenses.bankLoanPayment === 10_000)
+  const debt0 = l.liabilities.bankLoan
+  for (let i = 0; i < 10; i++) l = applyEvent(l, { type: 'PAYCHECK' })
+  check('долг гасится платежами', l.liabilities.bankLoan === 0, `${debt0} → 0 за 10 зарплат`)
+  check('платёж исчез вместе с долгом', l.expenses.bankLoanPayment === 0)
+  check('переплаты нет', debt0 === 100_000, 'вернул ровно столько же')
+}
 
 console.log('\n=== Партнёрский бизнес: рост со временем ===')
 const pn = bigDeals('ru').find((c: any) => c.category === 'partnership') as any
@@ -47,14 +56,14 @@ check('поток растёт с зарплатами', flow5 > flow0, `${flow0
 for (let i = 0; i < 100; i++) led = applyEvent(led, { type: 'PAYCHECK' })
 check('рост упирается в потолок', led.businesses[0].cashFlow === pn.growthCap, String(led.businesses[0].cashFlow))
 
-console.log('\n=== Инвестор: взнос его, поток пополам ===')
-let l2 = t.seats[1].ledger
+console.log('\n=== Мушарака: складываемся долями, делим в тех же долях ===')
+let l2 = applyEvent(t.seats[1].ledger, { type: 'ADJUST_CASH', amount: 500_000 })
 const cashBefore = l2.cash
 l2 = applyEvent(l2, {
   type: 'BUY_REAL_ESTATE', id: 're1', name: 'Тест', cost: 10_000_000, downPayment: 500_000,
   mortgage: 9_500_000, cashFlow: 40_000, category: 'aptKZN', investorShare: 0.5,
 })
-check('взнос не списан с игрока', l2.cash === cashBefore, `${cashBefore} → ${l2.cash}`)
+check('игрок внёс свою половину', cashBefore - l2.cash === 250_000, `списано ${cashBefore - l2.cash}`)
 check('в пассив идёт половина', passiveIncome(l2) === 20_000, String(passiveIncome(l2)))
 const l3 = applyEvent(l2, { type: 'SELL_REAL_ESTATE', assetId: 're1', salePrice: 12_000_000 })
 check('с продажи игроку половина', l3.cash - l2.cash === 1_250_000, String(l3.cash - l2.cash))
@@ -96,6 +105,24 @@ console.log('\n=== Карта рынка видна другим игрокам 
   t4 = { ...t4, pending: { kind: 'deal', deck: 'small', card: { kind: 'stock', id: 'y', symbol: 'GRIT', title: '', flavor: '', price: 2000, range: [100, 4000] } } }
   check('дешёвую акцию может купить сосед', pendingInvolvesOthers(t4) === true)
 }
+
+console.log('\n=== Партнёрский бизнес не принтер ===')
+{
+  const pns = bigDeals('ru').filter((c: any) => c.category === 'partnership') as any[]
+  const worst = Math.max(...pns.map((c) => c.growthCap / c.downPayment))
+  check('потолок соразмерен взносу', worst < 0.4, `максимум ${(worst * 100).toFixed(0)}% от взноса в месяц`)
+  let l = t.seats[0].ledger
+  for (let i = 0; i < 5; i++) {
+    l = applyEvent(l, {
+      type: 'BUY_BUSINESS', id: `pn${i}`, name: 'Пакет', cost: 28_900, downPayment: 0,
+      liability: 0, cashFlow: 1700, category: 'partnership',
+    })
+  }
+  check('больше трёх кабинетов не набрать', l.businesses.length === 3, `куплено ${l.businesses.length}`)
+}
+
+console.log('\n=== Масштаб доходности ===')
+check('в RU-режиме игровой масштаб', RULES.yieldScale === 0.3, String(RULES.yieldScale))
 
 console.log('\n=== Колоды RU ===')
 check('малых сделок', smallDeals('ru').length >= 30, String(smallDeals('ru').length))

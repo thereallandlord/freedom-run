@@ -6,3 +6,6 @@ dist
 .selftest.mjs
 tsconfig.tsbuildinfo
 .mech.mjs
+.sweep.mjs
+.diag.mjs
+.calib.mjs
