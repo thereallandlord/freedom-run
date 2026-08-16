@@ -14,6 +14,7 @@ import { randomSeed } from '../engine/rng'
 import type { SeatSetup, TableSetup } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
 import { ROOM_MAX_PLAYERS } from '../engine/room'
+import { artByDeck } from './cardArt'
 import type { DeckTheme } from '../engine/data'
 
 const MIN_PLAYERS = 2
@@ -115,7 +116,12 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <header className="mb-7 text-center">
-        <h1 className="text-4xl font-black tracking-tight">Freedom Run</h1>
+        <h1 className="text-4xl font-black tracking-tight">
+          Cashflow{' '}
+          <span className="align-middle text-base font-bold uppercase tracking-wide text-accent">
+            GreenLeaf version
+          </span>
+        </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
           Вырвись из денежной рутины: нарасти пассивный доход выше расходов, потом мчись к мечте.
         </p>
@@ -128,24 +134,38 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
         <div className="grid gap-2 sm:grid-cols-3">
           {(
             [
-              ['ru', '🇷🇺 Россия · халяль', 'рубли, рассрочка вместо кредитов, партнёрский бизнес'],
+              ['ru', 'Россия · халяль', 'рубли, рассрочка вместо кредитов, партнёрский бизнес'],
               ['offshore', 'Уругвай', 'квартиры, земля, фермы, мемкоины'],
               ['classic', 'Классическая', 'кондо, франшизы, акции'],
             ] as const
-          ).map(([id, title, hint]) => (
-            <button
-              key={id}
-              onClick={() => setTheme(id)}
-              className={`rounded-lg border px-3 py-2.5 text-left transition ${
-                theme === id
-                  ? 'border-emerald-500 bg-emerald-500/10'
-                  : 'border-[var(--line)] bg-[var(--panel-2)] hover:border-emerald-500/50'
-              }`}
-            >
-              <div className="text-sm font-semibold">{title}</div>
-              <div className="text-xs text-[var(--muted)]">{hint}</div>
-            </button>
-          ))}
+          ).map(([id, title, hint]) => {
+            const cover = artByDeck(id)
+            return (
+              <button
+                key={id}
+                onClick={() => setTheme(id)}
+                className={`overflow-hidden rounded-xl border text-left transition ${
+                  theme === id
+                    ? 'border-accent bg-accent/[0.07]'
+                    : 'border-[var(--line)] hover:border-accent/50'
+                }`}
+              >
+                {cover && (
+                  <img
+                    src={cover}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="block h-20 w-full object-cover"
+                  />
+                )}
+                <div className="p-3">
+                  <div className="text-sm font-bold">{title}</div>
+                  <div className="mt-0.5 text-[11px] leading-snug text-[var(--muted)]">{hint}</div>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 

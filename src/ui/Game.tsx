@@ -260,7 +260,7 @@ export function Game({
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
       <header className="mb-3 flex items-center gap-2">
-        <h1 className="text-base font-black tracking-tight sm:text-lg">Freedom Run</h1>
+        <h1 className="font-display text-base font-bold tracking-tight sm:text-lg">Cashflow</h1>
         <div className="ml-auto flex items-center gap-1.5">
           {topRight}
           <button

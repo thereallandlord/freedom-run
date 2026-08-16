@@ -42,6 +42,7 @@ function Art({
           src={src}
           alt=""
           loading="lazy"
+          decoding="async"
           onError={() => setBroken(true)}
           className="size-full object-cover"
         />
@@ -83,7 +84,12 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
           <div className="grid size-9 place-items-center rounded-xl bg-accent text-lg text-accent-ink shadow-glow">
             🕊️
           </div>
-          <div className="font-black tracking-tight">Freedom Run</div>
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-lg font-bold tracking-tight">Cashflow</span>
+            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+              GreenLeaf version
+            </span>
+          </div>
           <div className="ml-auto flex items-center gap-2">{topRight}</div>
         </header>
 
@@ -136,57 +142,41 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
           </p>
         </section>
 
-        {/* ─── Два пути ─── */}
-        <section className="mb-4 grid gap-4 sm:grid-cols-2">
+        {/* ─── Два пути: просто две кнопки, без картинок ─── */}
+        <section className="mb-4 grid gap-3 sm:grid-cols-2">
           <button
             onClick={onLocal}
-            className="panel group relative overflow-hidden rounded-2xl p-0 text-left transition duration-150 hover:-translate-y-0.5 hover:border-accent/60 active:scale-[0.995]"
+            className="btn-primary group flex items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left"
           >
-            <Art
-              src="/cards/big-partner-start-team.webp"
-              emoji="🎲"
-              className="h-36 w-full sm:h-44"
-              gradient="linear-gradient(135deg,#34d399,#0ea5e9)"
-            />
-            <div className="p-5">
-              <div className="text-lg font-bold">На одном устройстве</div>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">
-                Все за одним экраном, ход передаётся по кругу. Пустые места закроют боты.
-                Ничего настраивать не нужно.
-              </p>
-              <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
-                Начать партию
-                <span className="transition duration-150 group-hover:translate-x-0.5">→</span>
-              </div>
-            </div>
+            <span className="min-w-0">
+              <span className="block text-base font-bold sm:text-lg">На одном устройстве</span>
+              <span className="mt-0.5 block text-[13px] font-normal opacity-80">
+                Все за одним экраном, пустые места закроют боты
+              </span>
+            </span>
+            <span className="shrink-0 text-lg transition duration-150 group-hover:translate-x-0.5">
+              →
+            </span>
           </button>
 
           <button
             onClick={onCreate}
-            className="panel group relative overflow-hidden rounded-2xl p-0 text-left transition duration-150 hover:-translate-y-0.5 hover:border-accent/60 active:scale-[0.995]"
+            className="panel group flex items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left transition duration-150 hover:border-accent/60 active:scale-[0.995]"
           >
-            <Art
-              src="/cards/dd-telefon-rebenku.webp"
-              emoji="📱"
-              className="h-36 w-full sm:h-44"
-              gradient="linear-gradient(135deg,#a78bfa,#f472b6)"
-            />
-            <div className="p-5">
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold">Играть онлайн</span>
+            <span className="min-w-0">
+              <span className="flex items-center gap-2">
+                <span className="text-base font-bold sm:text-lg">Играть онлайн</span>
                 <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-accent">
                   до 10
                 </span>
-              </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">
-                Комната с кодом и ссылкой. Каждый со своего телефона, ссылка на созвон —
-                внутри. Пароль не нужен.
-              </p>
-              <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
-                Создать комнату
-                <span className="transition duration-150 group-hover:translate-x-0.5">→</span>
-              </div>
-            </div>
+              </span>
+              <span className="mt-0.5 block text-[13px] text-muted">
+                Комната с кодом, каждый со своего телефона
+              </span>
+            </span>
+            <span className="shrink-0 text-lg text-accent transition duration-150 group-hover:translate-x-0.5">
+              →
+            </span>
           </button>
         </section>
 

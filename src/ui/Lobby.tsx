@@ -33,7 +33,7 @@ const BOT_LABEL: Record<BotDifficulty, string> = {
 }
 
 const THEME_LABEL: Record<DeckTheme, string> = {
-  ru: '🇷🇺 Россия · халяль',
+  ru: 'Россия · халяль',
   offshore: 'Уругвай',
   classic: 'Классическая',
 }

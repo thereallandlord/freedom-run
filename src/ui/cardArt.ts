@@ -8,6 +8,7 @@
  *   byTicker — акции: один рисунок на бумагу, а не на каждую цену покупки
  *   byDream  — мечты Полосы свободы (у них нет id, только название)
  *   bySpace  — клетки-события: одна картинка на ТИП клетки
+ *   byDeck   — обложки трёх колод на экране выбора игры
  *
  * Картинки нет — возвращаем null, и карточка честно показывает эмодзи.
  * Так игра остаётся играбельной, даже если иллюстрации ещё не нарисованы.
@@ -19,6 +20,7 @@ type Manifest = {
   byTicker?: Record<string, string>
   byDream?: Record<string, string>
   bySpace?: Record<string, string>
+  byDeck?: Record<string, string>
 }
 
 const M = manifest as Manifest
@@ -42,6 +44,10 @@ export function artByTicker(symbol: string | undefined): string | null {
 
 export function artByDream(name: string | undefined): string | null {
   return name ? url(M.byDream?.[name]) : null
+}
+
+export function artByDeck(theme: string | undefined): string | null {
+  return theme ? url(M.byDeck?.[theme]) : null
 }
 
 export function artBySpace(kind: string | undefined): string | null {

@@ -231,6 +231,19 @@ const SCENES_SPACES = {
     'Two people sitting on opposite sides of a mediator’s desk in a plain office, a folder of documents between them, both looking down, flat daylight, restrained and sad',
 }
 
+/**
+ * Обложки трёх колод — их видно на самом первом экране, при выборе игры.
+ * Раньше там стояли эмодзи (флаг, ничего, ничего), и экран выглядел
+ * недоделанным. Сцена показывает МИР колоды, а не абстрактную «Россию».
+ */
+const SCENES_DECKS = {
+  ru: 'A Russian provincial city street on a clear day: a mid-rise brick apartment block with a small bakery and a parcel pickup point on the ground floor, a parked delivery van, birch trees along the pavement, people walking with shopping bags, warm daylight',
+  offshore:
+    'A South American coastal town from a hillside: pastel low-rise houses with terracotta roofs, palm trees, a wide river estuary and open sea beyond, small farms visible on the green hills behind, bright clear afternoon',
+  classic:
+    'A North American suburban street of detached houses with wide lawns and driveways, a modest strip of shops at the corner, a distant downtown skyline on the horizon, clean midday light',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -574,6 +587,14 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Обложки колод
+  manifest.byDeck = manifest.byDeck || {}
+  for (const theme of Object.keys(SCENES_DECKS)) {
+    push(theme, `deck-${theme}`, SCENES_DECKS[theme], 'deck', () => {
+      manifest.byDeck[theme] = `/cards/deck-${theme}.webp`
+    })
   }
 
   // Клетки-события: одна картинка на тип
