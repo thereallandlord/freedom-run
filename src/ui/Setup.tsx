@@ -15,6 +15,7 @@ import type { SeatSetup, TableSetup } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
 import { ROOM_MAX_PLAYERS } from '../engine/room'
 import { artByDeck } from './cardArt'
+import { Wordmark } from './Wordmark'
 import type { DeckTheme } from '../engine/data'
 
 const MIN_PLAYERS = 2
@@ -116,12 +117,7 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <header className="mb-7 text-center">
-        <h1 className="text-4xl font-black tracking-tight">
-          Cashflow{' '}
-          <span className="align-middle text-base font-bold uppercase tracking-wide text-accent">
-            GreenLeaf version
-          </span>
-        </h1>
+        <Wordmark size="lg" className="justify-center" />
         <p className="mt-2 text-sm text-[var(--muted)]">
           Вырвись из денежной рутины: нарасти пассивный доход выше расходов, потом мчись к мечте.
         </p>

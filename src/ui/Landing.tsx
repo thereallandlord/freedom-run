@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { ROOM_CODE_LENGTH, isValidRoomCode, normalizeRoomCode } from '../engine/room'
 import { artByDeck } from './cardArt'
+import { Wordmark } from './Wordmark'
 
 /**
  * Стартовый экран: два больших пути — «на одном устройстве» и «онлайн».
@@ -193,19 +194,7 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
       <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-5 sm:px-6">
         {/* ─── Шапка ─── */}
         <header className="mb-8 flex items-center gap-3">
-          <div className="grid size-9 place-items-center rounded-xl bg-accent text-accent-ink shadow-glow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"
-              strokeLinecap="round" strokeLinejoin="round" className="size-[19px]">
-              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
-            </svg>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-lg font-bold tracking-tight">Cashflow</span>
-            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
-              GreenLeaf version
-            </span>
-          </div>
+          <Wordmark />
           <div className="ml-auto flex items-center gap-2">{topRight}</div>
         </header>
 
@@ -299,7 +288,7 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
 
         {/* ─── Вход по коду: одна строка, поле под шесть символов ─── */}
         {!joinCode && (
-          <section className="mb-12 flex flex-wrap items-center gap-2.5">
+          <section className="mb-12 flex flex-wrap items-center justify-center gap-2.5">
             <span className="text-[13px] text-muted">Есть код комнаты?</span>
             <input
               value={code}

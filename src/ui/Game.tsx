@@ -16,6 +16,7 @@ import { CardModal } from './CardModal'
 import { BankModal } from './BankModal'
 import { TradesModal } from './TradesModal'
 import { OfferInbox } from './OfferInbox'
+import { Wordmark } from './Wordmark'
 import { liveOffers, offerResponders, playerDebt } from './tradeHelpers'
 import type { Offer } from '../engine/trades'
 import { WorldEvents } from './WorldEvents'
@@ -260,7 +261,7 @@ export function Game({
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
       <header className="mb-3 flex items-center gap-2">
-        <h1 className="font-display text-base font-bold tracking-tight sm:text-lg">Cashflow</h1>
+        <Wordmark size="sm" edition={false} />
         <div className="ml-auto flex items-center gap-1.5">
           {topRight}
           <button
