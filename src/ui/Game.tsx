@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
-import { currentSeat, diceCountFor } from '../engine/table'
+import { currentSeat, diceCountFor, pendingInvolvesOthers } from '../engine/table'
 import {
   RULES,
   fastTrackIncome,
@@ -56,6 +56,41 @@ function Scoreboard({
   )
 }
 
+/** Всплывашка над доской: откуда пришли деньги. Жалоба с созвона — «бабки растут, непонятно». */
+function MoneyToast({ table }: { table: Table }) {
+  const [note, setNote] = useState<{ text: string; key: number } | null>(null)
+  const lastLen = useRef(table.log.length)
+
+  useEffect(() => {
+    if (table.log.length <= lastLen.current) {
+      lastLen.current = table.log.length
+      return
+    }
+    const fresh = table.log.slice(lastLen.current)
+    lastLen.current = table.log.length
+    const hit = [...fresh]
+      .reverse()
+      .find((e) => /Зарплата|выплата|Повышение|вычет|Автопромоушен/i.test(e.text))
+    if (hit) setNote({ text: hit.text, key: Date.now() })
+  }, [table.log.length])
+
+  useEffect(() => {
+    if (!note) return
+    const id = window.setTimeout(() => setNote(null), 2600)
+    return () => window.clearTimeout(id)
+  }, [note])
+
+  if (!note) return null
+  return (
+    <div
+      key={note.key}
+      className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full border border-emerald-500/50 bg-emerald-500/15 px-4 py-1.5 text-sm font-semibold text-emerald-300 shadow-lg backdrop-blur pop-in"
+    >
+      {note.text}
+    </div>
+  )
+}
+
 function Log({ table }: { table: Table }) {
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -78,7 +113,17 @@ function Log({ table }: { table: Table }) {
   )
 }
 
-function WinScreen({ table, onNew, onUndo }: { table: Table; onNew: () => void; onUndo: () => void }) {
+function WinScreen({
+  table,
+  onNew,
+  onUndo,
+  onRematch,
+}: {
+  table: Table
+  onNew: () => void
+  onUndo: () => void
+  onRematch: () => void
+}) {
   const winner = table.seats.find((s) => s.id === table.winnerId)
   const standings = [...table.seats].sort((a, b) => netWorth(b.ledger) - netWorth(a.ledger))
   return (
@@ -122,13 +167,18 @@ function WinScreen({ table, onNew, onUndo }: { table: Table; onNew: () => void; 
           ))}
         </div>
 
-        <div className="mt-5 flex gap-2">
-          <button onClick={onNew} className="btn-primary flex-1">
-            Новая партия
+        <div className="mt-5 space-y-2">
+          <button onClick={onRematch} className="btn-primary w-full py-2.5">
+            🔁 Реванш — те же игроки, свежие колоды
           </button>
-          <button onClick={onUndo} className="btn-ghost">
-            Отменить ход
-          </button>
+          <div className="flex gap-2">
+            <button onClick={onNew} className="btn-ghost flex-1">
+              Новая партия
+            </button>
+            <button onClick={onUndo} className="btn-ghost">
+              Отменить ход
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -142,6 +192,7 @@ export function Game({
   rolling,
   undo,
   reset,
+  rematch,
 }: {
   table: Table
   dispatch: (e: TableEvent) => void
@@ -149,6 +200,7 @@ export function Game({
   rolling: boolean
   undo: () => void
   reset: () => void
+  rematch: () => void
 }) {
   const seat = currentSeat(table)
   const [viewId, setViewId] = useState(seat.id)
@@ -205,7 +257,8 @@ export function Game({
         </div>
 
         <div className="order-1 lg:order-2">
-          <div className="panel rounded-2xl p-4">
+          <div className="panel relative rounded-2xl p-4">
+            <MoneyToast table={table} />
             <Board table={table} />
 
             <div className="mt-4 flex flex-col items-center gap-2">
@@ -236,6 +289,12 @@ export function Game({
                 </button>
               ) : null}
 
+              <p className="max-w-sm text-center text-[11px] leading-relaxed text-[var(--muted)]">
+                {seat.track === 'rat'
+                  ? 'Цель: пассивный доход выше расходов — тогда выходишь из Рутины.'
+                  : 'Победа: встать на свою мечту и купить её — или собрать цель по доходу.'}
+              </p>
+
               {canEscape && (
                 <button onClick={() => roll(diceOptions[0])} className="text-xs text-[var(--muted)] hover:underline">
                   или остаться и бросить кубик
@@ -250,11 +309,15 @@ export function Game({
         </div>
       </div>
 
-      {table.pending && table.pending.kind !== 'gameOver' && !seat.isBot && (
-        <CardModal table={table} seat={seat} dispatch={dispatch} />
-      )}
+      {table.pending &&
+        table.pending.kind !== 'gameOver' &&
+        (!seat.isBot || pendingInvolvesOthers(table)) && (
+          <CardModal table={table} seat={seat} dispatch={dispatch} />
+        )}
       {bankOpen && <BankModal seat={seat} dispatch={dispatch} onClose={() => setBankOpen(false)} />}
-      {table.phase === 'finished' && <WinScreen table={table} onNew={reset} onUndo={undo} />}
+      {table.phase === 'finished' && (
+        <WinScreen table={table} onNew={reset} onUndo={undo} onRematch={rematch} />
+      )}
     </div>
   )
 }

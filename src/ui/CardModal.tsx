@@ -31,7 +31,7 @@ function Shell({
 }) {
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4">
-      <div className="pop-in panel w-full max-w-md rounded-2xl p-5 shadow-2xl shadow-black/70">
+      <div className="card-fly-in panel w-full max-w-md rounded-2xl p-5 shadow-2xl shadow-black/70">
         <div
           className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
           style={{ background: `${accent}22`, color: accent }}

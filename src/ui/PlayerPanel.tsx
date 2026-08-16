@@ -1,4 +1,5 @@
-import type { Seat } from '../engine/types'
+import { useState } from 'react'
+import type { RealEstateAsset, BusinessAsset, Seat } from '../engine/types'
 import {
   dividendLines,
   fastTrackIncome,
@@ -39,6 +40,50 @@ function Row({ label, value, dim }: { label: string; value: string; dim?: boolea
     <div className="flex items-baseline justify-between gap-3 py-[3px] text-[13px]">
       <span className={dim ? 'text-[var(--muted)]' : ''}>{label}</span>
       <span className="tabnum">{value}</span>
+    </div>
+  )
+}
+
+/** Актив с раскрытием: сколько стоил, сколько должен, сколько приносит. */
+function AssetRow({ a, kind }: { a: RealEstateAsset | BusinessAsset; kind: 'realEstate' | 'business' }) {
+  const [open, setOpen] = useState(false)
+  const debt = kind === 'realEstate' ? (a as RealEstateAsset).mortgage : (a as BusinessAsset).liability
+  const mine = Math.round(a.cashFlow * (1 - (a.investorShare ?? 0)))
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-baseline justify-between gap-3 py-[3px] text-left text-[13px] hover:text-emerald-300"
+      >
+        <span className="truncate text-[var(--muted)]">
+          <span className="mr-1 inline-block text-[9px] text-[var(--muted)]">{open ? '▾' : '▸'}</span>
+          {a.name}
+          {a.investorShare ? ' · 50% инвестору' : ''}
+        </span>
+        <span className="tabnum shrink-0">{signed(mine)}</span>
+      </button>
+      {open && (
+        <div className="mb-1 ml-3 space-y-0.5 border-l border-[var(--line)] pl-2 text-[11px] text-[var(--muted)]">
+          <div className="flex justify-between">
+            <span>Стоимость</span>
+            <span className="tabnum">{money(a.cost)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Вложено своих</span>
+            <span className="tabnum">{money(a.investorShare ? 0 : a.downPayment)}</span>
+          </div>
+          {debt > 0 && (
+            <div className="flex justify-between">
+              <span>Остаток рассрочки</span>
+              <span className="tabnum">{money(debt)}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span>Приносит в месяц</span>
+            <span className="tabnum">{signed(mine)}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -128,20 +173,10 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
               <Row key={d.symbol} label={`Дивиденды ${d.symbol}`} value={money(d.amount)} dim />
             ))}
             {l.realEstate.map((a) => (
-              <Row
-                key={a.id}
-                label={a.investorShare ? `${a.name} (50% инвестору)` : a.name}
-                value={signed(Math.round(a.cashFlow * (1 - (a.investorShare ?? 0))))}
-                dim
-              />
+              <AssetRow key={a.id} a={a} kind="realEstate" />
             ))}
             {l.businesses.map((a) => (
-              <Row
-                key={a.id}
-                label={a.investorShare ? `${a.name} (50% инвестору)` : a.name}
-                value={signed(Math.round(a.cashFlow * (1 - (a.investorShare ?? 0))))}
-                dim
-              />
+              <AssetRow key={a.id} a={a} kind="business" />
             ))}
             <div className="mt-1 border-t border-[var(--line)] pt-1">
               <Row label="Пассивный доход" value={money(passive)} />
@@ -207,8 +242,8 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
         </>
       )}
 
-      {(l.stocks.length > 0 || l.liabilities.bankLoan > 0) && (
-        <Section title="Портфель и долги">
+      {l.stocks.length > 0 && (
+        <Section title="Портфель">
           {l.stocks.map((s) => (
             <Row
               key={s.id}
@@ -217,11 +252,29 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
               dim
             />
           ))}
-          {l.liabilities.bankLoan > 0 && (
-            <Row label="Банковский кредит" value={money(l.liabilities.bankLoan)} dim />
-          )}
         </Section>
       )}
+
+      <Section title="Обязательства">
+        {[
+          ['Жильё', l.liabilities.homeMortgage],
+          ['Обучение', l.liabilities.schoolLoans],
+          ['Машина', l.liabilities.carLoans],
+          [RULES.loansEnabled ? 'Кредитные карты' : 'Техника', l.liabilities.creditCards],
+          ['Рассрочка', l.liabilities.retailDebt],
+          [RULES.loansEnabled ? 'Банковский кредит' : 'Заём', l.liabilities.bankLoan],
+        ]
+          .filter(([, v]) => (v as number) > 0)
+          .map(([label, v]) => (
+            <Row key={label as string} label={label as string} value={money(v as number)} dim />
+          ))}
+        {l.realEstate.filter((a) => a.mortgage > 0).map((a) => (
+          <Row key={a.id} label={`↳ ${a.name}`} value={money(a.mortgage)} dim />
+        ))}
+        {l.businesses.filter((a) => a.liability > 0).map((a) => (
+          <Row key={a.id} label={`↳ ${a.name}`} value={money(a.liability)} dim />
+        ))}
+      </Section>
     </div>
   )
 }

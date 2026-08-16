@@ -209,6 +209,30 @@ export function marketMatches(
   return out
 }
 
+/**
+ * Может ли кто-то, кроме ходящего, действовать по открытой карте.
+ * Нужно, чтобы карту рынка показывали всем, а не только активному игроку.
+ */
+export function pendingInvolvesOthers(t: Table): boolean {
+  const p = t.pending
+  if (!p) return false
+  const me = currentSeat(t).id
+  if (p.kind === 'market') {
+    if (p.card.kind === 'sellOffer')
+      return marketMatches(t, p.card.category).some((m) => m.seat.id !== me)
+    if (p.card.kind === 'stockPrice')
+      return stockHolders(t, p.card.symbol).some((s) => s.id !== me)
+    return false
+  }
+  if (p.kind === 'deal' && p.card.kind === 'stock') {
+    const price = p.card.price
+    return t.seats.some(
+      (s) => s.id !== me && !s.outOfGame && s.track === 'rat' && s.ledger.cash >= price,
+    )
+  }
+  return false
+}
+
 export function stockHolders(t: Table, symbol: string): Seat[] {
   return t.seats.filter(
     (s) => !s.outOfGame && s.track === 'rat' && s.ledger.stocks.some((l) => l.symbol === symbol),

@@ -49,6 +49,18 @@ body {
 }
 .pop-in { animation: pop-in 0.18s ease-out; }
 
+/* Карточка прилетает на стол, как настоящая. */
+@keyframes card-fly-in {
+  0%   { opacity: 0; transform: translateY(-140px) scale(0.72) rotate(-9deg); }
+  60%  { opacity: 1; transform: translateY(6px) scale(1.02) rotate(1.5deg); }
+  100% { opacity: 1; transform: none; }
+}
+.card-fly-in { animation: card-fly-in 0.42s cubic-bezier(0.2, 0.9, 0.25, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-fly-in, .pop-in, .dice-rolling { animation: none !important; }
+}
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #2a3345; border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

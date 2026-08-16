@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { applyTableEvent, createTable, currentSeat, replayTable, type TableSetup } from '../engine/table'
+import { randomSeed } from '../engine/rng'
 import { decideBotEvent } from '../engine/bots'
 import { mulberry32 } from '../engine/rng'
 
@@ -68,6 +69,15 @@ export function useGame() {
     })
   }, [setup])
 
+  /** Реванш: те же игроки и режим, свежие колоды. Новая ссылка не нужна. */
+  const rematch = useCallback(() => {
+    if (!setup) return
+    const next = { ...setup, seed: randomSeed() }
+    setSetup(next)
+    setEvents([])
+    setTable(createTable(next))
+  }, [setup])
+
   const reset = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY)
     setSetup(null)
@@ -119,5 +129,5 @@ export function useGame() {
     }
   }, [table, events.length])
 
-  return { setup, table, events, start, dispatch, undo, reset, roll, rolling }
+  return { setup, table, events, start, dispatch, undo, reset, rematch, roll, rolling }
 }

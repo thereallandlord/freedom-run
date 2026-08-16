@@ -3,7 +3,7 @@ import { Game } from './Game'
 import { useGame } from './useGame'
 
 export function App() {
-  const { table, start, dispatch, undo, reset, roll, rolling } = useGame()
+  const { table, start, dispatch, undo, reset, rematch, roll, rolling } = useGame()
 
   if (!table) return <Setup onStart={start} />
 
@@ -15,6 +15,7 @@ export function App() {
       rolling={rolling}
       undo={undo}
       reset={reset}
+      rematch={rematch}
     />
   )
 }

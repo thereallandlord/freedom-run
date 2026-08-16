@@ -1,5 +1,5 @@
 /** Точечная проверка новых механик RU-режима без интерфейса. */
-import { createTable, applyTableEvent, currentSeat, type TableSetup } from './table'
+import { createTable, applyTableEvent, currentSeat, pendingInvolvesOthers, type TableSetup } from './table'
 import { applyEvent } from './applyEvent'
 import { passiveIncome, monthlyCashFlow, RULES, ownShare } from './ledger'
 import { professionsFor, setActiveTheme, setFastBoardTheme, dreamSpaces, smallDeals, bigDeals, marketCards, doodads } from './data'
@@ -74,6 +74,28 @@ console.log('\n=== Трата в рассрочку без процентов ==
 let l6 = applyEvent(t.seats[0].ledger, { type: 'FINANCE_DOODAD', amount: 20_000 })
 check('платёж = 1/10 суммы', l6.expenses.retailPayment - t.seats[0].ledger.expenses.retailPayment === 2000)
 check('кредитка не тронута', l6.liabilities.creditCards === t.seats[0].ledger.liabilities.creditCards)
+
+console.log('\n=== Карта рынка видна другим игрокам ===')
+{
+  // У второго игрока есть акции; активный тянет котировку — он должен увидеть карту.
+  let t2 = createTable(setup)
+  t2.seats[1] = {
+    ...t2.seats[1],
+    ledger: applyEvent(t2.seats[1].ledger, {
+      type: 'BUY_STOCK', id: 'lot1', symbol: 'GRIT', shares: 10, costPerShare: 500, dividendPerShareMonthly: 0,
+    }),
+  }
+  t2 = { ...t2, pending: { kind: 'market', card: { kind: 'stockPrice', id: 'x', title: 'GRIT', flavor: '', symbol: 'GRIT', price: 3000 } } }
+  check('котировка касается держателя', pendingInvolvesOthers(t2) === true)
+
+  let t3 = createTable(setup)
+  t3 = { ...t3, pending: { kind: 'market', card: { kind: 'stockPrice', id: 'x', title: 'GRIT', flavor: '', symbol: 'GRIT', price: 3000 } } }
+  check('без держателей — никого не касается', pendingInvolvesOthers(t3) === false)
+
+  let t4 = createTable(setup)
+  t4 = { ...t4, pending: { kind: 'deal', deck: 'small', card: { kind: 'stock', id: 'y', symbol: 'GRIT', title: '', flavor: '', price: 2000, range: [100, 4000] } } }
+  check('дешёвую акцию может купить сосед', pendingInvolvesOthers(t4) === true)
+}
 
 console.log('\n=== Колоды RU ===')
 check('малых сделок', smallDeals('ru').length >= 30, String(smallDeals('ru').length))

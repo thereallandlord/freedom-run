@@ -1,26 +1,70 @@
 import { fastBoard, RAT_BOARD } from '../engine/data'
 import type { Seat, Table } from '../engine/types'
 
-const RAT_STYLE: Record<string, { icon: string; color: string }> = {
-  opportunity: { icon: '💼', color: '#10b981' },
-  market: { icon: '📈', color: '#38bdf8' },
-  doodad: { icon: '🛍️', color: '#fb7185' },
-  charity: { icon: '❤️', color: '#f59e0b' },
-  paycheck: { icon: '💵', color: '#a78bfa' },
-  baby: { icon: '🐕', color: '#f472b6' },
-  downsized: { icon: '📉', color: '#64748b' },
+const RAT_STYLE: Record<string, { icon: string; color: string; label: string }> = {
+  opportunity: { icon: '💼', color: '#10b981', label: 'Возможность' },
+  market: { icon: '📈', color: '#38bdf8', label: 'Рынок' },
+  doodad: { icon: '🛍️', color: '#fb7185', label: 'Трата' },
+  charity: { icon: '❤️', color: '#f59e0b', label: 'Благотворительность' },
+  paycheck: { icon: '💵', color: '#a78bfa', label: 'Зарплата' },
+  baby: { icon: '🐕', color: '#f472b6', label: 'Питомец' },
+  downsized: { icon: '📉', color: '#64748b', label: 'Увольнение' },
 }
 
-const FAST_STYLE: Record<string, { icon: string; color: string }> = {
-  cashflowDay: { icon: '💰', color: '#a78bfa' },
-  business: { icon: '🏢', color: '#10b981' },
-  dream: { icon: '⭐', color: '#f472b6' },
-  venture: { icon: '🛢️', color: '#f97316' },
-  taxAudit: { icon: '🧾', color: '#64748b' },
-  lawsuit: { icon: '⚖️', color: '#64748b' },
-  divorce: { icon: '💔', color: '#64748b' },
-  downsized: { icon: '📉', color: '#64748b' },
-  charity: { icon: '❤️', color: '#f59e0b' },
+const FAST_STYLE: Record<string, { icon: string; color: string; label: string }> = {
+  cashflowDay: { icon: '💰', color: '#a78bfa', label: 'День дохода' },
+  business: { icon: '🏢', color: '#10b981', label: 'Инвестиция' },
+  dream: { icon: '⭐', color: '#f472b6', label: 'Мечта' },
+  venture: { icon: '🛢️', color: '#f97316', label: 'Рисковый проект' },
+  taxAudit: { icon: '🧾', color: '#64748b', label: 'Налоговая проверка' },
+  lawsuit: { icon: '⚖️', color: '#64748b', label: 'Иск' },
+  divorce: { icon: '💔', color: '#64748b', label: 'Развод' },
+  downsized: { icon: '📉', color: '#64748b', label: 'Сокращение' },
+  charity: { icon: '❤️', color: '#f59e0b', label: 'Благотворительность' },
+}
+
+/**
+ * Точка на периметре скруглённого прямоугольника. Внешняя дорожка так читается
+ * как настоящая доска, а не как второе кольцо (правка Анвара с созвона).
+ */
+function roundedRectPoint(tRaw: number, size: number, r: number) {
+  const t = ((tRaw % 1) + 1) % 1
+  const straight = size - 2 * r
+  const arc = (Math.PI / 2) * r
+  const total = 4 * straight + 4 * arc
+  let d = t * total
+
+  // Старт — середина верхней стороны, дальше по часовой стрелке.
+  const halfTop = straight / 2
+  if (d < halfTop) return { x: size / 2 + d, y: 0 }
+  d -= halfTop
+  if (d < arc) {
+    const a = (d / arc) * (Math.PI / 2)
+    return { x: size - r + r * Math.sin(a), y: r - r * Math.cos(a) }
+  }
+  d -= arc
+  if (d < straight) return { x: size, y: r + d }
+  d -= straight
+  if (d < arc) {
+    const a = (d / arc) * (Math.PI / 2)
+    return { x: size - r + r * Math.cos(a), y: size - r + r * Math.sin(a) }
+  }
+  d -= arc
+  if (d < straight) return { x: size - r - d, y: size }
+  d -= straight
+  if (d < arc) {
+    const a = (d / arc) * (Math.PI / 2)
+    return { x: r - r * Math.sin(a), y: size - r + r * Math.cos(a) }
+  }
+  d -= arc
+  if (d < straight) return { x: 0, y: size - r - d }
+  d -= straight
+  if (d < arc) {
+    const a = (d / arc) * (Math.PI / 2)
+    return { x: r - r * Math.cos(a), y: r - r * Math.sin(a) }
+  }
+  d -= arc
+  return { x: size / 2 - (halfTop - d), y: 0 }
 }
 
 function polar(index: number, total: number, radius: number) {
@@ -48,31 +92,33 @@ function Tokens({ seats }: { seats: Seat[] }) {
 
 export function Board({ table }: { table: Table }) {
   const active = table.seats[table.turnIndex]
+  const board = fastBoard()
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[min(460px,58vh)]">
-      {/* Полоса свободы — внешний круг */}
-      <div className="absolute inset-0 rounded-full border border-[var(--line)] bg-white/[0.015]" />
-      {fastBoard().map((space, i) => {
+    <div className="relative mx-auto aspect-square w-full max-w-[min(470px,58vh)]">
+      {/* Полоса свободы — внешняя дорожка скруглённым прямоугольником */}
+      <div className="absolute inset-0 rounded-[13%] border border-[var(--line)] bg-white/[0.015]" />
+      {board.map((space, i) => {
         const st = FAST_STYLE[space.type]
         const here = table.seats.filter((s) => s.track === 'fast' && s.position === i && !s.outOfGame)
-        const isDream = space.type === 'dream'
         const owned = table.ftOwnership[i]
-        const dreamOf = table.seats.find((s) => s.dreamSpace === i && s.track === 'fast')
+        const dreamOf = table.seats.find((s) => s.dreamSpace === i && !s.outOfGame)
+        const pt = roundedRectPoint(i / board.length, 100, 15)
+        const name = 'name' in space ? (space as { name: string }).name : st.label
         return (
           <div
             key={`f${i}`}
             className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={polar(i, fastBoard().length, 46)}
-            title={'name' in space ? space.name : space.type}
+            style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
+            title={`${st.label}${'name' in space ? ': ' + name : ''}`}
           >
             <div
-              className="relative grid size-[26px] place-items-center rounded-md text-[11px] transition"
+              className="relative grid size-[24px] place-items-center rounded-md text-[11px]"
               style={{
                 background: owned ? '#1f2937' : `${st.color}22`,
                 border: `1px solid ${owned ? '#374151' : st.color + '66'}`,
-                opacity: owned ? 0.45 : 1,
-                boxShadow: isDream && dreamOf ? `0 0 0 2px ${dreamOf.color}` : undefined,
+                opacity: owned ? 0.4 : 1,
+                boxShadow: dreamOf ? `0 0 0 2px ${dreamOf.color}` : undefined,
               }}
             >
               {st.icon}
@@ -82,8 +128,8 @@ export function Board({ table }: { table: Table }) {
         )
       })}
 
-      {/* Круг — внутренний */}
-      <div className="absolute inset-[22%] rounded-full border border-[var(--line)] bg-white/[0.02]" />
+      {/* Рутина — внутреннее кольцо */}
+      <div className="absolute inset-[27%] rounded-full border border-[var(--line)] bg-white/[0.025]" />
       {RAT_BOARD.map((space, i) => {
         const st = RAT_STYLE[space]
         const here = table.seats.filter((s) => s.track === 'rat' && s.position === i && !s.outOfGame)
@@ -91,10 +137,11 @@ export function Board({ table }: { table: Table }) {
           <div
             key={`r${i}`}
             className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={polar(i, RAT_BOARD.length, 28)}
+            style={polar(i, RAT_BOARD.length, 31)}
+            title={st.label}
           >
             <div
-              className="relative grid size-[26px] place-items-center rounded-md text-[11px]"
+              className="relative grid size-[24px] place-items-center rounded-md text-[11px]"
               style={{ background: `${st.color}22`, border: `1px solid ${st.color}66` }}
             >
               {st.icon}
@@ -105,7 +152,7 @@ export function Board({ table }: { table: Table }) {
       })}
 
       {/* Центр */}
-      <div className="absolute inset-[34%] grid place-items-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-center">
+      <div className="absolute inset-[38%] grid place-items-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-center">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-[var(--muted)]">
             {active.track === 'rat' ? 'Рутина' : 'Полоса свободы'}
@@ -118,7 +165,8 @@ export function Board({ table }: { table: Table }) {
               {table.lastRoll.join(' + ')}
               {table.lastRoll.length > 1 && (
                 <span className="text-[var(--muted)]">
-                  {' '}= {table.lastRoll.reduce((a, b) => a + b, 0)}
+                  {' '}
+                  = {table.lastRoll.reduce((a, b) => a + b, 0)}
                 </span>
               )}
             </div>
