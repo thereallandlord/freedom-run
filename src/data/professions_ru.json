@@ -1,15 +1,15 @@
 [
   {
-    "id": "courier",
-    "name": "Курьер",
-    "salary": 100000,
+    "id": "seller",
+    "name": "Продавец-консультант",
+    "salary": 90000,
     "savings": 15000,
-    "perChildExpense": 9000,
+    "perChildExpense": 8000,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 25000,
+      "homeMortgagePayment": 22000,
       "schoolLoanPayment": 0,
-      "carPayment": 9000,
+      "carPayment": 5000,
       "creditCardPayment": 3000,
       "retailPayment": 2000,
       "otherExpenses": 35000
@@ -17,262 +17,400 @@
     "liabilities": {
       "homeMortgage": 0,
       "schoolLoans": 0,
-      "carLoans": 250000,
+      "carLoans": 150000,
       "creditCards": 60000,
       "retailDebt": 25000
     }
   },
   {
-    "id": "cashier",
-    "name": "Продавец-кассир",
-    "salary": 65000,
-    "savings": 12000,
-    "perChildExpense": 6000,
-    "expenses": {
-      "taxes": 0,
-      "homeMortgagePayment": 18000,
-      "schoolLoanPayment": 0,
-      "carPayment": 4000,
-      "creditCardPayment": 2500,
-      "retailPayment": 1500,
-      "otherExpenses": 24000
-    },
-    "liabilities": {
-      "homeMortgage": 0,
-      "schoolLoans": 0,
-      "carLoans": 90000,
-      "creditCards": 50000,
-      "retailDebt": 20000
-    }
-  },
-  {
-    "id": "taxi",
-    "name": "Таксист",
-    "salary": 95000,
-    "savings": 12000,
-    "perChildExpense": 8500,
+    "id": "teacher",
+    "name": "Учитель",
+    "salary": 90000,
+    "savings": 16000,
+    "perChildExpense": 8000,
     "expenses": {
       "taxes": 0,
       "homeMortgagePayment": 22000,
-      "schoolLoanPayment": 0,
-      "carPayment": 14000,
-      "creditCardPayment": 3000,
-      "retailPayment": 2000,
-      "otherExpenses": 31000
-    },
-    "liabilities": {
-      "homeMortgage": 0,
-      "schoolLoans": 0,
-      "carLoans": 700000,
-      "creditCards": 70000,
-      "retailDebt": 25000
-    }
-  },
-  {
-    "id": "mechanic",
-    "name": "Автомеханик",
-    "salary": 95000,
-    "savings": 14000,
-    "perChildExpense": 8500,
-    "expenses": {
-      "taxes": 0,
-      "homeMortgagePayment": 22000,
-      "schoolLoanPayment": 0,
-      "carPayment": 10000,
-      "creditCardPayment": 3000,
-      "retailPayment": 2000,
-      "otherExpenses": 34000
-    },
-    "liabilities": {
-      "homeMortgage": 0,
-      "schoolLoans": 0,
-      "carLoans": 350000,
-      "creditCards": 65000,
-      "retailDebt": 30000
-    }
-  },
-  {
-    "id": "nurse",
-    "name": "Медсестра",
-    "salary": 75000,
-    "savings": 14000,
-    "perChildExpense": 7000,
-    "expenses": {
-      "taxes": 0,
-      "homeMortgagePayment": 20000,
       "schoolLoanPayment": 3000,
-      "carPayment": 5000,
-      "creditCardPayment": 2500,
-      "retailPayment": 1500,
-      "otherExpenses": 28000
+      "carPayment": 6000,
+      "creditCardPayment": 3000,
+      "retailPayment": 2000,
+      "otherExpenses": 33000
     },
     "liabilities": {
       "homeMortgage": 0,
-      "schoolLoans": 90000,
-      "carLoans": 120000,
+      "schoolLoans": 110000,
+      "carLoans": 180000,
       "creditCards": 55000,
       "retailDebt": 20000
     }
   },
   {
-    "id": "teacher",
-    "name": "Учитель",
-    "salary": 70000,
-    "savings": 14000,
-    "perChildExpense": 6500,
+    "id": "nurse",
+    "name": "Медсестра",
+    "salary": 95000,
+    "savings": 17000,
+    "perChildExpense": 8500,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 19000,
+      "homeMortgagePayment": 23000,
       "schoolLoanPayment": 3000,
-      "carPayment": 5000,
-      "creditCardPayment": 2500,
-      "retailPayment": 1500,
-      "otherExpenses": 26000
+      "carPayment": 6000,
+      "creditCardPayment": 3000,
+      "retailPayment": 2000,
+      "otherExpenses": 35000
     },
     "liabilities": {
       "homeMortgage": 0,
-      "schoolLoans": 110000,
-      "carLoans": 110000,
-      "creditCards": 50000,
-      "retailDebt": 18000
+      "schoolLoans": 95000,
+      "carLoans": 190000,
+      "creditCards": 60000,
+      "retailDebt": 22000
+    }
+  },
+  {
+    "id": "courier",
+    "name": "Курьер",
+    "salary": 130000,
+    "savings": 22000,
+    "perChildExpense": 11500,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 26000,
+      "schoolLoanPayment": 0,
+      "carPayment": 14000,
+      "creditCardPayment": 4000,
+      "retailPayment": 3000,
+      "otherExpenses": 49000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 550000,
+      "creditCards": 70000,
+      "retailDebt": 30000
+    }
+  },
+  {
+    "id": "mechanic",
+    "name": "Автомеханик",
+    "salary": 130000,
+    "savings": 24000,
+    "perChildExpense": 11500,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 27000,
+      "schoolLoanPayment": 0,
+      "carPayment": 12000,
+      "creditCardPayment": 4000,
+      "retailPayment": 3000,
+      "otherExpenses": 50000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 420000,
+      "creditCards": 75000,
+      "retailDebt": 35000
+    }
+  },
+  {
+    "id": "taxi",
+    "name": "Таксист",
+    "salary": 140000,
+    "savings": 22000,
+    "perChildExpense": 12500,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 27000,
+      "schoolLoanPayment": 0,
+      "carPayment": 22000,
+      "creditCardPayment": 4000,
+      "retailPayment": 3000,
+      "otherExpenses": 49000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 1100000,
+      "creditCards": 80000,
+      "retailDebt": 30000
+    }
+  },
+  {
+    "id": "accountant",
+    "name": "Бухгалтер",
+    "salary": 140000,
+    "savings": 26000,
+    "perChildExpense": 12500,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 30000,
+      "schoolLoanPayment": 3000,
+      "carPayment": 11000,
+      "creditCardPayment": 4500,
+      "retailPayment": 3000,
+      "otherExpenses": 52000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 90000,
+      "carLoans": 400000,
+      "creditCards": 80000,
+      "retailDebt": 28000
     }
   },
   {
     "id": "beauty",
     "name": "Мастер маникюра",
-    "salary": 100000,
-    "savings": 16000,
-    "perChildExpense": 9000,
+    "salary": 150000,
+    "savings": 28000,
+    "perChildExpense": 13500,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 24000,
+      "homeMortgagePayment": 30000,
       "schoolLoanPayment": 0,
-      "carPayment": 8000,
-      "creditCardPayment": 3500,
-      "retailPayment": 2500,
-      "otherExpenses": 36000
+      "carPayment": 12000,
+      "creditCardPayment": 5000,
+      "retailPayment": 4000,
+      "otherExpenses": 56000
     },
     "liabilities": {
       "homeMortgage": 0,
       "schoolLoans": 0,
-      "carLoans": 300000,
-      "creditCards": 80000,
+      "carLoans": 450000,
+      "creditCards": 100000,
+      "retailDebt": 55000
+    }
+  },
+  {
+    "id": "builder",
+    "name": "Прораб на стройке",
+    "salary": 180000,
+    "savings": 32000,
+    "perChildExpense": 16000,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 32000,
+      "schoolLoanPayment": 0,
+      "carPayment": 18000,
+      "creditCardPayment": 5500,
+      "retailPayment": 4000,
+      "otherExpenses": 68000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 750000,
+      "creditCards": 95000,
+      "retailDebt": 40000
+    }
+  },
+  {
+    "id": "marketer",
+    "name": "Маркетолог",
+    "salary": 180000,
+    "savings": 34000,
+    "perChildExpense": 16000,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 38000,
+      "schoolLoanPayment": 3000,
+      "carPayment": 13000,
+      "creditCardPayment": 6000,
+      "retailPayment": 4000,
+      "otherExpenses": 66000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 120000,
+      "carLoans": 500000,
+      "creditCards": 110000,
+      "retailDebt": 45000
+    }
+  },
+  {
+    "id": "trucker",
+    "name": "Дальнобойщик",
+    "salary": 200000,
+    "savings": 36000,
+    "perChildExpense": 18000,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 30000,
+      "schoolLoanPayment": 0,
+      "carPayment": 30000,
+      "creditCardPayment": 6000,
+      "retailPayment": 4000,
+      "otherExpenses": 72000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 2200000,
+      "creditCards": 100000,
+      "retailDebt": 40000
+    }
+  },
+  {
+    "id": "engineer",
+    "name": "Инженер",
+    "salary": 200000,
+    "savings": 38000,
+    "perChildExpense": 18000,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 40000,
+      "schoolLoanPayment": 3000,
+      "carPayment": 16000,
+      "creditCardPayment": 6500,
+      "retailPayment": 4000,
+      "otherExpenses": 75000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 140000,
+      "carLoans": 700000,
+      "creditCards": 120000,
       "retailDebt": 45000
     }
   },
   {
     "id": "sales",
     "name": "Менеджер по продажам",
-    "salary": 130000,
-    "savings": 20000,
-    "perChildExpense": 11500,
+    "salary": 220000,
+    "savings": 40000,
+    "perChildExpense": 20000,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 30000,
+      "homeMortgagePayment": 44000,
       "schoolLoanPayment": 0,
-      "carPayment": 15000,
-      "creditCardPayment": 4500,
-      "retailPayment": 2500,
-      "otherExpenses": 43000
+      "carPayment": 20000,
+      "creditCardPayment": 7000,
+      "retailPayment": 5000,
+      "otherExpenses": 81000
     },
     "liabilities": {
       "homeMortgage": 0,
       "schoolLoans": 0,
-      "carLoans": 800000,
-      "creditCards": 110000,
-      "retailDebt": 40000
-    }
-  },
-  {
-    "id": "accountant",
-    "name": "Бухгалтер",
-    "salary": 100000,
-    "savings": 16000,
-    "perChildExpense": 9000,
-    "expenses": {
-      "taxes": 0,
-      "homeMortgagePayment": 25000,
-      "schoolLoanPayment": 3000,
-      "carPayment": 9000,
-      "creditCardPayment": 3000,
-      "retailPayment": 2000,
-      "otherExpenses": 36000
-    },
-    "liabilities": {
-      "homeMortgage": 0,
-      "schoolLoans": 80000,
-      "carLoans": 320000,
-      "creditCards": 70000,
-      "retailDebt": 25000
-    }
-  },
-  {
-    "id": "engineer",
-    "name": "Инженер",
-    "salary": 140000,
-    "savings": 22000,
-    "perChildExpense": 12500,
-    "expenses": {
-      "taxes": 0,
-      "homeMortgagePayment": 32000,
-      "schoolLoanPayment": 3000,
-      "carPayment": 13000,
-      "creditCardPayment": 4500,
-      "retailPayment": 2500,
-      "otherExpenses": 49000
-    },
-    "liabilities": {
-      "homeMortgage": 0,
-      "schoolLoans": 140000,
-      "carLoans": 650000,
-      "creditCards": 95000,
-      "retailDebt": 35000
+      "carLoans": 900000,
+      "creditCards": 140000,
+      "retailDebt": 55000
     }
   },
   {
     "id": "doctor",
-    "name": "Врач",
-    "salary": 170000,
-    "savings": 28000,
-    "perChildExpense": 15500,
+    "name": "Врач частной клиники",
+    "salary": 260000,
+    "savings": 48000,
+    "perChildExpense": 23500,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 38000,
-      "schoolLoanPayment": 3000,
-      "carPayment": 16000,
-      "creditCardPayment": 5500,
-      "retailPayment": 3000,
-      "otherExpenses": 58000
+      "homeMortgagePayment": 50000,
+      "schoolLoanPayment": 4000,
+      "carPayment": 22000,
+      "creditCardPayment": 8000,
+      "retailPayment": 5000,
+      "otherExpenses": 96000
     },
     "liabilities": {
       "homeMortgage": 0,
       "schoolLoans": 260000,
-      "carLoans": 850000,
-      "creditCards": 120000,
-      "retailDebt": 40000
+      "carLoans": 1000000,
+      "creditCards": 150000,
+      "retailDebt": 55000
     }
   },
   {
     "id": "developer",
     "name": "Программист",
-    "salary": 230000,
-    "savings": 40000,
-    "perChildExpense": 20500,
+    "salary": 300000,
+    "savings": 55000,
+    "perChildExpense": 27000,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 52000,
+      "homeMortgagePayment": 60000,
       "schoolLoanPayment": 0,
-      "carPayment": 18000,
-      "creditCardPayment": 7000,
-      "retailPayment": 4000,
-      "otherExpenses": 79000
+      "carPayment": 20000,
+      "creditCardPayment": 9000,
+      "retailPayment": 6000,
+      "otherExpenses": 111000
     },
     "liabilities": {
       "homeMortgage": 0,
       "schoolLoans": 0,
-      "carLoans": 1000000,
-      "creditCards": 150000,
-      "retailDebt": 55000
+      "carLoans": 950000,
+      "creditCards": 170000,
+      "retailDebt": 65000
+    }
+  },
+  {
+    "id": "dentist",
+    "name": "Стоматолог",
+    "salary": 350000,
+    "savings": 65000,
+    "perChildExpense": 31500,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 62000,
+      "schoolLoanPayment": 5000,
+      "carPayment": 28000,
+      "creditCardPayment": 11000,
+      "retailPayment": 7000,
+      "otherExpenses": 129000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 320000,
+      "carLoans": 1300000,
+      "creditCards": 190000,
+      "retailDebt": 70000
+    }
+  },
+  {
+    "id": "founder",
+    "name": "Предприниматель",
+    "salary": 400000,
+    "savings": 70000,
+    "perChildExpense": 36000,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 70000,
+      "schoolLoanPayment": 0,
+      "carPayment": 32000,
+      "creditCardPayment": 13000,
+      "retailPayment": 8000,
+      "otherExpenses": 149000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 1500000,
+      "creditCards": 260000,
+      "retailDebt": 90000
+    }
+  },
+  {
+    "id": "executive",
+    "name": "Топ-менеджер",
+    "salary": 500000,
+    "savings": 95000,
+    "perChildExpense": 45000,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 95000,
+      "schoolLoanPayment": 0,
+      "carPayment": 38000,
+      "creditCardPayment": 16000,
+      "retailPayment": 9000,
+      "otherExpenses": 182000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 1800000,
+      "creditCards": 300000,
+      "retailDebt": 95000
     }
   }
 ]
