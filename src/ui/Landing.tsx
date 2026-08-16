@@ -54,19 +54,130 @@ function Art({
   )
 }
 
-const STEPS: { icon: string; title: string; text: string }[] = [
+/** Русское согласование: 1 карта · 2 карты · 5 карт. */
+function cardsWord(n: number): string {
+  const t = n % 100
+  if (t >= 11 && t <= 14) return 'карт'
+  switch (n % 10) {
+    case 1:
+      return 'карта'
+    case 2:
+    case 3:
+    case 4:
+      return 'карты'
+    default:
+      return 'карт'
+  }
+}
+
+/** Стрелка «дальше» — одна на все кнопки. */
+function ArrowRight() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+      strokeLinecap="round" strokeLinejoin="round" className="size-[17px] block">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  )
+}
+
+/**
+ * Колода как СТОПКА КАРТ: обложка в портретной пропорции (у настоящей карты
+ * она портретная — пейзажный кадр читается как фотография, а не как колода),
+ * плюс две подложки сзади. Подложки рисует CSS, лишних картинок не нужно —
+ * иллюстрации карт есть только у российской колоды.
+ */
+function DeckStack({ src, selected }: { src: string | null; selected: boolean }) {
+  return (
+    <span className="relative block aspect-[3/4] w-full max-w-[172px]">
+      <span
+        aria-hidden
+        className={`absolute inset-x-[9%] top-[5%] block h-full rounded-[11px] border border-line bg-panel2 transition duration-200 ${
+          selected ? 'rotate-[5deg]' : 'rotate-[3.5deg] group-hover:rotate-[5deg]'
+        }`}
+      />
+      <span
+        aria-hidden
+        className={`absolute inset-x-[4.5%] top-[2.5%] block h-full rounded-[11px] border border-line bg-panel transition duration-200 ${
+          selected ? '-rotate-[3deg]' : '-rotate-[1.5deg] group-hover:-rotate-[3deg]'
+        }`}
+      />
+      <span
+        className={`absolute inset-0 block overflow-hidden rounded-[11px] border bg-panel2 transition duration-200 ${
+          selected ? 'border-accent shadow-[0_10px_24px_-14px_rgb(4_124_84/0.55)]' : 'border-line'
+        }`}
+      >
+        {src ? (
+          <img src={src} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+        ) : (
+          <span className="block size-full bg-panel2" />
+        )}
+      </span>
+    </span>
+  )
+}
+
+const DECKS = [
   {
-    icon: '💼',
+    id: 'ru' as const,
+    name: 'Россия · халяль',
+    currency: '₽',
+    cards: 142,
+    about: 'Наши зарплаты и объекты. Рассрочка и партнёрство вместо процентных кредитов.',
+  },
+  {
+    id: 'offshore' as const,
+    name: 'Уругвай',
+    currency: '$',
+    cards: 186,
+    about: 'Квартиры у океана, земля и фермы. Мемкоины — для тех, кто любит риск.',
+  },
+  {
+    id: 'classic' as const,
+    name: 'Классическая',
+    currency: '$',
+    cards: 154,
+    about: 'Оригинальные карты: кондо, франшизы, акции. Как в настольной коробке.',
+  },
+]
+
+/** Иконки шагов — рисованные, а не эмодзи: эмодзи в интерфейсе выглядят заглушкой. */
+const ICON_CLS = 'size-[17px] block'
+const IconBriefcase = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" className={ICON_CLS}>
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+  </svg>
+)
+const IconHouse = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" className={ICON_CLS}>
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <path d="M9 22V12h6v10" />
+  </svg>
+)
+const IconTrophy = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" className={ICON_CLS}>
+    <path d="M6 3h12l-1 7a5 5 0 0 1-10 0z" />
+    <path d="M8 21h8M12 17v4" />
+    <path d="M18 5h3v3a4 4 0 0 1-4 4M6 5H3v3a4 4 0 0 0 4 4" />
+  </svg>
+)
+
+const STEPS: { Icon: () => ReactNode; title: string; text: string }[] = [
+  {
+    Icon: IconBriefcase,
     title: 'Профессия и расходы',
     text: 'Зарплата, ипотека, кредиты, дети. Всё как в жизни — и всё против вас.',
   },
   {
-    icon: '🏠',
+    Icon: IconHouse,
     title: 'Покупайте активы',
     text: 'Квартиры, бизнес, доли, акции. Каждый актив приносит доход каждый месяц.',
   },
   {
-    icon: '🕊️',
+    Icon: IconTrophy,
     title: 'Выход из Круга',
     text: 'Пассивный доход перерос расходы — работа больше не нужна. Дальше мечта.',
   },
@@ -82,8 +193,12 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
       <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-5 sm:px-6">
         {/* ─── Шапка ─── */}
         <header className="mb-8 flex items-center gap-3">
-          <div className="grid size-9 place-items-center rounded-xl bg-accent text-lg text-accent-ink shadow-glow">
-            🕊️
+          <div className="grid size-9 place-items-center rounded-xl bg-accent text-accent-ink shadow-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"
+              strokeLinecap="round" strokeLinejoin="round" className="size-[19px]">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+            </svg>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="font-display text-lg font-bold tracking-tight">Cashflow</span>
@@ -143,75 +258,74 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
           </p>
         </section>
 
-        {/* ─── Два пути: просто две кнопки, без картинок ─── */}
-        <section className="mb-4 grid gap-3 sm:grid-cols-2">
-          <button
-            onClick={onLocal}
-            className="btn-primary group flex items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left"
-          >
-            <span className="min-w-0">
-              <span className="block text-base font-bold sm:text-lg">На одном устройстве</span>
-              <span className="mt-0.5 block text-[13px] font-normal opacity-80">
-                Все за одним экраном, пустые места закроют боты
-              </span>
-            </span>
-            <span className="shrink-0 text-lg transition duration-150 group-hover:translate-x-0.5">
-              →
-            </span>
-          </button>
-
-          <button
-            onClick={onCreate}
-            className="panel group flex items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left transition duration-150 hover:border-accent/60 active:scale-[0.995]"
-          >
-            <span className="min-w-0">
-              <span className="flex items-center gap-2">
-                <span className="text-base font-bold sm:text-lg">Играть онлайн</span>
-                <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-accent">
-                  до 10
+        {/* ─── Два пути. Равноправны: навязывать один режим незачем. ─── */}
+        <section className="mb-3 grid gap-3 sm:grid-cols-2">
+          {[
+            {
+              onClick: onLocal,
+              title: 'На одном устройстве',
+              sub: 'Все за одним экраном, пустые места закроют боты',
+              tag: null as string | null,
+            },
+            {
+              onClick: onCreate,
+              title: 'Играть онлайн',
+              sub: 'Комната с кодом, каждый со своего телефона',
+              tag: 'до 10',
+            },
+          ].map((m) => (
+            <button
+              key={m.title}
+              onClick={m.onClick}
+              className="panel group flex items-center gap-3 rounded-2xl px-5 py-4 text-left transition duration-150 hover:-translate-y-0.5 hover:border-accent/60 active:scale-[0.995]"
+            >
+              <span className="min-w-0">
+                <span className="flex items-center gap-2">
+                  <span className="text-base font-bold sm:text-[17px]">{m.title}</span>
+                  {m.tag && (
+                    <span className="rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-accent">
+                      {m.tag}
+                    </span>
+                  )}
                 </span>
+                <span className="mt-0.5 block text-[13px] leading-snug text-muted">{m.sub}</span>
               </span>
-              <span className="mt-0.5 block text-[13px] text-muted">
-                Комната с кодом, каждый со своего телефона
+              <span className="ml-auto shrink-0 text-accent transition duration-150 group-hover:translate-x-0.5">
+                <ArrowRight />
               </span>
-            </span>
-            <span className="shrink-0 text-lg text-accent transition duration-150 group-hover:translate-x-0.5">
-              →
-            </span>
-          </button>
+            </button>
+          ))}
         </section>
 
-        {/* ─── Вход по коду ─── */}
+        {/* ─── Вход по коду: одна строка, поле под шесть символов ─── */}
         {!joinCode && (
-          <section className="panel mb-12 rounded-2xl p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="shrink-0 text-sm font-semibold">Вам дали код комнаты?</div>
-              <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && canJoinTyped && onJoin(typed, 'player')}
-                /* Точки, а не тире: при таком межбуквенном интервале тире сливаются в линию. */
-                placeholder={'•'.repeat(ROOM_CODE_LENGTH)}
-                inputMode="text"
-                autoCapitalize="characters"
-                autoComplete="off"
-                spellCheck={false}
-                maxLength={40}
-                aria-label="Код комнаты"
-                className="tabnum w-full rounded-xl border border-line bg-panel2 px-4 py-3 text-center text-xl font-bold uppercase tracking-[0.35em] outline-none transition duration-150 placeholder:tracking-[0.2em] placeholder:text-muted focus:border-accent sm:w-56 sm:text-left"
-              />
-              <button
-                disabled={!canJoinTyped}
-                onClick={() => onJoin(typed, 'player')}
-                className="btn-primary shrink-0 px-5 py-3"
-              >
-                Войти
-              </button>
-            </div>
+          <section className="mb-12 flex flex-wrap items-center gap-2.5">
+            <span className="text-[13px] text-muted">Есть код комнаты?</span>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && canJoinTyped && onJoin(typed, 'player')}
+              /* Точки, а не тире: при таком межбуквенном интервале тире сливаются в линию. */
+              placeholder={'•'.repeat(ROOM_CODE_LENGTH)}
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={40}
+              aria-label="Код комнаты"
+              className="tabnum w-[8.5rem] shrink-0 rounded-xl border border-line bg-panel px-3 py-2 text-center text-[15px] font-bold uppercase tracking-[0.24em] outline-none transition duration-150 placeholder:text-muted/60 focus:border-accent"
+            />
+            <button
+              disabled={!canJoinTyped}
+              onClick={() => onJoin(typed, 'player')}
+              className="btn-ghost px-4 py-2 text-[13px] disabled:opacity-45"
+            >
+              Войти
+            </button>
             {typed.length > 0 && !canJoinTyped && (
-              <p className="mt-2 text-xs text-muted">
+              <span className="basis-full text-xs text-muted">
                 Код — {ROOM_CODE_LENGTH} символов. Можно вставить и целую ссылку.
-              </p>
+              </span>
             )}
           </section>
         )}
@@ -225,8 +339,8 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
             {STEPS.map((s, i) => (
               <div key={s.title} className="panel rounded-2xl p-5">
                 <div className="mb-3 flex items-center gap-2.5">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-lg">
-                    {s.icon}
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
+                    <s.Icon />
                   </span>
                   <span className="tabnum text-xs font-bold text-muted">
                     ШАГ {i + 1}
@@ -238,35 +352,43 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
             ))}
           </div>
 
-          <div className="panel mt-3 overflow-hidden rounded-2xl sm:flex">
-            {/* Блок про три колоды — показываем сами эти три колоды, а не отвлечённую картинку. */}
-            <div className="grid h-32 w-full shrink-0 grid-cols-3 gap-px bg-[var(--line)] sm:h-auto sm:w-64 sm:grid-cols-1">
-              {(['ru', 'offshore', 'classic'] as const).map((deck) => (
-                <Art
-                  key={deck}
-                  src={artByDeck(deck) ?? ''}
-                  emoji="🗂️"
-                  className="size-full"
-                  gradient="linear-gradient(135deg,#34d399,#0ea5e9)"
-                />
+          <div className="panel mt-3 rounded-2xl p-5">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-accent">
+              Три колоды
+            </div>
+            <div className="mt-1 text-lg font-bold">Один стол — три разных мира</div>
+            <p className="mt-1.5 max-w-[60ch] text-sm leading-relaxed text-muted">
+              Колода решает, чем вы торгуете и в какой валюте считаете. Меняются цены,
+              зарплаты и сами сделки. Выбрать можно перед началом партии.
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              {DECKS.map((d) => (
+                <div key={d.id} className="group">
+                  <DeckStack src={artByDeck(d.id)} selected={d.id === 'ru'} />
+                  <div className="mt-3.5 flex items-baseline gap-2">
+                    <span
+                      className={`text-sm font-bold ${d.id === 'ru' ? 'text-accent' : ''}`}
+                    >
+                      {d.name}
+                    </span>
+                    <span className="tabnum text-[11px] font-semibold text-muted">
+                      {d.currency} · {d.cards} {cardsWord(d.cards)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[12.5px] leading-snug text-muted">{d.about}</p>
+                </div>
               ))}
             </div>
-            <div className="p-5">
-              <div className="font-bold">Три колоды на выбор</div>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">
-                <b className="font-semibold text-ink">Россия · халяль</b> — рубли,
-                российские зарплаты и объекты, рассрочка и партнёрство вместо процентных
-                кредитов. Плюс классическая и «Уругвай» — доллары и оригинальные карты.
-              </p>
-              {onRules && (
-                <button
-                  onClick={onRules}
-                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition duration-150 hover:gap-2.5"
-                >
-                  Читать правила →
-                </button>
-              )}
-            </div>
+
+            {onRules && (
+              <button
+                onClick={onRules}
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition duration-150 hover:gap-2.5"
+              >
+                Читать правила <ArrowRight />
+              </button>
+            )}
           </div>
         </section>
 
