@@ -99,6 +99,56 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+/**
+ * Главная цель партии. Раньше жила в самом низу панели — под доходами,
+ * расходами и обязательствами, — и чтобы понять, далеко ли до выхода,
+ * приходилось прокручивать. Теперь это первое, что видно.
+ *
+ * Шкала сделана по образцу панели GreenLeaf: крупное число, под ним полоса,
+ * рядом процент.
+ */
+function GoalCard({ seat }: { seat: Seat }) {
+  const l = seat.ledger
+  const onFast = seat.track === 'fast'
+  const done = onFast ? fastTrackProgress(l) : passiveIncome(l)
+  const need = onFast ? fastTrackTarget() : totalExpenses(l)
+  const pct = Math.max(0, Math.min(100, (done / Math.max(1, need)) * 100))
+  const won = onFast ? done >= need : isOutOfRatRace(l)
+
+  return (
+    <div className="panel rounded-xl p-3.5">
+      <div className="flex items-baseline gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--muted)]">
+          {onFast ? 'Цель Полосы свободы' : 'Цель: выйти из Круга'}
+        </span>
+        <span className="tabnum ml-auto text-[11px] font-bold text-accent">{Math.round(pct)}%</span>
+      </div>
+
+      <div className="mt-1.5 flex items-baseline gap-1.5">
+        <span className="tabnum text-2xl font-black leading-none text-accent">{money(done)}</span>
+        <span className="text-[11px] text-[var(--muted)]">из {money(need)}</span>
+      </div>
+
+      <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[var(--line)]">
+        <div
+          className="h-full rounded-full bg-accent transition-[width] duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+
+      <p className="mt-2 text-[11px] leading-snug text-[var(--muted)]">
+        {won
+          ? onFast
+            ? 'Цель достигнута — победа ваша.'
+            : 'Пассивный доход перерос расходы — можно уходить из Круга.'
+          : onFast
+            ? 'Соберите новый доход на Полосе свободы.'
+            : 'Пассивный доход должен перерасти расходы — тогда работа больше не нужна.'}
+      </p>
+    </div>
+  )
+}
+
 export function PlayerPanel({ seat }: { seat: Seat }) {
   const l = seat.ledger
   const income = totalIncome(l)
@@ -109,6 +159,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
 
   return (
     <div className="space-y-2">
+      <GoalCard seat={seat} />
       <div className="panel rounded-xl p-3">
         <div className="flex items-center gap-2">
           <span className="size-3 rounded-full ring-2 ring-white/15" style={{ background: seat.color }} />
@@ -149,14 +200,6 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
         <Section title="Цель Полосы свободы">
           <Row label="Новый доход собран" value={money(fastTrackProgress(l))} />
           <Row label="Нужно для победы" value={money(fastTrackTarget())} dim />
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-            <div
-              className="h-full rounded-full bg-emerald-500 transition-all"
-              style={{
-                width: `${Math.min(100, (fastTrackProgress(l) / fastTrackTarget()) * 100)}%`,
-              }}
-            />
-          </div>
           {l.fastTrack && l.fastTrack.businesses.length > 0 && (
             <div className="mt-2 space-y-0.5">
               {l.fastTrack.businesses.map((b) => (
@@ -213,32 +256,6 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
             </div>
           </Section>
 
-          <div
-            className={`rounded-lg px-3 py-2 text-[13px] ${
-              isOutOfRatRace(l)
-                ? 'bg-emerald-500/15 text-emerald-300'
-                : 'panel-2 text-[var(--muted)]'
-            }`}
-          >
-            {isOutOfRatRace(l) ? (
-              '🎉 Пассивный доход перерос расходы — можно уходить из Круга!'
-            ) : (
-              <>
-                <div className="mb-1">
-                  <div>Цель: пассивный доход выше расходов</div>
-                  <div className="tabnum mt-0.5 text-[var(--ink)]">
-                    {money(passive)} <span className="text-[var(--muted)]">из</span> {money(expenses)}
-                  </div>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all"
-                    style={{ width: `${Math.min(100, (passive / Math.max(1, expenses)) * 100)}%` }}
-                  />
-                </div>
-              </>
-            )}
-          </div>
         </>
       )}
 

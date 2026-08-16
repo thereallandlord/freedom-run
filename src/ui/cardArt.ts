@@ -10,6 +10,7 @@
  *   bySpace  — клетки-события: одна картинка на ТИП клетки
  *   byDeck   — обложки трёх колод, широкий кадр
  *   byDeckCard — те же обложки, кадрированные под карту (портрет, ~размер показа)
+ *   byBoard  — полотно доски: поверхность и центральная плашка
  *
  * Картинки нет — возвращаем null, и карточка честно показывает эмодзи.
  * Так игра остаётся играбельной, даже если иллюстрации ещё не нарисованы.
@@ -23,6 +24,7 @@ type Manifest = {
   bySpace?: Record<string, string>
   byDeck?: Record<string, string>
   byDeckCard?: Record<string, string>
+  byBoard?: Record<string, string>
 }
 
 const M = manifest as Manifest
@@ -55,6 +57,11 @@ export function artByDeck(theme: string | undefined): string | null {
 /** Обложка колоды в пропорции карты: отдельный файл, а не обрезка большого. */
 export function artByDeckCard(theme: string | undefined): string | null {
   return theme ? url(M.byDeckCard?.[theme]) : null
+}
+
+/** Полотно доски: 'surface' — поверхность, 'center' — центральная плашка. */
+export function artBoard(part: 'surface' | 'center'): string | null {
+  return url(M.byBoard?.[part])
 }
 
 export function artBySpace(kind: string | undefined): string | null {

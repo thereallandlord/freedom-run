@@ -37,7 +37,45 @@ function ThemeToggle() {
   )
 }
 
+/**
+ * Свет, идущий за курсором — тот же приём, что в панели GreenLeaf.
+ * Координаты кладём в переменные на <html>, а рисует их CSS: так подсветку
+ * получают все карточки разом, без слушателя на каждой.
+ */
+function useCursorGlow() {
+  useEffect(() => {
+    const root = document.documentElement
+    let raf = 0
+    let x = 0
+    let y = 0
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
+      x = e.clientX
+      y = e.clientY
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        root.style.setProperty('--mx', x.toFixed(0))
+        root.style.setProperty('--my', y.toFixed(0))
+        root.style.setProperty('--glow-op', '1')
+      })
+    }
+    // Ушли мышью со страницы — гасим, иначе пятно висит замершим.
+    const onLeave = () => root.style.setProperty('--glow-op', '0')
+    document.addEventListener('pointermove', onMove, { passive: true })
+    document.addEventListener('mouseleave', onLeave)
+    document.body.classList.add('glow-on')
+    return () => {
+      document.removeEventListener('pointermove', onMove)
+      document.removeEventListener('mouseleave', onLeave)
+      document.body.classList.remove('glow-on')
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+}
+
 export function App() {
+  useCursorGlow()
   const game = useGame()
   // Транспорт создаётся один раз: Supabase, если заданы ключи, иначе вкладки одного браузера.
   const transport = useMemo(() => createTransport('auto'), [])

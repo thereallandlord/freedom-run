@@ -539,3 +539,79 @@
     font-size: 18px;
   }
 }
+
+/* ───────────────────────────────────────────────────────────────────
+   Свет за курсором — перенесено из панели GreenLeaf, чтобы игра и панель
+   ощущались одинаково.
+
+   Главное в приёме — не пятно на фоне, а СВЕТЯЩАЯСЯ КРОМКА: она ведёт себя
+   как отражение источника света и подсвечивает ровно ту карточку, над
+   которой рука. Работает это за счёт `background-attachment: fixed` —
+   градиент живёт в системе координат окна, а не карточки.
+
+   Пятно внутри намеренно почти в ноль: на светлом фоне оно даёт грязь.
+   ─────────────────────────────────────────────────────────────────── */
+.glow-on .panel {
+  --spot: 420px;
+  transition: border-color 0.25s ease;
+}
+.glow-on .panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  opacity: var(--glow-op, 0);
+  transition: opacity 0.3s ease;
+  background-image: radial-gradient(
+    var(--spot) var(--spot) at calc(var(--mx, 0) * 1px) calc(var(--my, 0) * 1px),
+    rgb(var(--c-accent) / 0.9) 0%,
+    rgb(var(--c-accent) / 0.26) 38%,
+    transparent 72%
+  );
+  background-attachment: fixed;
+  /* Красим только рамку: заливка вырезается маской. */
+  -webkit-mask:
+    linear-gradient(#000, #000) content-box,
+    linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000, #000) content-box,
+    linear-gradient(#000, #000);
+  mask-composite: exclude;
+}
+.glow-on .panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  opacity: calc(var(--glow-op, 0) * 0.35);
+  transition: opacity 0.3s ease;
+  background-image: radial-gradient(
+    calc(var(--spot) * 0.8) calc(var(--spot) * 0.8) at calc(var(--mx, 0) * 1px) calc(var(--my, 0) * 1px),
+    rgb(var(--c-accent) / 0.1),
+    transparent 60%
+  );
+  background-attachment: fixed;
+}
+.glow-on .panel > * {
+  position: relative;
+  z-index: 2;
+}
+/* На телефоне курсора нет, а лишний слой стоит кадров. */
+@media (max-width: 760px) {
+  .glow-on .panel::before,
+  .glow-on .panel::after {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow-on .panel::before,
+  .glow-on .panel::after {
+    display: none;
+  }
+}

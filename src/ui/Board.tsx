@@ -1,26 +1,32 @@
 import { fastBoard, RAT_BOARD } from '../engine/data'
 import type { Seat, Table } from '../engine/types'
+import { artBoard } from './cardArt'
+import { FAST_ICON, RAT_ICON } from './boardIcons'
 
-const RAT_STYLE: Record<string, { icon: string; color: string; label: string }> = {
-  opportunity: { icon: '💼', color: '#10b981', label: 'Возможность' },
-  market: { icon: '📈', color: '#38bdf8', label: 'Рынок' },
-  doodad: { icon: '🛍️', color: '#fb7185', label: 'Трата' },
-  charity: { icon: '❤️', color: '#f59e0b', label: 'Благотворительность' },
-  paycheck: { icon: '💵', color: '#a78bfa', label: 'Зарплата' },
-  baby: { icon: '🐕', color: '#f472b6', label: 'Питомец' },
-  downsized: { icon: '📉', color: '#64748b', label: 'Увольнение' },
+/*
+ * Цвета клеток. Взяты тёмными намеренно: значок наследует цвет клетки, и на
+ * светлом полотне доски пастельная линия в 26 пикселей просто не видна.
+ */
+const RAT_STYLE: Record<string, { color: string; label: string }> = {
+  opportunity: { color: '#047C54', label: 'Возможность' },
+  market: { color: '#0369A1', label: 'Рынок' },
+  doodad: { color: '#BE123C', label: 'Трата' },
+  charity: { color: '#B45309', label: 'Благотворительность' },
+  paycheck: { color: '#6D28D9', label: 'Зарплата' },
+  baby: { color: '#A21CAF', label: 'Питомец' },
+  downsized: { color: '#475569', label: 'Увольнение' },
 }
 
-const FAST_STYLE: Record<string, { icon: string; color: string; label: string }> = {
-  cashflowDay: { icon: '💰', color: '#a78bfa', label: 'День дохода' },
-  business: { icon: '🏢', color: '#10b981', label: 'Инвестиция' },
-  dream: { icon: '⭐', color: '#f472b6', label: 'Мечта' },
-  venture: { icon: '🛢️', color: '#f97316', label: 'Рисковый проект' },
-  taxAudit: { icon: '🧾', color: '#64748b', label: 'Налоговая проверка' },
-  lawsuit: { icon: '⚖️', color: '#64748b', label: 'Иск' },
-  divorce: { icon: '💔', color: '#64748b', label: 'Развод' },
-  downsized: { icon: '📉', color: '#64748b', label: 'Сокращение' },
-  charity: { icon: '❤️', color: '#f59e0b', label: 'Благотворительность' },
+const FAST_STYLE: Record<string, { color: string; label: string }> = {
+  cashflowDay: { color: '#6D28D9', label: 'День дохода' },
+  business: { color: '#047C54', label: 'Инвестиция' },
+  dream: { color: '#BE185D', label: 'Мечта' },
+  venture: { color: '#C2410C', label: 'Рисковый проект' },
+  taxAudit: { color: '#475569', label: 'Налоговая проверка' },
+  lawsuit: { color: '#475569', label: 'Иск' },
+  divorce: { color: '#475569', label: 'Развод' },
+  downsized: { color: '#475569', label: 'Сокращение' },
+  charity: { color: '#B45309', label: 'Благотворительность' },
 }
 
 /**
@@ -98,11 +104,22 @@ function Tokens({ seats }: { seats: Seat[] }) {
 export function Board({ table }: { table: Table }) {
   const active = table.seats[table.turnIndex]
   const board = fastBoard()
+  const surface = artBoard('surface')
+  const center = artBoard('center')
 
   return (
     <div className="relative aspect-square h-full max-h-full w-auto max-w-full self-center">
-      {/* Полоса свободы — внешняя дорожка скруглённым прямоугольником */}
-      <div className="absolute inset-0 rounded-[13%] border border-[var(--line)] bg-[var(--panel-2)]" />
+      {/* Полотно доски — снимок настоящей поверхности, а не плоская заливка. */}
+      <div className="absolute inset-0 overflow-hidden rounded-[13%] border border-[var(--line)] bg-[var(--panel-2)]">
+        {surface && (
+          <img
+            src={surface}
+            alt=""
+            aria-hidden
+            className="size-full object-cover opacity-95 dark:opacity-25"
+          />
+        )}
+      </div>
       {board.map((space, i) => {
         const st = FAST_STYLE[space.type]
         const here = table.seats.filter((s) => s.track === 'fast' && s.position === i && !s.outOfGame)
@@ -121,15 +138,15 @@ export function Board({ table }: { table: Table }) {
             title={`${st.label}${'name' in space ? ': ' + name : ''}`}
           >
             <div
-              className="relative grid size-[24px] place-items-center rounded-md text-[11px]"
+              className="relative grid size-[26px] place-items-center rounded-[7px] bg-[var(--panel)] shadow-[0_1px_2px_rgb(24_30_28/0.10)]"
               style={{
-                background: owned ? '#1f2937' : `${st.color}22`,
-                border: `1px solid ${owned ? '#374151' : st.color + '66'}`,
-                opacity: owned ? 0.4 : 1,
-                boxShadow: dreamOf ? `0 0 0 2px ${dreamOf.color}` : undefined,
+                border: `1.5px solid ${st.color}${owned ? '33' : '55'}`,
+                color: st.color,
+                opacity: owned ? 0.35 : 1,
+                boxShadow: dreamOf ? `0 0 0 2.5px ${dreamOf.color}` : undefined,
               }}
             >
-              {st.icon}
+              <span className="block size-[14px] [&>svg]:size-full">{FAST_ICON[space.type]}</span>
               <Tokens seats={here} />
             </div>
           </div>
@@ -149,20 +166,28 @@ export function Board({ table }: { table: Table }) {
             title={st.label}
           >
             <div
-              className="relative grid size-[24px] place-items-center rounded-md text-[11px]"
-              style={{ background: `${st.color}22`, border: `1px solid ${st.color}66` }}
+              className="relative grid size-[26px] place-items-center rounded-[7px] bg-[var(--panel)] shadow-[0_1px_2px_rgb(24_30_28/0.10)]"
+              style={{ border: `1.5px solid ${st.color}55`, color: st.color }}
             >
-              {st.icon}
+              <span className="block size-[14px] [&>svg]:size-full">{RAT_ICON[space]}</span>
               <Tokens seats={here} />
             </div>
           </div>
         )
       })}
 
-      {/* Центр */}
-      <div className="absolute inset-[33%] grid place-items-center rounded-2xl border border-[var(--line)] bg-[var(--panel-2)] text-center">
-        <div>
-          <div className="text-[10px] uppercase tracking-widest text-[var(--muted)]">
+      {/* Центр — плашка с гравировкой, поверх неё имя ходящего и кубики. */}
+      <div className="absolute inset-[33%] grid place-items-center overflow-hidden rounded-full border border-[var(--line)] bg-[var(--panel)] text-center shadow-[0_1px_2px_rgb(24_30_28/0.06)]">
+        {center && (
+          <img
+            src={center}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 size-full object-cover opacity-90 dark:opacity-20"
+          />
+        )}
+        <div className="relative px-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
             {active.track === 'rat' ? 'Рутина' : 'Полоса свободы'}
           </div>
           <div className="mt-0.5 text-sm font-bold" style={{ color: active.color }}>

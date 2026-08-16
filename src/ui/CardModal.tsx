@@ -128,19 +128,22 @@ export function CardModal({
     case 'chooseDeal':
       return (
         <Shell badge="Возможность" title="Малая или крупная сделка?">
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => dispatch({ type: 'CHOOSE_DEAL', size: 'small' })} className="btn-ghost py-3">
-              <div className="text-base">Малая</div>
-              <div className="text-[11px] text-[var(--muted)]">
-                {RULES.currency === 'RUB' ? 'взнос до 150 000 ₽' : 'взнос до $5 000'}
-              </div>
-            </button>
-            <button onClick={() => dispatch({ type: 'CHOOSE_DEAL', size: 'big' })} className="btn-ghost py-3">
-              <div className="text-base">Крупная</div>
-              <div className="text-[11px] text-[var(--muted)]">
-                {RULES.currency === 'RUB' ? 'от 200 000 ₽' : 'от $8 000'}
-              </div>
-            </button>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {(
+              [
+                ['small', 'Малая', RULES.currency === 'RUB' ? 'взнос до 150 000 ₽' : 'взнос до $5 000'],
+                ['big', 'Крупная', RULES.currency === 'RUB' ? 'от 200 000 ₽' : 'от $8 000'],
+              ] as const
+            ).map(([size, name, hint]) => (
+              <button
+                key={size}
+                onClick={() => dispatch({ type: 'CHOOSE_DEAL', size })}
+                className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-4 py-3 text-left transition duration-150 hover:border-accent/60"
+              >
+                <span className="block text-[15px] font-bold">{name}</span>
+                <span className="mt-0.5 block text-xs leading-snug text-[var(--muted)]">{hint}</span>
+              </button>
+            ))}
           </div>
         </Shell>
       )

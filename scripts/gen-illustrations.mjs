@@ -244,6 +244,19 @@ const SCENES_DECKS = {
     'A North American suburban street of detached houses with wide lawns and driveways, a modest strip of shops at the corner, a distant downtown skyline on the horizon, clean midday light',
 }
 
+/**
+ * Полотно доски. Это не «картинка на странице», а поверхность, на которой
+ * лежат клетки, — поэтому сцена намеренно СПОКОЙНАЯ: фактура и лёгкая
+ * печатная рамка, никаких предметов и сюжета. Любая деталь тут будет спорить
+ * с фишками и подписями.
+ */
+const SCENES_BOARD = {
+  surface:
+    'Top-down flat photograph of a premium board game playing surface: warm off-white pressed paper board with a fine linen grain, very subtle paper fibre texture, a faint blind-embossed decorative border frame just inside the edges, soft even studio lighting with almost no shadow, extremely low contrast, muted warm neutral tones with a whisper of sage green. Completely empty surface. No objects, no cards, no pieces, no text, no letters, no numbers, no logos.',
+  center:
+    'Top-down flat photograph of a shallow circular inlay in a premium board game: a smooth warm off-white paper medallion set into the board, ringed by a fine blind-embossed double circle and a delicate laurel-like botanical engraving in pale sage green, soft even studio lighting, very low contrast, empty flat centre with room to breathe. No text, no letters, no numbers, no symbols, no logos.',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -587,6 +600,14 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Полотно доски
+  manifest.byBoard = manifest.byBoard || {}
+  for (const part of Object.keys(SCENES_BOARD)) {
+    push(part, `board-${part}`, SCENES_BOARD[part], 'board', () => {
+      manifest.byBoard[part] = `/cards/board-${part}.webp`
+    })
   }
 
   // Обложки колод
