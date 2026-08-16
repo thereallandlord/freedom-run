@@ -1353,28 +1353,28 @@
    "id": "dd-baran-na-kurban",
    "title": "Баран на Курбан-байрам",
    "flavor": "Выбрал самого справного. Мясо — себе, родне и нуждающимся, всё по сунне.",
-   "amount": 18000,
+   "amount": 10000,
    "financeable": true
   },
   {
    "id": "dd-abonement-v-zal",
    "title": "Годовой абонемент в зал",
    "flavor": "С понедельника — новая жизнь. Абонемент — свидетель старой.",
-   "amount": 20000,
+   "amount": 10500,
    "financeable": true
   },
   {
    "id": "dd-putevka-v-lager",
    "title": "Путёвка в лагерь",
    "flavor": "Три недели тишины дома. Если подумать — почти даром.",
-   "amount": 25000,
+   "amount": 11000,
    "financeable": true
   },
   {
    "id": "dd-televizor-sgorel",
    "title": "Телевизор приказал долго жить",
    "flavor": "Не пережил финал по борьбе. Дед без телевизора с внуками сидеть отказывается.",
-   "amount": 28000,
+   "amount": 11500,
    "financeable": true
   }
  ],

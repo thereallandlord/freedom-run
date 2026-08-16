@@ -767,21 +767,11 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     case 'PAY_DOWNSIZED': {
       if (t.pending?.kind !== 'downsized') return prev
-      const cost = totalExpenses(l)
-      // В кредитном режиме нехватку закрывают займом; в халяль-режиме
-      // платим в минус — дальше штатное банкротство.
-      if (RULES.loansEnabled && l.cash < cost) return prev
       seatLedgerEvent(t, seat.id, { type: 'DOWNSIZED' })
       t.seats[seatIdx] = { ...t.seats[seatIdx], skipTurns: 2 }
-      log(t, seat.id, `Увольнение: заплатил ${money(cost)}, пропуск 2 ходов`)
-      if (t.seats[seatIdx].ledger.cash < 0) {
-        t.pending = { kind: 'bankruptcy' }
-        t.phase = 'resolving'
-        log(t, seat.id, 'Наличные ушли в минус — банкротство')
-      } else {
-        t.pending = null
-        t.phase = 'turnEnd'
-      }
+      log(t, seat.id, 'Потерял работу: два месяца без зарплаты, счета идут')
+      t.pending = null
+      t.phase = 'turnEnd'
       return t
     }
 

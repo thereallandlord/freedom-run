@@ -474,13 +474,7 @@ export function CardModal({
           >
             Заплатить {money(cost)} и пропустить 2 хода
           </button>
-          {l.cash < cost && (
-            <p className="text-center text-xs text-amber-400">
-              {RULES.loansEnabled
-                ? 'Не хватает — возьмите кредит в банке'
-                : 'Наличных не хватает — уйдёте в минус и попадёте в банкротство'}
-            </p>
-          )}
+
         </Shell>
       )
     }

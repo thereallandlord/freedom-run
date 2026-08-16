@@ -176,7 +176,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       return l
 
     case 'DOWNSIZED':
-      l.cash -= totalExpenses(l)
+      // Наказание — пропуск ходов (месяцы без зарплаты при живых расходах).
+      // Отдельный платёж не берём: это был бы двойной счёт.
       l.charityTurnsLeft = 0
       return l
 

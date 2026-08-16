@@ -209,15 +209,8 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
       return { type: 'DECLINE_CHARITY' }
     }
 
-    case 'downsized': {
-      const cost = totalExpenses(l)
-      if (l.cash < cost) {
-        const step = RULES.currency === 'RUB' ? 10_000 : 1000
-        const loan = Math.ceil((cost - l.cash) / step) * step
-        return { type: 'TAKE_LOAN', amount: loan }
-      }
+    case 'downsized':
       return { type: 'PAY_DOWNSIZED' }
-    }
 
     case 'ftBusiness': {
       const space = fastBoard()[pending.space]
