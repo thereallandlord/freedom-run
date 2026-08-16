@@ -16,22 +16,48 @@ import { RULES, monthlyCashFlow, totalExpenses } from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText } from '../engine/data'
 import { money, signed, tone } from './PlayerPanel'
 
+/** Картинка карточки: иконка по типу актива поверх фирменного градиента. */
+const CARD_ART: Record<string, string> = {
+  roomUFA: '🏚️', aptKZN: '🏢', aptMSK: '🌆', aptSPB: '🌉', aptDXB: '🕌', aptTUR: '🏖️',
+  parking: '🅿️', land: '🌾', houseRF: '🏡',
+  bizFood: '🍽️', bizService: '🔧', bizDigital: '💻', partnership: '🤝',
+  condo2br: '🏢', fourplex: '🏘️', eightplex: '🏘️', duplex: '🏘️', aptSmall: '🏢', aptLarge: '🏢',
+  franchise: '🍔', localBiz: '🏪', dairyUY: '🐄', villaPDE: '🏝️', landUY: '🌾', aptMVD: '🏢', aptPDE: '🌊',
+}
+
+function CardArt({ icon, accent }: { icon: string; accent: string }) {
+  return (
+    <div
+      className="mb-3 grid h-24 place-items-center overflow-hidden rounded-xl border text-5xl"
+      style={{
+        borderColor: `${accent}44`,
+        background: `radial-gradient(120% 140% at 50% 0%, ${accent}33 0%, ${accent}0d 55%, transparent 100%)`,
+      }}
+    >
+      <span className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">{icon}</span>
+    </div>
+  )
+}
+
 function Shell({
   badge,
   title,
   flavor,
   children,
   accent = '#10b981',
+  art,
 }: {
   badge: string
   title: string
   flavor?: string
   children: React.ReactNode
   accent?: string
+  art?: string
 }) {
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4">
-      <div className="card-fly-in panel w-full max-w-md rounded-2xl p-5 shadow-2xl shadow-black/70">
+      <div className="card-fly-in panel max-h-[92vh] w-full max-w-md overflow-auto rounded-2xl p-5 shadow-2xl shadow-black/70">
+        {art && <CardArt icon={art} accent={accent} />}
         <div
           className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
           style={{ background: `${accent}22`, color: accent }}
@@ -101,7 +127,7 @@ export function CardModal({
         const max = Math.floor(l.cash / s.price)
         const holders = stockHolders(table, s.symbol)
         return (
-          <Shell badge={badge} title={txt.title} flavor={txt.flavor} accent="#38bdf8">
+          <Shell badge={badge} title={txt.title} flavor={txt.flavor} accent="#38bdf8" art="📈">
             <div className="panel-2 space-y-1 rounded-lg p-3">
               <Stat label="Тикер" value={s.symbol} />
               <Stat label="Цена сегодня" value={money(s.price)} strong />
@@ -223,6 +249,7 @@ export function CardModal({
           title={txt.title}
           flavor={txt.flavor}
           accent={card.category === 'partnership' ? '#22c55e' : '#10b981'}
+          art={CARD_ART[card.category] ?? (card.kind === 'business' ? '🏭' : '🏠')}
         >
           <div className="panel-2 space-y-1 rounded-lg p-3">
             <Stat label="Стоимость" value={money(card.cost)} />
@@ -276,7 +303,7 @@ export function CardModal({
       if (card.kind === 'sellOffer') {
         const matches = marketMatches(table, card.category)
         return (
-          <Shell badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
+          <Shell badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8" art="🤝">
             <div className="panel-2 rounded-lg p-3">
               <Stat label="Покупатель даёт" value={`${card.multiplierPct}% от стоимости`} strong />
             </div>
@@ -376,7 +403,7 @@ export function CardModal({
       const txt = cardText(card, locale)
       const monthly = Math.ceil(0.03 * card.amount)
       return (
-        <Shell badge="Трата" title={txt.title} flavor={txt.flavor} accent="#fb7185">
+        <Shell badge="Трата" title={txt.title} flavor={txt.flavor} accent="#fb7185" art="🛍️">
           <div className="panel-2 rounded-lg p-3">
             <Stat label="К оплате" value={money(card.amount)} strong />
             <Stat label="Ваши наличные" value={money(l.cash)} />
@@ -409,7 +436,7 @@ export function CardModal({
     case 'charity': {
       const cost = charityCost(l)
       return (
-        <Shell badge="Благотворительность" title="Пожертвовать 10% дохода?" accent="#f59e0b">
+        <Shell badge="Благотворительность" title="Пожертвовать 10% дохода?" accent="#f59e0b" art="❤️">
           <p className="text-sm text-[var(--muted)]">
             Отдайте {money(cost)} — и следующие 3 хода сможете бросать два кубика вместо одного.
           </p>
@@ -432,7 +459,7 @@ export function CardModal({
     case 'downsized': {
       const cost = totalExpenses(l)
       return (
-        <Shell badge="Увольнение" title="Вы временно потеряли работу" accent="#64748b">
+        <Shell badge="Увольнение" title="Вы временно потеряли работу" accent="#64748b" art="📉">
           <p className="text-sm text-[var(--muted)]">
             Оплатите полный месяц расходов и пропустите 2 хода. Бонус благотворительности сгорает.
           </p>
@@ -463,7 +490,7 @@ export function CardModal({
       if (space.type !== 'business') return null
       const txt = fastSpaceText(p.space, locale)
       return (
-        <Shell badge="Инвестиция Полосы" title={txt?.name ?? space.name} flavor={txt?.flavor}>
+        <Shell badge="Инвестиция Полосы" title={txt?.name ?? space.name} flavor={txt?.flavor} art="🏢">
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Взнос" value={money(space.downPayment)} strong />
             <Stat label="Добавит дохода" value={`${signed(space.cashFlow)}/мес`} strong />
@@ -490,7 +517,7 @@ export function CardModal({
       if (space.type !== 'venture') return null
       const txt = fastSpaceText(p.space, locale)
       return (
-        <Shell badge="Рисковый проект" title={txt?.name ?? space.name} flavor={txt?.flavor} accent="#f97316">
+        <Shell badge="Рисковый проект" title={txt?.name ?? space.name} flavor={txt?.flavor} accent="#f97316" art="🛢️">
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Ставка (невозвратная)" value={money(space.downPayment)} strong />
             <Stat label="При удаче" value={`${signed(space.cashFlow)}/мес`} strong />
@@ -521,7 +548,7 @@ export function CardModal({
       const bumps = table.dreamBumps[p.space] ?? 0
       const txt = fastSpaceText(p.space, locale)
       return (
-        <Shell badge="Ваша мечта" title={txt?.name ?? space.name} flavor={txt?.flavor} accent="#f472b6">
+        <Shell badge="Ваша мечта" title={txt?.name ?? space.name} flavor={txt?.flavor} accent="#f472b6" art="⭐">
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Базовая цена" value={money(space.price)} />
             {bumps > 0 && <Stat label={`Соперники поднимали ×${bumps}`} value={money(price)} strong />}
@@ -571,7 +598,7 @@ export function CardModal({
       const flow = monthlyCashFlow(l)
       const recover = canRecover(l)
       return (
-        <Shell badge="Банкротство" title={`${seat.name} не свёл концы с концами`} accent="#f43f5e">
+        <Shell badge="Банкротство" title={`${seat.name} не свёл концы с концами`} accent="#f43f5e" art="🆘">
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Наличные" value={money(l.cash)} strong />
             <Stat label="Поток в месяц" value={signed(flow)} strong />
