@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { ROOM_CODE_LENGTH, isValidRoomCode, normalizeRoomCode } from '../engine/room'
+import { artByDeck } from './cardArt'
 
 /**
  * Стартовый экран: два больших пути — «на одном устройстве» и «онлайн».
@@ -238,12 +239,18 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
           </div>
 
           <div className="panel mt-3 overflow-hidden rounded-2xl sm:flex">
-            <Art
-              src="/cards/dream-world-trip.webp"
-              emoji="✨"
-              className="h-32 w-full sm:h-auto sm:w-56 sm:shrink-0"
-              gradient="linear-gradient(135deg,#fbbf24,#f97316)"
-            />
+            {/* Блок про три колоды — показываем сами эти три колоды, а не отвлечённую картинку. */}
+            <div className="grid h-32 w-full shrink-0 grid-cols-3 gap-px bg-[var(--line)] sm:h-auto sm:w-64 sm:grid-cols-1">
+              {(['ru', 'offshore', 'classic'] as const).map((deck) => (
+                <Art
+                  key={deck}
+                  src={artByDeck(deck) ?? ''}
+                  emoji="🗂️"
+                  className="size-full"
+                  gradient="linear-gradient(135deg,#34d399,#0ea5e9)"
+                />
+              ))}
+            </div>
             <div className="p-5">
               <div className="font-bold">Три колоды на выбор</div>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
