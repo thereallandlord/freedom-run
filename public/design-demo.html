@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Cashflow · варианты дизайна</title>
 <style>
-/* Шрифт заголовков — тот же файл, что уже стоит в игре. */
 @font-face{font-family:'Unbounded';font-style:normal;font-weight:700;font-display:swap;
   src:url('./fonts/unbounded-cyrillic-700.woff2') format('woff2');
   unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
@@ -15,409 +14,311 @@
 
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;font:15px/1.5 ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  background:#0A0F0D;color:#E9F5EE;-webkit-font-smoothing:antialiased}
+body{margin:0;background:#EDEFEC;color:#171A19;
+  font:15px/1.5 ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
 
-/* ─── Обёртка страницы выбора ─── */
-.page{max-width:1080px;margin:0 auto;padding:28px 16px 80px}
-.page-head{margin-bottom:26px}
-.page-head h1{font-family:'Unbounded',system-ui,sans-serif;font-weight:700;font-size:26px;
-  letter-spacing:-.02em;margin:0 0 8px}
-.page-head p{margin:0;color:#93A99E;max-width:64ch}
-.page-head code{background:#152219;border:1px solid #1D2C24;border-radius:6px;padding:1px 6px;font-size:13px}
+/* ══ Обёртка страницы выбора ══ */
+.pick{max-width:1240px;margin:0 auto;padding:30px 18px 90px}
+.pick-head h1{font-family:'Unbounded',system-ui,sans-serif;font-weight:700;font-size:25px;
+  letter-spacing:-.025em;margin:0 0 9px}
+.pick-head p{margin:0;color:#5C6862;max-width:70ch;line-height:1.6}
 
-/* Рамка каждого варианта */
-.variant{margin-top:34px;border:1px solid #1D2C24;border-radius:20px;overflow:hidden;background:#0C1712}
-.variant>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;
-  padding:14px 18px;border-bottom:1px solid #1D2C24;background:#101C16}
-.variant>header b{font-size:15px}
-.variant>header .num{font-family:'Unbounded',system-ui,sans-serif;font-size:12px;font-weight:700;
-  color:#39E09B;letter-spacing:.08em}
-.variant>header span{color:#93A99E;font-size:13px}
-.stage{padding:0}
+.slot{margin-top:40px}
+.slot>.cap{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:12px}
+.slot>.cap .n{font-family:'Unbounded',system-ui,sans-serif;font-size:12px;font-weight:700;
+  color:#047C54;letter-spacing:.09em}
+.slot>.cap b{font-size:16px}
+.slot>.cap i{font-style:normal;color:#5C6862;font-size:13.5px}
+.slot>.why{margin:12px 2px 0;color:#5C6862;font-size:13.5px;line-height:1.6;max-width:88ch}
+.slot>.why b{color:#171A19;font-weight:600}
 
-/* ══════════════════════════════════════════════════════════════════
-   Общий каркас макета. Цвета живут в переменных — каждый вариант
-   переопределяет только их, разметка одна и та же.
-   ══════════════════════════════════════════════════════════════════ */
-.demo{
-  --r:16px;
-  padding:26px 22px 30px;
-  background:var(--bg);color:var(--ink);
-  font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;
-  position:relative;overflow:hidden;
+/* Ряд: настоящий десктопный экран + настоящий телефон рядом */
+.pair{display:grid;gap:18px;align-items:start}
+@media(min-width:1000px){.pair{grid-template-columns:1fr 392px}}
+
+/* Рамка «браузер» */
+.frame{border:1px solid #D8DCD7;border-radius:16px;overflow:hidden;background:#fff;
+  box-shadow:0 1px 2px rgb(20 26 23/.05),0 18px 40px -28px rgb(20 26 23/.35)}
+.frame .bar{display:flex;align-items:center;gap:7px;padding:9px 13px;background:#F1F3F0;
+  border-bottom:1px solid #E2E6E1}
+.frame .bar i{width:9px;height:9px;border-radius:50%;background:#D3D8D3;display:block}
+.frame .bar u{flex:1;margin-left:8px;height:19px;border-radius:6px;background:#E7EAE6;
+  text-decoration:none;display:flex;align-items:center;padding:0 9px;
+  font:500 10.5px/1 ui-monospace,monospace;color:#8A968F;overflow:hidden;white-space:nowrap}
+.frame .view{height:660px;overflow:auto;-webkit-overflow-scrolling:touch;
+  container-type:inline-size}
+
+/* Рамка «телефон» */
+.phone{width:392px;max-width:100%;border:1px solid #D8DCD7;border-radius:34px;padding:9px;
+  background:#fff;box-shadow:0 1px 2px rgb(20 26 23/.05),0 18px 40px -28px rgb(20 26 23/.35)}
+.phone .view{height:718px;overflow:auto;border-radius:26px;container-type:inline-size}
+.phone .notch{width:104px;height:5px;border-radius:99px;background:#DDE1DC;margin:2px auto 7px}
+
+/* ══════════════════════════════════════════════════════════════
+   НАСТОЯЩИЙ ЭКРАН. Всё, что ниже, — верстка самой страницы игры.
+   Отличаются варианты только переменными в .t-*.
+   ══════════════════════════════════════════════════════════════ */
+.app{min-height:100%;background:var(--bg);color:var(--ink);position:relative;
+  font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.app::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--wash)}
+.app .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:20px 18px 44px}
+
+/* шапка */
+.app .top{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+.app .mark{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;
+  background:var(--accent);color:var(--on-accent)}
+.app .mark svg{width:19px;height:19px}
+.app .name{font-family:'Unbounded',system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.025em}
+.app .ver{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.app .top .end{margin-left:auto;display:flex;gap:8px}
+.app .icobtn{width:31px;height:31px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.app .icobtn svg{width:15px;height:15px}
+
+/* герой */
+.app h1{font-family:'Unbounded',system-ui,sans-serif;font-weight:700;
+  font-size:clamp(27px,5.4cqw,47px);line-height:1.05;letter-spacing:-.035em;margin:0 0 13px;text-wrap:balance}
+.app h1 em{font-style:normal;color:var(--accent)}
+.app .lede{margin:0 0 24px;color:var(--muted);font-size:15px;line-height:1.6;max-width:54ch}
+
+/* два режима — равноправные, без «главной» кнопки */
+.app .modes{display:grid;gap:11px}
+@container (min-width:620px){.app .modes{grid-template-columns:1fr 1fr}}
+.app .mode{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+  padding:15px 17px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);
+  color:inherit;font:inherit;transition:border-color .18s ease,transform .15s ease}
+.app .mode:hover{border-color:var(--accent);transform:translateY(-1px)}
+.app .mode .txt{min-width:0}
+.app .mode .t{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15.5px}
+.app .mode .s{display:block;margin-top:3px;font-size:12.5px;color:var(--muted)}
+.app .mode .go{margin-left:auto;flex:none;color:var(--accent)}
+.app .mode .go svg{width:17px;height:17px;display:block}
+.app .tag{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:2px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+
+/* строка кода — компактная, не во всю ширину */
+.app .join{display:flex;align-items:center;gap:9px;margin-top:13px;flex-wrap:wrap}
+.app .join .lab{font-size:13px;color:var(--muted)}
+.app .join input{width:126px;flex:none;padding:8px 11px;border-radius:10px;
+  border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  font:700 14px/1 ui-monospace,monospace;letter-spacing:.24em;text-align:center}
+.app .join input::placeholder{letter-spacing:.24em;color:var(--muted);opacity:.55}
+.app .join button{padding:8px 14px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel);color:var(--muted);font:600 13px/1 inherit;cursor:pointer}
+.app .join button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* «Что это за игра» */
+.app .sec-t{font-family:'Unbounded',system-ui,sans-serif;font-weight:700;font-size:19px;
+  letter-spacing:-.025em;margin:36px 0 13px;text-align:center}
+.app .steps{display:grid;gap:11px}
+@container (min-width:620px){.app .steps{grid-template-columns:repeat(3,1fr)}}
+.app .step{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:16px 17px}
+.app .step .hd{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.app .step .ico{width:32px;height:32px;flex:none;border-radius:10px;display:grid;place-items:center;
+  background:var(--accent-soft);color:var(--accent)}
+.app .step .ico svg{width:17px;height:17px}
+.app .step .num{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.app .step h4{margin:0;font-size:14.5px;font-weight:700}
+.app .step p{margin:6px 0 0;font-size:13px;line-height:1.55;color:var(--muted)}
+
+/* ── Три колоды. Всё внутри — блочное: у span'ов вертикальные отступы
+   не держат высоту строки, из-за этого в прошлой версии текст обрезало. ── */
+.app .decks{margin-top:11px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--panel);overflow:hidden}
+.app .decks-hd{padding:17px 18px 14px}
+.app .decks-hd .kick{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:6px}
+.app .decks-hd h4{margin:0;font-size:17px;font-weight:700;letter-spacing:-.015em}
+.app .decks-hd p{margin:6px 0 0;font-size:13.5px;line-height:1.55;color:var(--muted);max-width:62ch}
+.app .deck-row{display:grid;grid-template-columns:repeat(3,1fr);
+  border-top:1px solid var(--line)}
+.app .deck{display:block;width:100%;text-align:left;border:0;border-left:1px solid var(--line);
+  background:var(--panel);color:inherit;font:inherit;padding:0;cursor:pointer;
+  transition:background .18s ease}
+.app .deck:first-child{border-left:0}
+.app .deck:hover{background:var(--panel-2)}
+.app .deck.on{background:var(--accent-soft)}
+.app .deck .shot{display:block;width:100%;height:96px;object-fit:cover}
+.app .deck .info{display:block;padding:12px 14px 15px}
+.app .deck .dn{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px}
+.app .deck.on .dn{color:var(--accent)}
+.app .deck .bul{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+.app .deck .dd{display:block;margin-top:4px;font-size:12px;line-height:1.5;color:var(--muted)}
+@container (max-width:640px){
+  .app .deck-row{grid-template-columns:1fr}
+  .app .deck{border-left:0;border-top:1px solid var(--line);display:grid;
+    grid-template-columns:112px 1fr;align-items:stretch}
+  .app .deck:first-child{border-top:0}
+  .app .deck .shot{height:100%;min-height:88px}
 }
-.demo *{box-sizing:border-box}
-.demo .brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;position:relative;z-index:2}
-.demo .mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
-  background:var(--glow);color:var(--on-glow);flex:none}
-.demo .mark svg{width:19px;height:19px}
-.demo .wordmark{font-family:'Unbounded',system-ui,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.02em}
-.demo .ver{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
-  padding:3px 8px;border-radius:999px;background:var(--glow-soft);color:var(--glow-ink)}
-.demo .spacer{margin-left:auto}
-.demo .moon{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);
-  background:var(--card);display:grid;place-items:center;color:var(--ink2)}
-.demo .moon svg{width:15px;height:15px}
 
-.demo h2{font-family:'Unbounded',system-ui,sans-serif;font-weight:700;
-  font-size:clamp(28px,4.4vw,46px);line-height:1.04;letter-spacing:-.035em;
-  margin:0 0 12px;text-wrap:balance;position:relative;z-index:2}
-.demo h2 em{font-style:normal;color:var(--glow-ink)}
-.demo .lede{margin:0 0 22px;color:var(--ink2);max-width:52ch;font-size:15px;line-height:1.55;position:relative;z-index:2}
-
-/* Две кнопки */
-.demo .ways{display:grid;gap:11px;margin-bottom:11px;position:relative;z-index:2}
-@media(min-width:640px){.demo .ways{grid-template-columns:1fr 1fr}}
-.demo .way{display:flex;align-items:center;gap:12px;text-align:left;width:100%;
-  padding:15px 17px;border-radius:var(--r);border:1px solid var(--line);
-  background:var(--card);color:inherit;font:inherit;cursor:pointer;
-  transition:border-color .2s ease,transform .15s ease}
-.demo .way:hover{border-color:var(--glow);transform:translateY(-1px)}
-.demo .way.primary{background:var(--glow);border-color:var(--glow);color:var(--on-glow)}
-.demo .way.primary .way-sub{color:var(--on-glow);opacity:.78}
-.demo .way-t{font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:8px}
-.demo .way-sub{display:block;margin-top:3px;font-size:12.5px;color:var(--ink2);font-weight:400}
-.demo .way .arr{margin-left:auto;flex:none;opacity:.85}
-.demo .way .arr svg{width:17px;height:17px;display:block}
-.demo .cap{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  padding:2px 7px;border-radius:999px;background:var(--glow-soft);color:var(--glow-ink)}
-
-/* Строка «код комнаты» */
-.demo .joinbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;
-  padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);
-  margin-bottom:22px;position:relative;z-index:2}
-.demo .joinbar .lab{font-size:13.5px;font-weight:600}
-.demo .joinbar input{flex:1;min-width:130px;padding:9px 12px;border-radius:10px;
-  border:1px solid var(--line);background:var(--bg2);color:var(--ink);
-  font:600 15px/1 ui-monospace,monospace;letter-spacing:.28em}
-.demo .joinbar button{padding:9px 16px;border-radius:10px;border:1px solid var(--line);
-  background:var(--bg2);color:var(--ink2);font:600 13.5px/1 inherit;cursor:pointer}
-
-/* Блок трёх колод — то, ради чего всё затевалось */
-.demo .decks{border:1px solid var(--line);border-radius:var(--r);background:var(--card);
-  overflow:hidden;position:relative;z-index:2}
-.demo .decks-head{padding:16px 18px 13px}
-.demo .decks-head .kicker{font-size:10.5px;font-weight:700;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--glow-ink);margin-bottom:5px}
-.demo .decks-head h3{margin:0;font-size:17px;font-weight:700;letter-spacing:-.015em}
-.demo .decks-head p{margin:5px 0 0;color:var(--ink2);font-size:13.5px;line-height:1.55;max-width:60ch}
-.demo .deck-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
-.demo .deck{position:relative;background:var(--card);text-align:left;border:0;padding:0;
-  color:inherit;font:inherit;cursor:pointer;display:block}
-.demo .deck img{display:block;width:100%;height:104px;object-fit:cover}
-.demo .deck .body{padding:11px 13px 14px}
-.demo .deck .name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px}
-.demo .deck .desc{margin-top:3px;font-size:11.5px;line-height:1.45;color:var(--ink2)}
-.demo .deck .dot{width:6px;height:6px;border-radius:50%;background:var(--glow);flex:none}
-.demo .deck.on{background:var(--glow-soft)}
-.demo .deck.on .name{color:var(--glow-ink)}
-@media(max-width:560px){
-  .demo .deck-row{grid-template-columns:1fr}
-  .demo .deck{display:grid;grid-template-columns:104px 1fr;align-items:center}
-  .demo .deck img{height:100%;min-height:74px}
+/* ─── Тема A: как сейчас в игре ─── */
+.t-now{
+  --bg:#F7F6F2;--panel:#FFFFFF;--panel-2:#F3F3EF;--line:#E4E4DD;
+  --ink:#171A19;--muted:#69716D;
+  --accent:#047C54;--accent-soft:rgba(4,124,84,.10);--on-accent:#FFFFFF;--r:16px;
+  --wash:radial-gradient(1200px 720px at 50% -12%,rgba(5,150,105,.07),transparent 62%),
+         radial-gradient(900px 520px at 88% 4%,rgba(180,130,60,.05),transparent 60%);
 }
-
-/* ─── Вариант 1: тёмная панель GreenLeaf ─── */
-.v-panel{
-  --bg:#07100C;--bg2:#0C1712;--card:#101C16;--line:#1D2C24;
-  --ink:#E9F5EE;--ink2:#93A99E;
-  --glow:#39E09B;--glow-ink:#39E09B;--glow-soft:rgba(57,224,155,.13);--on-glow:#06231A;
+/* ─── Тема B: светлая палитра панели GreenLeaf ─── */
+.t-leaf{
+  --bg:#EEF2EF;--panel:#FFFFFF;--panel-2:#F4F8F5;--line:#DDE6E0;
+  --ink:#0B1A13;--muted:#4B5F55;
+  --accent:#0E8F63;--accent-soft:rgba(14,143,99,.11);--on-accent:#FFFFFF;--r:16px;
+  --wash:radial-gradient(1100px 500px at 12% -8%,rgba(14,143,99,.08),transparent 62%);
 }
-.v-panel::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(1100px 500px at 12% -8%,rgba(57,224,155,.10),transparent 62%)}
-.v-panel .decks{background:linear-gradient(160deg,#152219,#101C16)}
-.v-panel .decks::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
-  background:radial-gradient(250px 250px at 92% -30%,rgba(57,224,155,.16),transparent 70%)}
-
-/* ─── Вариант 2: светлая на тех же токенах ─── */
-.v-light{
-  --bg:#EEF2EF;--bg2:#F7FAF8;--card:#FFFFFF;--line:#DDE6E0;
-  --ink:#0B1A13;--ink2:#4B5F55;
-  --glow:#0E8F63;--glow-ink:#0E8F63;--glow-soft:rgba(14,143,99,.11);--on-glow:#FFFFFF;
+/* ─── Тема C: тихий минимал ─── */
+.t-quiet{
+  --bg:#FBFBFA;--panel:#FFFFFF;--panel-2:#F5F6F4;--line:#E7E9E6;
+  --ink:#10231A;--muted:#5C6E64;
+  --accent:#0E8F63;--accent-soft:rgba(14,143,99,.08);--on-accent:#FFFFFF;--r:12px;
+  --wash:none;
 }
-.v-light::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(1100px 500px at 12% -8%,rgba(14,143,99,.07),transparent 62%)}
-
-/* ─── Вариант 3: игровое сукно ─── */
-.v-felt{
-  --bg:#0B2119;--bg2:#0E2A20;--card:#123026;--line:#1E4436;
-  --ink:#F2EFE3;--ink2:#A6BCB0;
-  --glow:#E8B93C;--glow-ink:#E8B93C;--glow-soft:rgba(232,185,60,.14);--on-glow:#241B05;
-}
-.v-felt::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-  background:
-    radial-gradient(900px 420px at 50% -14%,rgba(232,185,60,.10),transparent 64%),
-    repeating-linear-gradient(45deg,rgba(255,255,255,.014) 0 2px,transparent 2px 4px)}
-.v-felt h2{letter-spacing:-.03em}
-.v-felt .wordmark,.v-felt h2 em{color:var(--glow)}
-.v-felt .mark{background:var(--glow);color:var(--on-glow)}
-.v-felt .decks{background:linear-gradient(160deg,#16382B,#123026)}
-
-/* ─── Вариант 4: тихий минимал ─── */
-.v-quiet{
-  --bg:#F6F7F5;--bg2:#FFFFFF;--card:#FFFFFF;--line:#E4E8E4;
-  --ink:#10231A;--ink2:#5C6E64;
-  --glow:#0E8F63;--glow-ink:#0E8F63;--glow-soft:rgba(14,143,99,.09);--on-glow:#FFFFFF;
-}
-.v-quiet h2{font-size:clamp(30px,5vw,52px);letter-spacing:-.045em}
-.v-quiet .way{border-radius:12px}
-.v-quiet .decks{border-radius:12px}
-.v-quiet .deck img{height:88px;filter:saturate(.86)}
-.v-quiet .joinbar{background:transparent;border-style:dashed}
-
-/* Подпись под вариантом */
-.note{padding:13px 18px;border-top:1px solid #1D2C24;background:#0C1712;
-  color:#93A99E;font-size:13px;line-height:1.55}
-.note b{color:#E9F5EE;font-weight:600}
+.t-quiet h1{font-size:clamp(28px,6cqw,53px);letter-spacing:-.045em}
+.t-quiet .mode{border-radius:12px}
+.t-quiet .deck .shot{height:84px;filter:saturate(.88)}
+.t-quiet .mark{background:var(--ink);color:#fff}
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="page-head">
-    <h1>Cashflow · варианты первого экрана</h1>
+<div class="pick">
+  <div class="pick-head">
+    <h1>Cashflow · три светлых варианта</h1>
     <p>
-      Все четыре собраны на токенах панели GreenLeaf — палитра, радиусы и подсветка те же,
-      чтобы игра и панель читались как одна семья. Разметка у всех одинаковая: меняются
-      только цвета и характер. Скажи номер — переношу в игру целиком.
+      Каждый показан как настоящий экран — на большом мониторе и на телефоне, прокручиваются
+      целиком. Разметка одинаковая, отличаются только палитра и характер. Оба режима игры
+      равноправны, поле кода компактное. Тёмные варианты отложил.
     </p>
   </div>
 
-  <!-- ─────────────────────────── 1 ─────────────────────────── -->
-  <section class="variant">
-    <header>
-      <span class="num">01</span>
-      <b>Панель GreenLeaf, тёмная</b>
-      <span>прямой перенос: те же цвета, что в дашборде</span>
-    </header>
-    <div class="stage">
-      <div class="demo v-panel">
-        <div class="brand">
-          <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
-          <span class="wordmark">Cashflow</span>
-          <span class="ver">GreenLeaf version</span>
-          <span class="spacer"></span>
-          <span class="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
-        </div>
-        <h2>Вырвись из<br><em>денежной рутины</em></h2>
-        <p class="lede">Настольная игра про личные финансы. Нарасти пассивный доход выше расходов — и мчись к мечте. Партия на 2–10 человек, с телефона тоже.</p>
-        <div class="ways">
-          <button class="way primary">
-            <span><span class="way-t">На одном устройстве</span><span class="way-sub">Все за одним экраном, пустые места закроют боты</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-          <button class="way">
-            <span><span class="way-t">Играть онлайн <span class="cap">до 10</span></span><span class="way-sub">Комната с кодом, каждый со своего телефона</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-        </div>
-        <div class="joinbar">
-          <span class="lab">Вам дали код комнаты?</span>
-          <input value="" placeholder="••••••" />
-          <button>Войти</button>
-        </div>
-        <div class="decks">
-          <div class="decks-head">
-            <div class="kicker">Три колоды</div>
-            <h3>Один стол — три разных мира</h3>
-            <p>Колода решает, чем вы торгуете и в какой валюте считаете. Меняется всё: цены, зарплаты, сами сделки.</p>
-          </div>
-          <div class="deck-row">
-            <button class="deck on">
-              <img src="./cards/deck-ru.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name"><span class="dot"></span>Россия · халяль</span><span class="desc">Рубли, наши зарплаты и объекты. Рассрочка и партнёрство вместо процентных кредитов.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-offshore.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Уругвай</span><span class="desc">Доллары, квартиры у океана, земля и фермы. Мемкоины для смелых.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-classic.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Классическая</span><span class="desc">Оригинальные карты: кондо, франшизы, акции. Как в настольной коробке.</span></span>
-            </button>
-          </div>
-        </div>
+  <!-- ═════ A ═════ -->
+  <section class="slot">
+    <div class="cap"><span class="n">A</span><b>Как сейчас в игре</b><i>тёплый белый, изумрудный акцент</i></div>
+    <div class="pair">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><u>thereallandlord.github.io/freedom-run/</u></div>
+        <div class="view"><div class="app t-now" data-screen></div></div>
       </div>
+      <div class="phone"><div class="notch"></div><div class="view"><div class="app t-now" data-screen></div></div></div>
     </div>
-    <div class="note"><b>За что:</b> один в один язык панели — человек, знающий дашборд, узнаёт продукт мгновенно. <b>Против:</b> ты просил светлую тему по умолчанию.</div>
+    <p class="why"><b>За что:</b> тёплая бумага вместо холодного белого, экран не выглядит как админка. <b>Против:</b> с панелью GreenLeaf роднится только зелёным — фон и оттенок акцента другие.</p>
   </section>
 
-  <!-- ─────────────────────────── 2 ─────────────────────────── -->
-  <section class="variant">
-    <header>
-      <span class="num">02</span>
-      <b>Панель GreenLeaf, светлая</b>
-      <span>та же палитра, светлый режим панели</span>
-    </header>
-    <div class="stage">
-      <div class="demo v-light">
-        <div class="brand">
-          <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
-          <span class="wordmark">Cashflow</span>
-          <span class="ver">GreenLeaf version</span>
-          <span class="spacer"></span>
-          <span class="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
-        </div>
-        <h2>Вырвись из<br><em>денежной рутины</em></h2>
-        <p class="lede">Настольная игра про личные финансы. Нарасти пассивный доход выше расходов — и мчись к мечте. Партия на 2–10 человек, с телефона тоже.</p>
-        <div class="ways">
-          <button class="way primary">
-            <span><span class="way-t">На одном устройстве</span><span class="way-sub">Все за одним экраном, пустые места закроют боты</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-          <button class="way">
-            <span><span class="way-t">Играть онлайн <span class="cap">до 10</span></span><span class="way-sub">Комната с кодом, каждый со своего телефона</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-        </div>
-        <div class="joinbar">
-          <span class="lab">Вам дали код комнаты?</span>
-          <input value="" placeholder="••••••" />
-          <button>Войти</button>
-        </div>
-        <div class="decks">
-          <div class="decks-head">
-            <div class="kicker">Три колоды</div>
-            <h3>Один стол — три разных мира</h3>
-            <p>Колода решает, чем вы торгуете и в какой валюте считаете. Меняется всё: цены, зарплаты, сами сделки.</p>
-          </div>
-          <div class="deck-row">
-            <button class="deck on">
-              <img src="./cards/deck-ru.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name"><span class="dot"></span>Россия · халяль</span><span class="desc">Рубли, наши зарплаты и объекты. Рассрочка и партнёрство вместо процентных кредитов.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-offshore.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Уругвай</span><span class="desc">Доллары, квартиры у океана, земля и фермы. Мемкоины для смелых.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-classic.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Классическая</span><span class="desc">Оригинальные карты: кондо, франшизы, акции. Как в настольной коробке.</span></span>
-            </button>
-          </div>
-        </div>
+  <!-- ═════ B ═════ -->
+  <section class="slot">
+    <div class="cap"><span class="n">B</span><b>Палитра панели GreenLeaf</b><i>та же семья, что дашборд</i></div>
+    <div class="pair">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><u>thereallandlord.github.io/freedom-run/</u></div>
+        <div class="view"><div class="app t-leaf" data-screen></div></div>
       </div>
+      <div class="phone"><div class="notch"></div><div class="view"><div class="app t-leaf" data-screen></div></div></div>
     </div>
-    <div class="note"><b>За что:</b> общая палитра с панелью и при этом светлая — как ты и просил. Самый безопасный выбор. <b>Против:</b> менее эффектно, чем тёмная.</div>
+    <p class="why"><b>За что:</b> ровно те же токены, что в светлом режиме панели — игра и панель читаются как один продукт. <b>Против:</b> фон холоднее, чуть строже.</p>
   </section>
 
-  <!-- ─────────────────────────── 3 ─────────────────────────── -->
-  <section class="variant">
-    <header>
-      <span class="num">03</span>
-      <b>Игровое сукно</b>
-      <span>зелёный фетр и золото — читается как настолка</span>
-    </header>
-    <div class="stage">
-      <div class="demo v-felt">
-        <div class="brand">
-          <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
-          <span class="wordmark">Cashflow</span>
-          <span class="ver">GreenLeaf version</span>
-          <span class="spacer"></span>
-          <span class="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
-        </div>
-        <h2>Вырвись из<br><em>денежной рутины</em></h2>
-        <p class="lede">Настольная игра про личные финансы. Нарасти пассивный доход выше расходов — и мчись к мечте. Партия на 2–10 человек, с телефона тоже.</p>
-        <div class="ways">
-          <button class="way primary">
-            <span><span class="way-t">На одном устройстве</span><span class="way-sub">Все за одним экраном, пустые места закроют боты</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-          <button class="way">
-            <span><span class="way-t">Играть онлайн <span class="cap">до 10</span></span><span class="way-sub">Комната с кодом, каждый со своего телефона</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-        </div>
-        <div class="joinbar">
-          <span class="lab">Вам дали код комнаты?</span>
-          <input value="" placeholder="••••••" />
-          <button>Войти</button>
-        </div>
-        <div class="decks">
-          <div class="decks-head">
-            <div class="kicker">Три колоды</div>
-            <h3>Один стол — три разных мира</h3>
-            <p>Колода решает, чем вы торгуете и в какой валюте считаете. Меняется всё: цены, зарплаты, сами сделки.</p>
-          </div>
-          <div class="deck-row">
-            <button class="deck on">
-              <img src="./cards/deck-ru.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name"><span class="dot"></span>Россия · халяль</span><span class="desc">Рубли, наши зарплаты и объекты. Рассрочка и партнёрство вместо процентных кредитов.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-offshore.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Уругвай</span><span class="desc">Доллары, квартиры у океана, земля и фермы. Мемкоины для смелых.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-classic.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Классическая</span><span class="desc">Оригинальные карты: кондо, франшизы, акции. Как в настольной коробке.</span></span>
-            </button>
-          </div>
-        </div>
+  <!-- ═════ C ═════ -->
+  <section class="slot">
+    <div class="cap"><span class="n">C</span><b>Тихий минимал</b><i>крупная типографика, цвета почти нет</i></div>
+    <div class="pair">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><u>thereallandlord.github.io/freedom-run/</u></div>
+        <div class="view"><div class="app t-quiet" data-screen></div></div>
       </div>
+      <div class="phone"><div class="notch"></div><div class="view"><div class="app t-quiet" data-screen></div></div></div>
     </div>
-    <div class="note"><b>За что:</b> единственный вариант, который с первого взгляда говорит «это игра», а не сервис. Золото хорошо ложится на суммы. <b>Против:</b> дальше всех от панели — общая семья слабее.</div>
-  </section>
-
-  <!-- ─────────────────────────── 4 ─────────────────────────── -->
-  <section class="variant">
-    <header>
-      <span class="num">04</span>
-      <b>Тихий минимал</b>
-      <span>крупная типографика, почти без цвета</span>
-    </header>
-    <div class="stage">
-      <div class="demo v-quiet">
-        <div class="brand">
-          <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
-          <span class="wordmark">Cashflow</span>
-          <span class="ver">GreenLeaf version</span>
-          <span class="spacer"></span>
-          <span class="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
-        </div>
-        <h2>Вырвись из <em>денежной рутины</em></h2>
-        <p class="lede">Настольная игра про личные финансы. Нарасти пассивный доход выше расходов — и мчись к мечте. Партия на 2–10 человек, с телефона тоже.</p>
-        <div class="ways">
-          <button class="way primary">
-            <span><span class="way-t">На одном устройстве</span><span class="way-sub">Все за одним экраном, пустые места закроют боты</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-          <button class="way">
-            <span><span class="way-t">Играть онлайн <span class="cap">до 10</span></span><span class="way-sub">Комната с кодом, каждый со своего телефона</span></span>
-            <span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          </button>
-        </div>
-        <div class="joinbar">
-          <span class="lab">Вам дали код комнаты?</span>
-          <input value="" placeholder="••••••" />
-          <button>Войти</button>
-        </div>
-        <div class="decks">
-          <div class="decks-head">
-            <div class="kicker">Три колоды</div>
-            <h3>Один стол — три разных мира</h3>
-            <p>Колода решает, чем вы торгуете и в какой валюте считаете. Меняется всё: цены, зарплаты, сами сделки.</p>
-          </div>
-          <div class="deck-row">
-            <button class="deck on">
-              <img src="./cards/deck-ru.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name"><span class="dot"></span>Россия · халяль</span><span class="desc">Рубли, наши зарплаты и объекты. Рассрочка и партнёрство вместо процентных кредитов.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-offshore.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Уругвай</span><span class="desc">Доллары, квартиры у океана, земля и фермы. Мемкоины для смелых.</span></span>
-            </button>
-            <button class="deck">
-              <img src="./cards/deck-classic.webp" alt="" loading="lazy" decoding="async" />
-              <span class="body"><span class="name">Классическая</span><span class="desc">Оригинальные карты: кондо, франшизы, акции. Как в настольной коробке.</span></span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="note"><b>За что:</b> самый спокойный и «дорогой»; хорошо стареет, ничего не мешает читать. <b>Против:</b> нейтрален — бренда GreenLeaf в нём почти не слышно.</div>
+    <p class="why"><b>За что:</b> самый спокойный, ничего не спорит с картинками карточек. <b>Против:</b> зелёного почти нет — связь с GreenLeaf на глаз не читается.</p>
   </section>
 </div>
+
+<script>
+/* Разметка экрана одна на все варианты — держим её в одном месте,
+   иначе правку пришлось бы вносить трижды и они бы разъехались. */
+const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const leaf  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>';
+const moon  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+
+const STEPS = [
+  ['Шаг 1','Профессия и расходы','Зарплата, ипотека, кредиты, дети. Всё как в жизни — и всё против вас.',
+   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>'],
+  ['Шаг 2','Покупайте активы','Квартиры, бизнес, доли, акции. Каждый актив приносит доход каждый месяц.',
+   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>'],
+  ['Шаг 3','Выход из Круга','Пассивный доход перерос расходы — работа больше не нужна. Дальше мечта.',
+   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l-1 7a5 5 0 0 1-10 0z"/><path d="M8 21h8M12 17v4"/><path d="M18 5h3v3a4 4 0 0 1-4 4M6 5H3v3a4 4 0 0 0 4 4"/></svg>'],
+];
+
+const DECKS = [
+  ['ru','Россия · халяль','Рубли, наши зарплаты и объекты. Рассрочка и партнёрство вместо процентных кредитов.',true],
+  ['offshore','Уругвай','Доллары, квартиры у океана, земля и фермы. Мемкоины для смелых.',false],
+  ['classic','Классическая','Оригинальные карты: кондо, франшизы, акции. Как в настольной коробке.',false],
+];
+
+const screen = () => `
+  <div class="wrap">
+    <div class="top">
+      <span class="mark">${leaf}</span>
+      <span class="name">Cashflow</span>
+      <span class="ver">GreenLeaf version</span>
+      <span class="end"><span class="icobtn">${moon}</span></span>
+    </div>
+
+    <h1>Вырвись из<br><em>денежной рутины</em></h1>
+    <p class="lede">Настольная игра про личные финансы. Нарасти пассивный доход выше расходов — и мчись к мечте. Партия на 2–10 человек, с телефона тоже.</p>
+
+    <div class="modes">
+      <button class="mode">
+        <span class="txt">
+          <span class="t">На одном устройстве</span>
+          <span class="s">Все за одним экраном, пустые места закроют боты</span>
+        </span>
+        <span class="go">${arrow}</span>
+      </button>
+      <button class="mode">
+        <span class="txt">
+          <span class="t">Играть онлайн <span class="tag">до 10</span></span>
+          <span class="s">Комната с кодом, каждый со своего телефона</span>
+        </span>
+        <span class="go">${arrow}</span>
+      </button>
+    </div>
+
+    <div class="join">
+      <span class="lab">Есть код комнаты?</span>
+      <input placeholder="••••••" />
+      <button>Войти</button>
+    </div>
+
+    <h3 class="sec-t">Что это за игра</h3>
+    <div class="steps">
+      ${STEPS.map(([n,t,p,ico])=>`
+        <div class="step">
+          <div class="hd"><span class="ico">${ico}</span><span><span class="num">${n}</span><h4>${t}</h4></span></div>
+          <p>${p}</p>
+        </div>`).join('')}
+    </div>
+
+    <div class="decks">
+      <div class="decks-hd">
+        <div class="kick">Три колоды</div>
+        <h4>Один стол — три разных мира</h4>
+        <p>Колода решает, чем вы торгуете и в какой валюте считаете. Меняются цены, зарплаты и сами сделки.</p>
+      </div>
+      <div class="deck-row">
+        ${DECKS.map(([id,name,desc,on])=>`
+          <button class="deck${on?' on':''}">
+            <img class="shot" src="./cards/deck-${id}.webp" alt="" loading="lazy" decoding="async" />
+            <span class="info">
+              <span class="dn">${on?'<span class="bul"></span>':''}${name}</span>
+              <span class="dd">${desc}</span>
+            </span>
+          </button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+document.querySelectorAll('[data-screen]').forEach(el => { el.innerHTML = screen(); });
+</script>
 </body>
 </html>
