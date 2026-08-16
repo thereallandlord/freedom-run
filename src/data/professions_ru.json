@@ -1,71 +1,48 @@
 [
   {
-    "id": "seller",
-    "name": "Продавец-консультант",
-    "salary": 90000,
-    "savings": 15000,
-    "perChildExpense": 8000,
-    "expenses": {
-      "taxes": 0,
-      "homeMortgagePayment": 22000,
-      "schoolLoanPayment": 0,
-      "carPayment": 5000,
-      "creditCardPayment": 3000,
-      "retailPayment": 2000,
-      "otherExpenses": 35000
-    },
-    "liabilities": {
-      "homeMortgage": 0,
-      "schoolLoans": 0,
-      "carLoans": 150000,
-      "creditCards": 60000,
-      "retailDebt": 25000
-    }
-  },
-  {
     "id": "teacher",
     "name": "Учитель",
-    "salary": 90000,
-    "savings": 16000,
-    "perChildExpense": 8000,
+    "salary": 120000,
+    "savings": 21000,
+    "perChildExpense": 10500,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 22000,
-      "schoolLoanPayment": 3000,
-      "carPayment": 6000,
-      "creditCardPayment": 3000,
-      "retailPayment": 2000,
-      "otherExpenses": 33000
+      "homeMortgagePayment": 29500,
+      "schoolLoanPayment": 4000,
+      "carPayment": 8000,
+      "creditCardPayment": 4000,
+      "retailPayment": 2500,
+      "otherExpenses": 44000
     },
     "liabilities": {
       "homeMortgage": 0,
-      "schoolLoans": 110000,
-      "carLoans": 180000,
-      "creditCards": 55000,
-      "retailDebt": 20000
+      "schoolLoans": 145000,
+      "carLoans": 240000,
+      "creditCards": 75000,
+      "retailDebt": 25000
     }
   },
   {
     "id": "nurse",
     "name": "Медсестра",
-    "salary": 95000,
-    "savings": 17000,
-    "perChildExpense": 8500,
+    "salary": 130000,
+    "savings": 23000,
+    "perChildExpense": 11500,
     "expenses": {
       "taxes": 0,
-      "homeMortgagePayment": 23000,
-      "schoolLoanPayment": 3000,
-      "carPayment": 6000,
-      "creditCardPayment": 3000,
-      "retailPayment": 2000,
-      "otherExpenses": 35000
+      "homeMortgagePayment": 31500,
+      "schoolLoanPayment": 4000,
+      "carPayment": 8000,
+      "creditCardPayment": 4000,
+      "retailPayment": 2500,
+      "otherExpenses": 48000
     },
     "liabilities": {
       "homeMortgage": 0,
-      "schoolLoans": 95000,
-      "carLoans": 190000,
-      "creditCards": 60000,
-      "retailDebt": 22000
+      "schoolLoans": 130000,
+      "carLoans": 260000,
+      "creditCards": 80000,
+      "retailDebt": 30000
     }
   },
   {
@@ -227,6 +204,29 @@
       "carLoans": 500000,
       "creditCards": 110000,
       "retailDebt": 45000
+    }
+  },
+  {
+    "id": "welder",
+    "name": "Сварщик на вахте",
+    "salary": 190000,
+    "savings": 34000,
+    "perChildExpense": 17000,
+    "expenses": {
+      "taxes": 0,
+      "homeMortgagePayment": 34000,
+      "schoolLoanPayment": 0,
+      "carPayment": 19000,
+      "creditCardPayment": 6000,
+      "retailPayment": 4000,
+      "otherExpenses": 72000
+    },
+    "liabilities": {
+      "homeMortgage": 0,
+      "schoolLoans": 0,
+      "carLoans": 790000,
+      "creditCards": 100000,
+      "retailDebt": 40000
     }
   },
   {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Dropdown } from './Dropdown'
+import { Card, CardHead, Page, Rule } from './kit'
 import {
   dreamSpaces,
   professionName,
@@ -348,65 +349,77 @@ export function JoinRoom({
   const ready = draft.name.trim().length > 0
 
   return (
-    <div className="mx-auto w-full max-w-lg px-4 py-6 sm:py-10">
+    <Page width="form">
       <button
         onClick={onBack}
-        className="mb-4 text-sm font-semibold text-muted transition duration-150 hover:text-ink"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted transition duration-150 hover:text-ink"
       >
-        ← Назад
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round" className="size-4">
+          <path d="M19 12H5M11 18l-6-6 6-6" />
+        </svg>
+        Назад
       </button>
 
-      <div className="panel overflow-hidden rounded-2xl">
-        <div className="border-b border-line px-5 py-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-accent">
-            {creating ? 'Новая комната' : 'Вход в комнату'}
-          </div>
-          {!creating && (
-            <div className="tabnum mt-1 text-2xl font-black tracking-[0.25em]">{code}</div>
-          )}
-          <p className="mt-1 text-sm text-muted">
-            {creating
-              ? 'Настройте своё место — код и ссылку получите сразу после создания.'
-              : 'Заполните всё в одном окне и занимайте место.'}
-          </p>
-        </div>
+      <Card>
+        <CardHead
+          kicker={creating ? 'Новая комната' : 'Вход в комнату'}
+          title={creating ? 'Займите своё место' : 'Присоединиться к столу'}
+          hint={
+            creating
+              ? 'Код и ссылку получите сразу после создания — их можно скинуть кому угодно.'
+              : 'Заполните всё в одном окне и занимайте место за столом.'
+          }
+          end={
+            !creating && (
+              <span className="tabnum rounded-xl bg-panel2 px-3 py-1.5 text-lg font-black tracking-[0.2em]">
+                {code}
+              </span>
+            )
+          }
+        />
 
-        <div className="p-5">
-          <SeatForm
-            draft={draft}
-            onChange={onChange}
-            deckTheme={deckTheme}
-            takenColors={takenColors}
-            autoFocusName
-          />
+        <SeatForm
+          draft={draft}
+          onChange={onChange}
+          deckTheme={deckTheme}
+          takenColors={takenColors}
+          autoFocusName
+        />
 
-          {error && (
-            <div className="mt-4 rounded-xl border border-bad/40 bg-bad/10 px-3.5 py-2.5 text-sm text-bad">
-              {error}
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-line p-5">
-          <button
-            disabled={!ready || busy}
-            onClick={() => onSubmit('player')}
-            className="btn-primary w-full py-3.5 text-base"
+        {error && (
+          <div
+            role="alert"
+            className="mt-4 rounded-xl border border-bad/40 bg-bad/10 px-3.5 py-2.5 text-sm text-bad"
           >
-            {creating ? 'Создать комнату' : 'Занять место'}
+            {error}
+          </div>
+        )}
+
+        <Rule className="my-5" />
+
+        <button
+          disabled={!ready || busy}
+          onClick={() => onSubmit('player')}
+          className="btn-primary w-full py-3.5 text-base disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {busy ? 'Секунду…' : creating ? 'Создать комнату' : 'Занять место'}
+        </button>
+        {/* Кнопка неактивна — объясняем почему, а не оставляем гадать. */}
+        {!ready && (
+          <p className="mt-2 text-center text-xs text-muted">Сначала впишите имя за столом</p>
+        )}
+        {!creating && allowSpectator && (
+          <button
+            onClick={() => onSubmit('spectator')}
+            disabled={busy}
+            className="btn-ghost mt-2 w-full py-3 text-sm"
+          >
+            Войти зрителем — без места за столом
           </button>
-          {!creating && allowSpectator && (
-            <button
-              onClick={() => onSubmit('spectator')}
-              disabled={busy}
-              className="btn-ghost mt-2 w-full py-3"
-            >
-              👀 Войти зрителем — без места за столом
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+        )}
+      </Card>
+    </Page>
   )
 }
 
@@ -465,7 +478,8 @@ export function Lobby({
   const start = canStart(room)
   const waiting = pendingDisconnects(room)
   const provider = callProvider(room.callLink)
-  const full = room.players.length >= room.settings.maxPlayers
+  // Потолок жёсткий и внутренний: настройки «сколько мест» больше нет.
+  const full = room.players.length >= ROOM_MAX_PLAYERS
 
   const addBot = () => {
     const taken = room.players.map((p) => p.professionId)
@@ -481,7 +495,7 @@ export function Lobby({
   const dreamLabel = (index: number) => dreams.find((d) => d.index === index)?.name ?? '—'
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5 sm:pb-8">
+    <Page width="room" className="pb-28 sm:pb-16">
       {/* ─── Шапка: код и ссылка ─── */}
       <header className="mb-4 flex items-center gap-3">
         <div className="min-w-0">
@@ -607,7 +621,7 @@ export function Lobby({
         <div className="mb-2 flex items-center gap-2 px-1">
           <h2 className="text-sm font-bold">За столом</h2>
           <span className="tabnum text-xs text-muted">
-            {room.players.length} / {room.settings.maxPlayers}
+            {room.players.length}
           </span>
           {host && !full && (
             <button
@@ -738,7 +752,7 @@ export function Lobby({
           >
             <span className="shrink-0 text-sm font-bold">Настройки</span>
             <span className="truncate text-xs text-muted">
-              {THEME_LABEL[theme]} · до {room.settings.maxPlayers}
+              {THEME_LABEL[theme]}
             </span>
             <span
               className={`ml-auto text-[10px] text-muted transition duration-150 ${
@@ -763,31 +777,6 @@ export function Lobby({
                     label: THEME_LABEL[t],
                   }))}
                 />
-              </div>
-
-              <div>
-                <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-                  Мест за столом
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => onSettings({ maxPlayers: room.settings.maxPlayers - 1 })}
-                    disabled={room.settings.maxPlayers <= Math.max(ROOM_MIN_PLAYERS, room.players.length)}
-                    className="btn-ghost size-10 p-0 text-lg"
-                  >
-                    −
-                  </button>
-                  <span className="tabnum w-8 text-center text-xl font-black">
-                    {room.settings.maxPlayers}
-                  </span>
-                  <button
-                    onClick={() => onSettings({ maxPlayers: room.settings.maxPlayers + 1 })}
-                    disabled={room.settings.maxPlayers >= ROOM_MAX_PLAYERS}
-                    className="btn-ghost size-10 p-0 text-lg"
-                  >
-                    ＋
-                  </button>
-                </div>
               </div>
 
               <div>
@@ -931,6 +920,6 @@ export function Lobby({
           </div>
         </Sheet>
       )}
-    </div>
+    </Page>
   )
 }

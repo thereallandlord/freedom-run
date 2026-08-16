@@ -259,8 +259,8 @@ export function Game({
     table.phase === 'awaitingRoll' && seat.track === 'rat' && isOutOfRatRace(seat.ledger) && !seat.isBot
 
   return (
-    <div className="mx-auto max-w-7xl px-3 py-4">
-      <header className="mb-3 flex items-center gap-2">
+    <div className="mx-auto flex h-[100dvh] max-w-7xl flex-col px-3 py-3">
+      <header className="mb-2.5 flex shrink-0 items-center gap-2">
         <Wordmark size="sm" edition={false} />
         <div className="ml-auto flex items-center gap-1.5">
           {topRight}
@@ -312,18 +312,25 @@ export function Game({
 
       <WorldEvents table={table} />
 
-      <div className="grid items-start gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="order-2 max-h-[calc(100vh-9.5rem)] overflow-auto lg:order-1">
+      {/*
+        Стол занимает ровно остаток окна: панель игрока прокручивается ВНУТРИ
+        себя, доска подгоняется под свободную высоту. Прокручивать всю страницу
+        во время партии неудобно — доска должна быть видна целиком.
+      */}
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="order-2 min-h-0 overflow-auto lg:order-1">
           <PlayerPanel seat={viewed} />
         </div>
 
-        <div className="order-1 lg:order-2">
-          <div className="panel relative rounded-2xl p-4">
+        <div className="order-1 flex min-h-0 lg:order-2">
+          <div className="panel relative flex min-h-0 w-full flex-col items-center rounded-2xl p-4">
             <MoneyToast table={table} />
             <TradeToast table={table} />
-            <Board table={table} />
+            <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+              <Board table={table} />
+            </div>
 
-            <div className="mt-4 flex flex-col items-center gap-2">
+            <div className="mt-3 flex shrink-0 flex-col items-center gap-2">
               {seat.isBot ? (
                 <div className="text-sm text-[var(--muted)]">
                   🤖 {seat.name} думает…

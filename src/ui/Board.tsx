@@ -67,12 +67,17 @@ function roundedRectPoint(tRaw: number, size: number, r: number) {
   return { x: size / 2 - (halfTop - d), y: 0 }
 }
 
-function polar(index: number, total: number, radius: number) {
-  const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-  return {
-    left: `${50 + Math.cos(angle) * radius}%`,
-    top: `${50 + Math.sin(angle) * radius}%`,
-  }
+/**
+ * Обе дорожки живут на одной геометрии — скруглённом прямоугольнике.
+ * Раньше Рутина была окружностью, и рядом с прямоугольной Полосой это
+ * читалось как ошибка вёрстки: по сторонам клетки подпирали внешний ряд,
+ * а в углах проваливались внутрь.
+ */
+function ratPoint(index: number, total: number) {
+  const inset = 24
+  const size = 100 - inset * 2
+  const pt = roundedRectPoint(index / total, size, size * 0.16)
+  return { left: `${inset + pt.x}%`, top: `${inset + pt.y}%` }
 }
 
 function Tokens({ seats }: { seats: Seat[] }) {
@@ -95,7 +100,7 @@ export function Board({ table }: { table: Table }) {
   const board = fastBoard()
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[min(470px,58vh)]">
+    <div className="relative aspect-square h-full max-h-full w-auto max-w-full self-center">
       {/* Полоса свободы — внешняя дорожка скруглённым прямоугольником */}
       <div className="absolute inset-0 rounded-[13%] border border-[var(--line)] bg-[var(--panel-2)]" />
       {board.map((space, i) => {
@@ -103,7 +108,10 @@ export function Board({ table }: { table: Table }) {
         const here = table.seats.filter((s) => s.track === 'fast' && s.position === i && !s.outOfGame)
         const owned = table.ftOwnership[i]
         const dreamOf = table.seats.find((s) => s.dreamSpace === i && !s.outOfGame)
-        const pt = roundedRectPoint(i / board.length, 100, 15)
+        // Отступ = половина клетки: путь идёт по центрам, а не по краю.
+        const pad = 2.6
+        const raw = roundedRectPoint(i / board.length, 100 - pad * 2, (100 - pad * 2) * 0.15)
+        const pt = { x: pad + raw.x, y: pad + raw.y }
         const name = 'name' in space ? (space as { name: string }).name : st.label
         return (
           <div
@@ -129,7 +137,7 @@ export function Board({ table }: { table: Table }) {
       })}
 
       {/* Рутина — внутреннее кольцо */}
-      <div className="absolute inset-[27%] rounded-full border border-[var(--line)] bg-white/[0.025]" />
+      <div className="absolute inset-[22%] rounded-[16%] border border-[var(--line)] bg-[var(--panel)]" />
       {RAT_BOARD.map((space, i) => {
         const st = RAT_STYLE[space]
         const here = table.seats.filter((s) => s.track === 'rat' && s.position === i && !s.outOfGame)
@@ -137,7 +145,7 @@ export function Board({ table }: { table: Table }) {
           <div
             key={`r${i}`}
             className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={polar(i, RAT_BOARD.length, 31)}
+            style={ratPoint(i, RAT_BOARD.length)}
             title={st.label}
           >
             <div
@@ -152,7 +160,7 @@ export function Board({ table }: { table: Table }) {
       })}
 
       {/* Центр */}
-      <div className="absolute inset-[38%] grid place-items-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-center">
+      <div className="absolute inset-[33%] grid place-items-center rounded-2xl border border-[var(--line)] bg-[var(--panel-2)] text-center">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-[var(--muted)]">
             {active.track === 'rat' ? 'Рутина' : 'Полоса свободы'}

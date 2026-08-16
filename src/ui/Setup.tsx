@@ -16,6 +16,7 @@ import type { BotDifficulty } from '../engine/types'
 import { ROOM_MAX_PLAYERS } from '../engine/room'
 import { DECKS, DeckCard } from './DeckCard'
 import { Wordmark } from './Wordmark'
+import { Page } from './kit'
 import type { DeckTheme } from '../engine/data'
 
 const MIN_PLAYERS = 2
@@ -115,7 +116,7 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <Page width="room">
       <header className="mb-7 text-center">
         <Wordmark size="lg" className="justify-center" />
         <p className="mt-2 text-sm text-[var(--muted)]">
@@ -253,6 +254,6 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
       <p className="mt-4 text-center text-xs text-[var(--muted)]">
         {MIN_PLAYERS}–{MAX_PLAYERS} игроков на одном устройстве. Ход передаётся по списку.
       </p>
-    </div>
+    </Page>
   )
 }
