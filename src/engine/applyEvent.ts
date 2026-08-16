@@ -4,6 +4,7 @@ import type { LedgerEvent } from './events'
 import {
   MAX_PETS,
   RULES,
+  zakatDue,
   fastTrackProgress,
   monthlyCashFlow,
   passiveIncome,
@@ -45,6 +46,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         }
       }
       l.cash += monthlyCashFlow(l)
+      l.paydays += 1
 
       /*
        * Беспроцентный заём гасится сам: платёж уменьшает тело долга.
@@ -59,6 +61,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           l.expenses.bankLoanPayment = 0
         }
       }
+      return l
+    }
+
+    /** Закят: 2,5% с того, что лежало без дела. Раз в год, по счётчику зарплат. */
+    case 'ZAKAT': {
+      const due = zakatDue(l)
+      if (due <= 0) return prev
+      l.cash -= due
       return l
     }
 
@@ -110,6 +120,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         category: e.category,
         investorShare: e.investorShare,
         installmentMonthly: e.installmentMonthly,
+        partnerId: e.partnerId,
       })
       return l
 
@@ -139,6 +150,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         growthPerPayday: e.growthPerPayday,
         growthCap: e.growthCap,
         installmentMonthly: e.installmentMonthly,
+        partnerId: e.partnerId,
       })
       return l
 
@@ -331,9 +343,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.cash -= Math.ceil(l.cash / 2)
       return l
 
-    /** Развод: половина наличных уходит, не всё («при разводе половину получать»). */
+    /**
+     * Развод. 🔴 Переделан 16.08: «отнимает половину» — это норма российского
+     * права об общей совместной собственности, а в шариате имущество супругов
+     * РАЗДЕЛЬНОЕ. Делить нечего. Реальные последствия — разовые расходы:
+     * махр, раздел совместно нажитого быта, судебные и переезд.
+     */
     case 'DIVORCE':
-      l.cash -= Math.ceil(l.cash / 2)
+      l.cash -= Math.min(l.cash, e.amount)
       return l
 
     default:

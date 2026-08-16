@@ -2,65 +2,503 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   ТОКЕНЫ. Светлая тема — по умолчанию, тёмная — по [data-theme="dark"].
+
+   Каждый цвет объявлен ДВАЖДЫ:
+     --c-*  — каналы RGB ("5 150 105") для Tailwind и прозрачности;
+     --*    — готовый rgb() для var(--muted) в разметке компонентов.
+   Правим только --c-*, второе собирается из первого.
+   ============================================================ */
+
 :root {
+  color-scheme: light;
+
+  /* Поверхности: тёплый почти белый фон, белые карточки, едва заметные границы. */
+  --c-bg: 247 246 242;
+  --c-panel: 255 255 255;
+  --c-panel-2: 243 243 239;
+  --c-line: 228 228 221;
+  --c-ink: 23 26 25;
+  --c-muted: 105 113 109;
+
+  /* Акцент — изумрудный. accent-ink это то, чем пишем ПО акценту. */
+  --c-accent: 5 150 105;
+  --c-accent-soft: 16 185 129;
+  --c-accent-ink: 255 255 255;
+
+  /* Смысловые цвета сумм и статусов. */
+  --c-good: 5 150 105;
+  --c-bad: 214 32 62;
+  --c-warn: 180 83 9;
+
+  /* Текстовые ступени готовых шкал (см. комментарий в tailwind.config.js). */
+  --c-emerald-200: 6 95 70;
+  --c-emerald-300: 4 120 87;
+  --c-emerald-400: 5 150 105;
+  --c-amber-300: 146 64 14;
+  --c-amber-400: 180 83 9;
+  --c-rose-300: 159 18 57;
+  --c-rose-400: 214 32 62;
+  --c-violet-300: 109 40 217;
+
+  /* Тени: мягкие, многослойные, чуть тёплые. */
+  --shadow-card: 0 1px 2px rgb(24 30 28 / 0.04), 0 8px 24px -12px rgb(24 30 28 / 0.14);
+  --shadow-tile: 0 1px 2px rgb(24 30 28 / 0.05), 0 12px 28px -16px rgb(24 30 28 / 0.22);
+  --shadow-pop: 0 18px 48px -12px rgb(24 30 28 / 0.28), 0 2px 8px rgb(24 30 28 / 0.08);
+  --shadow-glow: 0 6px 18px -6px rgb(5 150 105 / 0.45);
+
+  /* Подсветка фона — очень слабая, только чтобы белое не было плоским. */
+  --bg-wash: radial-gradient(1200px 720px at 50% -12%, rgb(5 150 105 / 0.07) 0%, transparent 62%),
+    radial-gradient(900px 520px at 88% 4%, rgb(180 130 60 / 0.05) 0%, transparent 60%);
+
+  /*
+    Шрифт без единого внешнего запроса (страница живёт на GitHub Pages).
+    Заголовки — скруглённый гротеск: на Apple это SF Pro Rounded, он заметно
+    характернее системного и звучит «игрой», а не панелью администратора.
+    Дальше по списку то, что реально стоит в системе у остальных.
+  */
+  --font-display: 'SF Pro Rounded', ui-rounded, 'Hiragino Maru Gothic ProN', 'Segoe UI Variable Display',
+    'Nunito', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'SF Pro Text', -apple-system, 'Inter', 'Segoe UI Variable Text', 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --dur-fast: 140ms;
+  --dur: 200ms;
+  --ease-pop: cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0b0d12;
-  --panel: #141821;
-  --panel-2: #1b2130;
-  --line: #262e3f;
-  --ink: #e7ecf5;
-  --muted: #8b95ab;
-  --accent: #10b981;
+
+  --c-bg: 11 13 18;
+  --c-panel: 20 24 33;
+  --c-panel-2: 27 33 48;
+  --c-line: 38 46 63;
+  --c-ink: 231 236 245;
+  --c-muted: 139 149 171;
+
+  --c-accent: 16 185 129;
+  --c-accent-soft: 52 211 153;
+  --c-accent-ink: 2 44 34;
+
+  --c-good: 52 211 153;
+  --c-bad: 251 113 133;
+  --c-warn: 251 191 36;
+
+  /* Здесь значения ровно как у Tailwind по умолчанию — тёмная тема не меняется. */
+  --c-emerald-200: 167 243 208;
+  --c-emerald-300: 110 231 183;
+  --c-emerald-400: 52 211 153;
+  --c-amber-300: 252 211 77;
+  --c-amber-400: 251 191 36;
+  --c-rose-300: 253 164 175;
+  --c-rose-400: 251 113 133;
+  --c-violet-300: 196 181 253;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
+  --shadow-tile: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
+  --shadow-pop: 0 24px 60px -16px rgb(0 0 0 / 0.75), 0 2px 10px rgb(0 0 0 / 0.5);
+  --shadow-glow: 0 6px 20px -6px rgb(16 185 129 / 0.4);
+
+  --bg-wash: radial-gradient(1100px 700px at 50% -10%, rgb(22 48 74 / 0.9) 0%, transparent 60%);
 }
 
-html, body, #root { height: 100%; }
-
-body {
-  background:
-    radial-gradient(1100px 700px at 50% -10%, #16304a 0%, transparent 60%),
-    var(--bg);
-  color: var(--ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
+/* Готовые цвета для разметки: var(--muted), var(--line), var(--panel-2)… */
+:root,
+[data-theme='dark'] {
+  --bg: rgb(var(--c-bg));
+  --panel: rgb(var(--c-panel));
+  --panel-2: rgb(var(--c-panel-2));
+  --line: rgb(var(--c-line));
+  --ink: rgb(var(--c-ink));
+  --muted: rgb(var(--c-muted));
+  --accent: rgb(var(--c-accent));
 }
 
-.panel { background: var(--panel); border: 1px solid var(--line); }
-.panel-2 { background: var(--panel-2); border: 1px solid var(--line); }
+/* ============================================================
+   БАЗА
+   ============================================================ */
 
-.btn {
-  @apply rounded-lg px-3 py-2 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
+@layer base {
+  html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+    /* Игра не должна дёргаться от pull-to-refresh при броске кубика. */
+    overscroll-behavior: none;
+  }
+
+  body {
+    height: 100%;
+    min-height: 100dvh;
+    background: var(--bg-wash), var(--bg);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    height: 100%;
+  }
+
+  /* Иерархия держится на одном приёме: заголовок — плотный и крупный, текст — спокойный. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.022em;
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: rgb(var(--c-accent) / 0.22);
+    color: var(--ink);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--c-ink) / 0.16);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--c-ink) / 0.26);
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
-.btn-primary { @apply btn bg-emerald-500 text-emerald-950 hover:bg-emerald-400; }
-.btn-ghost { @apply btn border border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink)] hover:border-emerald-500/60; }
-.btn-danger { @apply btn bg-rose-600 text-white hover:bg-rose-500; }
 
-.tabnum { font-variant-numeric: tabular-nums; }
+/* ============================================================
+   КОМПОНЕНТЫ
+   Радиус намеренно не задаём — разметка ставит свой (rounded-2xl и т.п.).
+   ============================================================ */
 
-@keyframes dice-shake {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-6px) rotate(-12deg); }
-  75% { transform: translateY(-3px) rotate(10deg); }
+@layer components {
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Второй уровень: вложенные блоки внутри .panel. Без тени, чтобы не грязнить. */
+  .panel-2 {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+  }
+
+  /* Плитка: то, на что можно нажать и что живёт в сетке. */
+  .card-tile {
+    @apply relative overflow-hidden rounded-tile border p-4 text-left;
+    background: var(--panel);
+    border-color: var(--line);
+    box-shadow: var(--shadow-tile);
+    transition: transform var(--dur-fast) var(--ease-pop), box-shadow var(--dur-fast) var(--ease-pop),
+      border-color var(--dur-fast) linear;
+  }
+  .card-tile:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--c-accent) / 0.45);
+  }
+  .card-tile:active {
+    transform: translateY(0) scale(0.995);
+  }
+  /* Выбранная плитка: подсветка рамкой, а не заливкой — так спокойнее. */
+  .card-tile[data-selected='true'],
+  .card-tile[aria-pressed='true'] {
+    border-color: rgb(var(--c-accent));
+    box-shadow: var(--shadow-tile), inset 0 0 0 1px rgb(var(--c-accent) / 0.5);
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    transition: background-color var(--dur-fast) linear, border-color var(--dur-fast) linear,
+      color var(--dur-fast) linear, transform var(--dur-fast) var(--ease-pop),
+      box-shadow var(--dur-fast) linear;
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.975);
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-40;
+    transform: none;
+  }
+
+  .btn-primary {
+    @apply btn;
+    background: rgb(var(--c-accent));
+    color: rgb(var(--c-accent-ink));
+    box-shadow: var(--shadow-glow);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: rgb(var(--c-accent-soft));
+  }
+
+  .btn-ghost {
+    @apply btn border;
+    background: var(--panel-2);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: rgb(var(--c-accent) / 0.55);
+    background: rgb(var(--c-accent) / 0.08);
+  }
+
+  .btn-danger {
+    @apply btn;
+    background: rgb(var(--c-bad));
+    color: #fff;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: rgb(var(--c-bad) / 0.88);
+  }
+  [data-theme='dark'] .btn-danger {
+    /* В тёмной теме --c-bad светлый (розовый текст сумм), для кнопки нужен насыщенный. */
+    background: rgb(225 29 72);
+    color: #fff;
+  }
+
+  /* Пилюля-ярлык: статус, тег, счётчик. */
+  .chip {
+    @apply inline-flex select-none items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[12px] font-semibold leading-none;
+    background: var(--panel-2);
+    border-color: var(--line);
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .chip-accent {
+    background: rgb(var(--c-accent) / 0.12);
+    border-color: rgb(var(--c-accent) / 0.35);
+    color: rgb(var(--c-accent));
+  }
+  .chip-good {
+    background: rgb(var(--c-good) / 0.12);
+    border-color: rgb(var(--c-good) / 0.35);
+    color: rgb(var(--c-good));
+  }
+  .chip-bad {
+    background: rgb(var(--c-bad) / 0.12);
+    border-color: rgb(var(--c-bad) / 0.35);
+    color: rgb(var(--c-bad));
+  }
+  .chip-warn {
+    background: rgb(var(--c-warn) / 0.12);
+    border-color: rgb(var(--c-warn) / 0.35);
+    color: rgb(var(--c-warn));
+  }
+
+  /* Показатель: подпись сверху мелко, число снизу крупно. */
+  .stat {
+    @apply flex flex-col gap-0.5;
+  }
+  .stat-label {
+    @apply text-[11px] font-semibold uppercase leading-none;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .stat-value {
+    @apply text-[19px] font-extrabold leading-tight;
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .stat-value-lg {
+    @apply text-[26px];
+  }
+
+  .tabnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+
+  /* Тонкая линия-разделитель внутри панелей. */
+  .hairline {
+    border-top: 1px solid var(--line);
+  }
 }
-.dice-rolling { animation: dice-shake 0.45s ease-in-out infinite; }
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+
+@layer utilities {
+  /* Безопасные зоны — для нижних панелей и шапок на айфоне. */
+  .safe-t {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-b {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Гарантированная тач-цель 44×44 без раздувания видимой кнопки. */
+  .tap {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ============================================================
+   АНИМАЦИИ. Все короткие: 150–350 мс.
+   ============================================================ */
 
 @keyframes pop-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.pop-in { animation: pop-in 0.18s ease-out; }
+.pop-in {
+  animation: pop-in 170ms var(--ease-pop) both;
+}
 
 /* Карточка прилетает на стол, как настоящая. */
 @keyframes card-fly-in {
-  0%   { opacity: 0; transform: translateY(-140px) scale(0.72) rotate(-9deg); }
-  60%  { opacity: 1; transform: translateY(6px) scale(1.02) rotate(1.5deg); }
-  100% { opacity: 1; transform: none; }
+  0% {
+    opacity: 0;
+    transform: translateY(-90px) scale(0.8) rotate(-6deg);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.015) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
-.card-fly-in { animation: card-fly-in 0.42s cubic-bezier(0.2, 0.9, 0.25, 1); }
+.card-fly-in {
+  animation: card-fly-in 320ms var(--ease-pop) both;
+}
+
+@keyframes dice-shake {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(-12deg);
+  }
+  75% {
+    transform: translateY(-3px) rotate(10deg);
+  }
+}
+.dice-rolling {
+  animation: dice-shake 350ms ease-in-out infinite;
+}
+
+/* Сумма изменилась — короткий толчок, чтобы взгляд поймал цифру. */
+@keyframes money-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.money-pop {
+  animation: money-pop 260ms var(--ease-pop);
+  display: inline-block;
+  transform-origin: right center;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .card-fly-in, .pop-in, .dice-rolling { animation: none !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-fly-in,
+  .pop-in,
+  .dice-rolling,
+  .money-pop {
+    animation: none !important;
+  }
 }
 
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #2a3345; border-radius: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
+/* ============================================================
+   МОБИЛЬНЫЙ
+   ============================================================ */
+
+/* На пальцах любая кнопка — не меньше 44px. Мышью остаётся компактной. */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+  .chip {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+  /* iOS зумит страницу, если шрифт поля меньше 16px. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .stat-value {
+    font-size: 18px;
+  }
+}

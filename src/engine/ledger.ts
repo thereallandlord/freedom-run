@@ -28,6 +28,8 @@ export interface Rules {
   installmentMarkup: { realEstate: number; business: number }
   /** На сколько месяцев расписывается рассрочка. */
   installmentTerm: number
+  /** Закят: доля в процентах и период в «зарплатах» (12 = раз в год). */
+  zakat: { enabled: boolean; pct: number; everyPaydays: number }
 }
 
 export const RULES: Rules = {
@@ -38,6 +40,7 @@ export const RULES: Rules = {
   yieldScale: 1,
   installmentMarkup: { realEstate: 1.25, business: 1.2 },
   installmentTerm: 120,
+  zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
 }
 
 export function setRules(patch: Partial<Rules>) {
@@ -149,6 +152,23 @@ export function paycheckShortfall(l: Ledger): boolean {
   return flow < 0 && l.cash < -flow
 }
 
+/**
+ * База закята — то, что лежит без дела: наличные и вложения в бумаги.
+ * НЕ входят жильё, в котором живёшь, и активы, которыми зарабатываешь, —
+ * поэтому закят сам выталкивает деньги из-под матраса в дело.
+ * Долги перед другими из базы вычитаются.
+ */
+export function zakatBase(l: Ledger): number {
+  const idle = l.cash + l.stocks.reduce((s, x) => s + x.shares * x.costPerShare, 0)
+  const owed = l.liabilities.bankLoan
+  return Math.max(0, idle - owed)
+}
+
+export function zakatDue(l: Ledger): number {
+  if (!RULES.zakat.enabled) return 0
+  return Math.round((zakatBase(l) * RULES.zakat.pct) / 100 / 100) * 100
+}
+
 export function netWorth(l: Ledger): number {
   const assets =
     l.cash +
@@ -181,5 +201,6 @@ export function createLedger(p: Profession, playerName: string): Ledger {
     realEstate: [],
     businesses: [],
     charityTurnsLeft: 0,
+    paydays: 0,
   }
 }

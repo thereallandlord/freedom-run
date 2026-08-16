@@ -62,6 +62,8 @@ export interface RealEstateAsset {
   investorShare?: number
   /** Платёж по рассрочке, уже вычтенный из cashFlow. Ноль — куплено налом. */
   installmentMonthly?: number
+  /** Кто соинвестор, если актив куплен в долях. */
+  partnerId?: string
 }
 
 export interface BusinessAsset {
@@ -78,6 +80,7 @@ export interface BusinessAsset {
   growthPerPayday?: number
   growthCap?: number
   installmentMonthly?: number
+  partnerId?: string
 }
 
 export interface FtBusiness {
@@ -111,6 +114,8 @@ export interface Ledger {
   realEstate: RealEstateAsset[]
   businesses: BusinessAsset[]
   charityTurnsLeft: number
+  /** Сколько зарплат получено — по нему наступает срок закята. */
+  paydays: number
   fastTrack?: FastTrackState
   winReason?: 'dream' | 'cashflowGoal'
 }
@@ -332,4 +337,8 @@ export interface Table {
   }
   /** Последнее мировое событие — чтобы показать его всем. */
   lastWorldEvent: { id: string; at: number } | null
+  /** Живые предложения между игроками. */
+  offers: import('./trades').Offer[]
+  /** Беспроцентные займы между игроками. */
+  loans: import('./trades').PlayerLoan[]
 }

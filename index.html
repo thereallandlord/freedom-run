@@ -1,9 +1,29 @@
 <!doctype html>
-<html lang="ru" class="h-full">
+<html lang="ru" class="h-full" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Freedom Run — настольная игра про личные финансы: выйти из крысиных бегов и жить на пассивный доход." />
+    <meta name="theme-color" content="#f7f6f2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Freedom Run</title>
+    <script>
+      // Ставим тему ДО первой отрисовки, иначе на секунду мигнёт светлым у тех,
+      // кто выбрал тёмную. Ключ обязан совпадать с THEME_STORAGE_KEY в src/ui/theme.ts.
+      ;(function () {
+        try {
+          var t = localStorage.getItem('freedom-run:theme')
+          if (t !== 'dark' && t !== 'light') t = 'light'
+          document.documentElement.setAttribute('data-theme', t)
+          document.documentElement.style.colorScheme = t
+          var m = document.querySelector('meta[name="theme-color"]')
+          if (m) m.setAttribute('content', t === 'dark' ? '#0b0d12' : '#f7f6f2')
+        } catch (e) {
+          /* приватный режим без localStorage — остаёмся на светлой */
+        }
+      })()
+    </script>
   </head>
   <body class="h-full">
     <div id="root" class="h-full"></div>

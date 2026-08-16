@@ -68,12 +68,49 @@ check('в пассив идёт половина', passiveIncome(l2) === 20_000,
 const l3 = applyEvent(l2, { type: 'SELL_REAL_ESTATE', assetId: 're1', salePrice: 12_000_000 })
 check('с продажи игроку половина', l3.cash - l2.cash === 1_250_000, String(l3.cash - l2.cash))
 
-console.log('\n=== Развод: половина, не всё ===')
-let l4 = t.seats[0].ledger
-l4 = applyEvent(l4, { type: 'ADJUST_CASH', amount: 100_000 })
-const c4 = l4.cash
-l4 = applyEvent(l4, { type: 'DIVORCE' })
-check('осталась половина', l4.cash === Math.floor(c4 / 2), `${c4} → ${l4.cash}`)
+console.log('\n=== Развод: разовые расходы, а не «половина всего» ===')
+{
+  let l4 = applyEvent(t.seats[0].ledger, { type: 'ADJUST_CASH', amount: 500_000 })
+  const c4 = l4.cash
+  l4 = applyEvent(l4, { type: 'DIVORCE', amount: 200_000 })
+  check('списана названная сумма', c4 - l4.cash === 200_000, `${c4} → ${l4.cash}`)
+  const poor = applyEvent(applyEvent(t.seats[0].ledger, { type: 'DIVORCE', amount: 10_000_000 }), { type: 'ADJUST_CASH', amount: 0 })
+  check('в минус не уводит', poor.cash === 0, String(poor.cash))
+}
+
+console.log('\n=== Закят: с мёртвых денег, не с активов ===')
+{
+  const { RULES: R, zakatBase, zakatDue } = await import('./ledger')
+  let z = applyEvent(t.seats[0].ledger, { type: 'ADJUST_CASH', amount: 1_000_000 })
+  const baseCash = zakatBase(z)
+  z = applyEvent(z, {
+    type: 'BUY_REAL_ESTATE', id: 're-z', name: 'Квартира', cost: 5_000_000, downPayment: 500_000,
+    mortgage: 4_500_000, cashFlow: 20_000, category: 'aptKZN',
+  })
+  check('квартира в базу закята НЕ входит', zakatBase(z) === baseCash - 500_000, `${baseCash} → ${zakatBase(z)}`)
+  check('закят включён в RU-режиме', R.zakat.enabled === true)
+  const due = zakatDue(z)
+  check('ставка 2,5%', Math.abs(due - zakatBase(z) * 0.025) < 200, `${due} с базы ${zakatBase(z)}`)
+  const after = applyEvent(z, { type: 'ZAKAT' })
+  check('закят списывается', z.cash - after.cash === due)
+}
+
+console.log('\n=== Сделки между игроками ===')
+{
+  const tr = await import('./trades')
+  check('цену «другу за рубль» отбивает', tr.priceAllowed(1, 500_000) === false)
+  check('честный торг проходит', tr.priceAllowed(600_000, 500_000) === true)
+  check('цена зажимается в коридор', tr.clampPrice(1, 500_000) === 250_000, String(tr.clampPrice(1, 500_000)))
+  check('доля считается по деньгам', Math.abs(tr.shareOf(300_000, 1_000_000) - 0.3) < 1e-9)
+  const profit = tr.splitProceeds(100_000, 0.3, 0.5)
+  check('прибыль по договорённости', profit.mine === 50_000, String(profit.mine))
+  const loss = tr.splitProceeds(-100_000, 0.3, 0.5)
+  check('убыток строго по долям капитала', loss.mine === -30_000, String(loss.mine))
+  const loans = [{ id: 'l1', lenderId: 'a', borrowerId: 'b', amount: 100_000, repaid: 40_000, atTurn: 1 }]
+  check('остаток долга считается', tr.loanOutstanding(loans, 'b') === 60_000)
+  check('с долгом победить нельзя', tr.canWinWithLoans(loans, 'b') === false)
+  check('без долга можно', tr.canWinWithLoans(loans, 'a') === true)
+}
 
 console.log('\n=== Повышение зарплаты ===')
 let l5 = applyEvent(t.seats[0].ledger, { type: 'SALARY_RAISE', amount: 20_000 })

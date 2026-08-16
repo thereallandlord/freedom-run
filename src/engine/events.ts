@@ -7,12 +7,13 @@ import type { PayableDebt } from './types'
 export type LedgerEvent =
   | { type: 'PAYCHECK' }
   | { type: 'SALARY_RAISE'; amount: number }
+  | { type: 'ZAKAT' }
   | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse' }
-  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number }
+  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string }
   | { type: 'SELL_REAL_ESTATE'; assetId: string; salePrice: number }
-  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number }
+  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string }
   | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number }
   | { type: 'DOODAD'; amount: number }
   | { type: 'FINANCE_DOODAD'; amount: number }
@@ -37,7 +38,7 @@ export type LedgerEvent =
   | { type: 'BUY_DREAM'; name: string; pricePaid: number }
   | { type: 'TAX_AUDIT' }
   | { type: 'LAWSUIT' }
-  | { type: 'DIVORCE' }
+  | { type: 'DIVORCE'; amount: number }
 
 /**
  * События уровня стола. Ровно это и гоняется по сети в онлайне,
@@ -71,6 +72,16 @@ export type TableEvent =
   | { type: 'END_TURN' }
   | { type: 'FINISH_GAME' }
   | { type: 'WORLD_EVENT'; index: number }
+  // ─── Сделки между игроками ───
+  | { type: 'OFFER_CARD'; amount: number; toId?: string }
+  | { type: 'OFFER_COINVEST'; amount: number; share: number }
+  | { type: 'OFFER_ASSET'; assetId: string; amount: number; toId?: string }
+  | { type: 'OFFER_LOAN'; toId: string; amount: number }
+  | { type: 'BID_OFFER'; offerId: string; seatId: string; amount: number }
+  | { type: 'ACCEPT_OFFER_TRADE'; offerId: string; seatId: string }
+  | { type: 'CANCEL_OFFER'; offerId: string }
+  | { type: 'REPAY_PLAYER_LOAN'; loanId: string; amount: number }
+  | { type: 'FORGIVE_LOAN'; loanId: string }
 
 export interface StampedEvent {
   seq: number

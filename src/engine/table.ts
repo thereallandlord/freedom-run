@@ -40,8 +40,18 @@ import {
   localizedSpaceName,
   type DeckTheme,
 } from './data'
-import { RULES, setRules, installmentPrice, installmentMonthly } from './ledger'
+import { RULES, setRules, installmentPrice, installmentMonthly, zakatDue } from './ledger'
 import { shuffleIndices } from './rng'
+import {
+  auctionWinner,
+  clampPrice,
+  fairAssetPrice,
+  fairCardPrice,
+  loanOutstanding,
+  offerAlive,
+  splitProceeds,
+  type Offer,
+} from './trades'
 
 export interface SeatSetup {
   name: string
@@ -71,6 +81,7 @@ export function createTable(setup: TableSetup): Table {
       fastTrackTarget: 1_000_000,
       loansEnabled: false,
       yieldScale: 0.3,
+      zakat: { enabled: true, pct: 2.5, everyPaydays: 12 },
     })
   } else {
     setRules({
@@ -79,6 +90,7 @@ export function createTable(setup: TableSetup): Table {
       fastTrackTarget: 150_000,
       loansEnabled: true,
       yieldScale: 1,
+      zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
     })
   }
   const pool = professionsFor(theme)
@@ -124,6 +136,8 @@ export function createTable(setup: TableSetup): Table {
     worldDeck: { order: shuffleIndices(WORLD_EVENTS.length, setup.seed + 5), next: 0 },
     market: { price: {}, flow: {}, stock: {} },
     lastWorldEvent: null,
+    offers: [],
+    loans: [],
   }
 }
 
@@ -210,6 +224,8 @@ function cloneTable(t: Table): Table {
     ftOwnership: { ...t.ftOwnership },
     worldDeck: { ...t.worldDeck },
     market: { price: { ...t.market.price }, flow: { ...t.market.flow }, stock: { ...t.market.stock } },
+    offers: t.offers.map((o) => ({ ...o, bids: [...o.bids] })),
+    loans: t.loans.map((l) => ({ ...l })),
     log: [...t.log],
     pending: t.pending ? ({ ...t.pending } as Pending) : null,
     lastRoll: t.lastRoll ? [...t.lastRoll] : null,
@@ -397,6 +413,18 @@ function advance(t: Table, seatIdx: number, steps: number) {
     const l = t.seats[seatIdx].ledger
     const amount = seat.track === 'rat' ? monthlyCashFlow(l) : fastTrackIncome(l)
     log(t, seat.id, `Зарплата ×${payouts}: ${money(amount)}`)
+
+    // Год прошёл — время закята. Берётся с того, что лежало без дела.
+    if (RULES.zakat.enabled) {
+      const before = t.seats[seatIdx].ledger
+      if (before.paydays > 0 && before.paydays % RULES.zakat.everyPaydays === 0) {
+        const due = zakatDue(before)
+        if (due > 0) {
+          seatLedgerEvent(t, seat.id, { type: 'ZAKAT' })
+          log(t, seat.id, `Закят за год: ${money(due)} (2,5% с накоплений, активы не в счёт)`)
+        }
+      }
+    }
   }
 }
 
@@ -485,11 +513,15 @@ function resolveLanding(t: Table, seatIdx: number) {
       t.phase = 'turnEnd'
       return
     }
-    case 'divorce':
-      seatLedgerEvent(t, seat.id, { type: 'DIVORCE' })
-      log(t, seat.id, 'Развод: наличные обнулены')
+    case 'divorce': {
+      // Имущество супругов раздельное — делить нечего. Бьют разовые расходы:
+      // махр, раздел быта, суд, переезд. Считаем от масштаба жизни игрока.
+      const cost = Math.min(l.cash, Math.round((totalExpenses(l) * 4) / 1000) * 1000)
+      seatLedgerEvent(t, seat.id, { type: 'DIVORCE', amount: cost })
+      log(t, seat.id, `Развод: разовые расходы ${money(cost)} — махр, раздел быта, переезд`)
       t.phase = 'turnEnd'
       return
+    }
     case 'downsized': {
       const amount = fastTrackIncome(l)
       seatLedgerEvent(t, seat.id, { type: 'FT_DOWNSIZED', amount })
@@ -992,6 +1024,8 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     case 'BUY_DREAM': {
       if (t.pending?.kind !== 'ftDream') return prev
+      // Нельзя уйти победителем, не рассчитавшись с теми, кто выручил.
+      if (loanOutstanding(t.loans, seat.id) > 0) return prev
       const spaceIdx = t.pending.space
       const space = fastBoard()[spaceIdx]
       if (space.type !== 'dream') return prev
@@ -1067,6 +1101,276 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const t2 = applyWorldEvent(t, event.index)
       t2.worldDeck = { ...t2.worldDeck, next: t2.worldDeck.next + 1 }
       return t2
+    }
+
+    // ─── Сделки между игроками ────────────────────────────────────────
+    /*
+     * Продаётся ПРАВО на найденную сделку, а не сама вещь — вещи у игрока ещё
+     * нет, продавать чужое нельзя. Это посредничество, и оно дозволено.
+     * Цена держится в коридоре ±100% от справедливой: так ловится сговор
+     * вроде «продам другу за рубль», не запрещая торг как таковой.
+     */
+    case 'OFFER_CARD': {
+      if (t.pending?.kind !== 'deal') return prev
+      const card = t.pending.card
+      if (card.kind === 'stock') return prev
+      const fair = fairCardPrice(card.downPayment)
+      const amount = clampPrice(event.amount, fair)
+      t.offers = [
+        ...t.offers,
+        {
+          id: `of-${t.log.length}`,
+          kind: 'resellCard',
+          fromId: seat.id,
+          toId: event.toId,
+          amount,
+          expiresAtTurn: t.turnCounter + 1,
+          bids: [],
+        },
+      ]
+      log(t, seat.id, `Предложил другим свою находку «${localizedCardTitle(card)}» за ${money(amount)}`)
+      return t
+    }
+
+    /** Позвать соинвестора: доля партнёра считается по внесённым деньгам. */
+    case 'OFFER_COINVEST': {
+      if (t.pending?.kind !== 'deal') return prev
+      const card = t.pending.card
+      if (card.kind === 'stock') return prev
+      const share = Math.min(0.9, Math.max(0.1, event.share))
+      t.offers = [
+        ...t.offers,
+        {
+          id: `of-${t.log.length}`,
+          kind: 'coInvest',
+          fromId: seat.id,
+          amount: Math.max(0, Math.round(event.amount)),
+          share,
+          expiresAtTurn: t.turnCounter + 1,
+          bids: [],
+        },
+      ]
+      log(
+        t,
+        seat.id,
+        `Ищет партнёра в «${localizedCardTitle(card)}»: ${money(event.amount)} за ${Math.round(share * 100)}% доли`,
+      )
+      return t
+    }
+
+    case 'OFFER_ASSET': {
+      const re = l.realEstate.find((x) => x.id === event.assetId)
+      const biz = l.businesses.find((x) => x.id === event.assetId)
+      const asset = re ?? biz
+      if (!asset) return prev
+      const debt = re ? re.mortgage : (biz as any).liability
+      const amount = clampPrice(event.amount, fairAssetPrice(asset.cost, debt))
+      t.offers = [
+        ...t.offers,
+        {
+          id: `of-${t.log.length}`,
+          kind: 'sellAsset',
+          fromId: seat.id,
+          toId: event.toId,
+          assetId: event.assetId,
+          amount,
+          expiresAtTurn: t.turnCounter + 2,
+          bids: [],
+        },
+      ]
+      log(t, seat.id, `Продаёт «${asset.name}» игрокам за ${money(amount)}`)
+      return t
+    }
+
+    /** Заём между игроками только беспроцентный: сколько взял, столько вернул. */
+    case 'OFFER_LOAN': {
+      const to = t.seats.find((x) => x.id === event.toId)
+      if (!to || to.outOfGame || to.id === seat.id) return prev
+      const amount = Math.max(0, Math.round(event.amount))
+      if (l.cash < amount) return prev
+      t.offers = [
+        ...t.offers,
+        {
+          id: `of-${t.log.length}`,
+          kind: 'loan',
+          fromId: seat.id,
+          toId: to.id,
+          amount,
+          expiresAtTurn: t.turnCounter + 2,
+          bids: [],
+        },
+      ]
+      log(t, seat.id, `Предлагает ${to.name} беспроцентный заём ${money(amount)}`)
+      return t
+    }
+
+    /** Ставка в мини-аукционе, если желающих несколько. */
+    case 'BID_OFFER': {
+      const o = t.offers.find((x) => x.id === event.offerId)
+      if (!o || !offerAlive(o, t)) return prev
+      const bidder = t.seats.find((x) => x.id === event.seatId)
+      if (!bidder || bidder.outOfGame || bidder.id === o.fromId) return prev
+      if (bidder.ledger.cash < event.amount) return prev
+      o.bids = [...o.bids.filter((b) => b.seatId !== event.seatId), { seatId: event.seatId, amount: event.amount }]
+      log(t, event.seatId, `${bidder.name} предлагает ${money(event.amount)}`)
+      return t
+    }
+
+    case 'CANCEL_OFFER': {
+      t.offers = t.offers.filter((o) => o.id !== event.offerId)
+      return t
+    }
+
+    case 'ACCEPT_OFFER_TRADE': {
+      const o = t.offers.find((x) => x.id === event.offerId)
+      if (!o || !offerAlive(o, t)) return prev
+      const from = t.seats.find((x) => x.id === o.fromId)
+      const winner = auctionWinner(o)
+      const buyerId = winner?.seatId ?? event.seatId
+      const price = winner?.amount ?? o.amount
+      const buyer = t.seats.find((x) => x.id === buyerId)
+      if (!from || !buyer || buyer.outOfGame) return prev
+      if (o.toId && o.toId !== buyer.id) return prev
+
+      switch (o.kind) {
+        case 'resellCard': {
+          if (t.pending?.kind !== 'deal') return prev
+          const card = t.pending.card
+          if (card.kind === 'stock') return prev
+          // Покупатель платит и за право, и за сам первый взнос.
+          const total = price + card.downPayment
+          if (buyer.ledger.cash < total) return prev
+          seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -price })
+          seatLedgerEvent(t, from.id, { type: 'ADJUST_CASH', amount: price })
+          const common = {
+            id: `${card.id}-${t.log.length}`,
+            name: localizedCardTitle(card),
+            cost: card.cost,
+            downPayment: card.downPayment,
+            cashFlow: card.cashFlow,
+            category: card.category,
+          }
+          if (card.kind === 'realEstate') {
+            seatLedgerEvent(t, buyer.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: card.mortgage })
+          } else {
+            seatLedgerEvent(t, buyer.id, { type: 'BUY_BUSINESS', ...common, liability: card.liability })
+          }
+          log(t, buyer.id, `${buyer.name} выкупил находку у ${from.name} за ${money(price)} и вошёл в сделку`)
+          t.offers = t.offers.filter((x) => x.id !== o.id)
+          t.pending = null
+          t.phase = 'turnEnd'
+          return t
+        }
+
+        case 'sellAsset': {
+          const re = from.ledger.realEstate.find((x) => x.id === o.assetId)
+          const biz = from.ledger.businesses.find((x) => x.id === o.assetId)
+          const asset = re ?? biz
+          if (!asset) return prev
+          const debt = re ? re.mortgage : (biz as any).liability
+          if (buyer.ledger.cash < price) return prev
+          seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -price })
+          // Продавец получает цену за вычетом долга, который уходит вместе с активом.
+          if (re) seatLedgerEvent(t, from.id, { type: 'SELL_REAL_ESTATE', assetId: o.assetId!, salePrice: price })
+          else seatLedgerEvent(t, from.id, { type: 'SELL_BUSINESS', assetId: o.assetId!, salePrice: price })
+          const common = {
+            id: `${o.assetId}-${t.log.length}`,
+            name: asset.name,
+            cost: asset.cost,
+            downPayment: price,
+            cashFlow: asset.cashFlow,
+            category: asset.category,
+          }
+          if (re) seatLedgerEvent(t, buyer.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: debt })
+          else seatLedgerEvent(t, buyer.id, { type: 'BUY_BUSINESS', ...common, liability: debt })
+          log(t, buyer.id, `${buyer.name} купил «${asset.name}» у ${from.name} за ${money(price)}`)
+          t.offers = t.offers.filter((x) => x.id !== o.id)
+          return t
+        }
+
+        case 'coInvest': {
+          if (t.pending?.kind !== 'deal') return prev
+          const card = t.pending.card
+          if (card.kind === 'stock') return prev
+          if (buyer.ledger.cash < o.amount) return prev
+          const mine = Math.max(0, card.downPayment - o.amount)
+          if (from.ledger.cash < mine) return prev
+          // Каждый вносит свою часть; доля партнёра записана в актив инициатора.
+          seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -o.amount })
+          seatLedgerEvent(t, from.id, { type: 'ADJUST_CASH', amount: -mine })
+          const share = o.share ?? 0.5
+          const common = {
+            id: `${card.id}-${t.log.length}`,
+            name: localizedCardTitle(card),
+            cost: card.cost,
+            downPayment: 0,
+            cashFlow: card.cashFlow,
+            category: card.category,
+            investorShare: share,
+            partnerId: buyer.id,
+          }
+          if (card.kind === 'realEstate') {
+            seatLedgerEvent(t, from.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: card.mortgage })
+          } else {
+            seatLedgerEvent(t, from.id, { type: 'BUY_BUSINESS', ...common, liability: card.liability })
+          }
+          log(
+            t,
+            from.id,
+            `${from.name} и ${buyer.name} вошли в «${localizedCardTitle(card)}» долями ${Math.round((1 - share) * 100)}/${Math.round(share * 100)} — прибыль и убыток пополам по долям`,
+          )
+          t.offers = t.offers.filter((x) => x.id !== o.id)
+          t.pending = null
+          t.phase = 'turnEnd'
+          return t
+        }
+
+        case 'loan': {
+          if (from.ledger.cash < o.amount) return prev
+          seatLedgerEvent(t, from.id, { type: 'ADJUST_CASH', amount: -o.amount })
+          seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: o.amount })
+          t.loans = [
+            ...t.loans,
+            {
+              id: `ln-${t.log.length}`,
+              lenderId: from.id,
+              borrowerId: buyer.id,
+              amount: o.amount,
+              repaid: 0,
+              atTurn: t.turnCounter,
+            },
+          ]
+          log(t, buyer.id, `${buyer.name} взял у ${from.name} ${money(o.amount)} без надбавки — вернуть столько же`)
+          t.offers = t.offers.filter((x) => x.id !== o.id)
+          return t
+        }
+      }
+      return prev
+    }
+
+    case 'REPAY_PLAYER_LOAN': {
+      const ln = t.loans.find((x) => x.id === event.loanId)
+      if (!ln || ln.borrowerId !== seat.id) return prev
+      const left = ln.amount - ln.repaid
+      const pay = Math.min(Math.max(0, Math.round(event.amount)), left, l.cash)
+      if (pay <= 0) return prev
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -pay })
+      seatLedgerEvent(t, ln.lenderId, { type: 'ADJUST_CASH', amount: pay })
+      ln.repaid += pay
+      const lender = t.seats.find((x) => x.id === ln.lenderId)
+      log(t, seat.id, `Вернул ${lender?.name ?? 'игроку'} ${money(pay)}${ln.repaid >= ln.amount ? ' — долг закрыт' : ''}`)
+      if (ln.repaid >= ln.amount) t.loans = t.loans.filter((x) => x.id !== ln.id)
+      return t
+    }
+
+    /** Простить долг — дело доброе и разрешённое. */
+    case 'FORGIVE_LOAN': {
+      const ln = t.loans.find((x) => x.id === event.loanId)
+      if (!ln || ln.lenderId !== seat.id) return prev
+      t.loans = t.loans.filter((x) => x.id !== ln.id)
+      const borrower = t.seats.find((x) => x.id === ln.borrowerId)
+      log(t, seat.id, `${seat.name} простил долг ${borrower?.name ?? ''} — ${money(ln.amount - ln.repaid)}`)
+      return t
     }
 
     /** Досрочно завершить партию — победители уже известны, остальные согласились. */
