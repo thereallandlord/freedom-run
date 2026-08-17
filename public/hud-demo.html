@@ -1,0 +1,50 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Интерфейс · пять вариантов</title>
+<style>
+@font-face{font-family:'Unbounded';font-style:normal;font-weight:700;font-display:swap;
+  src:url('./fonts/unbounded-cyrillic-700.woff2') format('woff2');
+  unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;overflow-x:hidden;background:#0E1512;color:#E9F0EB;
+  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1500px;margin:0 auto;padding:30px 18px 90px}
+h1{font-family:'Unbounded',system-ui,sans-serif;font-size:25px;letter-spacing:-.025em;margin:0 0 8px}
+.lede{margin:0 0 30px;color:#93A99E;max-width:84ch}
+.lede b{color:#E9F0EB;font-weight:600}
+.hud{margin-bottom:34px}
+.cap{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:9px}
+.cap b{font-family:'Unbounded',system-ui,sans-serif;font-size:16px;letter-spacing:-.02em}
+.cap span{color:#93A99E;font-size:13px}
+.hud img{display:block;width:100%;border-radius:16px;border:1px solid #24332B;
+  box-shadow:0 24px 60px -34px #000}
+</style></head><body><div class="wrap">
+<h1>Весь экран как игровой интерфейс</h1>
+<p class="lede">
+  Пять вариантов целого экрана: доска с городами в центре, слева панель игрока,
+  сверху фишки, справа кнопка и цифры. <b>Это эталон вида, а не готовый экран:</b>
+  живые панели картинкой быть не могут — цифры в них меняются каждый ход. Картинка
+  задаёт язык (материал, скругления, свет, палитру), а рабочий интерфейс я соберу
+  кодом поверх сгенерированного фона — ровно так, как сейчас сделаны клетки доски.
+  Текста в картинках нет намеренно: буквы модель путает.
+</p>
+  <section class="hud">
+    <div class="cap"><b>Матовое стекло</b><span>Полупрозрачные панели поверх сцены, мягкое размытие, вечерний свет.</span></div>
+    <img src="./cards/hud-glass.webp" alt="Интерфейс: Матовое стекло" loading="lazy" decoding="async">
+  </section>
+  <section class="hud">
+    <div class="cap"><b>Тёплый дневной</b><span>Кремовые панели, песок и шалфей, воздушно и спокойно.</span></div>
+    <img src="./cards/hud-warm.webp" alt="Интерфейс: Тёплый дневной" loading="lazy" decoding="async">
+  </section>
+  <section class="hud">
+    <div class="cap"><b>Ночной с золотом</b><span>Тёмные панели с золотой кромкой, город горит золотом и бирюзой.</span></div>
+    <img src="./cards/hud-night.webp" alt="Интерфейс: Ночной с золотом" loading="lazy" decoding="async">
+  </section>
+  <section class="hud">
+    <div class="cap"><b>Пергамент</b><span>Всё напечатано на состаренной бумаге, карта тушью, латунь по углам.</span></div>
+    <img src="./cards/hud-paper.webp" alt="Интерфейс: Пергамент" loading="lazy" decoding="async">
+  </section>
+  <section class="hud">
+    <div class="cap"><b>Плоский современный</b><span>Белые и бледно-зелёные панели, крупные скругления, светло.</span></div>
+    <img src="./cards/hud-flat.webp" alt="Интерфейс: Плоский современный" loading="lazy" decoding="async">
+  </section>
+</div></body></html>

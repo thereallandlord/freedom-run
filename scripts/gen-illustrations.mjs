@@ -382,6 +382,45 @@ const SCENES_CITY_WIDE = {
     ' Deep midnight blue water, cities glowing with warm gold and cool cyan lights, reflections on the water, dramatic and expensive.',
 }
 
+/**
+ * Полноэкранные интерфейсы (16:9). Это НЕ карта с клетками — это весь экран
+ * игры: доска в центре, вокруг панели, как в компьютерной игре.
+ *
+ * 🔴 Зачем они нужны, если панели всё равно будет рисовать код: это ЭТАЛОН
+ * ВИДА. Живые панели с настоящими цифрами картинкой быть не могут — их
+ * содержимое меняется каждый ход. Поэтому картинка задаёт язык (материал,
+ * скругления, свет, палитру), а интерфейс потом собирается кодом поверх
+ * сгенерированного фона. Текст просим НЕ рисовать: модель путает буквы.
+ */
+const HUD_LAYOUT =
+  'Full-screen video game interface seen straight on, 16:9, edge to edge. ' +
+  'In the CENTRE: a square game board seen from directly above, with a ring of 24 identical empty rounded spaces around its edge ' +
+  'and a miniature world of famous cities inside — Dubai with its needle tower, Istanbul with domes and minarets, Antalya marina, ' +
+  'Kazan white kremlin, Baku curved towers, Cairo pyramids. ' +
+  'On the LEFT: a tall vertical panel divided into four stacked empty sections with small coloured accents. ' +
+  'On the RIGHT: a narrow vertical column of a few small panels and one large prominent action button. ' +
+  'ALONG THE TOP: a slim horizontal bar with several small rounded chips. ' +
+  'All panels are empty containers — no writing inside them. ' +
+  'No text, no letters, no numbers, no words, no labels, no logos anywhere in the image.'
+
+const SCENES_HUD = {
+  'hud-glass':
+    HUD_LAYOUT + ' Style: frosted translucent glass panels floating over the scene, soft blur, thin light edges, ' +
+    'warm evening light on the city below, deep blue-grey ambience, premium and calm.',
+  'hud-warm':
+    HUD_LAYOUT + ' Style: warm ivory panels with soft shadows over a sunlit miniature world, sand and sage palette, ' +
+    'gentle rounded shapes, clean modern app look, very low contrast, airy.',
+  'hud-night':
+    HUD_LAYOUT + ' Style: dark charcoal-green panels with thin gold edges over a night city scene glowing gold and cyan, ' +
+    'reflections on dark water, cinematic and expensive.',
+  'hud-paper':
+    HUD_LAYOUT + ' Style: everything printed on aged parchment — panels are paper cards pinned to a desk, ' +
+    'the board is a hand-drawn ink and watercolour map, brass instruments in the corners, warm lamp light.',
+  'hud-flat':
+    HUD_LAYOUT + ' Style: clean flat modern dashboard, white and pale sage panels with generous rounded corners and soft drop shadows, ' +
+    'a bright simplified 3D city diorama in the middle, cheerful daylight, crisp and minimal.',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -725,6 +764,14 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Полноэкранные интерфейсы
+  manifest.byHud = manifest.byHud || {}
+  for (const [k, scene] of Object.entries(SCENES_HUD)) {
+    push(k, k, scene, 'plateWide', () => {
+      manifest.byHud[k] = `/cards/${k}.webp`
+    })
   }
 
   // Городские поля: квадратные и во всю ширину
