@@ -120,17 +120,17 @@ def order_perimeter(centres, w, h):
     return sorted(centres, key=key)
 
 
-def even_grid(n_side, x0, y0, x1, y1):
-    """Запасной вариант: ровная сетка по найденной рамке доски."""
+def even_grid(cols, rows, x0, y0, x1, y1):
+    """Запасной вариант: ровное кольцо cols×rows по найденной рамке доски."""
     pts = []
-    sw, sh = (x1 - x0) / n_side, (y1 - y0) / n_side
-    for c in range(n_side):
+    sw, sh = (x1 - x0) / cols, (y1 - y0) / rows
+    for c in range(cols):
         pts.append((x0 + sw * (c + 0.5), y0 + sh * 0.5))
-    for r in range(1, n_side):
+    for r in range(1, rows):
         pts.append((x1 - sw * 0.5, y0 + sh * (r + 0.5)))
-    for c in range(n_side - 2, -1, -1):
+    for c in range(cols - 2, -1, -1):
         pts.append((x0 + sw * (c + 0.5), y1 - sh * 0.5))
-    for r in range(n_side - 2, 0, -1):
+    for r in range(rows - 2, 0, -1):
         pts.append((x0 + sw * 0.5, y0 + sh * (r + 0.5)))
     return pts
 
@@ -139,7 +139,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--image', default='board-plate-b.webp')
     ap.add_argument('--cells', type=int, default=24, help='сколько клеток на дорожке')
-    ap.add_argument('--grid', type=int, default=7, help='сторона сетки для запасного варианта')
+    ap.add_argument('--grid', type=int, default=7, help='столбцов в запасной сетке')
+    ap.add_argument('--rows', type=int, default=0, help='строк в запасной сетке (0 = как столбцов)')
     ap.add_argument('--key', default='rat', help='ключ дорожки в JSON')
     ap.add_argument('--debug', action='store_true')
     a = ap.parse_args()
@@ -188,7 +189,7 @@ def main():
         else:
             m = w * 0.075
             x0, y0, x1, y1 = m, m, w - m, h - m
-        pts = even_grid(a.grid, x0, y0, x1, y1)
+        pts = even_grid(a.grid, a.rows or a.grid, x0, y0, x1, y1)
 
     норм = [{'x': round(x / w, 5), 'y': round(y / h, 5)} for x, y in pts]
 
@@ -199,7 +200,8 @@ def main():
         cell_w = round(float(np.median([s[0] for s in sizes])), 5)
         cell_h = round(float(np.median([s[1] for s in sizes])), 5)
     else:
-        cell_w = cell_h = round(1 / a.grid * 0.86, 5)
+        cell_w = round(1 / a.grid * 0.86, 5)
+        cell_h = round(1 / (a.rows or a.grid) * 0.86, 5)
 
     out_path = os.path.join(ROOT, 'src', 'data', 'board-cells.json')
     data = {}

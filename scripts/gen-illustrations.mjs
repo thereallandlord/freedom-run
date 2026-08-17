@@ -43,7 +43,7 @@ const SIZE_SQUARE = '1024x1024'
 // для доски это вредно: нужна плоская печатная поверхность без сюжета.
 const BOARD_STYLE = [
   'Flat top-down product photograph of printed board game cardboard, shot straight from above,',
-  'perfectly square and centred, filling the frame. Even soft studio light, no cast shadows,',
+  'centred and filling the frame. Even soft studio light, no cast shadows,',
   'no perspective, no tilt. Calm minimalist print design, muted warm palette.',
   'No text, no letters, no numbers, no logos, no watermarks.',
 ].join(' ')
@@ -302,6 +302,84 @@ const SCENES_TABLE = {
     'Top-down photograph of a 1970s printed board game, perfectly square. Bold graphic print on thick cardboard: wide bands of burnt orange, teal and cream, thick black outlines, visible halftone dot texture and slight ink misregistration. ' + RING_RULE.replace('spaces', 'spaces printed as flat bright rectangles alternating cream and mustard, each with a thick black outline') + ' Confident retro poster style, warm nostalgic colours.',
   greenleaf:
     'Top-down photograph of a premium modern board game, perfectly square. Fresh sage and deep forest green surface with a subtle botanical pattern of delicate leaf silhouettes, a slim gold border frame. ' + RING_RULE.replace('spaces', 'spaces of clean warm white card with thin gold outlines and a soft drop shadow') + ' Elegant natural palette of greens, cream and gold, calm and expensive looking.',
+}
+
+/**
+ * Городские поля. Вместо острова — мировые города, по клетке на достопримечательность
+ * (задача Камиля). Стиль снят с его референсов словами: объёмный макет-диорама,
+ * вид сверху, вечерний свет, живая миниатюра — но композиция своя, чужие концепты
+ * не копируем и лишнего в кадр не тянем.
+ *
+ * Два формата: квадрат (кольцо 7×7 = 24 клетки) и во всю ширину экрана
+ * (кольцо 9×5 = тоже 24). Счёт клеток проговаривается жёстко — модель охотно
+ * добавляет лишний ряд, мы это уже ловили на острове.
+ */
+const RING_SQUARE =
+  'A ring of 24 empty game spaces runs around the outer edge: exactly seven along the top edge, ' +
+  'seven along the bottom edge, and exactly five on the left edge and five on the right edge between the corners. ' +
+  'Do not add any extra row or column of spaces. All spaces are identical rounded squares of the same size, ' +
+  'evenly spaced, aligned to a strict grid, each a clean empty pale card with a thin outline and a soft shadow. ' +
+  'The spaces are completely EMPTY — nothing drawn inside them. The whole middle of the board is open scenery with no spaces at all.'
+
+const RING_WIDE =
+  'A ring of 24 empty game spaces runs around the outer edge: exactly nine along the top edge, nine along the bottom edge, ' +
+  'and exactly three on the left edge and three on the right edge between the corners. Do not add any extra row or column. ' +
+  'All spaces are identical rounded squares of the same size, evenly spaced, aligned to a strict grid, each a clean empty pale card ' +
+  'with a thin outline and a soft shadow. The spaces are completely EMPTY — nothing drawn inside them. ' +
+  'The whole middle is open scenery with no spaces at all.'
+
+const CITY_WORLD =
+  'Between and behind the spaces, all around the edge of the board, sits a tiny hand-crafted world of famous cities in miniature: ' +
+  'Dubai with its needle tower and palm island, Istanbul with domes and minarets over the strait, Antalya with a marina and cliffs, ' +
+  'Kazan with a white kremlin and a blue-domed mosque, Moscow with towers by a river, Baku with curved glass towers, ' +
+  'Singapore with a boat-topped tower and gardens, Cairo with pyramids at the desert edge. ' +
+  'Each city is a small detailed diorama the size of a few spaces, separated from its neighbours by water, sand or greenery. ' +
+  'No text, no letters, no numbers, no labels, no logos.'
+
+const SCENES_CITY = {
+  'city-diorama':
+    'Top-down photograph of a luxurious miniature board game, perfectly square, shot straight from above. ' +
+    RING_SQUARE + ' ' + CITY_WORLD +
+    ' Warm evening light, tiny glowing windows, deep soft shadows, rich photoreal miniature-model look, shallow depth cues.',
+  'city-isometric':
+    'Top-down illustration of a bright stylised game board, perfectly square. ' +
+    RING_SQUARE + ' ' + CITY_WORLD +
+    ' Vivid saturated colours, soft white clouds curling at the outer corners, crisp clean 3D-render look, cheerful daylight.',
+  'city-parchment':
+    'Top-down photograph of an antique explorer map board, perfectly square, aged parchment with a subtle grid border. ' +
+    RING_SQUARE + ' ' + CITY_WORLD.replace('tiny hand-crafted world', 'hand-drawn ink-and-watercolour world') +
+    ' Sepia and faded blue-green washes, fine pen hatching, compass rose in one corner, warm lamp light.',
+  'city-soft':
+    'Top-down illustration of a calm modern game board, perfectly square, in a clean contemporary app style. ' +
+    RING_SQUARE + ' ' + CITY_WORLD +
+    ' Soft matte pastel palette of sand, sage and cream, gentle even light, very low contrast, simplified rounded shapes.',
+  'city-night':
+    'Top-down photograph of a premium night-time miniature board, perfectly square. ' +
+    RING_SQUARE + ' ' + CITY_WORLD +
+    ' Deep midnight blue water and dark ground, cities glowing with warm gold and cool cyan lights, reflections on the water, dramatic and expensive.',
+}
+
+const SCENES_CITY_WIDE = {
+  'wide-diorama':
+    'Top-down photograph of a luxurious miniature board game, WIDE horizontal format, shot straight from above. ' +
+    RING_WIDE + ' ' + CITY_WORLD +
+    ' Warm evening light, tiny glowing windows, deep soft shadows, rich photoreal miniature-model look.',
+  'wide-isometric':
+    'Top-down illustration of a bright stylised game board, WIDE horizontal format. ' +
+    RING_WIDE + ' ' + CITY_WORLD +
+    ' Vivid saturated colours, soft white clouds at the outer corners, crisp clean 3D-render look, cheerful daylight.',
+  'wide-parchment':
+    'Top-down photograph of an antique explorer map board, WIDE horizontal format, aged parchment with a fine grid border. ' +
+    RING_WIDE + ' ' + CITY_WORLD.replace('tiny hand-crafted world', 'hand-drawn ink-and-watercolour world') +
+    ' Sepia and faded blue-green washes, fine pen hatching, compass rose in a corner, warm lamp light.',
+  'wide-soft':
+    'Top-down illustration of a calm modern game board, WIDE horizontal format, clean contemporary app style. ' +
+    RING_WIDE + ' ' + CITY_WORLD +
+    ' Soft matte pastel palette of sand, sage and cream, gentle even light, very low contrast, simplified rounded shapes.',
+  'wide-night':
+    'Top-down photograph of a premium night-time miniature board, WIDE horizontal format. ' +
+    RING_WIDE + ' ' + CITY_WORLD +
+    ' Deep midnight blue water, cities glowing with warm gold and cool cyan lights, reflections on the water, dramatic and expensive.',
 }
 
 /** Большие сделки — недвижимость. */
@@ -649,6 +727,19 @@ function buildJobs() {
     }
   }
 
+  // Городские поля: квадратные и во всю ширину
+  manifest.byTable = manifest.byTable || {}
+  for (const [k, scene] of Object.entries(SCENES_CITY)) {
+    push(k, `table-${k}`, scene, 'plate', () => {
+      manifest.byTable[k] = `/cards/table-${k}.webp`
+    })
+  }
+  for (const [k, scene] of Object.entries(SCENES_CITY_WIDE)) {
+    push(k, `table-${k}`, scene, 'plateWide', () => {
+      manifest.byTable[k] = `/cards/table-${k}.webp`
+    })
+  }
+
   // Пять досок на выбор
   manifest.byTable = manifest.byTable || {}
   for (const k of Object.keys(SCENES_TABLE)) {
@@ -915,10 +1006,10 @@ async function main() {
       const dest = path.join(OUT_DIR, job.file + '.webp')
       try {
         // Доске нужен квадратный кадр, остальному — альбомный.
-        const size = job.group === 'plate' || job.group === 'board' ? SIZE_SQUARE : SIZE
-        const style = job.group === 'plate' || job.group === 'board' ? BOARD_STYLE : STYLE
+        const size = job.group === 'plateWide' ? SIZE : job.group === 'plate' || job.group === 'board' ? SIZE_SQUARE : SIZE
+        const style = job.group === 'plate' || job.group === 'plateWide' || job.group === 'board' ? BOARD_STYLE : STYLE
         const png = await generateOne(apiKey, `${job.scene}. ${style}`, 1, size)
-        await compress(png, dest, size === SIZE_SQUARE ? TARGET_WIDTH_BOARD : TARGET_WIDTH)
+        await compress(png, dest, job.group.startsWith('plate') || job.group === 'board' ? TARGET_WIDTH_BOARD : TARGET_WIDTH)
         const sz = fs.statSync(dest).size
         bytes += sz
         done++

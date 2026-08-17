@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-17T11:50:44.057Z",
+ "generatedAt": "2026-08-17T12:13:34.510Z",
  "byId": {
   "sd-room-ufa-chernikovka": "/cards/sd-room-ufa-chernikovka.webp",
   "sd-room-ufa-sipailovo": "/cards/sd-room-ufa-sipailovo.webp",
@@ -176,6 +176,16 @@
   "Свой самолёт и лицензия пилота": "/cards/dream-airplane-pilot.webp"
  },
  "byTable": {
+  "city-diorama": "/cards/table-city-diorama.webp",
+  "city-isometric": "/cards/table-city-isometric.webp",
+  "city-parchment": "/cards/table-city-parchment.webp",
+  "city-soft": "/cards/table-city-soft.webp",
+  "city-night": "/cards/table-city-night.webp",
+  "wide-diorama": "/cards/table-wide-diorama.webp",
+  "wide-isometric": "/cards/table-wide-isometric.webp",
+  "wide-parchment": "/cards/table-wide-parchment.webp",
+  "wide-soft": "/cards/table-wide-soft.webp",
+  "wide-night": "/cards/table-wide-night.webp",
   "felt": "/cards/table-felt.webp",
   "city": "/cards/table-city.webp",
   "island": "/cards/table-island.webp",
