@@ -225,8 +225,19 @@ export function applyWorldEvent(prev: Table, index: number): Table {
     case 'stockPrice':
       push('stock', e.symbols, e.pct)
       break
+    /*
+     * 🔴 Мировое событие не может забрать больше, чем у человека есть на руках.
+     * Раньше списывало вслепую и уводило наличные в минус, причём БЕЗ экрана
+     * банкротства: он открывается только по своей зарплате, а событие приходит
+     * посреди чужого хода. Через эту дыру в игре появлялись отрицательные
+     * деньги, которых взяться неоткуда.
+     */
     case 'cashAll':
-      for (const s of t.seats) if (!s.outOfGame) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: e.amount })
+      for (const s of t.seats) {
+        if (s.outOfGame) continue
+        const take = e.amount < 0 ? -Math.min(s.ledger.cash, -e.amount) : e.amount
+        if (take !== 0) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: take })
+      }
       break
     case 'frictionAll':
       for (const s of t.seats) {
@@ -235,7 +246,8 @@ export function applyWorldEvent(prev: Table, index: number): Table {
           log(t, s.id, `${s.name}: обошло стороной — выручил второй паспорт`)
           continue
         }
-        seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: e.amount })
+        const take = e.amount < 0 ? -Math.min(s.ledger.cash, -e.amount) : e.amount
+        if (take !== 0) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: take })
       }
       break
     case 'expenseAll':

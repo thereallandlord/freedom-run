@@ -134,6 +134,12 @@ export const GL_PROMOS: GlPromo[] = [
   },
 ]
 
+/**
+ * Порог насыщения структуры. Чем ближе доход к этой величине, тем медленнее
+ * прибавка: удвоить маленькую команду легко, большую — почти невозможно.
+ */
+export const GL_SATURATION = 120_000
+
 /** Стартовый доход структуры и её обычная скорость роста. */
 export const GL_START_FLOW = 1_700
 export const GL_START_GROWTH = 600
@@ -247,7 +253,14 @@ export function glOnPayday(g: GlState): { next: GlState; note: string | null } {
   if (next.slowdownLeft > 0) {
     next.slowdownLeft -= 1
   } else {
-    next.baseFlow += Math.round((g.growthPerPayday * g.luck) / 100) * 100
+    /*
+     * 🔴 Рост НАСЫЩАЕТСЯ. Линейная прибавка до конца партии — неправда: чем
+     * больше структура, тем труднее её удвоить, люди уходят, рынок насыщается.
+     * Поэтому прибавка тает по мере роста дохода. Без этого на длинной партии
+     * партнёрский бизнес улетал за девятьсот тысяч в месяц.
+     */
+    const damp = GL_SATURATION / (GL_SATURATION + g.baseFlow)
+    next.baseFlow += Math.round((g.growthPerPayday * g.luck * damp) / 100) * 100
   }
 
   const rankAfter = glRankFor(next.volume)

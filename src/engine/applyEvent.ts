@@ -84,6 +84,13 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
        * обещанием, а в цифрах — вечный расход, и к середине партии игрок таскал
        * платежи за холодильник, купленный полтора часа назад.
        */
+      // Страховка: платёж без тела долга — всегда ошибка, откуда бы он ни взялся.
+      if (l.liabilities.retailDebt === 0) l.expenses.retailPayment = 0
+      if (l.liabilities.creditCards === 0) l.expenses.creditCardPayment = 0
+      if (l.liabilities.carLoans === 0) l.expenses.carPayment = 0
+      if (l.liabilities.bankLoan === 0) l.expenses.bankLoanPayment = 0
+      if (l.liabilities.ribaLoan === 0) l.expenses.ribaPayment = 0
+
       if (!RULES.loansEnabled && l.liabilities.retailDebt > 0) {
         const pay = Math.min(l.expenses.retailPayment, l.liabilities.retailDebt)
         l.liabilities.retailDebt -= pay
@@ -283,7 +290,12 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'DOODAD':
     case 'FT_STAKE_LOST':
     case 'FT_DOWNSIZED':
-      l.cash -= e.amount
+      /*
+       * 🔴 Больше, чем есть на руках, не забираем. Раньше списывали вслепую и
+       * наличные уходили в минус, а экран банкротства на Полосе не открывается —
+       * получались отрицательные деньги, которых взяться неоткуда.
+       */
+      l.cash -= Math.min(l.cash, e.amount)
       return l
 
     /**
@@ -404,6 +416,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.expenses.carPayment = Math.floor(l.expenses.carPayment / 2)
       l.expenses.creditCardPayment = Math.floor(l.expenses.creditCardPayment / 2)
       l.expenses.retailPayment = Math.floor(l.expenses.retailPayment / 2)
+      /*
+       * 🔴 Округление вниз может обнулить ТЕЛО долга, оставив платёж живым:
+       * долг 1 → 0, платёж 3 → 1, и дальше он висит вечно, потому что гасить
+       * уже нечего. Подчищаем все три сразу.
+       */
+      if (l.liabilities.carLoans === 0) l.expenses.carPayment = 0
+      if (l.liabilities.creditCards === 0) l.expenses.creditCardPayment = 0
+      if (l.liabilities.retailDebt === 0) l.expenses.retailPayment = 0
       return l
 
     case 'DECLARE_GAME_OVER':
