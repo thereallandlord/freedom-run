@@ -11,7 +11,7 @@
     "test:mech": "esbuild src/engine/mechtest.ts --bundle --platform=node --format=esm --outfile=.mech.mjs --log-level=error && node .mech.mjs",
     "test:all": "npm run test:mech && npm test",
     "dump:state": "esbuild src/engine/dumpstate.ts --bundle --platform=node --format=esm --outfile=.dump.mjs --log-level=error && node .dump.mjs",
-    "test:scen": "tsx src/engine/scenarios.ts"
+    "test:scen": "npx tsx src/engine/scenarios.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

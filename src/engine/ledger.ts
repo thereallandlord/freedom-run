@@ -244,8 +244,9 @@ export const RIBA = {
 
 /** Долговая нагрузка от 0 до 1 — её видно в панели, по ней растёт частота бед. */
 export function ribaRisk(l: Ledger): number {
-  if (l.liabilities.ribaLoan <= 0) return 0
-  return Math.min(RIBA.maxRisk, (l.liabilities.ribaLoan / RIBA.loadStep) * 0.2)
+  const load = l.liabilities.ribaLoan + (l.ribaExposure ?? 0)
+  if (load <= 0) return 0
+  return Math.min(RIBA.maxRisk, (load / RIBA.loadStep) * 0.2)
 }
 
 export function ribaLimit(l: Ledger): number {

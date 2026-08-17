@@ -10,7 +10,7 @@ import { PRICE_CEIL, PRICE_FLOOR, fairAssetPrice } from '../engine/trades'
 import { RULES } from '../engine/ledger'
 import { Dropdown, type Option } from './Dropdown'
 import { money, signed } from './PlayerPanel'
-import { RIBA, ribaLimit } from '../engine/ledger'
+import { CITIZENSHIP, RIBA, citizenshipReady, ribaLimit } from '../engine/ledger'
 import {
   glPackage,
   glStructureIncome,
@@ -338,6 +338,84 @@ export function TradesModal({
       </TradeBlock>
 
       {/* ─── Попросить в долг ─── */}
+      {/*
+        Дать в долг С НАДБАВКОЙ. Не запрещаем — показываем, что будет.
+        🔴 Нагрузка ложится на ОБОИХ: и на того, кто взял, и на того, кто дал.
+        Именно этим заём отличается от ростовщичества, и игрок узнаёт это,
+        попробовав, а не прочитав нотацию.
+      */}
+      {others.length > 0 && (
+        <TradeBlock title="Дать в долг с надбавкой" accent="warn">
+          <p className="mb-2 text-[12px] leading-snug text-[var(--muted)]">
+            Вернут больше, чем дали. Пока такой долг открыт, неприятности будут приходить чаще —
+            и к должнику, и к вам.
+          </p>
+          {others.map((o) => (
+            <div key={o.id} className="mt-1 flex items-center gap-2">
+              <span className="flex-1 text-[13px]">
+                <span style={{ color: o.color }}>●</span> {o.name}
+              </span>
+              {[10, 25].map((pct) => {
+                const amt = Math.min(seat.ledger.cash, 200_000)
+                return (
+                  <button
+                    key={pct}
+                    disabled={amt < 10_000}
+                    onClick={() =>
+                      dispatch({
+                        type: 'OFFER_LOAN_WITH_INTEREST',
+                        toId: o.id,
+                        amount: amt,
+                        interestPct: pct,
+                      })
+                    }
+                    className="rounded-lg border border-amber-500/50 px-2 py-1 text-[11px] transition hover:bg-amber-500/10 disabled:opacity-40"
+                  >
+                    {money(amt)} под {pct}%
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </TradeBlock>
+      )}
+
+      {/*
+        Второй паспорт. Дохода не даёт вообще — снимает трение: платежи проходят,
+        счета открываются, часть зарубежных сделок становится доступна.
+      */}
+      <TradeBlock title="Второе гражданство">
+        {seat.ledger.citizenship ? (
+          <p className="text-[12px] text-[var(--muted)]">
+            У вас есть {seat.ledger.citizenship.toLowerCase()}. Дохода это не приносит, зато часть
+            мировых неприятностей вас больше не касается.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {CITIZENSHIP.map((c) => {
+              const r = citizenshipReady(seat.ledger, c.id)
+              return (
+                <button
+                  key={c.id}
+                  disabled={!r.ok}
+                  onClick={() => dispatch({ type: 'GET_CITIZENSHIP', id: c.id })}
+                  className="w-full rounded-xl border border-[var(--line)] p-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-bold">{c.name}</span>
+                    <span className="tabnum text-[13px] font-black">{money(c.fee)}</span>
+                  </div>
+                  <div className="mt-1 text-[11px] leading-snug text-[var(--muted)]">{c.note}</div>
+                  {!r.ok && r.why && (
+                    <div className="mt-1 text-[11px] text-amber-400">{r.why}</div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </TradeBlock>
+
       <TradeBlock title="Попросить в долг — без надбавки">
         {!lender ? (
           <p className="text-[12px] text-[var(--muted)]">Просить не у кого.</p>

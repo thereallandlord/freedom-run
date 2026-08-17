@@ -1,11 +1,11 @@
 /** Прогон партий разными составами: ищем перекосы, тупики и принтеры денег. */
-import { createTable, applyTableEvent, applyWorldEvent, nextWorldEventIndex, currentSeat, type TableSetup } from '../table'
-import { decideBotEvent } from '../bots'
-import { mulberry32 } from '../rng'
-import { professionsFor, dreamSpaces, setActiveTheme, setFastBoardTheme } from '../data'
-import { setRules, monthlyCashFlow, passiveIncome, totalExpenses, netWorth, RULES } from '../ledger'
-import { glTotalIncome, glRankFor } from '../greenleaf'
-import type { Table } from '../types'
+import { createTable, applyTableEvent, applyWorldEvent, nextWorldEventIndex, currentSeat, type TableSetup } from './table'
+import { decideBotEvent } from './bots'
+import { mulberry32 } from './rng'
+import { professionsFor, dreamSpaces, setActiveTheme, setFastBoardTheme } from './data'
+import { setRules, monthlyCashFlow, passiveIncome, totalExpenses, netWorth, RULES } from './ledger'
+import { glTotalIncome, glRankFor } from './greenleaf'
+import type { Table } from './types'
 
 setActiveTheme('ru'); setFastBoardTheme('ru')
 const M = (n: number) => Math.round(n).toLocaleString('ru-RU') + ' ₽'

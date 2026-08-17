@@ -234,6 +234,10 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.wantsRefused = 0
       return l
 
+    case 'ADJUST_RIBA_EXPOSURE':
+      l.ribaExposure = Math.max(0, (l.ribaExposure ?? 0) + e.amount)
+      return l
+
     case 'SET_CITIZENSHIP':
       l.cash -= e.fee
       l.citizenship = e.name

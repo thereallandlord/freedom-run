@@ -228,6 +228,16 @@ export function applyWorldEvent(prev: Table, index: number): Table {
     case 'cashAll':
       for (const s of t.seats) if (!s.outOfGame) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: e.amount })
       break
+    case 'frictionAll':
+      for (const s of t.seats) {
+        if (s.outOfGame) continue
+        if (s.ledger.citizenship) {
+          log(t, s.id, `${s.name}: обошло стороной — выручил второй паспорт`)
+          continue
+        }
+        seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: e.amount })
+      }
+      break
     case 'expenseAll':
       t.seats = t.seats.map((s) => {
         if (s.outOfGame) return s
@@ -922,12 +932,20 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const flow = payCash ? card.cashFlow : card.cashFlow - monthly
       const debt = payCash ? 0 : instDebt
 
+      /*
+       * 🔴 Стоимость актива записываем ТУ, за которую его купили: налом — цену
+       * налом, в рассрочку — цену с наценкой. Раньше долг вешали с наценкой, а
+       * объект ставили по цене без неё — и каждая покупка в рассрочку сразу
+       * давала минус в четверть стоимости. У ботов к концу партии выходил
+       * отрицательный капитал на ровном месте.
+       */
+      const bookCost = payCash ? fullPrice : instTotal
       if (card.kind === 'realEstate') {
         seatLedgerEvent(t, seat.id, {
           type: 'BUY_REAL_ESTATE',
           id: `${card.id}-${nextId(t)}`,
           name: localizedCardTitle(card),
-          cost: card.cost,
+          cost: bookCost,
           downPayment: payCash ? fullPrice : card.downPayment,
           mortgage: debt,
           cashFlow: flow,
@@ -940,7 +958,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           type: 'BUY_BUSINESS',
           id: `${card.id}-${nextId(t)}`,
           name: localizedCardTitle(card),
-          cost: card.cost,
+          cost: bookCost,
           downPayment: payCash ? fullPrice : card.downPayment,
           liability: debt,
           cashFlow: flow,
@@ -1444,6 +1462,33 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       return t
     }
 
+    /** Дать в долг с надбавкой. Игра не запрещает — показывает последствия. */
+    case 'OFFER_LOAN_WITH_INTEREST': {
+      const to = t.seats.find((x) => x.id === event.toId)
+      if (!to || to.outOfGame || to.id === seat.id) return prev
+      const amount = Math.max(0, Math.round(event.amount))
+      if (amount <= 0 || l.cash < amount) return prev
+      t.offers = [
+        ...t.offers,
+        {
+          id: `of-${nextId(t)}`,
+          kind: 'loan',
+          fromId: seat.id,
+          toId: to.id,
+          amount,
+          interestPct: Math.max(1, Math.round(event.interestPct)),
+          expiresAtTurn: t.turnCounter + 2,
+          bids: [],
+        },
+      ]
+      log(
+        t,
+        seat.id,
+        `Предлагает ${to.name} ${money(amount)} под ${Math.round(event.interestPct)}% — вернуть ${money(Math.round((amount * (100 + event.interestPct)) / 100))}`,
+      )
+      return t
+    }
+
     case 'PASS_CARD': {
       if (!t.pending) return prev
       if (t.pending.kind === 'doodad' || t.pending.kind === 'bankruptcy') return prev
@@ -1747,7 +1792,23 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
               atTurn: t.turnCounter,
             },
           ]
-          log(t, buyer.id, `${buyer.name} взял у ${from.name} ${money(o.amount)} без надбавки — вернуть столько же`)
+          if (o.interestPct) {
+            /*
+             * 🔴 Надбавка сверху — и оба получают долговую нагрузку. Не только
+             * должник: дал под процент — беды приходят и к тебе. Это и есть
+             * разница между займом и ростовщичеством.
+             */
+            const owe = Math.round((o.amount * (100 + o.interestPct)) / 100)
+            seatLedgerEvent(t, buyer.id, { type: 'ADJUST_RIBA_EXPOSURE', amount: owe })
+            seatLedgerEvent(t, from.id, { type: 'ADJUST_RIBA_EXPOSURE', amount: o.amount })
+            log(
+              t,
+              buyer.id,
+              `${buyer.name} взял у ${from.name} ${money(o.amount)} под ${o.interestPct}% — вернуть ${money(owe)}. Нагрузка легла на обоих`,
+            )
+          } else {
+            log(t, buyer.id, `${buyer.name} взял у ${from.name} ${money(o.amount)} без надбавки — вернуть столько же`)
+          }
           t.offers = t.offers.filter((x) => x.id !== o.id)
           return t
         }

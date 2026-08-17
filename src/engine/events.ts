@@ -16,6 +16,7 @@ export type LedgerEvent =
   | { type: 'REFUSE_WANT' }
   | { type: 'INDULGE' }
   | { type: 'SET_CITIZENSHIP'; name: string; fee: number }
+  | { type: 'ADJUST_RIBA_EXPOSURE'; amount: number }
   | { type: 'SALARY_RAISE'; amount: number }
   | { type: 'ZAKAT' }
   | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
@@ -107,6 +108,8 @@ export type TableEvent =
   | { type: 'OFFER_LOAN'; toId: string; amount: number }
   /** Заём просят чаще, чем предлагают: fromId — тот, у КОГО просят. */
   | { type: 'ASK_LOAN'; fromId: string; amount: number }
+  /** Дать в долг С НАДБАВКОЙ. Беды потом приходят обоим. */
+  | { type: 'OFFER_LOAN_WITH_INTEREST'; toId: string; amount: number; interestPct: number }
   | { type: 'BID_OFFER'; offerId: string; seatId: string; amount: number }
   | { type: 'ACCEPT_OFFER_TRADE'; offerId: string; seatId: string }
   | { type: 'CANCEL_OFFER'; offerId: string }

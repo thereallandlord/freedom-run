@@ -161,6 +161,8 @@ export function effectKindLabel(e: WorldEffect): string {
       return 'Расходы'
     case 'salaryAll':
       return 'Зарплата'
+    case 'frictionAll':
+      return 'Трение'
   }
 }
 
@@ -181,6 +183,8 @@ export function effectText(e: WorldEffect, short = false): string {
       return `прочие ${pct(e.pct)} у всех`
     case 'salaryAll':
       return `${pct(e.pct)} у всех`
+    case 'frictionAll':
+      return `${money(-e.amount)} со всех, кроме тех, у кого второй паспорт`
   }
 }
 
@@ -197,6 +201,8 @@ function goodness(e: WorldEffect): 1 | -1 {
     case 'expenseAll':
       // Рост расходов — плохая новость, знак процента здесь читается наоборот.
       return e.pct > 0 ? -1 : 1
+    case 'frictionAll':
+      return e.amount >= 0 ? 1 : -1
   }
 }
 
