@@ -421,6 +421,57 @@ const SCENES_HUD = {
     'a bright simplified 3D city diorama in the middle, cheerful daylight, crisp and minimal.',
 }
 
+/**
+ * Интерфейсы по двум референсам Камиля.
+ *
+ * r6 — светлый плоский дашборд: узкая колонка значков слева, крупные белые
+ *      карточки со скруглениями, зелёный акцент, объёмная сценка-«ломоть»
+ *      посередине, таблетка навигации внизу.
+ * r1 — физический макет на подносе, за ним и над ним парят панели из
+ *      матового стекла, вечерний свет, тёплые огни в окнах.
+ *
+ * Общее для всех: панели ПУСТЫЕ и текста нет — цифры и надписи печатает
+ * интерфейс, а буквы генератор путает.
+ */
+const BOARD_IN_MIDDLE =
+  'In the middle sits the game board: a square slab seen from above with a ring of exactly 24 identical empty rounded spaces ' +
+  'around its outer edge — seven along the top, seven along the bottom, five on each side between the corners — and inside the ring ' +
+  'a miniature world of famous cities: Dubai needle tower and palm island, Istanbul domes and minarets, Antalya marina and cliffs, ' +
+  'Kazan white kremlin, Baku curved towers, Cairo pyramids. The spaces are completely empty. '
+
+const NO_TEXT =
+  'All panels and cards are EMPTY containers with no writing in them. ' +
+  'No text, no letters, no numbers, no words, no labels, no logos anywhere in the image.'
+
+const R6 =
+  'Full-screen app interface, 16:9, seen straight on, edge to edge. Warm cream background. ' +
+  'A narrow vertical rail of six small rounded-square icon buttons runs down the far left edge, one of them highlighted deep green. ' +
+  'Large white rounded cards with soft drop shadows are arranged around the screen: a wide card top-left, ' +
+  'a deep-green rounded card top-right, a tall card of three stacked list rows bottom-right, a small card bottom-left. ' +
+  'A pill-shaped bar with five round icon slots floats at the bottom centre. ' + BOARD_IN_MIDDLE +
+  'Style: clean flat modern app design, generous rounded corners, soft realistic shadows, olive and forest green accents, ' +
+  'sand and cream palette, gentle even daylight, simplified 3D shapes. ' + NO_TEXT
+
+const R1 =
+  'Full-screen scene, 16:9, seen straight on. A physical miniature model sits on a smooth white tray base with rounded corners, ' +
+  'photographed in a softly lit studio against a deep blue-grey backdrop. ' +
+  'Rising behind the model is a large sheet of frosted transparent glass acting as a screen, with several empty frosted glass panels ' +
+  'floating on it: a wide one upper-left, a small one upper-right, a tall one on the right. ' +
+  'A row of four small frosted glass buttons rests on the tray in front, one of them glowing accent blue. ' + BOARD_IN_MIDDLE +
+  'Style: photoreal 3D render of a physical diorama, warm glowing tiny windows, evening blue ambience, ' +
+  'soft reflections on the glass, premium product photography. ' + NO_TEXT
+
+const SCENES_REF = {
+  'r6-dubai': R6 + ' The city diorama leans towards Dubai and the Gulf: turquoise water, palm island, desert edge.',
+  'r6-istanbul': R6 + ' The city diorama leans towards Istanbul: the strait, ferries, domes and minarets, red rooftops.',
+  'r6-kazan': R6 + ' The city diorama leans towards Kazan and the Volga: white kremlin walls, blue domes, a wide river, birches.',
+  'r6-antalya': R6 + ' The city diorama leans towards Antalya: cliffs over turquoise sea, marina, pines and old town roofs.',
+  'r1-dubai': R1 + ' The miniature leans towards Dubai and the Gulf: turquoise water, palm island, glowing towers at dusk.',
+  'r1-istanbul': R1 + ' The miniature leans towards Istanbul: the lit strait at dusk, ferries, domes and minarets aglow.',
+  'r1-kazan': R1 + ' The miniature leans towards Kazan: floodlit white kremlin, blue domes, dark river reflecting the lights.',
+  'r1-antalya': R1 + ' The miniature leans towards Antalya: cliffs and marina at dusk, warm harbour lights on dark water.',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -764,6 +815,14 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Интерфейсы по референсам Камиля
+  manifest.byHud = manifest.byHud || {}
+  for (const [k, scene] of Object.entries(SCENES_REF)) {
+    push(k, k, scene, 'plateWide', () => {
+      manifest.byHud[k] = `/cards/${k}.webp`
+    })
   }
 
   // Полноэкранные интерфейсы

@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-17T12:31:13.058Z",
+ "generatedAt": "2026-08-17T12:37:44.498Z",
  "byId": {
   "sd-room-ufa-chernikovka": "/cards/sd-room-ufa-chernikovka.webp",
   "sd-room-ufa-sipailovo": "/cards/sd-room-ufa-sipailovo.webp",
@@ -176,6 +176,14 @@
   "Свой самолёт и лицензия пилота": "/cards/dream-airplane-pilot.webp"
  },
  "byHud": {
+  "r6-dubai": "/cards/r6-dubai.webp",
+  "r6-istanbul": "/cards/r6-istanbul.webp",
+  "r6-kazan": "/cards/r6-kazan.webp",
+  "r6-antalya": "/cards/r6-antalya.webp",
+  "r1-dubai": "/cards/r1-dubai.webp",
+  "r1-istanbul": "/cards/r1-istanbul.webp",
+  "r1-kazan": "/cards/r1-kazan.webp",
+  "r1-antalya": "/cards/r1-antalya.webp",
   "hud-glass": "/cards/hud-glass.webp",
   "hud-warm": "/cards/hud-warm.webp",
   "hud-night": "/cards/hud-night.webp",
