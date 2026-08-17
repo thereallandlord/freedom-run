@@ -38,8 +38,19 @@ function url(path: string | undefined): string | null {
   return BASE.replace(/\/$/, '') + path
 }
 
+/**
+ * 🔴 У КУПЛЕННОГО актива id не такой, как у карточки: движок добавляет хвост
+ * с номером хода, чтобы две одинаковые покупки не слиплись
+ * (`big-re-msk-butovo` → `big-re-msk-butovo-133`). Поэтому прямой поиск по id
+ * в манифесте не находил НИЧЕГО, и миниатюры покупок не показывались вовсе.
+ * Хвост срезаем.
+ */
 export function artById(id: string | undefined): string | null {
-  return id ? url(M.byId?.[id]) : null
+  if (!id) return null
+  const direct = M.byId?.[id]
+  if (direct) return url(direct)
+  const base = id.replace(/-\d+$/, '')
+  return base !== id ? url(M.byId?.[base]) : null
 }
 
 export function artByTicker(symbol: string | undefined): string | null {
