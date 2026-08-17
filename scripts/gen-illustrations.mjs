@@ -257,6 +257,19 @@ const SCENES_BOARD = {
     'Top-down flat photograph of a shallow circular inlay in a premium board game: a smooth warm off-white paper medallion set into the board, ringed by a fine blind-embossed double circle and a delicate laurel-like botanical engraving in pale sage green, soft even studio lighting, very low contrast, empty flat centre with room to breathe. No text, no letters, no numbers, no symbols, no logos.',
 }
 
+/**
+ * Две подложки доски на сравнение (решение Камиля: посмотреть оба подхода).
+ *  plate-a — ТОЛЬКО поверхность: клетки потом кладёт код ровно по сетке 7×7.
+ *  plate-b — доска ЦЕЛИКОМ, вместе с клетками: красивее, но координаты клеток
+ *            придётся размечать руками под конкретную картинку.
+ */
+const SCENES_PLATE = {
+  'plate-a':
+    'Top-down photograph of an empty premium board game board, perfectly square, seen straight from above. Warm ivory pressed paper with fine linen grain, a slim blind-embossed double border frame set in from the edges, delicate corner flourishes in pale sage green, a large calm empty area in the middle with a faint embossed compass-rose-like geometric ornament. Soft even studio light, no shadows, very low contrast, muted warm neutral palette. Completely empty playing area — no squares, no spaces, no grid, no tiles, no cards, no pieces. No text, no letters, no numbers, no logos.',
+  'plate-b':
+    'Top-down photograph of a premium minimalist board game board, perfectly square, seen straight from above. Warm ivory pressed paper with fine linen grain. A single continuous track of small equal rounded square spaces runs around the outer edge forming a closed loop — exactly seven spaces along each side, corners shared. Each space is a plain pale tile with a thin sage green outline, all identical, evenly spaced, perfectly aligned. The large middle area is completely empty ivory with a faint embossed geometric ornament. Soft even studio light, no shadows, very low contrast. No text, no letters, no numbers, no icons, no illustrations inside the spaces, no cards, no pieces, no logos.',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -600,6 +613,14 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Подложки доски на сравнение
+  manifest.byPlate = manifest.byPlate || {}
+  for (const k of Object.keys(SCENES_PLATE)) {
+    push(k, `board-${k}`, SCENES_PLATE[k], 'plate', () => {
+      manifest.byPlate[k] = `/cards/board-${k}.webp`
+    })
   }
 
   // Полотно доски
