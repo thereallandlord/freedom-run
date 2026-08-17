@@ -2,11 +2,25 @@ import { fastBoard, RAT_BOARD } from '../engine/data'
 import type { Seat, Table } from '../engine/types'
 import { artBoard } from './cardArt'
 import { FAST_ICON, RAT_ICON } from './boardIcons'
+import cellData from '../data/board-cells.json'
 
-/*
- * Цвета клеток. Взяты тёмными намеренно: значок наследует цвет клетки, и на
- * светлом полотне доски пастельная линия в 26 пикселей просто не видна.
+/**
+ * Доска.
+ *
+ * Полотно ВМЕСТЕ С КЛЕТКАМИ рисует GPT Image — так решил Камиль. Клетки на нём
+ * пиксели, а не элементы разметки, поэтому координаты берутся не «на глаз»:
+ * scripts/calibrate-board.py находит нарисованные клетки на самой картинке и
+ * пишет их центры в src/data/board-cells.json. Перерисовал полотно — прогнал
+ * калибровку, разметка обновилась сама, руками ничего размечать не надо.
+ *
+ * Поверх картинки ложатся только значок, фишки и зона наведения. Поэтому у
+ * нарисованной доски всё равно есть подсветка и подпись клетки: они живут в
+ * наложенном слое, а не в пикселях.
+ *
+ * 🔴 На экране ОДНА дорожка за раз: пока все в Рутине, Полосы свободы не видно
+ * вовсе — она появляется, когда кто-то из-за стола вышел.
  */
+
 const RAT_STYLE: Record<string, { color: string; label: string }> = {
   opportunity: { color: '#047C54', label: 'Возможность' },
   market: { color: '#0369A1', label: 'Рынок' },
@@ -29,181 +43,169 @@ const FAST_STYLE: Record<string, { color: string; label: string }> = {
   charity: { color: '#B45309', label: 'Благотворительность' },
 }
 
-/**
- * Точка на периметре скруглённого прямоугольника. Внешняя дорожка так читается
- * как настоящая доска, а не как второе кольцо (правка Анвара с созвона).
- */
-function roundedRectPoint(tRaw: number, size: number, r: number) {
-  const t = ((tRaw % 1) + 1) % 1
-  const straight = size - 2 * r
-  const arc = (Math.PI / 2) * r
-  const total = 4 * straight + 4 * arc
-  let d = t * total
-
-  // Старт — середина верхней стороны, дальше по часовой стрелке.
-  const halfTop = straight / 2
-  if (d < halfTop) return { x: size / 2 + d, y: 0 }
-  d -= halfTop
-  if (d < arc) {
-    const a = (d / arc) * (Math.PI / 2)
-    return { x: size - r + r * Math.sin(a), y: r - r * Math.cos(a) }
-  }
-  d -= arc
-  if (d < straight) return { x: size, y: r + d }
-  d -= straight
-  if (d < arc) {
-    const a = (d / arc) * (Math.PI / 2)
-    return { x: size - r + r * Math.cos(a), y: size - r + r * Math.sin(a) }
-  }
-  d -= arc
-  if (d < straight) return { x: size - r - d, y: size }
-  d -= straight
-  if (d < arc) {
-    const a = (d / arc) * (Math.PI / 2)
-    return { x: r - r * Math.sin(a), y: size - r + r * Math.cos(a) }
-  }
-  d -= arc
-  if (d < straight) return { x: 0, y: size - r - d }
-  d -= straight
-  if (d < arc) {
-    const a = (d / arc) * (Math.PI / 2)
-    return { x: r - r * Math.cos(a), y: r - r * Math.sin(a) }
-  }
-  d -= arc
-  return { x: size / 2 - (halfTop - d), y: 0 }
+interface Calib {
+  image: string
+  cellW: number
+  cellH: number
+  cells: { x: number; y: number }[]
 }
+const CALIB = cellData as unknown as Record<string, Calib | undefined>
 
-/**
- * Обе дорожки живут на одной геометрии — скруглённом прямоугольнике.
- * Раньше Рутина была окружностью, и рядом с прямоугольной Полосой это
- * читалось как ошибка вёрстки: по сторонам клетки подпирали внешний ряд,
- * а в углах проваливались внутрь.
- */
-function ratPoint(index: number, total: number) {
-  const inset = 24
-  const size = 100 - inset * 2
-  const pt = roundedRectPoint(index / total, size, size * 0.16)
-  return { left: `${inset + pt.x}%`, top: `${inset + pt.y}%` }
+/** Ровная сетка по периметру — если калибровки для дорожки ещё нет. */
+function fallbackCells(count: number): { x: number; y: number }[] {
+  const side = Math.round((count + 4) / 4)
+  const pts: { x: number; y: number }[] = []
+  const at = (i: number) => (1 / side) * (i + 0.5)
+  for (let c = 0; c < side; c++) pts.push({ x: at(c), y: at(0) })
+  for (let r = 1; r < side; r++) pts.push({ x: at(side - 1), y: at(r) })
+  for (let c = side - 2; c >= 0; c--) pts.push({ x: at(c), y: at(side - 1) })
+  for (let r = side - 2; r >= 1; r--) pts.push({ x: at(0), y: at(r) })
+  return pts.slice(0, count)
 }
 
 function Tokens({ seats }: { seats: Seat[] }) {
   if (!seats.length) return null
   return (
-    <div className="pointer-events-none absolute -top-1.5 left-1/2 flex -translate-x-1/2 gap-0.5">
+    <span className="pointer-events-none absolute -top-1 left-1/2 z-20 flex -translate-x-1/2 gap-[3px]">
       {seats.map((s) => (
         <span
           key={s.id}
-          className="size-2.5 rounded-full ring-2 ring-[var(--bg)]"
-          style={{ background: s.color }}
+          className="block size-[11px] rounded-full ring-[2.5px] ring-white"
+          style={{ background: s.color, boxShadow: '0 2px 5px rgb(0 0 0 / 0.28)' }}
         />
       ))}
+    </span>
+  )
+}
+
+/** Клетка: значок, фишки и подпись при наведении — слоем поверх рисунка. */
+function Cell({
+  at,
+  w,
+  h,
+  color,
+  label,
+  icon,
+  seats,
+  dim,
+  ring,
+}: {
+  at: { x: number; y: number }
+  w: number
+  h: number
+  color: string
+  label: string
+  icon: React.ReactNode
+  seats: Seat[]
+  dim?: boolean
+  ring?: string
+}) {
+  return (
+    <div
+      className="group absolute -translate-x-1/2 -translate-y-1/2"
+      style={{
+        left: `${at.x * 100}%`,
+        top: `${at.y * 100}%`,
+        width: `${w * 100}%`,
+        height: `${h * 100}%`,
+      }}
+    >
+      <div
+        className="relative grid size-full place-items-center rounded-[16%] transition duration-150 group-hover:scale-[1.1]"
+        style={{
+          color,
+          opacity: dim ? 0.32 : 1,
+          boxShadow: ring ? `0 0 0 3px ${ring}` : undefined,
+        }}
+      >
+        <span className="block size-[46%] [&>svg]:size-full">{icon}</span>
+        <Tokens seats={seats} />
+      </div>
+
+      {/* Подпись только под курсором — иначе доска превратится в стену текста. */}
+      <span className="pointer-events-none absolute bottom-[calc(100%+5px)] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#171A19] px-2 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        {label}
+      </span>
     </div>
   )
 }
 
 export function Board({ table }: { table: Table }) {
   const active = table.seats[table.turnIndex]
+  // Полоса свободы появляется, только когда на неё кто-то вышел.
+  const showFast = table.seats.some((s) => s.track === 'fast' && !s.outOfGame)
   const board = fastBoard()
-  const surface = artBoard('surface')
-  const center = artBoard('center')
+
+  const calib = CALIB[showFast ? 'fast' : 'rat']
+  const count = showFast ? board.length : RAT_BOARD.length
+  const cells = calib && calib.cells.length === count ? calib.cells : fallbackCells(count)
+  const cw = calib?.cellW ?? 0.114
+  const ch = calib?.cellH ?? 0.117
+  const plate = artBoard('plate')
 
   return (
-    <div className="relative aspect-square h-full max-h-full w-auto max-w-full self-center">
-      {/* Полотно доски — снимок настоящей поверхности, а не плоская заливка. */}
-      <div className="absolute inset-0 overflow-hidden rounded-[13%] border border-[var(--line)] bg-[var(--panel-2)]">
-        {surface && (
-          <img
-            src={surface}
-            alt=""
-            aria-hidden
-            className="size-full object-cover opacity-95 dark:opacity-25"
-          />
-        )}
-      </div>
-      {board.map((space, i) => {
-        const st = FAST_STYLE[space.type]
-        const here = table.seats.filter((s) => s.track === 'fast' && s.position === i && !s.outOfGame)
-        const owned = table.ftOwnership[i]
-        const dreamOf = table.seats.find((s) => s.dreamSpace === i && !s.outOfGame)
-        // Отступ = половина клетки: путь идёт по центрам, а не по краю.
-        const pad = 2.6
-        const raw = roundedRectPoint(i / board.length, 100 - pad * 2, (100 - pad * 2) * 0.15)
-        const pt = { x: pad + raw.x, y: pad + raw.y }
-        const name = 'name' in space ? (space as { name: string }).name : st.label
-        return (
-          <div
-            key={`f${i}`}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
-            title={`${st.label}${'name' in space ? ': ' + name : ''}`}
-          >
-            <div
-              className="relative grid size-[26px] place-items-center rounded-[7px] bg-[var(--panel)] shadow-[0_1px_2px_rgb(24_30_28/0.10)]"
-              style={{
-                border: `1.5px solid ${st.color}${owned ? '33' : '55'}`,
-                color: st.color,
-                opacity: owned ? 0.35 : 1,
-                boxShadow: dreamOf ? `0 0 0 2.5px ${dreamOf.color}` : undefined,
-              }}
-            >
-              <span className="block size-[14px] [&>svg]:size-full">{FAST_ICON[space.type]}</span>
-              <Tokens seats={here} />
-            </div>
-          </div>
-        )
-      })}
+    <div className="board-fit relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--panel-2)]">
+      {plate && (
+        <img
+          src={plate}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 size-full object-cover dark:opacity-30"
+        />
+      )}
 
-      {/* Рутина — внутреннее кольцо */}
-      <div className="absolute inset-[22%] rounded-[16%] border border-[var(--line)] bg-[var(--panel)]" />
-      {RAT_BOARD.map((space, i) => {
-        const st = RAT_STYLE[space]
-        const here = table.seats.filter((s) => s.track === 'rat' && s.position === i && !s.outOfGame)
-        return (
-          <div
-            key={`r${i}`}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={ratPoint(i, RAT_BOARD.length)}
-            title={st.label}
-          >
-            <div
-              className="relative grid size-[26px] place-items-center rounded-[7px] bg-[var(--panel)] shadow-[0_1px_2px_rgb(24_30_28/0.10)]"
-              style={{ border: `1.5px solid ${st.color}55`, color: st.color }}
-            >
-              <span className="block size-[14px] [&>svg]:size-full">{RAT_ICON[space]}</span>
-              <Tokens seats={here} />
-            </div>
-          </div>
-        )
-      })}
+      {showFast
+        ? board.map((space, i) => {
+            const st = FAST_STYLE[space.type]
+            const dreamOf = table.seats.find((s) => s.dreamSpace === i && !s.outOfGame)
+            const name = 'name' in space ? (space as { name: string }).name : st.label
+            return (
+              <Cell
+                key={`f${i}`}
+                at={cells[i]}
+                w={cw}
+                h={ch}
+                color={st.color}
+                label={name}
+                icon={FAST_ICON[space.type]}
+                seats={table.seats.filter(
+                  (s) => s.track === 'fast' && s.position === i && !s.outOfGame,
+                )}
+                dim={!!table.ftOwnership[i]}
+                ring={dreamOf?.color}
+              />
+            )
+          })
+        : RAT_BOARD.map((space, i) => {
+            const st = RAT_STYLE[space]
+            return (
+              <Cell
+                key={`r${i}`}
+                at={cells[i]}
+                w={cw}
+                h={ch}
+                color={st.color}
+                label={st.label}
+                icon={RAT_ICON[space]}
+                seats={table.seats.filter(
+                  (s) => s.track === 'rat' && s.position === i && !s.outOfGame,
+                )}
+              />
+            )
+          })}
 
-      {/* Центр — плашка с гравировкой, поверх неё имя ходящего и кубики. */}
-      <div className="absolute inset-[33%] grid place-items-center overflow-hidden rounded-full border border-[var(--line)] bg-[var(--panel)] text-center shadow-[0_1px_2px_rgb(24_30_28/0.06)]">
-        {center && (
-          <img
-            src={center}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 size-full object-cover opacity-90 dark:opacity-20"
-          />
-        )}
-        <div className="relative px-3">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-            {active.track === 'rat' ? 'Рутина' : 'Полоса свободы'}
+      {/* Центр — только чей сейчас ход. Больше там ничему быть не нужно. */}
+      <div className="pointer-events-none absolute inset-[28%] grid place-items-center text-center">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+            {showFast ? 'Полоса свободы' : 'Ходит'}
           </div>
-          <div className="mt-0.5 text-sm font-bold" style={{ color: active.color }}>
+          <div
+            className="font-display mt-1 text-lg font-bold leading-tight sm:text-xl"
+            style={{ color: active.color }}
+          >
             {active.name}
           </div>
-          {table.lastRoll && (
-            <div className="tabnum mt-1 text-xl font-black">
-              {table.lastRoll.join(' + ')}
-              {table.lastRoll.length > 1 && (
-                <span className="text-[var(--muted)]">
-                  {' '}
-                  = {table.lastRoll.reduce((a, b) => a + b, 0)}
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

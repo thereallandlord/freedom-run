@@ -35,9 +35,22 @@ const DECKS = path.join(ROOT, 'src', 'data', 'decks_ru.json')
 const MODEL = 'gpt-image-2'
 const QUALITY = 'low'
 const SIZE = '1536x1024'
+// Доска — квадрат: в альбомном кадре её пришлось бы обрезать, а обрезка
+// съедает рамку и ломает калибровку клеток.
+const SIZE_SQUARE = '1024x1024'
+
+// Стиль полотна. Общий STYLE просит живописную сцену в горизонтальном кадре —
+// для доски это вредно: нужна плоская печатная поверхность без сюжета.
+const BOARD_STYLE = [
+  'Flat top-down product photograph of printed board game cardboard, shot straight from above,',
+  'perfectly square and centred, filling the frame. Even soft studio light, no cast shadows,',
+  'no perspective, no tilt. Calm minimalist print design, muted warm palette.',
+  'No text, no letters, no numbers, no logos, no watermarks.',
+].join(' ')
 const RUB_PER_IMAGE = 0.37 // замер по факту: low ≈ 158 output-токенов × $30/1M × ~78 ₽/$
 
 const TARGET_WIDTH = 900
+const TARGET_WIDTH_BOARD = 1024
 const WEBP_QUALITY = 78
 
 // 🔴 У организации лимит gpt-image-2 = 5 картинок в минуту. Без троттлинга пачка
@@ -267,7 +280,7 @@ const SCENES_PLATE = {
   'plate-a':
     'Top-down photograph of an empty premium board game board, perfectly square, seen straight from above. Warm ivory pressed paper with fine linen grain, a slim blind-embossed double border frame set in from the edges, delicate corner flourishes in pale sage green, a large calm empty area in the middle with a faint embossed compass-rose-like geometric ornament. Soft even studio light, no shadows, very low contrast, muted warm neutral palette. Completely empty playing area — no squares, no spaces, no grid, no tiles, no cards, no pieces. No text, no letters, no numbers, no logos.',
   'plate-b':
-    'Top-down photograph of a premium minimalist board game board, perfectly square, seen straight from above. Warm ivory pressed paper with fine linen grain. A single continuous track of small equal rounded square spaces runs around the outer edge forming a closed loop — exactly seven spaces along each side, corners shared. Each space is a plain pale tile with a thin sage green outline, all identical, evenly spaced, perfectly aligned. The large middle area is completely empty ivory with a faint embossed geometric ornament. Soft even studio light, no shadows, very low contrast. No text, no letters, no numbers, no icons, no illustrations inside the spaces, no cards, no pieces, no logos.',
+    'Top-down photograph of a premium minimalist board game board, perfectly square, seen straight from above, filling the frame edge to edge. Warm ivory pressed paper with fine linen grain. One continuous track of small rounded square spaces runs around the outer edge in a closed loop: exactly seven equal spaces along the top edge, seven down the right edge, seven along the bottom, seven up the left, corners shared, all identical in size, evenly spaced, perfectly aligned to a strict grid. Each space is a flat pale card with a thin sage green outline and a subtle drop shadow, clearly separated from its neighbours by a small even gap. The whole middle of the board is completely empty warm ivory with only a very faint embossed geometric ornament. Soft even studio light, no cast shadows, low contrast, calm muted palette. No text, no letters, no numbers, no icons, no illustrations inside the spaces, no game pieces, no cards, no dice, no logos.',
 }
 
 /** Большие сделки — недвижимость. */
@@ -682,9 +695,9 @@ function pickCompressor() {
 
   try {
     const sharp = require('sharp')
-    compressor = async (buf, dest) => {
+    compressor = async (buf, dest, width = TARGET_WIDTH) => {
       await sharp(buf)
-        .resize({ width: TARGET_WIDTH, withoutEnlargement: true })
+        .resize({ width: width, withoutEnlargement: true })
         .webp({ quality: WEBP_QUALITY, effort: 6 })
         .toFile(dest)
     }
@@ -708,11 +721,11 @@ im.save(dst, "WEBP", quality=q, method=6)
     execFileSync('python3', ['-c', 'from PIL import Image, features; assert features.check("webp")'], {
       stdio: 'ignore',
     })
-    compressor = async (buf, dest) => {
+    compressor = async (buf, dest, width = TARGET_WIDTH) => {
       const tmp = path.join(os.tmpdir(), `fr-${process.pid}-${Math.random().toString(36).slice(2)}.png`)
       fs.writeFileSync(tmp, buf)
       try {
-        execFileSync('python3', ['-c', PY, tmp, dest, String(TARGET_WIDTH), String(WEBP_QUALITY)], {
+        execFileSync('python3', ['-c', PY, tmp, dest, String(width), String(WEBP_QUALITY)], {
           stdio: ['ignore', 'ignore', 'pipe'],
         })
       } finally {
@@ -727,11 +740,11 @@ im.save(dst, "WEBP", quality=q, method=6)
 
   try {
     execFileSync('cwebp', ['-version'], { stdio: 'ignore' })
-    compressor = async (buf, dest) => {
+    compressor = async (buf, dest, width = TARGET_WIDTH) => {
       const tmp = path.join(os.tmpdir(), `fr-${process.pid}-${Math.random().toString(36).slice(2)}.png`)
       fs.writeFileSync(tmp, buf)
       try {
-        execFileSync('cwebp', ['-q', String(WEBP_QUALITY), '-resize', String(TARGET_WIDTH), '0', tmp, '-o', dest], {
+        execFileSync('cwebp', ['-q', String(WEBP_QUALITY), '-resize', String(width), '0', tmp, '-o', dest], {
           stdio: 'ignore',
         })
       } finally {
@@ -777,12 +790,12 @@ function makeRateLimiter(rpm) {
 
 let takeSlot = () => Promise.resolve()
 
-async function generateOne(apiKey, prompt, attempt = 1) {
+async function generateOne(apiKey, prompt, attempt = 1, size = SIZE) {
   await takeSlot()
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, prompt: prompt.slice(0, 4000), size: SIZE, quality: QUALITY, n: 1 }),
+    body: JSON.stringify({ model: MODEL, prompt: prompt.slice(0, 4000), size, quality: QUALITY, n: 1 }),
     signal: AbortSignal.timeout(300_000),
   })
   if (!res.ok) {
@@ -794,7 +807,7 @@ async function generateOne(apiKey, prompt, attempt = 1) {
       const hint = /try again in ([\d.]+)s/.exec(body)
       const waitMs = hint ? Math.ceil(Number(hint[1]) * 1000) + 1500 : 5000 * attempt
       await sleep(waitMs)
-      return generateOne(apiKey, prompt, attempt + 1)
+      return generateOne(apiKey, prompt, attempt + 1, size)
     }
     throw new Error(`OpenAI ${res.status}: ${body.replace(/\s+/g, ' ').slice(0, 160)}`)
   }
@@ -872,8 +885,11 @@ async function main() {
       if (!job) return
       const dest = path.join(OUT_DIR, job.file + '.webp')
       try {
-        const png = await generateOne(apiKey, `${job.scene}. ${STYLE}`)
-        await compress(png, dest)
+        // Доске нужен квадратный кадр, остальному — альбомный.
+        const size = job.group === 'plate' || job.group === 'board' ? SIZE_SQUARE : SIZE
+        const style = job.group === 'plate' || job.group === 'board' ? BOARD_STYLE : STYLE
+        const png = await generateOne(apiKey, `${job.scene}. ${style}`, 1, size)
+        await compress(png, dest, size === SIZE_SQUARE ? TARGET_WIDTH_BOARD : TARGET_WIDTH)
         const sz = fs.statSync(dest).size
         bytes += sz
         done++

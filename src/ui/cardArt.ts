@@ -60,7 +60,7 @@ export function artByDeckCard(theme: string | undefined): string | null {
 }
 
 /** Полотно доски: 'surface' — поверхность, 'center' — центральная плашка. */
-export function artBoard(part: 'surface' | 'center'): string | null {
+export function artBoard(part: 'plate' | 'surface' | 'center'): string | null {
   return url(M.byBoard?.[part])
 }
 

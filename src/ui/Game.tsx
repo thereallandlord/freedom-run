@@ -323,67 +323,108 @@ export function Game({
         </div>
 
         <div className="order-1 flex min-h-0 lg:order-2">
-          <div className="panel relative flex min-h-0 w-full flex-col items-center rounded-2xl p-4">
+          <div className="panel relative flex h-full min-h-0 w-full gap-3 rounded-2xl p-4">
             <MoneyToast table={table} />
             <TradeToast table={table} />
-            <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+
+            <div className="board-slot grid h-full min-h-0 flex-1 place-items-center">
               <Board table={table} />
             </div>
 
-            <div className="mt-3 flex shrink-0 flex-col items-center gap-2">
+            {/*
+              Кнопка и цифры — в правой колонке (правка Камиля). Раньше они
+              лежали под доской и съедали высоту, из-за чего доска мельчала.
+            */}
+            <div className="flex w-[150px] shrink-0 flex-col gap-2 self-center">
               {seat.isBot ? (
-                <div className="text-sm text-[var(--muted)]">
-                  🤖 {seat.name} думает…
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-3 py-4 text-center text-[12px] leading-snug text-[var(--muted)]">
+                  {seat.name} думает…
                 </div>
               ) : canEscape ? (
                 <button
                   onClick={() => dispatch({ type: 'ENTER_FAST_TRACK' })}
-                  className="btn-primary px-6 py-3 text-base"
+                  className="btn-primary w-full px-3 py-3.5 text-[13px] leading-tight"
                 >
-                  🎉 Выйти из Круга — выкуп {money(100 * passiveIncome(seat.ledger))}
+                  Выйти из Круга
+                  <span className="mt-0.5 block text-[11px] font-normal opacity-80">
+                    выкуп {money(100 * passiveIncome(seat.ledger))}
+                  </span>
                 </button>
               ) : canRoll ? (
-                <div className="flex gap-2">
+                <>
                   {diceOptions.map((n) => (
-                    <button key={n} onClick={() => roll(n)} className="btn-primary px-6 py-3 text-base">
-                      🎲 Бросок {diceOptions.length > 1 ? `— ${n} ${n === 1 ? 'кубик' : 'кубика'}` : ''}
+                    <button
+                      key={n}
+                      onClick={() => roll(n)}
+                      className="btn-primary w-full px-3 py-4 text-[15px]"
+                    >
+                      Бросок
+                      {diceOptions.length > 1 && (
+                        <span className="mt-0.5 block text-[11px] font-normal opacity-80">
+                          {n} {n === 1 ? 'кубик' : 'кубика'}
+                        </span>
+                      )}
                     </button>
                   ))}
-                </div>
+                </>
               ) : rolling ? (
-                <div className="dice-rolling text-3xl">🎲</div>
+                <div className="dice-rolling grid place-items-center rounded-xl border border-[var(--line)] bg-[var(--panel-2)] py-5 text-3xl">
+                  🎲
+                </div>
               ) : table.phase === 'turnEnd' ? (
-                <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-primary px-6 py-3 text-base">
-                  Передать ход →
+                <button
+                  onClick={() => dispatch({ type: 'END_TURN' })}
+                  className="btn-primary w-full px-3 py-4 text-[14px]"
+                >
+                  Передать ход
                 </button>
               ) : null}
 
-              <p className="max-w-sm text-center text-[11px] leading-relaxed text-[var(--muted)]">
-                {seat.track === 'rat'
-                  ? 'Цель: пассивный доход выше расходов — тогда выходишь из Рутины.'
-                  : 'Победа: встать на свою мечту и купить её — или собрать цель по доходу.'}
-              </p>
-
               {canEscape && (
-                <button onClick={() => roll(diceOptions[0])} className="text-xs text-[var(--muted)] hover:underline">
-                  или остаться и бросить кубик
+                <button
+                  onClick={() => roll(diceOptions[0])}
+                  className="text-[11px] text-[var(--muted)] hover:underline"
+                >
+                  или остаться и бросить
                 </button>
               )}
 
-              {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — это загадка. */}
-              {myDebt > 0 && !seat.isBot && (
-                <div className="flex w-full max-w-sm flex-wrap items-center justify-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-center text-[12px] leading-snug">
-                  <span>
-                    🔒 Долг перед игроками <span className="tabnum font-semibold">{money(myDebt)}</span> —
-                    пока не вернёте, мечту купить нельзя.
-                  </span>
-                  <button
-                    onClick={() => setTradesOpen(true)}
-                    className="btn-ghost px-2 py-1 text-[11px]"
-                  >
-                    Рассчитаться
-                  </button>
+              {/* Что выпало — рядом с кнопкой, а не в центре доски. */}
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5 text-center">
+                <div className="text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--muted)]">
+                  Кубики
                 </div>
+                <div className="tabnum mt-1 text-xl font-black leading-none">
+                  {table.lastRoll
+                    ? table.lastRoll.reduce((a, b) => a + b, 0)
+                    : <span className="text-[var(--muted)]">—</span>}
+                </div>
+                {table.lastRoll && table.lastRoll.length > 1 && (
+                  <div className="mt-0.5 text-[10px] text-[var(--muted)]">
+                    {table.lastRoll.join(' + ')}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5">
+                <div className="text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--muted)]">
+                  Наличные
+                </div>
+                <div className="tabnum mt-1 text-[15px] font-bold leading-none">
+                  {money(seat.ledger.cash)}
+                </div>
+              </div>
+
+              {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — загадка. */}
+              {myDebt > 0 && !seat.isBot && (
+                <button
+                  onClick={() => setTradesOpen(true)}
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-left text-[11px] leading-snug"
+                >
+                  Долг перед игроками{' '}
+                  <span className="tabnum font-semibold">{money(myDebt)}</span> — пока не
+                  вернёте, мечту купить нельзя. Рассчитаться →
+                </button>
               )}
             </div>
           </div>

@@ -615,3 +615,14 @@
     display: none;
   }
 }
+
+/* Доска — квадрат по МЕНЬШЕЙ стороне свободного места. Одним aspect-ratio это
+   не выразить: он растянет квадрат по ширине и вылезет за низ. */
+.board-fit {
+  width: min(100%, 100cqh);
+  height: min(100cqh, 100%);
+  aspect-ratio: 1;
+}
+.board-slot {
+  container-type: size;
+}

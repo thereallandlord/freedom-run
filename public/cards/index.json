@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-17T10:42:10.573Z",
+ "generatedAt": "2026-08-17T11:16:15.454Z",
  "byId": {
   "sd-room-ufa-chernikovka": "/cards/sd-room-ufa-chernikovka.webp",
   "sd-room-ufa-sipailovo": "/cards/sd-room-ufa-sipailovo.webp",
@@ -181,7 +181,8 @@
  },
  "byBoard": {
   "surface": "/cards/board-surface.webp",
-  "center": "/cards/board-center.webp"
+  "center": "/cards/board-center.webp",
+  "plate": "/cards/board-plate-b.webp"
  },
  "byDeck": {
   "ru": "/cards/deck-ru.webp",
