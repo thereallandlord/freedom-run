@@ -1,64 +1,362 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><title>Интерфейс · по твоим референсам</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Стол · четыре темы</title>
 <style>
 @font-face{font-family:'Unbounded';font-style:normal;font-weight:700;font-display:swap;
   src:url('./fonts/unbounded-cyrillic-700.woff2') format('woff2');
   unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;overflow-x:hidden;background:#0E1512;color:#E9F0EB;
-  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1500px;margin:0 auto;padding:30px 18px 90px}
-h1{font-family:'Unbounded',system-ui,sans-serif;font-size:25px;letter-spacing:-.025em;margin:0 0 8px}
-h2{font-family:'Unbounded',system-ui,sans-serif;font-size:15px;letter-spacing:-.02em;color:#9FB3A7;margin:34px 0 14px}
-.lede{margin:0;color:#93A99E;max-width:84ch}
+body{margin:0;overflow-x:hidden;background:#0C1210;color:#E9F0EB;
+  font:15px/1.5 ui-sans-serif,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:28px 16px 80px}
+h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 0 8px}
+.lede{margin:0 0 26px;color:#93A99E;max-width:86ch}
 .lede b{color:#E9F0EB;font-weight:600}
-.grid{display:grid;gap:22px}
-@media(min-width:1080px){.grid{grid-template-columns:1fr 1fr}}
-.cap{margin-bottom:8px}
-.cap b{font-family:'Unbounded',system-ui,sans-serif;font-size:14px;letter-spacing:-.02em}
-.hud img{display:block;width:100%;border-radius:14px;border:1px solid #24332B;box-shadow:0 20px 50px -32px #000}
+.tname{font-family:'Unbounded',system-ui,sans-serif;font-size:15px;letter-spacing:-.02em;margin:30px 0 10px}
+
+/* ── Экран стола: фон + доска + панели кодом ── */
+.screen{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
+  border:1px solid #24332B;box-shadow:0 24px 60px -34px #000;container-type:size}
+.screen>.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hud{position:absolute;inset:0;display:grid;gap:1.6cqw;padding:1.8cqw;
+  grid-template-columns:20cqw minmax(0,1fr) 13cqw;color:var(--ink)}
+
+.card{background:var(--glass);border:1px solid var(--line);border-radius:1.1cqw;
+  padding:1cqw 1.1cqw;display:grid;gap:.3cqw;backdrop-filter:blur(10px)}
+.k{font-size:.85cqw;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.v{font-family:'Unbounded',system-ui,sans-serif;font-size:1.7cqw;letter-spacing:-.02em}
+.v.sm{font-size:1.25cqw}
+.v em{font-style:normal;font-size:.85cqw;color:var(--muted);font-family:inherit}
+.v.up{color:var(--accent)}
+.bar{display:block;height:.5cqw;border-radius:99px;background:var(--line);overflow:hidden;margin-top:.4cqw}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.acc-in{color:#1F9D6B}.acc-out{color:#D6425B}.acc-debt{color:#C98A2E}
+
+.side,.right{display:grid;gap:.9cqw;align-content:start}
+.card.lead{background:var(--glass)}
+.roll{border:0;border-radius:1.1cqw;background:var(--accent);color:#fff;cursor:pointer;
+  font:700 1.15cqw/1 'Unbounded',ui-sans-serif,system-ui;padding:1.5cqw .6cqw;
+  box-shadow:0 .6cqw 1.6cqw -.6cqw rgba(0,0,0,.55)}
+
+.mid{display:grid;grid-template-rows:auto minmax(0,1fr);gap:1cqw;min-height:0}
+.chips{display:flex;gap:.6cqw;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:.4cqw;background:var(--glass);
+  border:1px solid var(--line);border-radius:99px;padding:.45cqw .9cqw;font-size:.95cqw;
+  backdrop-filter:blur(10px)}
+.chip i{width:.6cqw;height:.6cqw;border-radius:50%}
+.chip.on{border-color:var(--accent)}
+.chip.mk{margin-left:auto;color:var(--muted)}
+
+.boardwrap{display:grid;place-items:center;min-height:0}
+.board{position:relative;height:100%;aspect-ratio:1;border-radius:1.4cqw;overflow:hidden;
+  border:1px solid var(--line);box-shadow:0 1.4cqw 3cqw -1.4cqw rgba(0,0,0,.6)}
+.board>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);
+  grid-template-rows:repeat(7,1fr);padding:.5cqw}
+.cell{position:relative;display:grid;place-items:center;margin:.18cqw;border-radius:.7cqw;
+  background:var(--glass);border:1px solid var(--line);color:var(--ink);
+  backdrop-filter:blur(6px);transition:transform .15s ease}
+.cell>svg{width:52%;height:52%}
+.cell:hover{transform:scale(1.14);z-index:5;border-color:var(--accent)}
+.cell .tip{position:absolute;bottom:calc(100% + .4cqw);left:50%;transform:translateX(-50%);
+  white-space:nowrap;background:#121815;color:#fff;font-size:.85cqw;font-weight:600;
+  padding:.3cqw .6cqw;border-radius:.5cqw;opacity:0;pointer-events:none;transition:opacity .15s;z-index:9}
+.cell:hover .tip{opacity:1}
+.tok{position:absolute;top:-.45cqw;left:50%;transform:translateX(-50%);display:flex;gap:.2cqw}
+.tok i{width:.75cqw;height:.75cqw;border-radius:50%;box-shadow:0 0 0 .16cqw #fff}
+.centre{position:absolute;inset:30%;display:grid;place-content:center;text-align:center;pointer-events:none}
+.centre .who{font-size:.85cqw;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.centre .nm{font-family:'Unbounded',system-ui,sans-serif;font-size:1.9cqw;margin-top:.3cqw;color:var(--ink)}
+
+/* ── Телефон: та же тема, другая раскладка. Ради этого всё и затевалось. ── */
+@container (max-width: 620px){
+  .hud{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:2.4cqw;padding:2.4cqw}
+  .side{grid-template-columns:repeat(2,1fr);order:2}
+  .right{grid-template-columns:repeat(4,1fr);order:3}
+  .mid{order:1}
+  .k{font-size:2.1cqw}.v{font-size:4cqw}.v.sm{font-size:3.2cqw}.v em{font-size:2.1cqw}
+  .chip{font-size:2.4cqw;padding:1.1cqw 2.2cqw}.chip i{width:1.5cqw;height:1.5cqw}
+  .roll{font-size:3cqw;padding:3.4cqw 1cqw;grid-column:1/-1}
+  .card{border-radius:2.6cqw;padding:2.4cqw}
+  .cell{border-radius:1.6cqw}.cell .tip{font-size:2cqw}
+  .centre .nm{font-size:4.4cqw}.centre .who{font-size:2cqw}
+}
+.phones{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:12px}
+.phone{width:100%;max-width:380px}
+.phone .screen{aspect-ratio:9/16}
 </style></head><body><div class="wrap">
-<h1>Интерфейс по твоим референсам</h1>
-<p class="lede">Восемь экранов: четыре по шестому референсу (светлый дашборд с колонкой значков)
-и четыре по первому (макет на подносе со стеклянными панелями). Города разные — Дубай, Стамбул,
-Казань, Анталия. <b>Это эталон вида:</b> панели пустые, потому что цифры в них живые — их печатает
-интерфейс поверх фона, как уже сделано с клетками доски.</p>
-<h2>Светлый дашборд · шестой референс</h2>
-<div class="grid">
-    <section class="hud">
-      <div class="cap"><b>Дубай</b></div>
-      <img src="./cards/ref6-a.webp" alt="Дубай" loading="lazy" decoding="async">
-    </section>
-    <section class="hud">
-      <div class="cap"><b>Стамбул</b></div>
-      <img src="./cards/ref6-b.webp" alt="Стамбул" loading="lazy" decoding="async">
-    </section>
-    <section class="hud">
-      <div class="cap"><b>Казань</b></div>
-      <img src="./cards/ref6-c.webp" alt="Казань" loading="lazy" decoding="async">
-    </section>
-    <section class="hud">
-      <div class="cap"><b>Анталия</b></div>
-      <img src="./cards/ref6-d.webp" alt="Анталия" loading="lazy" decoding="async">
-    </section>
-</div>
-<h2>Макет со стеклом · первый референс</h2>
-<div class="grid">
-    <section class="hud">
-      <div class="cap"><b>Дубай</b></div>
-      <img src="./cards/ref1-a.webp" alt="Дубай" loading="lazy" decoding="async">
-    </section>
-    <section class="hud">
-      <div class="cap"><b>Стамбул</b></div>
-      <img src="./cards/ref1-b.webp" alt="Стамбул" loading="lazy" decoding="async">
-    </section>
-    <section class="hud">
-      <div class="cap"><b>Казань</b></div>
-      <img src="./cards/ref1-c.webp" alt="Казань" loading="lazy" decoding="async">
-    </section>
-    <section class="hud">
-      <div class="cap"><b>Анталия</b></div>
-      <img src="./cards/ref1-d.webp" alt="Анталия" loading="lazy" decoding="async">
-    </section>
-</div>
+<h1>Стол: фон, доска и панели по отдельности</h1>
+<p class="lede">Три слоя: <b>фон</b> и <b>мир городов</b> нарисованы, <b>клетки и панели рисует код</b> —
+и берёт цвета прямо из картинок, поэтому читается как один интерфейс. Панели тянутся под любой
+экран: тот же стол ниже показан вертикально, как на телефоне. Наведи на клетку.</p>
+
+  <section class="theme" style="
+      --edge:#241609;--panel:#2B1C11;--ink:#F3F7F4;--muted:#A6B6AC;
+      --accent:#AE7226;--line:rgba(255,255,255,.15);
+      --glass:rgba(18,24,21,.60)">
+    <div class="tname">Макет городов</div>
+    <div class="screen">
+      <img class="bg" src="./cards/bg-diorama.webp" alt="" aria-hidden>
+      <div class="hud">
+        <aside class="side">
+          <div class="card lead">
+            <span class="k">Цель · выйти из Круга</span>
+            <span class="v">0 ₽ <em>из 144 500 ₽</em></span>
+            <span class="bar"><i style="width:18%"></i></span>
+          </div>
+          <div class="card"><span class="k acc-in">Доходы</span><span class="v sm">200 000 ₽</span></div>
+          <div class="card"><span class="k acc-out">Расходы</span><span class="v sm">144 500 ₽</span></div>
+          <div class="card"><span class="k acc-debt">Обязательства</span><span class="v sm">960 000 ₽</span></div>
+        </aside>
+
+        <main class="mid">
+          <div class="chips">
+            <span class="chip on"><i style="background:#E14B4B"></i>Камиль</span>
+            <span class="chip"><i style="background:#3B82F6"></i>Анвар</span>
+            <span class="chip"><i style="background:#16A34A"></i>Бот</span>
+            <span class="chip mk">Рынок · спокойно</span>
+          </div>
+          <div class="boardwrap">
+            <div class="board">
+              <img src="./cards/world-diorama.webp" alt="" aria-hidden>
+              <div class="grid"><div class="cell" style="grid-row:1;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:1;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tok"><i style="background:#E14B4B"></i></span><span class="tip">Трата</span></div><div class="cell" style="grid-row:1;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.2c1.6-2.4 5.2-1.3 5.2 1.5 0 2.3-3 4.2-5.2 5.8-2.2-1.6-5.2-3.5-5.2-5.8 0-2.8 3.6-3.9 5.2-1.5Z"/><path d="M3.5 20.5h17"/></svg><span class="tip">Закят</span></div><div class="cell" style="grid-row:1;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:3;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tok"><i style="background:#3B82F6"></i></span><span class="tip">Рынок</span></div><div class="cell" style="grid-row:5;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:7;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5 5 4l4 3.2M19.5 9.5 19 4l-4 3.2"/><path d="M12 20.5c-4 0-7-2.7-7-6.1S8 7.5 12 7.5s7 3.5 7 6.9-3 6.1-7 6.1Z"/><path d="M10 13.5h.01M14 13.5h.01"/></svg><span class="tip">Питомец</span></div><div class="cell" style="grid-row:7;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:7;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tok"><i style="background:#16A34A"></i></span><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:7;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:5;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 10 13l3.5-3.5L21 17"/><path d="M21 12.5V17h-4.5"/></svg><span class="tip">Увольнение</span></div><div class="cell" style="grid-row:3;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div></div>
+              <div class="centre"><span class="who">Ходит</span><span class="nm">Камиль</span></div>
+            </div>
+          </div>
+        </main>
+
+        <aside class="right">
+          <button class="roll">Бросок</button>
+          <div class="card"><span class="k">Кубики</span><span class="v sm">7</span></div>
+          <div class="card"><span class="k">Наличные</span><span class="v sm">93 500 ₽</span></div>
+          <div class="card"><span class="k">Поток</span><span class="v sm up">+55 500 ₽</span></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="theme" style="
+      --edge:#9FC7C6;--panel:#EFE6D0;--ink:#161F1A;--muted:#5C6961;
+      --accent:#403606;--line:rgba(20,28,24,.13);
+      --glass:rgba(255,255,255,.74)">
+    <div class="tname">Изометрия</div>
+    <div class="screen">
+      <img class="bg" src="./cards/bg-isometric.webp" alt="" aria-hidden>
+      <div class="hud">
+        <aside class="side">
+          <div class="card lead">
+            <span class="k">Цель · выйти из Круга</span>
+            <span class="v">0 ₽ <em>из 144 500 ₽</em></span>
+            <span class="bar"><i style="width:18%"></i></span>
+          </div>
+          <div class="card"><span class="k acc-in">Доходы</span><span class="v sm">200 000 ₽</span></div>
+          <div class="card"><span class="k acc-out">Расходы</span><span class="v sm">144 500 ₽</span></div>
+          <div class="card"><span class="k acc-debt">Обязательства</span><span class="v sm">960 000 ₽</span></div>
+        </aside>
+
+        <main class="mid">
+          <div class="chips">
+            <span class="chip on"><i style="background:#E14B4B"></i>Камиль</span>
+            <span class="chip"><i style="background:#3B82F6"></i>Анвар</span>
+            <span class="chip"><i style="background:#16A34A"></i>Бот</span>
+            <span class="chip mk">Рынок · спокойно</span>
+          </div>
+          <div class="boardwrap">
+            <div class="board">
+              <img src="./cards/world-isometric.webp" alt="" aria-hidden>
+              <div class="grid"><div class="cell" style="grid-row:1;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:1;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tok"><i style="background:#E14B4B"></i></span><span class="tip">Трата</span></div><div class="cell" style="grid-row:1;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.2c1.6-2.4 5.2-1.3 5.2 1.5 0 2.3-3 4.2-5.2 5.8-2.2-1.6-5.2-3.5-5.2-5.8 0-2.8 3.6-3.9 5.2-1.5Z"/><path d="M3.5 20.5h17"/></svg><span class="tip">Закят</span></div><div class="cell" style="grid-row:1;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:3;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tok"><i style="background:#3B82F6"></i></span><span class="tip">Рынок</span></div><div class="cell" style="grid-row:5;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:7;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5 5 4l4 3.2M19.5 9.5 19 4l-4 3.2"/><path d="M12 20.5c-4 0-7-2.7-7-6.1S8 7.5 12 7.5s7 3.5 7 6.9-3 6.1-7 6.1Z"/><path d="M10 13.5h.01M14 13.5h.01"/></svg><span class="tip">Питомец</span></div><div class="cell" style="grid-row:7;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:7;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tok"><i style="background:#16A34A"></i></span><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:7;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:5;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 10 13l3.5-3.5L21 17"/><path d="M21 12.5V17h-4.5"/></svg><span class="tip">Увольнение</span></div><div class="cell" style="grid-row:3;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div></div>
+              <div class="centre"><span class="who">Ходит</span><span class="nm">Камиль</span></div>
+            </div>
+          </div>
+        </main>
+
+        <aside class="right">
+          <button class="roll">Бросок</button>
+          <div class="card"><span class="k">Кубики</span><span class="v sm">7</span></div>
+          <div class="card"><span class="k">Наличные</span><span class="v sm">93 500 ₽</span></div>
+          <div class="card"><span class="k">Поток</span><span class="v sm up">+55 500 ₽</span></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="theme" style="
+      --edge:#D9C69C;--panel:#E6D4B0;--ink:#161F1A;--muted:#5C6961;
+      --accent:#524327;--line:rgba(20,28,24,.13);
+      --glass:rgba(255,255,255,.74)">
+    <div class="tname">Мягкий современный</div>
+    <div class="screen">
+      <img class="bg" src="./cards/bg-soft.webp" alt="" aria-hidden>
+      <div class="hud">
+        <aside class="side">
+          <div class="card lead">
+            <span class="k">Цель · выйти из Круга</span>
+            <span class="v">0 ₽ <em>из 144 500 ₽</em></span>
+            <span class="bar"><i style="width:18%"></i></span>
+          </div>
+          <div class="card"><span class="k acc-in">Доходы</span><span class="v sm">200 000 ₽</span></div>
+          <div class="card"><span class="k acc-out">Расходы</span><span class="v sm">144 500 ₽</span></div>
+          <div class="card"><span class="k acc-debt">Обязательства</span><span class="v sm">960 000 ₽</span></div>
+        </aside>
+
+        <main class="mid">
+          <div class="chips">
+            <span class="chip on"><i style="background:#E14B4B"></i>Камиль</span>
+            <span class="chip"><i style="background:#3B82F6"></i>Анвар</span>
+            <span class="chip"><i style="background:#16A34A"></i>Бот</span>
+            <span class="chip mk">Рынок · спокойно</span>
+          </div>
+          <div class="boardwrap">
+            <div class="board">
+              <img src="./cards/world-soft.webp" alt="" aria-hidden>
+              <div class="grid"><div class="cell" style="grid-row:1;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:1;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tok"><i style="background:#E14B4B"></i></span><span class="tip">Трата</span></div><div class="cell" style="grid-row:1;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.2c1.6-2.4 5.2-1.3 5.2 1.5 0 2.3-3 4.2-5.2 5.8-2.2-1.6-5.2-3.5-5.2-5.8 0-2.8 3.6-3.9 5.2-1.5Z"/><path d="M3.5 20.5h17"/></svg><span class="tip">Закят</span></div><div class="cell" style="grid-row:1;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:3;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tok"><i style="background:#3B82F6"></i></span><span class="tip">Рынок</span></div><div class="cell" style="grid-row:5;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:7;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5 5 4l4 3.2M19.5 9.5 19 4l-4 3.2"/><path d="M12 20.5c-4 0-7-2.7-7-6.1S8 7.5 12 7.5s7 3.5 7 6.9-3 6.1-7 6.1Z"/><path d="M10 13.5h.01M14 13.5h.01"/></svg><span class="tip">Питомец</span></div><div class="cell" style="grid-row:7;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:7;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tok"><i style="background:#16A34A"></i></span><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:7;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:5;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 10 13l3.5-3.5L21 17"/><path d="M21 12.5V17h-4.5"/></svg><span class="tip">Увольнение</span></div><div class="cell" style="grid-row:3;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div></div>
+              <div class="centre"><span class="who">Ходит</span><span class="nm">Камиль</span></div>
+            </div>
+          </div>
+        </main>
+
+        <aside class="right">
+          <button class="roll">Бросок</button>
+          <div class="card"><span class="k">Кубики</span><span class="v sm">7</span></div>
+          <div class="card"><span class="k">Наличные</span><span class="v sm">93 500 ₽</span></div>
+          <div class="card"><span class="k">Поток</span><span class="v sm up">+55 500 ₽</span></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="theme" style="
+      --edge:#07131B;--panel:#131419;--ink:#F3F7F4;--muted:#A6B6AC;
+      --accent:#7D6E4E;--line:rgba(255,255,255,.15);
+      --glass:rgba(18,24,21,.60)">
+    <div class="tname">Ночные города</div>
+    <div class="screen">
+      <img class="bg" src="./cards/bg-night.webp" alt="" aria-hidden>
+      <div class="hud">
+        <aside class="side">
+          <div class="card lead">
+            <span class="k">Цель · выйти из Круга</span>
+            <span class="v">0 ₽ <em>из 144 500 ₽</em></span>
+            <span class="bar"><i style="width:18%"></i></span>
+          </div>
+          <div class="card"><span class="k acc-in">Доходы</span><span class="v sm">200 000 ₽</span></div>
+          <div class="card"><span class="k acc-out">Расходы</span><span class="v sm">144 500 ₽</span></div>
+          <div class="card"><span class="k acc-debt">Обязательства</span><span class="v sm">960 000 ₽</span></div>
+        </aside>
+
+        <main class="mid">
+          <div class="chips">
+            <span class="chip on"><i style="background:#E14B4B"></i>Камиль</span>
+            <span class="chip"><i style="background:#3B82F6"></i>Анвар</span>
+            <span class="chip"><i style="background:#16A34A"></i>Бот</span>
+            <span class="chip mk">Рынок · спокойно</span>
+          </div>
+          <div class="boardwrap">
+            <div class="board">
+              <img src="./cards/world-night.webp" alt="" aria-hidden>
+              <div class="grid"><div class="cell" style="grid-row:1;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:1;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tok"><i style="background:#E14B4B"></i></span><span class="tip">Трата</span></div><div class="cell" style="grid-row:1;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.2c1.6-2.4 5.2-1.3 5.2 1.5 0 2.3-3 4.2-5.2 5.8-2.2-1.6-5.2-3.5-5.2-5.8 0-2.8 3.6-3.9 5.2-1.5Z"/><path d="M3.5 20.5h17"/></svg><span class="tip">Закят</span></div><div class="cell" style="grid-row:1;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:3;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tok"><i style="background:#3B82F6"></i></span><span class="tip">Рынок</span></div><div class="cell" style="grid-row:5;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:7;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5 5 4l4 3.2M19.5 9.5 19 4l-4 3.2"/><path d="M12 20.5c-4 0-7-2.7-7-6.1S8 7.5 12 7.5s7 3.5 7 6.9-3 6.1-7 6.1Z"/><path d="M10 13.5h.01M14 13.5h.01"/></svg><span class="tip">Питомец</span></div><div class="cell" style="grid-row:7;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:7;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tok"><i style="background:#16A34A"></i></span><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:7;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:5;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 10 13l3.5-3.5L21 17"/><path d="M21 12.5V17h-4.5"/></svg><span class="tip">Увольнение</span></div><div class="cell" style="grid-row:3;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div></div>
+              <div class="centre"><span class="who">Ходит</span><span class="nm">Камиль</span></div>
+            </div>
+          </div>
+        </main>
+
+        <aside class="right">
+          <button class="roll">Бросок</button>
+          <div class="card"><span class="k">Кубики</span><span class="v sm">7</span></div>
+          <div class="card"><span class="k">Наличные</span><span class="v sm">93 500 ₽</span></div>
+          <div class="card"><span class="k">Поток</span><span class="v sm up">+55 500 ₽</span></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+<div class="tname">Тот же стол на телефоне</div>
+<div class="phones"><div class="phone">
+  <section class="theme" style="
+      --edge:#241609;--panel:#2B1C11;--ink:#F3F7F4;--muted:#A6B6AC;
+      --accent:#AE7226;--line:rgba(255,255,255,.15);
+      --glass:rgba(18,24,21,.60)">
+    <div class="tname">Макет городов</div>
+    <div class="screen">
+      <img class="bg" src="./cards/bg-diorama.webp" alt="" aria-hidden>
+      <div class="hud">
+        <aside class="side">
+          <div class="card lead">
+            <span class="k">Цель · выйти из Круга</span>
+            <span class="v">0 ₽ <em>из 144 500 ₽</em></span>
+            <span class="bar"><i style="width:18%"></i></span>
+          </div>
+          <div class="card"><span class="k acc-in">Доходы</span><span class="v sm">200 000 ₽</span></div>
+          <div class="card"><span class="k acc-out">Расходы</span><span class="v sm">144 500 ₽</span></div>
+          <div class="card"><span class="k acc-debt">Обязательства</span><span class="v sm">960 000 ₽</span></div>
+        </aside>
+
+        <main class="mid">
+          <div class="chips">
+            <span class="chip on"><i style="background:#E14B4B"></i>Камиль</span>
+            <span class="chip"><i style="background:#3B82F6"></i>Анвар</span>
+            <span class="chip"><i style="background:#16A34A"></i>Бот</span>
+            <span class="chip mk">Рынок · спокойно</span>
+          </div>
+          <div class="boardwrap">
+            <div class="board">
+              <img src="./cards/world-diorama.webp" alt="" aria-hidden>
+              <div class="grid"><div class="cell" style="grid-row:1;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:1;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tok"><i style="background:#E14B4B"></i></span><span class="tip">Трата</span></div><div class="cell" style="grid-row:1;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.2c1.6-2.4 5.2-1.3 5.2 1.5 0 2.3-3 4.2-5.2 5.8-2.2-1.6-5.2-3.5-5.2-5.8 0-2.8 3.6-3.9 5.2-1.5Z"/><path d="M3.5 20.5h17"/></svg><span class="tip">Закят</span></div><div class="cell" style="grid-row:1;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:3;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tok"><i style="background:#3B82F6"></i></span><span class="tip">Рынок</span></div><div class="cell" style="grid-row:5;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:7;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5 5 4l4 3.2M19.5 9.5 19 4l-4 3.2"/><path d="M12 20.5c-4 0-7-2.7-7-6.1S8 7.5 12 7.5s7 3.5 7 6.9-3 6.1-7 6.1Z"/><path d="M10 13.5h.01M14 13.5h.01"/></svg><span class="tip">Питомец</span></div><div class="cell" style="grid-row:7;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:7;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tok"><i style="background:#16A34A"></i></span><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:7;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:5;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 10 13l3.5-3.5L21 17"/><path d="M21 12.5V17h-4.5"/></svg><span class="tip">Увольнение</span></div><div class="cell" style="grid-row:3;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div></div>
+              <div class="centre"><span class="who">Ходит</span><span class="nm">Камиль</span></div>
+            </div>
+          </div>
+        </main>
+
+        <aside class="right">
+          <button class="roll">Бросок</button>
+          <div class="card"><span class="k">Кубики</span><span class="v sm">7</span></div>
+          <div class="card"><span class="k">Наличные</span><span class="v sm">93 500 ₽</span></div>
+          <div class="card"><span class="k">Поток</span><span class="v sm up">+55 500 ₽</span></div>
+        </aside>
+      </div>
+    </div>
+  </section></div>
+<div class="phone">
+  <section class="theme" style="
+      --edge:#9FC7C6;--panel:#EFE6D0;--ink:#161F1A;--muted:#5C6961;
+      --accent:#403606;--line:rgba(20,28,24,.13);
+      --glass:rgba(255,255,255,.74)">
+    <div class="tname">Изометрия</div>
+    <div class="screen">
+      <img class="bg" src="./cards/bg-isometric.webp" alt="" aria-hidden>
+      <div class="hud">
+        <aside class="side">
+          <div class="card lead">
+            <span class="k">Цель · выйти из Круга</span>
+            <span class="v">0 ₽ <em>из 144 500 ₽</em></span>
+            <span class="bar"><i style="width:18%"></i></span>
+          </div>
+          <div class="card"><span class="k acc-in">Доходы</span><span class="v sm">200 000 ₽</span></div>
+          <div class="card"><span class="k acc-out">Расходы</span><span class="v sm">144 500 ₽</span></div>
+          <div class="card"><span class="k acc-debt">Обязательства</span><span class="v sm">960 000 ₽</span></div>
+        </aside>
+
+        <main class="mid">
+          <div class="chips">
+            <span class="chip on"><i style="background:#E14B4B"></i>Камиль</span>
+            <span class="chip"><i style="background:#3B82F6"></i>Анвар</span>
+            <span class="chip"><i style="background:#16A34A"></i>Бот</span>
+            <span class="chip mk">Рынок · спокойно</span>
+          </div>
+          <div class="boardwrap">
+            <div class="board">
+              <img src="./cards/world-isometric.webp" alt="" aria-hidden>
+              <div class="grid"><div class="cell" style="grid-row:1;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:1;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tok"><i style="background:#E14B4B"></i></span><span class="tip">Трата</span></div><div class="cell" style="grid-row:1;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:1;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10.2c1.6-2.4 5.2-1.3 5.2 1.5 0 2.3-3 4.2-5.2 5.8-2.2-1.6-5.2-3.5-5.2-5.8 0-2.8 3.6-3.9 5.2-1.5Z"/><path d="M3.5 20.5h17"/></svg><span class="tip">Закят</span></div><div class="cell" style="grid-row:1;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:3;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tok"><i style="background:#3B82F6"></i></span><span class="tip">Рынок</span></div><div class="cell" style="grid-row:5;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:7;grid-column:7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5 5 4l4 3.2M19.5 9.5 19 4l-4 3.2"/><path d="M12 20.5c-4 0-7-2.7-7-6.1S8 7.5 12 7.5s7 3.5 7 6.9-3 6.1-7 6.1Z"/><path d="M10 13.5h.01M14 13.5h.01"/></svg><span class="tip">Питомец</span></div><div class="cell" style="grid-row:7;grid-column:5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div><div class="cell" style="grid-row:7;grid-column:3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tok"><i style="background:#16A34A"></i></span><span class="tip">Возможность</span></div><div class="cell" style="grid-row:7;grid-column:2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 16V9M12 16V5M17 16v-4"/></svg><span class="tip">Рынок</span></div><div class="cell" style="grid-row:7;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:6;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8h15l-1.2 12.2a1.6 1.6 0 0 1-1.6 1.3H7.3a1.6 1.6 0 0 1-1.6-1.3z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tip">Трата</span></div><div class="cell" style="grid-row:5;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:4;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5 10 13l3.5-3.5L21 17"/><path d="M21 12.5V17h-4.5"/></svg><span class="tip">Увольнение</span></div><div class="cell" style="grid-row:3;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2.2"/><path d="M15.5 20.5V6a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v14.5"/></svg><span class="tip">Возможность</span></div><div class="cell" style="grid-row:2;grid-column:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></svg><span class="tip">Зарплата</span></div></div>
+              <div class="centre"><span class="who">Ходит</span><span class="nm">Камиль</span></div>
+            </div>
+          </div>
+        </main>
+
+        <aside class="right">
+          <button class="roll">Бросок</button>
+          <div class="card"><span class="k">Кубики</span><span class="v sm">7</span></div>
+          <div class="card"><span class="k">Наличные</span><span class="v sm">93 500 ₽</span></div>
+          <div class="card"><span class="k">Поток</span><span class="v sm up">+55 500 ₽</span></div>
+        </aside>
+      </div>
+    </div>
+  </section></div></div>
 </div></body></html>

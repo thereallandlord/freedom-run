@@ -1,0 +1,42 @@
+{
+ "diorama": {
+  "bg": "/cards/bg-diorama.webp",
+  "board": "/cards/world-diorama.webp",
+  "dark": true,
+  "edge": "#241609",
+  "panel": "#2B1C11",
+  "ink": "#F3F7F4",
+  "muted": "#A6B6AC",
+  "accent": "#AE7226"
+ },
+ "isometric": {
+  "bg": "/cards/bg-isometric.webp",
+  "board": "/cards/world-isometric.webp",
+  "dark": false,
+  "edge": "#9FC7C6",
+  "panel": "#EFE6D0",
+  "ink": "#161F1A",
+  "muted": "#5C6961",
+  "accent": "#403606"
+ },
+ "soft": {
+  "bg": "/cards/bg-soft.webp",
+  "board": "/cards/world-soft.webp",
+  "dark": false,
+  "edge": "#D9C69C",
+  "panel": "#E6D4B0",
+  "ink": "#161F1A",
+  "muted": "#5C6961",
+  "accent": "#524327"
+ },
+ "night": {
+  "bg": "/cards/bg-night.webp",
+  "board": "/cards/world-night.webp",
+  "dark": true,
+  "edge": "#07131B",
+  "panel": "#131419",
+  "ink": "#F3F7F4",
+  "muted": "#A6B6AC",
+  "accent": "#7D6E4E"
+ }
+}

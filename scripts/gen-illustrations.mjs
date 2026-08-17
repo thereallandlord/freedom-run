@@ -472,6 +472,70 @@ const SCENES_REF = {
   'r1-antalya': R1 + ' The miniature leans towards Antalya: cliffs and marina at dusk, warm harbour lights on dark water.',
 }
 
+/**
+ * Фоны под доски. Отдельный слой: доска кладётся поверх, панели рисует код.
+ *
+ * Почему так, а не одной картинкой на весь экран (решение Камиля): цельный
+ * макет всегда снят под углом, тащит лишние кнопки и не гнётся — ни под
+ * телефон, ни под широкий монитор. Фон + доска + панели кодом дают тот же
+ * вид и полную гибкость.
+ *
+ * 🔴 Требование к фону: СПОКОЙНАЯ СЕРЕДИНА. Там будет доска, и любая деталь
+ * под ней превратится в грязь. Вся жизнь — по краям и углам.
+ */
+const BG_RULE =
+  'Wide horizontal background image for a game screen, 3:2, seen straight on. ' +
+  'The CENTRE of the image is calm and almost empty — a large quiet area where a board will be placed on top. ' +
+  'All the interest lives around the outer edges and in the corners. Nothing important in the middle. ' +
+  'No board, no game spaces, no grid, no cards, no panels, no interface elements, no people. ' +
+  'No text, no letters, no numbers, no logos.'
+
+const SCENES_BG = {
+  'bg-diorama':
+    BG_RULE + ' A dark walnut table top photographed from above in a warm evening studio: soft pool of light in the middle, ' +
+    'deep shadows towards the corners, faint grain of the wood, a few blurred brass and glass objects at the very edges. ' +
+    'Rich warm browns and amber, low contrast, expensive and quiet.',
+  'bg-isometric':
+    BG_RULE + ' A bright sky seen from high above: soft white cumulus clouds drifting in the corners, ' +
+    'clear turquoise-blue air in the middle, tiny distant birds, gentle sunlight from the upper left. ' +
+    'Vivid cheerful palette, crisp clean 3D-render look, airy and open.',
+  'bg-soft':
+    BG_RULE + ' A calm matte surface in soft pastel sand and sage: very gentle wide gradient, ' +
+    'a few simplified rounded shapes and soft shadows drifting near the edges, like paper cut-outs. ' +
+    'Muted warm palette, extremely low contrast, quiet modern and clean.',
+  'bg-night':
+    BG_RULE + ' Dark still water at night seen from above: deep midnight blue, faint ripples, ' +
+    'scattered warm gold and cool cyan reflections near the outer edges from unseen city lights, ' +
+    'a few dark rocks in the corners. Cinematic, deep and expensive.',
+}
+
+/**
+ * Мир доски БЕЗ клеток.
+ *
+ * 🔴 Почему без. Замер: четыре городские доски × пять перерисовок — ни одна
+ * не дала ровно 24 клетки, выходило 20–23. На занятой городской картинке
+ * модель не держит счёт, а лишняя или недостающая клетка — это поехавшая
+ * фишка. Клетки теперь рисует код поверх этого мира: они всегда на месте,
+ * тянутся под любой экран (телефон!), умеют наведение и подсветку.
+ * Картинка отвечает за красоту, код — за точность.
+ */
+const WORLD_RULE =
+  'Square top-down illustration of a miniature world of famous cities, filling the frame edge to edge. ' +
+  'Dubai with its needle tower and palm island, Istanbul with domes and minarets over the strait, ' +
+  'Antalya with a marina and cliffs, Kazan with a white kremlin and blue domes, Baku with curved towers, ' +
+  'Cairo with pyramids at the desert edge. The cities sit in a ring around the outside, separated by water, ' +
+  'sand and greenery; the very middle is a calm open area with nothing important in it. ' +
+  'A clean quiet margin of plain ground runs along all four outer edges. ' +
+  'No game spaces, no squares, no tiles, no grid, no board frame, no cards, no pieces, no panels. ' +
+  'No text, no letters, no numbers, no logos.'
+
+const SCENES_WORLD = {
+  'world-diorama': WORLD_RULE + ' Style: photoreal miniature model under warm evening light, tiny glowing windows, soft deep shadows.',
+  'world-isometric': WORLD_RULE + ' Style: bright crisp 3D render, vivid saturated colours, soft clouds at the corners, cheerful daylight.',
+  'world-soft': WORLD_RULE + ' Style: soft matte pastel illustration, sand and sage palette, simplified rounded shapes, very low contrast.',
+  'world-night': WORLD_RULE + ' Style: night scene, deep midnight water, cities glowing warm gold and cool cyan, reflections, cinematic.',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -815,6 +879,22 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Мир доски без клеток
+  manifest.byWorld = manifest.byWorld || {}
+  for (const [k, scene] of Object.entries(SCENES_WORLD)) {
+    push(k, k, scene, 'plate', () => {
+      manifest.byWorld[k] = `/cards/${k}.webp`
+    })
+  }
+
+  // Фоны под доски
+  manifest.byBg = manifest.byBg || {}
+  for (const [k, scene] of Object.entries(SCENES_BG)) {
+    push(k, k, scene, 'plateWide', () => {
+      manifest.byBg[k] = `/cards/${k}.webp`
+    })
   }
 
   // Интерфейсы по референсам Камиля

@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-17T12:37:44.498Z",
+ "generatedAt": "2026-08-17T12:56:51.004Z",
  "byId": {
   "sd-room-ufa-chernikovka": "/cards/sd-room-ufa-chernikovka.webp",
   "sd-room-ufa-sipailovo": "/cards/sd-room-ufa-sipailovo.webp",
@@ -174,6 +174,18 @@
   "Суперкар": "/cards/dream-supercar.webp",
   "Дом у моря": "/cards/dream-seaside-house.webp",
   "Свой самолёт и лицензия пилота": "/cards/dream-airplane-pilot.webp"
+ },
+ "byWorld": {
+  "world-diorama": "/cards/world-diorama.webp",
+  "world-isometric": "/cards/world-isometric.webp",
+  "world-soft": "/cards/world-soft.webp",
+  "world-night": "/cards/world-night.webp"
+ },
+ "byBg": {
+  "bg-diorama": "/cards/bg-diorama.webp",
+  "bg-isometric": "/cards/bg-isometric.webp",
+  "bg-soft": "/cards/bg-soft.webp",
+  "bg-night": "/cards/bg-night.webp"
  },
  "byHud": {
   "r6-dubai": "/cards/r6-dubai.webp",
