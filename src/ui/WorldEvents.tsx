@@ -426,7 +426,7 @@ function MarketBar({
       onClick={onOpen}
       title="История мировых событий"
       aria-label="Состояние рынка и история мировых событий"
-      className={`panel-2 flex items-center gap-1.5 rounded-lg text-left transition hover:border-emerald-500/60 ${
+      className={`flex items-center gap-1.5 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] text-left text-[var(--t-ink)] backdrop-blur-md transition hover:border-[var(--t-accent)] ${
         compact ? 'shrink-0 px-2 py-1.5' : 'mb-3 w-full px-2.5 py-2'
       }`}
     >

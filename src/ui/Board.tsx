@@ -120,8 +120,12 @@ function Cell({
 
 export function Board({ table, children }: { table: Table; children?: ReactNode }) {
   const theme = useBoardTheme()
-  // Полоса свободы появляется, только когда на неё кто-то вышел.
-  const showFast = table.seats.some((s) => s.track === 'fast' && !s.outOfGame)
+  /*
+   * Показываем дорожку ТОГО, ЧЕЙ ХОД. Пока все в Рутине — на столе одно поле.
+   * Кто-то вышел на Полосу свободы — на его ходу стол показывает Полосу,
+   * на ходу остальных возвращается Рутина. Двух колец разом не бывает.
+   */
+  const showFast = table.seats[table.turnIndex]?.track === 'fast'
   const board = fastBoard()
   const count = showFast ? board.length : RAT_BOARD.length
   const side = sideFor(count)

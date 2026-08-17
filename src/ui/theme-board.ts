@@ -110,6 +110,7 @@ export function themeVars(t: BoardTheme): React.CSSProperties {
       '--t-accent': t.accent,
       '--t-line': t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(20,28,24,0.12)',
       '--t-glass': t.dark ? 'rgba(16,22,19,0.66)' : 'rgba(255,255,255,0.78)',
+      '--t-panel-2': t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(20,28,24,0.04)',
       '--t-cell': t.dark ? 'rgba(12,18,15,0.38)' : 'rgba(255,255,255,0.42)',
       '--t-cell-line': t.dark ? 'rgba(255,255,255,0.26)' : 'rgba(20,28,24,0.18)',
       '--t-on-accent': t.dark ? '#0B1310' : '#FFFFFF',

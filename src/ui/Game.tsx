@@ -40,7 +40,7 @@ function Scoreboard({
           <button
             key={s.id}
             onClick={() => onView(s.id)}
-            className={`panel-2 flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition ${
+            className={`flex shrink-0 items-center gap-2 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2.5 py-1.5 text-xs text-[var(--t-ink)] backdrop-blur-md transition ${
               viewId === s.id ? 'border-emerald-500/70' : ''
             } ${s.outOfGame ? 'opacity-40' : ''}`}
           >
@@ -49,7 +49,7 @@ function Scoreboard({
               style={{ background: s.color }}
             />
             <span className="font-semibold">{s.name}</span>
-            <span className="tabnum text-[var(--muted)]">{money(s.ledger.cash)}</span>
+            <span className="tabnum text-[var(--t-muted, var(--muted))]">{money(s.ledger.cash)}</span>
             <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>
             {s.won && <span className="text-[10px]">🏆</span>}
             {!s.won && s.track === 'fast' && (
@@ -139,7 +139,7 @@ function TradeToast({ table }: { table: Table }) {
   return (
     <div
       key={note.key}
-      className="pop-in pointer-events-none absolute left-1/2 top-3 z-20 max-w-[90%] -translate-x-1/2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 py-1.5 text-center text-sm font-semibold shadow-[var(--shadow-pop)]"
+      className="pop-in pointer-events-none absolute left-1/2 top-3 z-20 max-w-[90%] -translate-x-1/2 rounded-full border border-[var(--t-line, var(--line))] bg-[var(--panel)] px-4 py-1.5 text-center text-sm font-semibold shadow-[var(--shadow-pop)]"
     >
       {note.text}
     </div>
@@ -167,18 +167,18 @@ function WinScreen({
           {winner ? `${winner.name} побеждает!` : 'Все обанкротились'}
         </h2>
         {table.seats.filter((s) => s.won).length > 1 && (
-          <p className="mt-1 text-sm text-[var(--muted)]">
+          <p className="mt-1 text-sm text-[var(--t-muted, var(--muted))]">
             Цели достигли: {table.seats.filter((s) => s.won).map((s) => s.name).join(', ')}
           </p>
         )}
         {winner?.ledger.winReason === 'dream' && winner.ledger.fastTrack?.dream && (
-          <p className="mt-1 text-sm text-[var(--muted)]">
+          <p className="mt-1 text-sm text-[var(--t-muted, var(--muted))]">
             Купил мечту «{winner.ledger.fastTrack.dream.name}» за{' '}
             {money(winner.ledger.fastTrack.dream.pricePaid)}
           </p>
         )}
         {winner?.ledger.winReason === 'cashflowGoal' && (
-          <p className="mt-1 text-sm text-[var(--muted)]">
+          <p className="mt-1 text-sm text-[var(--t-muted, var(--muted))]">
             Собрал цель по доходу на Полосе свободы
           </p>
         )}
@@ -187,13 +187,13 @@ function WinScreen({
           {standings.map((s, i) => (
             <div key={s.id} className="panel-2 flex items-center justify-between rounded-lg px-3 py-2 text-sm">
               <span className="flex items-center gap-2">
-                <span className="text-[var(--muted)]">{i + 1}.</span>
+                <span className="text-[var(--t-muted, var(--muted))]">{i + 1}.</span>
                 <span className="size-2.5 rounded-full" style={{ background: s.color }} />
                 {s.name}
                 {s.won && <span className="text-xs text-emerald-400">🏆</span>}
                 {s.outOfGame && <span className="text-xs text-rose-400">(банкрот)</span>}
               </span>
-              <span className="tabnum text-[var(--muted)]">
+              <span className="tabnum text-[var(--t-muted, var(--muted))]">
                 капитал {money(netWorth(s.ledger))}
               </span>
             </div>
@@ -261,7 +261,10 @@ export function Game({
     table.phase === 'awaitingRoll' && seat.track === 'rat' && isOutOfRatRace(seat.ledger) && !seat.isBot
 
   return (
-    <div className="relative flex h-[100dvh] flex-col" style={themeVars(theme)}>
+    <div
+      className="relative flex h-[100dvh] flex-col"
+      style={{ ...themeVars(theme), color: 'var(--t-ink)' }}
+    >
       {/* Фон темы — отдельный слой: доска и панели ложатся поверх. */}
       <img
         src={theme.bg}
@@ -276,7 +279,7 @@ export function Game({
           {topRight}
           <button
             onClick={() => setTradesOpen(true)}
-            className="btn-ghost text-xs"
+            className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md"
             disabled={seat.isBot}
             title="Сделки между игроками"
           >
@@ -285,17 +288,17 @@ export function Game({
           </button>
           <button
             onClick={() => setBankOpen(true)}
-            className="btn-ghost text-xs"
+            className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md"
             disabled={seat.isBot}
             title={RULES.loansEnabled ? 'Банк' : 'Финансы'}
           >
             {RULES.loansEnabled ? '🏦' : '💼'}
             <span className="ml-1 hidden sm:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
           </button>
-          <button onClick={undo} className="btn-ghost text-xs" title="Откатить последнее событие">
+          <button onClick={undo} className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md" title="Откатить последнее событие">
             ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
           </button>
-          <button onClick={reset} className="btn-ghost text-xs" title="Начать заново">
+          <button onClick={reset} className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md" title="Начать заново">
             🔄<span className="ml-1 hidden sm:inline">Заново</span>
           </button>
         </div>
@@ -382,7 +385,7 @@ export function Game({
             */}
             <div className="flex w-[150px] shrink-0 flex-col gap-2 self-center">
               {seat.isBot ? (
-                <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-3 py-4 text-center text-[12px] leading-snug text-[var(--muted)]">
+                <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-4 text-center text-[12px] leading-snug text-[var(--t-muted, var(--muted))]">
                   {seat.name} думает…
                 </div>
               ) : canEscape ? (
@@ -414,7 +417,7 @@ export function Game({
                   ))}
                 </>
               ) : rolling ? (
-                <div className="dice-rolling grid place-items-center rounded-xl border border-[var(--line)] bg-[var(--panel-2)] py-5 text-3xl">
+                <div className="dice-rolling grid place-items-center rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] py-5 text-3xl">
                   🎲
                 </div>
               ) : table.phase === 'turnEnd' ? (
@@ -429,31 +432,31 @@ export function Game({
               {canEscape && (
                 <button
                   onClick={() => roll(diceOptions[0])}
-                  className="text-[11px] text-[var(--muted)] hover:underline"
+                  className="text-[11px] text-[var(--t-muted, var(--muted))] hover:underline"
                 >
                   или остаться и бросить
                 </button>
               )}
 
               {/* Что выпало — рядом с кнопкой, а не в центре доски. */}
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5 text-center">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--muted)]">
+              <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-2.5 text-center">
+                <div className="text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
                   Кубики
                 </div>
                 <div className="tabnum mt-1 text-xl font-black leading-none">
                   {table.lastRoll
                     ? table.lastRoll.reduce((a, b) => a + b, 0)
-                    : <span className="text-[var(--muted)]">—</span>}
+                    : <span className="text-[var(--t-muted, var(--muted))]">—</span>}
                 </div>
                 {table.lastRoll && table.lastRoll.length > 1 && (
-                  <div className="mt-0.5 text-[10px] text-[var(--muted)]">
+                  <div className="mt-0.5 text-[10px] text-[var(--t-muted, var(--muted))]">
                     {table.lastRoll.join(' + ')}
                   </div>
                 )}
               </div>
 
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--muted)]">
+              <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-2.5 text-[var(--t-ink)] backdrop-blur-md">
+                <div className="text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
                   Наличные
                 </div>
                 <div className="tabnum mt-1 text-[15px] font-bold leading-none">
@@ -462,8 +465,8 @@ export function Game({
               </div>
 
               {/* Поле — оформление, а не правила: меняется прямо в партии. */}
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-2.5 py-2">
-                <div className="mb-1.5 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--muted)]">
+              <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-2.5 py-2 text-[var(--t-ink)] backdrop-blur-md">
+                <div className="mb-1.5 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
                   Поле
                 </div>
                 <div className="grid gap-1">

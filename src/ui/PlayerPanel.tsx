@@ -33,13 +33,17 @@ export function signed(n: number) {
   return n < 0 ? `−$${s}` : `+$${s}`
 }
 export function tone(n: number) {
-  return n > 0 ? 'text-emerald-400' : n < 0 ? 'text-rose-400' : 'text-[var(--muted)]'
+  return n > 0
+    ? 'text-[var(--t-in,#1F9D6B)]'
+    : n < 0
+      ? 'text-[var(--t-out,#D6425B)]'
+      : 'text-[var(--t-muted, var(--muted))]'
 }
 
 function Row({ label, value, dim }: { label: string; value: string; dim?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-[3px] text-[13px]">
-      <span className={dim ? 'text-[var(--muted)]' : ''}>{label}</span>
+      <span className={dim ? 'text-[var(--t-muted, var(--muted))]' : ''}>{label}</span>
       <span className="tabnum">{value}</span>
     </div>
   )
@@ -72,15 +76,15 @@ function AssetRow({ a, kind }: { a: RealEstateAsset | BusinessAsset; kind: 'real
     <div>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 py-1 text-left text-[13px] transition hover:text-accent"
+        className="flex w-full items-center gap-2 py-1 text-left text-[13px] transition hover:text-[var(--t-accent,rgb(var(--c-accent)))]"
       >
         {/* Миниатюра того, что купил: строка «Однушка в Бутово» без картинки
             читается как бухгалтерия, а не как своя недвижимость. */}
-        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-md border border-[var(--line)] bg-[var(--panel)]">
+        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-md border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel))]">
           {shot ? (
             <img src={shot} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
           ) : (
-            <span className="text-[var(--muted)]">
+            <span className="text-[var(--t-muted, var(--muted))]">
               {kind === 'business' ? <IconShop /> : <IconKey />}
             </span>
           )}
@@ -88,13 +92,13 @@ function AssetRow({ a, kind }: { a: RealEstateAsset | BusinessAsset; kind: 'real
         <span className="min-w-0 flex-1">
           <span className="block truncate">{a.name}</span>
           {a.investorShare ? (
-            <span className="block text-[10.5px] text-[var(--muted)]">50% инвестору</span>
+            <span className="block text-[10.5px] text-[var(--t-muted, var(--muted))]">50% инвестору</span>
           ) : null}
         </span>
         <span className="tabnum shrink-0">{signed(mine)}</span>
       </button>
       {open && (
-        <div className="mb-1 ml-3 space-y-0.5 border-l border-[var(--line)] pl-2 text-[11px] text-[var(--muted)]">
+        <div className="mb-1 ml-3 space-y-0.5 border-l border-[var(--t-line, var(--line))] pl-2 text-[11px] text-[var(--t-muted, var(--muted))]">
           <div className="flex justify-between">
             <span>Стоимость</span>
             <span className="tabnum">{money(a.cost)}</span>
@@ -130,7 +134,7 @@ const SECTION_TONE = {
   expense: { bar: '#BE123C', ink: 'text-[#BE123C]' },
   debt: { bar: '#B45309', ink: 'text-[#B45309]' },
   asset: { bar: '#0369A1', ink: 'text-[#0369A1]' },
-  neutral: { bar: 'var(--line)', ink: 'text-[var(--muted)]' },
+  neutral: { bar: 'var(--t-line, var(--line))', ink: 'text-[var(--t-muted, var(--muted))]' },
 } as const
 
 function Section({
@@ -146,7 +150,7 @@ function Section({
 }) {
   const t = SECTION_TONE[tone]
   return (
-    <div className="panel-2 relative overflow-hidden rounded-lg py-2 pl-3.5 pr-3">
+    <div className="relative overflow-hidden rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] py-2 pl-3.5 pr-3 backdrop-blur-md">
       <span
         aria-hidden
         className="absolute inset-y-0 left-0 w-[3px] rounded-r"
@@ -178,27 +182,27 @@ function GoalCard({ seat }: { seat: Seat }) {
   const won = onFast ? done >= need : isOutOfRatRace(l)
 
   return (
-    <div className="panel rounded-xl p-3.5">
+    <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3.5 backdrop-blur-md">
       <div className="flex items-baseline gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--muted)]">
+        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--t-muted, var(--muted))]">
           {onFast ? 'Цель Полосы свободы' : 'Цель: выйти из Круга'}
         </span>
-        <span className="tabnum ml-auto text-[11px] font-bold text-accent">{Math.round(pct)}%</span>
+        <span className="tabnum ml-auto text-[11px] font-bold text-[var(--t-accent,rgb(var(--c-accent)))]">{Math.round(pct)}%</span>
       </div>
 
       <div className="mt-1.5 flex items-baseline gap-1.5">
-        <span className="tabnum text-2xl font-black leading-none text-accent">{money(done)}</span>
-        <span className="text-[11px] text-[var(--muted)]">из {money(need)}</span>
+        <span className="tabnum text-2xl font-black leading-none text-[var(--t-accent,rgb(var(--c-accent)))]">{money(done)}</span>
+        <span className="text-[11px] text-[var(--t-muted, var(--muted))]">из {money(need)}</span>
       </div>
 
-      <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[var(--line)]">
+      <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[var(--t-line, var(--line))]">
         <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500"
+          className="h-full rounded-full bg-[var(--t-accent,rgb(var(--c-accent)))] transition-[width] duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
 
-      <p className="mt-2 text-[11px] leading-snug text-[var(--muted)]">
+      <p className="mt-2 text-[11px] leading-snug text-[var(--t-muted, var(--muted))]">
         {won
           ? onFast
             ? 'Цель достигнута — победа ваша.'
@@ -222,23 +226,23 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
   return (
     <div className="space-y-2">
       <GoalCard seat={seat} />
-      <div className="panel rounded-xl p-3">
+      <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <span className="size-3 rounded-full ring-2 ring-white/15" style={{ background: seat.color }} />
           <span className="font-bold">{seat.name}</span>
           {seat.isBot && <span className="text-[10px] text-violet-300">🤖</span>}
           {seat.outOfGame && <span className="text-[10px] text-rose-400">банкрот</span>}
-          <span className="ml-auto text-[11px] text-[var(--muted)]">
+          <span className="ml-auto text-[11px] text-[var(--t-muted, var(--muted))]">
             {professionName(l.profession, 'ru')}
           </span>
         </div>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-[var(--muted)]">Наличные</div>
+            <div className="text-[10px] uppercase tracking-wider text-[var(--t-muted, var(--muted))]">Наличные</div>
             <div className="tabnum text-2xl font-black">{money(l.cash)}</div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-[var(--muted)]">
+            <div className="text-[10px] uppercase tracking-wider text-[var(--t-muted, var(--muted))]">
               {onFast ? 'Доход свободы' : 'Поток в месяц'}
             </div>
             <div className={`tabnum text-xl font-bold ${tone(onFast ? 1 : flow)}`}>
@@ -283,7 +287,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
             {l.businesses.map((a) => (
               <AssetRow key={a.id} a={a} kind="business" />
             ))}
-            <div className="mt-1 border-t border-[var(--line)] pt-1">
+            <div className="mt-1 border-t border-[var(--t-line, var(--line))] pt-1">
               <Row label="Пассивный доход" value={money(passive)} />
               <Row label="Всего доходов" value={money(income)} />
             </div>
@@ -313,7 +317,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
             {l.expenses.bankLoanPayment > 0 && (
               <Row label="Банковский кредит" value={money(l.expenses.bankLoanPayment)} dim />
             )}
-            <div className="mt-1 border-t border-[var(--line)] pt-1">
+            <div className="mt-1 border-t border-[var(--t-line, var(--line))] pt-1">
               <Row label="Всего расходов" value={money(expenses)} />
             </div>
           </Section>
