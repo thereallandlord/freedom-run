@@ -14,6 +14,7 @@ import {
   RULES,
 } from '../engine/ledger'
 import { professionName } from '../engine/data'
+import { artById } from './cardArt'
 
 export function money(n: number) {
   if (RULES.currency === 'RUB') {
@@ -45,20 +46,50 @@ function Row({ label, value, dim }: { label: string; value: string; dim?: boolea
 }
 
 /** Актив с раскрытием: сколько стоил, сколько должен, сколько приносит. */
+const ICO = 'size-[15px] block'
+const IconKey = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" className={ICO}>
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <path d="M9 22V12h6v10" />
+  </svg>
+)
+const IconShop = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" className={ICO}>
+    <path d="M3.5 9.5 5 3.5h14l1.5 6" />
+    <path d="M4.5 9.5v11h15v-11" />
+    <path d="M3.5 9.5a2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0" />
+  </svg>
+)
+
 function AssetRow({ a, kind }: { a: RealEstateAsset | BusinessAsset; kind: 'realEstate' | 'business' }) {
   const [open, setOpen] = useState(false)
+  const shot = artById(a.id)
   const debt = kind === 'realEstate' ? (a as RealEstateAsset).mortgage : (a as BusinessAsset).liability
   const mine = Math.round(a.cashFlow * (1 - (a.investorShare ?? 0)))
   return (
     <div>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-baseline justify-between gap-3 py-[3px] text-left text-[13px] hover:text-emerald-300"
+        className="flex w-full items-center gap-2 py-1 text-left text-[13px] transition hover:text-accent"
       >
-        <span className="truncate text-[var(--muted)]">
-          <span className="mr-1 inline-block text-[9px] text-[var(--muted)]">{open ? '▾' : '▸'}</span>
-          {a.name}
-          {a.investorShare ? ' · 50% инвестору' : ''}
+        {/* Миниатюра того, что купил: строка «Однушка в Бутово» без картинки
+            читается как бухгалтерия, а не как своя недвижимость. */}
+        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-md border border-[var(--line)] bg-[var(--panel)]">
+          {shot ? (
+            <img src={shot} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+          ) : (
+            <span className="text-[var(--muted)]">
+              {kind === 'business' ? <IconShop /> : <IconKey />}
+            </span>
+          )}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate">{a.name}</span>
+          {a.investorShare ? (
+            <span className="block text-[10.5px] text-[var(--muted)]">50% инвестору</span>
+          ) : null}
         </span>
         <span className="tabnum shrink-0">{signed(mine)}</span>
       </button>
@@ -88,11 +119,42 @@ function AssetRow({ a, kind }: { a: RealEstateAsset | BusinessAsset; kind: 'real
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * Раздел панели. Раньше все четыре блока выглядели одинаково — чёрным по
+ * белому, — и глазом не отделялись друг от друга. Теперь у каждого свой цвет:
+ * полоса слева и заголовок в тон. Цвет несёт смысл (доход зелёный, расход
+ * красный), но не остаётся единственным признаком — заголовок подписан словами.
+ */
+const SECTION_TONE = {
+  income: { bar: '#047C54', ink: 'text-[#047C54]' },
+  expense: { bar: '#BE123C', ink: 'text-[#BE123C]' },
+  debt: { bar: '#B45309', ink: 'text-[#B45309]' },
+  asset: { bar: '#0369A1', ink: 'text-[#0369A1]' },
+  neutral: { bar: 'var(--line)', ink: 'text-[var(--muted)]' },
+} as const
+
+function Section({
+  title,
+  tone = 'neutral',
+  end,
+  children,
+}: {
+  title: string
+  tone?: keyof typeof SECTION_TONE
+  end?: React.ReactNode
+  children: React.ReactNode
+}) {
+  const t = SECTION_TONE[tone]
   return (
-    <div className="panel-2 rounded-lg px-3 py-2">
-      <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-        {title}
+    <div className="panel-2 relative overflow-hidden rounded-lg py-2 pl-3.5 pr-3">
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-[3px] rounded-r"
+        style={{ background: t.bar }}
+      />
+      <div className="mb-1 flex items-baseline gap-2">
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${t.ink}`}>{title}</span>
+        {end && <span className="tabnum ml-auto text-[11px] font-semibold">{end}</span>}
       </div>
       {children}
     </div>
@@ -197,7 +259,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
       </div>
 
       {onFast ? (
-        <Section title="Цель Полосы свободы">
+        <Section title="Цель Полосы свободы" tone="asset">
           <Row label="Новый доход собран" value={money(fastTrackProgress(l))} />
           <Row label="Нужно для победы" value={money(fastTrackTarget())} dim />
           {l.fastTrack && l.fastTrack.businesses.length > 0 && (
@@ -210,7 +272,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
         </Section>
       ) : (
         <>
-          <Section title="Доходы">
+          <Section title="Доходы" tone="income" end={money(l.salary + passiveIncome(l))}>
             <Row label="Зарплата" value={money(l.salary)} />
             {dividendLines(l).map((d) => (
               <Row key={d.symbol} label={`Дивиденды ${d.symbol}`} value={money(d.amount)} dim />
@@ -227,7 +289,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
             </div>
           </Section>
 
-          <Section title="Расходы">
+          <Section title="Расходы" tone="expense" end={money(expenses)}>
             <Row label="Налоги" value={money(l.expenses.taxes)} dim />
             {l.expenses.homeMortgagePayment > 0 && (
               <Row label={RULES.loansEnabled ? "Ипотека" : "Рассрочка за жильё"} value={money(l.expenses.homeMortgagePayment)} dim />
@@ -260,7 +322,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
       )}
 
       {l.stocks.length > 0 && (
-        <Section title="Портфель">
+        <Section title="Портфель" tone="asset">
           {l.stocks.map((s) => (
             <Row
               key={s.id}
@@ -272,7 +334,7 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
         </Section>
       )}
 
-      <Section title="Обязательства">
+      <Section title="Обязательства" tone="debt">
         {[
           ['Жильё', l.liabilities.homeMortgage],
           ['Обучение', l.liabilities.schoolLoans],

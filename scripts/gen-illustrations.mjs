@@ -283,6 +283,27 @@ const SCENES_PLATE = {
     'Top-down photograph of a premium minimalist board game board, perfectly square, seen straight from above, filling the frame edge to edge. Warm ivory pressed paper with fine linen grain. One continuous track of small rounded square spaces runs around the outer edge in a closed loop: exactly seven equal spaces along the top edge, seven down the right edge, seven along the bottom, seven up the left, corners shared, all identical in size, evenly spaced, perfectly aligned to a strict grid. Each space is a flat pale card with a thin sage green outline and a subtle drop shadow, clearly separated from its neighbours by a small even gap. The whole middle of the board is completely empty warm ivory with only a very faint embossed geometric ornament. Soft even studio light, no cast shadows, low contrast, calm muted palette. No text, no letters, no numbers, no icons, no illustrations inside the spaces, no game pieces, no cards, no dice, no logos.',
 }
 
+/**
+ * Пять досок на выбор. Требование Камиля — «прикольные разные, а не грустные»,
+ * поэтому каждая живёт в своём мире, а не отличается оттенком бежевого.
+ * Условие у всех одно: ровно 7 клеток на сторону и ПУСТАЯ середина — туда
+ * интерфейс кладёт имя ходящего.
+ */
+const RING_RULE = 'One continuous track of small rounded square spaces runs around the outer edge in a closed loop: exactly seven equal spaces along the top edge, seven down the right, seven along the bottom, seven up the left, corners shared, all identical in size, evenly spaced, aligned to a strict grid, each clearly separated from its neighbours by an even gap. The entire middle of the board is empty with no spaces at all. No text, no letters, no numbers, no icons or pictures inside the spaces, no game pieces, no dice, no cards, no logos.'
+
+const SCENES_TABLE = {
+  felt:
+    'Top-down photograph of a luxurious private club game board, perfectly square. Deep emerald green billiard felt surface with visible soft nap, framed by a polished brass edge with mitred corners. ' + RING_RULE.replace('spaces', 'spaces of warm cream inlay with thin gold-foil outlines and a soft raised edge') + ' Rich saturated colour, warm directional light, gentle sheen on the brass.',
+  city:
+    'Top-down illustrated city map board, perfectly square, in the style of a beautiful printed tourist map. A stylised city seen from directly above: a winding blue river, green parks with tiny trees, a lake, blocks of small flat-roofed houses in warm terracotta and cream, tiny cars on pale streets. ' + RING_RULE.replace('spaces', 'spaces drawn as clean white paper plots with thin dark outlines, laid along a ring road') + ' Bright cheerful palette, crisp flat vector-like illustration.',
+  island:
+    'Top-down illustrated tropical island map board, perfectly square. Turquoise sea with gentle wave lines, a sandy island in the middle with palm groves, a small volcano, coral reefs and a wooden pier. ' + RING_RULE.replace('spaces', 'spaces drawn as pale sand-coloured stepping stones with soft shadows, forming a path around the shoreline') + ' Vivid holiday colours, playful hand-drawn feel, crisp flat illustration.',
+  retro:
+    'Top-down photograph of a 1970s printed board game, perfectly square. Bold graphic print on thick cardboard: wide bands of burnt orange, teal and cream, thick black outlines, visible halftone dot texture and slight ink misregistration. ' + RING_RULE.replace('spaces', 'spaces printed as flat bright rectangles alternating cream and mustard, each with a thick black outline') + ' Confident retro poster style, warm nostalgic colours.',
+  greenleaf:
+    'Top-down photograph of a premium modern board game, perfectly square. Fresh sage and deep forest green surface with a subtle botanical pattern of delicate leaf silhouettes, a slim gold border frame. ' + RING_RULE.replace('spaces', 'spaces of clean warm white card with thin gold outlines and a soft drop shadow') + ' Elegant natural palette of greens, cream and gold, calm and expensive looking.',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -626,6 +647,14 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Пять досок на выбор
+  manifest.byTable = manifest.byTable || {}
+  for (const k of Object.keys(SCENES_TABLE)) {
+    push(k, `table-${k}`, SCENES_TABLE[k], 'plate', () => {
+      manifest.byTable[k] = `/cards/table-${k}.webp`
+    })
   }
 
   // Подложки доски на сравнение

@@ -307,10 +307,13 @@ export function Game({
       )}
 
       <div className="mb-3">
-        <Scoreboard table={table} viewId={viewId} onView={setViewId} />
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <Scoreboard table={table} viewId={viewId} onView={setViewId} />
+          </div>
+          <WorldEvents table={table} compact />
+        </div>
       </div>
-
-      <WorldEvents table={table} />
 
       {/*
         Стол занимает ровно остаток окна: панель игрока прокручивается ВНУТРИ

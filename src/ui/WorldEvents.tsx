@@ -406,10 +406,19 @@ function HistoryModal({ table, onClose }: { table: Table; onClose: () => void })
 
 // ─── Постоянный индикатор рынка ───────────────────────────────────────
 
-function MarketBar({ table, onOpen }: { table: Table; onOpen: () => void }) {
+function MarketBar({
+  table,
+  onOpen,
+  compact,
+}: {
+  table: Table
+  onOpen: () => void
+  /** Рядом с игроками: без своей строки, короче и с меньшим числом плашек. */
+  compact?: boolean
+}) {
   const left = useWorldCountdown()
   const moves = marketMoves(table.market)
-  const shown = moves.slice(0, 3)
+  const shown = moves.slice(0, compact ? 2 : 3)
   const hidden = moves.length - shown.length
 
   return (
@@ -417,14 +426,18 @@ function MarketBar({ table, onOpen }: { table: Table; onOpen: () => void }) {
       onClick={onOpen}
       title="История мировых событий"
       aria-label="Состояние рынка и история мировых событий"
-      className="panel-2 mb-3 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left transition hover:border-emerald-500/60"
+      className={`panel-2 flex items-center gap-1.5 rounded-lg text-left transition hover:border-emerald-500/60 ${
+        compact ? 'shrink-0 px-2 py-1.5' : 'mb-3 w-full px-2.5 py-2'
+      }`}
     >
       <span className="shrink-0 text-sm leading-none">🌍</span>
-      <span className="hidden shrink-0 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)] xs:inline">
-        Рынок
-      </span>
+      {!compact && (
+        <span className="hidden shrink-0 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)] xs:inline">
+          Рынок
+        </span>
+      )}
 
-      <span className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+      <span className={`no-scrollbar flex min-w-0 items-center gap-1.5 overflow-x-auto ${compact ? '' : 'flex-1'}`}>
         {shown.length ? (
           shown.map((m, i) => (
             <span key={i} className={`chip ${m.pct > 0 ? 'chip-good' : 'chip-bad'}`}>
@@ -454,7 +467,7 @@ function MarketBar({ table, onOpen }: { table: Table; onOpen: () => void }) {
  * Мировые события целиком: полоса состояния рынка, карточка нового события
  * и история партии. В Game.tsx вставляется одной строкой.
  */
-export function WorldEvents({ table }: { table: Table }) {
+export function WorldEvents({ table, compact }: { table: Table; compact?: boolean }) {
   const [history, setHistory] = useState(false)
   const [fresh, setFresh] = useState<{ ev: WorldEvent; key: string } | null>(null)
   const stamp = table.lastWorldEvent ? `${table.lastWorldEvent.id}#${table.lastWorldEvent.at}` : ''
@@ -483,7 +496,7 @@ export function WorldEvents({ table }: { table: Table }) {
 
   return (
     <>
-      <MarketBar table={table} onOpen={() => setHistory(true)} />
+      <MarketBar table={table} compact={compact} onOpen={() => setHistory(true)} />
       {fresh && <EventToast key={fresh.key} event={fresh.ev} onClose={() => setFresh(null)} />}
       {history && <HistoryModal table={table} onClose={() => setHistory(false)} />}
     </>
