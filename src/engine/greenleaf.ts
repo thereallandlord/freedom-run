@@ -74,9 +74,19 @@ export interface GlRank {
 
 export const GL_RANKS: GlRank[] = [
   { level: 0, name: '—', volume: 0, bonus: 0, pension: 0 },
-  { level: 1, name: 'Менеджер', volume: 150_000, bonus: 70_000, pension: 20_000 },
-  { level: 2, name: 'Старший менеджер', volume: 500_000, bonus: 105_000, pension: 30_000 },
-  { level: 3, name: 'Директор', volume: 1_200_000, bonus: 140_000, pension: 40_000 },
+  /*
+   * 🔴 Пороги пересчитаны под ГЕОМЕТРИЧЕСКИЙ рост (17.08). Под прежний
+   * линейный они были втрое выше, и после перехода на проценты Менеджер не
+   * закрывался за всю партию: замер показал 98 100 объёма к тридцатой
+   * зарплате при пороге 150 000.
+   *
+   * Ориентир по замеру: тот, кто не работает, доходит до Менеджера примерно
+   * к двум годам; тот, кто работает со структурой, — к году, и к трём годам
+   * добирает Директора.
+   */
+  { level: 1, name: 'Менеджер', volume: 45_000, bonus: 70_000, pension: 20_000 },
+  { level: 2, name: 'Старший менеджер', volume: 180_000, bonus: 105_000, pension: 30_000 },
+  { level: 3, name: 'Директор', volume: 600_000, bonus: 140_000, pension: 40_000 },
 ]
 
 export const glRankFor = (volume: number): GlRank =>
@@ -120,7 +130,7 @@ export const GL_PROMOS: GlPromo[] = [
     amount: 200_000,
     everyPaydays: 6,
     warmupPaydays: 6,
-    needVolume: 250_000,
+    needVolume: 60_000,
     note: 'Компания везёт партнёров в поездку. Можно поехать, а можно забрать деньгами — берём деньгами.',
   },
   {
@@ -129,7 +139,7 @@ export const GL_PROMOS: GlPromo[] = [
     amount: 150_000,
     everyPaydays: 12,
     warmupPaydays: 12,
-    needVolume: 900_000,
+    needVolume: 200_000,
     note: 'Годовая премия за объём. Закрыть тяжело, зато и сумма другая.',
   },
 ]
