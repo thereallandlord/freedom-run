@@ -348,7 +348,12 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       const n = Math.min(e.amount, l.liabilities.bankLoan)
       l.cash -= n
       l.liabilities.bankLoan -= n
-      l.expenses.bankLoanPayment -= n / 10
+      l.expenses.bankLoanPayment = Math.max(0, l.expenses.bankLoanPayment - n / 10)
+      // 🔴 Долг закрыт — платёж исчезает СРАЗУ, а не на следующей зарплате.
+      if (l.liabilities.bankLoan <= 0) {
+        l.liabilities.bankLoan = 0
+        l.expenses.bankLoanPayment = 0
+      }
       return l
     }
 

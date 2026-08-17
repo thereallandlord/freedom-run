@@ -15,7 +15,7 @@ import { decideBotEvent } from './bots'
 import { mulberry32 } from './rng'
 import { professionsFor, dreamSpaces, setActiveTheme, setFastBoardTheme } from './data'
 import { setRules, netWorth, passiveIncome, totalExpenses, totalIncome, ribaRisk } from './ledger'
-import { glTotalIncome, glStructureIncome, glRankFor, GL_PACKAGES } from './greenleaf'
+import { glTotalIncome, glStructureIncome, glRankFor, GL_PACKAGES, GL_MAX_GROWTH_PCT } from './greenleaf'
 import type { Seat, Table } from './types'
 
 const GAMES = Number(process.env.FUZZ_GAMES || 60)
@@ -76,9 +76,16 @@ function checkSeat(s: Seat, seed: number, turn: number, t: Table) {
         fail('пенсия за ранг уменьшает доход', `${name}: ${M(glTotalIncome(g))} < ${M(glStructureIncome(g))}`, seed, turn)
       if (g.rankPaid > glRankFor(g.volume).level)
         fail('бонус выдан за ранг, который не закрыт', name, seed, turn)
-      // Ключевое обещание Камиля: партнёр не улетает в космос и не сидит в грошах.
-      if (glTotalIncome(g) > 3_000_000)
-        fail('партнёрский бизнес улетел в космос', `${name}: ${M(glTotalIncome(g))}/мес`, seed, turn)
+      /*
+       * 🔴 Потолка дохода у партнёрского бизнеса НЕТ и проверять его нельзя.
+       * Поправка Камиля 17.08: у лидеров бывает и шестьдесят миллионов в
+       * месяц, структура растёт геометрически и не упирается ни во что. Я
+       * сначала завёл здесь ограничение по своей догадке — оно снято.
+       * Проверяем только темп: он ограничен сверху, чтобы за пару лет не
+       * выходили триллионы, которых не бывает ни у кого.
+       */
+      if (g.growthPct > GL_MAX_GROWTH_PCT + 0.01)
+        fail('темп роста структуры выше допустимого', `${name}: ${g.growthPct}%`, seed, turn)
     }
   }
   for (const lot of l.stocks) {

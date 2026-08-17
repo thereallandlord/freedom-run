@@ -60,6 +60,8 @@ import {
   GL_LUCK_MIN,
   GL_START_FLOW,
   GL_PROMOS,
+  GL_ACCEL_POINTS,
+  GL_MAX_GROWTH_PCT,
   GL_TRIANGLE_BONUS,
   glPackage,
   glPromoReady,
@@ -727,7 +729,15 @@ function applyMarketAuto(t: Table, card: MarketCard) {
       const g = { ...biz.gl }
       if (card.boostPct) g.baseFlow = Math.round((g.baseFlow * (1 + card.boostPct / 100)) / 100) * 100
       if (card.growthPct)
-        g.growthPerPayday = Math.round((g.growthPerPayday * (1 + card.growthPct / 100)) / 100) * 100
+        /*
+         * Ускоритель поднимает СКОРОСТЬ роста — эффект накопительный.
+         * 🔴 Прибавкой в пунктах, а не умножением: умножение на длинной партии
+         * разгоняет доход до миллиардов, чего не бывает ни у кого.
+         */
+        g.growthPct = Math.min(
+          GL_MAX_GROWTH_PCT,
+          Math.round((g.growthPct + (card.growthPct / 100) * GL_ACCEL_POINTS * 2.5) * 10) / 10,
+        )
       if (card.dipPct) {
         g.dipMul = 1 - card.dipPct / 100
         g.dipLeft = card.dipPaydays ?? 4
