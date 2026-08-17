@@ -16,8 +16,13 @@ import { botOfferReply } from './tradeHelpers'
 import { scheduleWorldEvent } from './worldClock'
 
 const STORAGE_KEY = 'freedom-run:save:v2'
-/** Раз во сколько минут реального времени мир двигается сам. */
-export const WORLD_EVENT_MIN = 12
+/**
+ * Раз во сколько минут реального времени мир двигается сам.
+ * 🔴 Первое событие приходит раньше остальных: иначе начало партии проходит
+ * в мёртвом рынке и игрок успевает решить, что мировых событий вообще нет.
+ */
+export const WORLD_EVENT_MIN = 10
+export const WORLD_EVENT_FIRST_MIN = 5
 
 interface Save {
   setup: TableSetup
@@ -124,9 +129,9 @@ export function useGame() {
   useEffect(() => {
     if (!worldClockOn) return
     const period = WORLD_EVENT_MIN * 60_000
-    scheduleWorldEvent(period)
-    const id = window.setInterval(() => {
-      scheduleWorldEvent(period)
+    const first = WORLD_EVENT_FIRST_MIN * 60_000
+
+    const fire = () => {
       setTable((prev) => {
         if (!prev || prev.phase === 'finished') return prev
         const ev = { type: 'WORLD_EVENT' as const, index: nextWorldEventIndex(prev) }
@@ -134,8 +139,23 @@ export function useGame() {
         if (next !== prev) setEvents((evs) => [...evs, ev])
         return next
       })
-    }, period)
-    return () => window.clearInterval(id)
+    }
+
+    scheduleWorldEvent(first)
+    let interval: number | null = null
+    const kick = window.setTimeout(() => {
+      fire()
+      scheduleWorldEvent(period)
+      interval = window.setInterval(() => {
+        scheduleWorldEvent(period)
+        fire()
+      }, period)
+    }, first)
+
+    return () => {
+      window.clearTimeout(kick)
+      if (interval !== null) window.clearInterval(interval)
+    }
   }, [worldClockOn])
 
   // ─── Водитель ботов ───

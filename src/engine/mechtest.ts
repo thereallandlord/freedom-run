@@ -3,6 +3,16 @@ import { createTable, applyTableEvent, currentSeat, pendingInvolvesOthers, type 
 import { applyEvent } from './applyEvent'
 import { passiveIncome, monthlyCashFlow, RULES, ownShare } from './ledger'
 import { professionsFor, setActiveTheme, setFastBoardTheme, dreamSpaces, smallDeals, bigDeals, marketCards, doodads } from './data'
+import {
+  GL_PACKAGES,
+  glPackage,
+  glRankFor,
+  glStructureIncome,
+  glTotalIncome,
+  glUpgradeCost,
+  glInitialState,
+  glOnPayday,
+} from './greenleaf'
 
 setActiveTheme('ru'); setFastBoardTheme('ru')
 const dreams = dreamSpaces()
@@ -40,21 +50,35 @@ console.log('\n=== Заём есть, но беспроцентный (кард 
   check('переплаты нет', debt0 === 100_000, 'вернул ровно столько же')
 }
 
-console.log('\n=== Партнёрский бизнес: рост со временем ===')
+console.log('\n=== Партнёрский бизнес GreenLeaf ===')
 const pn = bigDeals('ru').find((c: any) => c.category === 'partnership') as any
 check('карта партнёрки есть', !!pn, pn?.title)
 let led = t.seats[0].ledger
+led = applyEvent(led, { type: 'ADJUST_CASH', amount: 300_000 })
 led = applyEvent(led, {
-  type: 'BUY_BUSINESS', id: 'pn1', name: pn.title, cost: pn.cost, downPayment: pn.downPayment,
-  liability: pn.liability ?? 0, cashFlow: pn.cashFlow, category: 'partnership',
-  growthPerPayday: pn.growthPerPayday, growthCap: pn.growthCap,
+  type: 'BUY_BUSINESS', id: 'pn1', name: pn.title, cost: GL_PACKAGES[0].price,
+  downPayment: GL_PACKAGES[0].price, liability: 0, cashFlow: 1700, category: 'partnership',
+  glPackage: 'platinum', glLuck: 1,
 })
-const flow0 = led.businesses[0].cashFlow
+const glBiz = () => led.businesses.find((b) => b.gl)!
+check('состояние GreenLeaf заведено', !!glBiz().gl, glBiz().gl && glPackage(glBiz().gl!.packageId).name)
+const flow0 = glTotalIncome(glBiz().gl!)
 for (let i = 0; i < 5; i++) led = applyEvent(led, { type: 'PAYCHECK' })
-const flow5 = led.businesses[0].cashFlow
-check('поток растёт с зарплатами', flow5 > flow0, `${flow0} → ${flow5} (потолок ${pn.growthCap})`)
-for (let i = 0; i < 100; i++) led = applyEvent(led, { type: 'PAYCHECK' })
-check('рост упирается в потолок', led.businesses[0].cashFlow === pn.growthCap, String(led.businesses[0].cashFlow))
+const flow5 = glTotalIncome(glBiz().gl!)
+check('доход растёт сам, по чуть-чуть', flow5 > flow0, `${flow0} → ${flow5}`)
+check('зеркало cashFlow сходится', glBiz().cashFlow === flow5, `${glBiz().cashFlow} vs ${flow5}`)
+for (let i = 0; i < 25; i++) led = applyEvent(led, { type: 'PAYCHECK' })
+const rank = glRankFor(glBiz().gl!.volume)
+check('ранг закрывается по объёму', rank.level >= 1, `${rank.name}, объём ${glBiz().gl!.volume} ₽`)
+check('пенсия идёт сверх структуры',
+  glTotalIncome(glBiz().gl!) === glStructureIncome(glBiz().gl!) + rank.pension,
+  `${glStructureIncome(glBiz().gl!)} + ${rank.pension}`)
+check('разовый бонус за ранг выдан', glBiz().gl!.rankPaid >= 1, String(glBiz().gl!.rankPaid))
+// Старший пакет даёт БОЛЬШЕ с той же структуры — но не втрое, а ровно на четверть и половину.
+check('Бриллиант даёт +25%', Math.abs(GL_PACKAGES[1].mul - 1.25) < 1e-9, String(GL_PACKAGES[1].mul))
+check('Корона даёт +50%', Math.abs(GL_PACKAGES[2].mul - 1.5) < 1e-9, String(GL_PACKAGES[2].mul))
+check('апгрейд стоит разницу', glUpgradeCost('platinum', 'crown') === GL_PACKAGES[2].price - GL_PACKAGES[0].price,
+  String(glUpgradeCost('platinum', 'crown')))
 
 console.log('\n=== Мушарака: складываемся долями, делим в тех же долях ===')
 let l2 = applyEvent(t.seats[1].ledger, { type: 'ADJUST_CASH', amount: 500_000 })
@@ -145,9 +169,17 @@ console.log('\n=== Карта рынка видна другим игрокам 
 
 console.log('\n=== Партнёрский бизнес не принтер ===')
 {
-  const pns = bigDeals('ru').filter((c: any) => c.category === 'partnership') as any[]
-  const worst = Math.max(...pns.map((c) => c.growthCap / c.downPayment))
-  check('потолок соразмерен взносу', worst < 0.4, `максимум ${(worst * 100).toFixed(0)}% от взноса в месяц`)
+  /*
+   * Потолка у GreenLeaf больше нет — доход растёт, пока игрок работает.
+   * Вместо потолка держим ДРУГОЙ рубеж: за 36 зарплат без единого ускорителя
+   * бизнес не должен вырасти до чего-то, что само выносит из Рутины.
+   * Камиль: «в космос не улетает и грошей не платит».
+   */
+  let g = glInitialState('platinum', 1)
+  for (let i = 0; i < 36; i++) { g = glOnPayday(g).next; g.age += 1 }
+  const passive = glTotalIncome(g)
+  check('пассивный игрок не улетает', passive < 60_000, `${passive} ₽/мес за 36 зарплат без работы`)
+  check('пассивный игрок не в грошах', passive > 25_000, `${passive} ₽/мес`)
   let l = t.seats[0].ledger
   for (let i = 0; i < 5; i++) {
     l = applyEvent(l, {
@@ -163,13 +195,20 @@ check('в RU-режиме игровой масштаб', RULES.yieldScale === 0
 
 console.log('\n=== Колоды RU ===')
 check('малых сделок', smallDeals('ru').length >= 30, String(smallDeals('ru').length))
-check('крупных сделок', bigDeals('ru').length >= 30, String(bigDeals('ru').length))
+check('крупных сделок', bigDeals('ru').length >= 25, String(bigDeals('ru').length))
 check('карт рынка', marketCards('ru').length >= 30, String(marketCards('ru').length))
 check('трат', doodads('ru').length >= 30, String(doodads('ru').length))
 const dood = doodads('ru').map((d) => d.amount)
 check('траты скромные', Math.max(...dood) <= 30_000, `макс ${Math.max(...dood)} ₽`)
+// GreenLeaf — ОДНА карта с тремя ценами внутри, а не три разные карты:
+// выбор пакета должен быть решением игрока, а не тем, что ему выпало.
 const partnerships = bigDeals('ru').filter((c: any) => c.category === 'partnership')
-check('партнёрских карт 5', partnerships.length === 5)
+check('карта GreenLeaf одна', partnerships.length === 1, String(partnerships.length))
+check('у неё три цены', GL_PACKAGES.length === 3, GL_PACKAGES.map((p) => p.name).join('/'))
+const glEvents = marketCards('ru').filter((c: any) => c.kind === 'glEvent')
+check('события GreenLeaf есть', glEvents.length >= 8, String(glEvents.length))
+const glDown = glEvents.filter((c: any) => c.dipPct || c.freezePaydays)
+check('среди них есть беды', glDown.length >= 3, String(glDown.length))
 const raises = marketCards('ru').filter((c: any) => c.kind === 'payRaise')
 check('карт повышения есть', raises.length >= 3, String(raises.length))
 const autopromo = marketCards('ru').find((c: any) => c.amountPerPartnership)

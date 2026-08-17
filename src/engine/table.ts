@@ -40,8 +40,17 @@ import {
   localizedSpaceName,
   type DeckTheme,
 } from './data'
-import { RULES, setRules, installmentPrice, installmentMonthly, zakatDue } from './ledger'
-import { shuffleIndices } from './rng'
+import { RULES, setRules, installmentPrice, installmentMonthly, zakatDue, marketStockPrice } from './ledger'
+import { mulberry32, shuffleIndices } from './rng'
+import {
+  GL_LUCK_MAX,
+  GL_LUCK_MIN,
+  GL_START_FLOW,
+  GL_TRIANGLE_BONUS,
+  glPackage,
+  glTotalIncome,
+  glUpgradeCost,
+} from './greenleaf'
 import {
   auctionWinner,
   clampPrice,
@@ -135,6 +144,8 @@ export function createTable(setup: TableSetup): Table {
     turnCounter: 0,
     worldDeck: { order: shuffleIndices(WORLD_EVENTS.length, setup.seed + 5), next: 0 },
     market: { price: {}, flow: {}, stock: {} },
+    marketEffects: [],
+    worldTick: 0,
     lastWorldEvent: null,
     offers: [],
     loans: [],
@@ -145,6 +156,26 @@ export function createTable(setup: TableSetup): Table {
  * Мировое событие. Приходит по таймеру реального времени, а не по чьему-то ходу,
  * и задевает всех сразу — так в игру попадает настоящий рынок.
  */
+/** Сколько мировых событий держится эффект рынка. */
+export const MARKET_EFFECT_LIFE = 3
+
+/**
+ * Пересобирает словари множителей из списка живых эффектов.
+ * Протухшие выбрасываются — так рынок возвращается к норме сам, и два
+ * противоположных события гасят друг друга ТОЧНО, без остатка от округления.
+ */
+export function recalcMarket(t: Table) {
+  t.marketEffects = t.marketEffects.filter((e) => e.until > t.worldTick)
+  const price: Record<string, number> = {}
+  const flow: Record<string, number> = {}
+  const stock: Record<string, number> = {}
+  for (const e of t.marketEffects) {
+    const bag = e.kind === 'price' ? price : e.kind === 'flow' ? flow : stock
+    bag[e.key] = (bag[e.key] ?? 1) * e.mul
+  }
+  t.market = { price, flow, stock }
+}
+
 export function applyWorldEvent(prev: Table, index: number): Table {
   const t = cloneTable(prev)
   const ev = WORLD_EVENTS[index]
@@ -152,27 +183,27 @@ export function applyWorldEvent(prev: Table, index: number): Table {
   const e = ev.effect
   const mul = (pct: number) => 1 + pct / 100
 
+  t.worldTick += 1
+  const until = t.worldTick + MARKET_EFFECT_LIFE
+  const push = (kind: 'price' | 'flow' | 'stock', keys: string[], pct: number) => {
+    for (const key of keys)
+      t.marketEffects.push({ eventId: ev.id, title: ev.title, kind, key, mul: mul(pct), until })
+  }
+
   switch (e.kind) {
     case 'assetPrice':
-      for (const c of e.categories) t.market.price[c] = (t.market.price[c] ?? 1) * mul(e.pct)
+      push('price', e.categories, e.pct)
       break
     case 'assetFlow':
-      // Доход активов меняется сразу и у всех, кто ими владеет.
-      for (const c of e.categories) t.market.flow[c] = (t.market.flow[c] ?? 1) * mul(e.pct)
-      t.seats = t.seats.map((s) => {
-        if (s.outOfGame) return s
-        const l = { ...s.ledger }
-        const touch = <T extends { category: string; cashFlow: number }>(a: T): T =>
-          e.categories.includes(a.category)
-            ? { ...a, cashFlow: Math.round((a.cashFlow * mul(e.pct)) / 100) * 100 }
-            : a
-        l.realEstate = l.realEstate.map(touch)
-        l.businesses = l.businesses.map(touch)
-        return { ...s, ledger: l }
-      })
+      /*
+       * 🔴 Доход НЕ переписывается у самих объектов — только множитель.
+       * Иначе эффект нельзя отменить, он не действует на купленное позже,
+       * а округление до сотен не даёт вернуться к исходному числу.
+       */
+      push('flow', e.categories, e.pct)
       break
     case 'stockPrice':
-      for (const sym of e.symbols) t.market.stock[sym] = (t.market.stock[sym] ?? 1) * mul(e.pct)
+      push('stock', e.symbols, e.pct)
       break
     case 'cashAll':
       for (const s of t.seats) if (!s.outOfGame) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: e.amount })
@@ -192,6 +223,7 @@ export function applyWorldEvent(prev: Table, index: number): Table {
       break
   }
 
+  recalcMarket(t)
   t.lastWorldEvent = { id: ev.id, at: t.log.length }
   log(t, null, `🌍 ${ev.title}`)
   return t
@@ -224,6 +256,7 @@ function cloneTable(t: Table): Table {
     ftOwnership: { ...t.ftOwnership },
     worldDeck: { ...t.worldDeck },
     market: { price: { ...t.market.price }, flow: { ...t.market.flow }, stock: { ...t.market.stock } },
+    marketEffects: t.marketEffects.map((e) => ({ ...e })),
     offers: t.offers.map((o) => ({ ...o, bids: [...o.bids] })),
     loans: t.loans.map((l) => ({ ...l })),
     log: [...t.log],
@@ -329,7 +362,7 @@ export function pendingInvolvesOthers(t: Table): boolean {
     return false
   }
   if (p.kind === 'deal' && p.card.kind === 'stock') {
-    const price = p.card.price
+    const price = marketStockPrice(p.card.price, t.market.stock[p.card.symbol])
     return t.seats.some(
       (s) => s.id !== me && !s.outOfGame && s.track === 'rat' && s.ledger.cash >= price,
     )
@@ -404,14 +437,14 @@ function advance(t: Table, seatIdx: number, steps: number) {
 
   for (let i = 0; i < payouts; i++) {
     if (seat.track === 'rat') {
-      seatLedgerEvent(t, seat.id, { type: 'PAYCHECK' })
+      seatLedgerEvent(t, seat.id, { type: 'PAYCHECK', flowMul: t.market.flow })
     } else {
       seatLedgerEvent(t, seat.id, { type: 'CASHFLOW_DAY' })
     }
   }
   if (payouts > 0) {
     const l = t.seats[seatIdx].ledger
-    const amount = seat.track === 'rat' ? monthlyCashFlow(l) : fastTrackIncome(l)
+    const amount = seat.track === 'rat' ? monthlyCashFlow(l, t.market.flow) : fastTrackIncome(l)
     log(t, seat.id, `Зарплата ×${payouts}: ${money(amount)}`)
 
     // Год прошёл — время закята. Берётся с того, что лежало без дела.
@@ -588,17 +621,50 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
       return true
     case 'payRaise':
       return true
+    case 'glEvent':
+      // Приходит только владельцу партнёрского бизнеса — как беды по кафе владельцу кафе.
+      return t.seats.some((s) => !s.outOfGame && s.track === 'rat' && s.ledger.businesses.some((b) => b.gl))
   }
 }
 
 /** Сплиты, выплаты и повышения применяются сразу — решать нечего. */
 function applyMarketAuto(t: Table, card: MarketCard) {
+  if (card.kind === 'glEvent' && !card.triangle) {
+    /*
+     * События партнёрского бизнеса. Применяются владельцу — и объясняются
+     * человеческой фразой: игрок должен понимать, почему доход изменился.
+     */
+    for (const s of t.seats) {
+      if (s.outOfGame || s.track === 'fast') continue
+      const biz = s.ledger.businesses.find((b) => b.gl)
+      if (!biz?.gl) continue
+      const g = { ...biz.gl }
+      if (card.boostPct) g.baseFlow = Math.round((g.baseFlow * (1 + card.boostPct / 100)) / 100) * 100
+      if (card.growthPct)
+        g.growthPerPayday = Math.round((g.growthPerPayday * (1 + card.growthPct / 100)) / 100) * 100
+      if (card.dipPct) {
+        g.dipMul = 1 - card.dipPct / 100
+        g.dipLeft = card.dipPaydays ?? 4
+      }
+      if (card.freezePaydays) g.slowdownLeft = Math.max(g.slowdownLeft, card.freezePaydays)
+      biz.gl = g
+      biz.cashFlow = glTotalIncome(g)
+      log(t, s.id, `${s.name}: ${card.title} — доход по партнёрскому бизнесу теперь ${money(glTotalIncome(g))}/мес`)
+    }
+    return
+  }
   if (card.kind === 'stockSplit') {
     for (const s of t.seats) {
       if (s.outOfGame || s.track === 'fast') continue
-      seatLedgerEvent(t, s.id, { type: 'STOCK_SPLIT', symbol: card.symbol, direction: card.direction })
+      seatLedgerEvent(t, s.id, {
+        type: 'STOCK_SPLIT',
+        symbol: card.symbol,
+        direction: card.direction,
+        ratio: card.ratio,
+      })
     }
-    log(t, null, `${card.symbol}: ${card.direction === 'split' ? 'сплит ×2' : 'обратный сплит ÷2'}`)
+    const k = card.ratio ?? 2
+    log(t, null, `${card.symbol}: ${card.direction === 'split' ? `сплит ${k}:1` : `обратный сплит 1:${k}`}`)
   } else if (card.kind === 'windfall') {
     for (const s of t.seats) {
       if (s.outOfGame || s.track === 'fast') continue
@@ -707,6 +773,37 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const card = t.pending.card
       if (card.kind === 'stock') return prev
 
+      /*
+       * GreenLeaf: цена берётся не из карты, а из ВЫБРАННОГО пакета.
+       * Карта одна, цен три — решение игрока, а не то, что ему выпало.
+       */
+      const glPkg = (card as { greenleaf?: boolean }).greenleaf
+        ? glPackage(event.glPackage ?? 'platinum')
+        : null
+      if (glPkg) {
+        if (l.cash < glPkg.price) return prev
+        // Разброс удачи: у двух одинаково старательных структура растёт по-разному.
+        // Детерминированно от зерна и длины журнала — повтор партии даст то же.
+        const luck =
+          GL_LUCK_MIN + mulberry32(t.seed + t.log.length)() * (GL_LUCK_MAX - GL_LUCK_MIN)
+        seatLedgerEvent(t, seat.id, {
+          type: 'BUY_BUSINESS',
+          id: `${card.id}-${t.log.length}`,
+          name: `${localizedCardTitle(card)} · ${glPkg.name}`,
+          cost: glPkg.price,
+          downPayment: glPkg.price,
+          liability: 0,
+          cashFlow: GL_START_FLOW,
+          category: 'partnership',
+          glPackage: glPkg.id,
+          glLuck: luck,
+        })
+        log(t, seat.id, `Вошёл в партнёрский бизнес, пакет «${glPkg.name}» за ${money(glPkg.price)}`)
+        t.pending = null
+        t.phase = 'turnEnd'
+        return t
+      }
+
       const kind = card.kind === 'realEstate' ? 'realEstate' : 'business'
       // Партнёр входит долей: складываемся, доход и убыток делим в тех же долях.
       const withInvestor = !!event.withInvestor && !RULES.loansEnabled && card.kind !== 'business'
@@ -787,7 +884,8 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       // Рынок для всех: пока карта на столе, купить может любой игрок Круга.
       const buyer = event.seatId ? t.seats.find((x) => x.id === event.seatId) : seat
       if (!buyer || buyer.outOfGame || buyer.track === 'fast') return prev
-      const total = shares * card.price
+      const price = marketStockPrice(card.price, t.market.stock[card.symbol])
+      const total = shares * price
       if (buyer.ledger.cash < total) return prev
 
       seatLedgerEvent(t, buyer.id, {
@@ -795,10 +893,10 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         id: `${card.symbol}-${t.log.length}`,
         symbol: card.symbol,
         shares,
-        costPerShare: card.price,
+        costPerShare: price,
         dividendPerShareMonthly: card.dividendPerShare ?? 0,
       })
-      log(t, buyer.id, `${buyer.name} купил ${shares} × ${card.symbol} по ${money(card.price)}`)
+      log(t, buyer.id, `${buyer.name} купил ${shares} × ${card.symbol} по ${money(price)}`)
       // Ход закрывает только активный игрок; чужая покупка карту не снимает.
       if (buyer.id === seat.id) {
         t.pending = null
@@ -1086,6 +1184,48 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       log(t, seat.id, `${seat.name} банкрот и выбывает`)
       t.pending = null
       nextTurn(t)
+      return t
+    }
+
+    /*
+     * Поднять пакет GreenLeaf. Доступно В ЛЮБОЙ МОМЕНТ, а не по карте:
+     * в жизни это решение, а не удача. Платишь только разницу.
+     */
+    case 'GL_UPGRADE': {
+      const biz = l.businesses.find((b) => b.id === event.assetId)
+      if (!biz?.gl) return prev
+      const cost = glUpgradeCost(biz.gl.packageId, event.to)
+      if (cost <= 0 || l.cash < cost) return prev
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -cost })
+      const after = t.seats[seatIdx].ledger.businesses.find((b) => b.id === event.assetId)
+      if (after?.gl) after.gl = { ...after.gl, packageId: event.to }
+      log(
+        t,
+        seat.id,
+        `Поднял пакет до «${glPackage(event.to).name}», доплатив ${money(cost)} — доход со структуры вырос`,
+      )
+      return t
+    }
+
+    /** Золотой треугольник: ещё два кабинета, доход растёт на треть. */
+    case 'GL_BUY_TRIANGLE': {
+      const biz = l.businesses.find((b) => b.gl && !b.gl.triangle)
+      if (!biz?.gl || l.cash < event.cost) return prev
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -event.cost })
+      const after = t.seats[seatIdx].ledger.businesses.find((b) => b.id === biz.id)
+      if (after?.gl) {
+        after.gl = { ...after.gl, triangle: true }
+        after.cashFlow = glTotalIncome(after.gl)
+      }
+      log(
+        t,
+        seat.id,
+        `Открыл ещё два кабинета за ${money(event.cost)} — доход по структуре вырос на ${Math.round(
+          (GL_TRIANGLE_BONUS - 1) * 100,
+        )}%`,
+      )
+      t.pending = null
+      t.phase = 'turnEnd'
       return t
     }
 

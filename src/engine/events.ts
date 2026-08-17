@@ -5,15 +5,19 @@ import type { PayableDebt } from './types'
  * из них восстанавливается любое состояние игрока.
  */
 export type LedgerEvent =
-  | { type: 'PAYCHECK' }
+  /**
+   * Снимок рыночных множителей кладётся ВНУТРЬ события: applyEvent не имеет
+   * доступа к столу, а повтор партии обязан давать тот же результат.
+   */
+  | { type: 'PAYCHECK'; flowMul?: Record<string, number> }
   | { type: 'SALARY_RAISE'; amount: number }
   | { type: 'ZAKAT' }
   | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
-  | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse' }
+  | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse'; ratio?: number }
   | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string }
   | { type: 'SELL_REAL_ESTATE'; assetId: string; salePrice: number }
-  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string }
+  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string; glPackage?: import('./greenleaf').GlPackageId; glLuck?: number }
   | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number }
   | { type: 'DOODAD'; amount: number }
   | { type: 'FINANCE_DOODAD'; amount: number }
@@ -47,7 +51,16 @@ export type LedgerEvent =
 export type TableEvent =
   | { type: 'ROLL'; dice: number[] }
   | { type: 'CHOOSE_DEAL'; size: 'small' | 'big' }
-  | { type: 'BUY_DEAL'; withInvestor?: boolean; payCash?: boolean }
+  /** glPackage — выбранный пакет GreenLeaf, если карта партнёрская. */
+  | {
+      type: 'BUY_DEAL'
+      withInvestor?: boolean
+      payCash?: boolean
+      glPackage?: import('./greenleaf').GlPackageId
+    }
+  /** Поднять пакет GreenLeaf, доплатив разницу. Доступно в любой момент. */
+  | { type: 'GL_UPGRADE'; assetId: string; to: import('./greenleaf').GlPackageId }
+  | { type: 'GL_BUY_TRIANGLE'; cost: number }
   | { type: 'BUY_STOCK_SHARES'; shares: number; seatId?: string }
   | { type: 'PASS_CARD' }
   | { type: 'SELL_STOCK_LOT'; seatId: string; lotId: string; shares: number; pricePerShare: number }

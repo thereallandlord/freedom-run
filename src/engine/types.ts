@@ -79,6 +79,12 @@ export interface BusinessAsset {
   /** Партнёрский бизнес: прирост потока на каждый день зарплаты, до потолка. */
   growthPerPayday?: number
   growthCap?: number
+  /**
+   * Партнёрский бизнес GreenLeaf. Если поле есть — доход этого актива считает
+   * НЕ cashFlow, а движок GreenLeaf: пакет-множитель, растущая структура,
+   * пенсия за ранг, просадки. Правила живут в engine/greenleaf.ts.
+   */
+  gl?: import('./greenleaf').GlState
   installmentMonthly?: number
   partnerId?: string
 }
@@ -180,6 +186,22 @@ export interface StockPriceCard {
   price: number
 }
 
+/**
+ * Один живой эффект рынка. Живёт заданное число мировых событий и гаснет.
+ * Срок нужен, чтобы обстановка менялась: рынок дышит, а не застывает навсегда.
+ */
+export interface MarketEffect {
+  /** Из какого мирового события пришёл — для подписи игроку. */
+  eventId: string
+  title: string
+  kind: 'price' | 'flow' | 'stock'
+  /** Категория актива или тикер бумаги. */
+  key: string
+  mul: number
+  /** До какого значения worldTick действует. */
+  until: number
+}
+
 export interface StockSplitCard {
   kind: 'stockSplit'
   id: string
@@ -187,6 +209,8 @@ export interface StockSplitCard {
   flavor: string
   symbol: string
   direction: 'split' | 'reverse'
+  /** Настоящий коэффициент сплита: Nvidia 10:1 в 2024-м, Apple 4:1 в 2020-м. По умолчанию 2. */
+  ratio?: number
 }
 
 export interface WindfallCard {
@@ -208,7 +232,40 @@ export interface PayRaiseCard {
   amount: number
 }
 
-export type MarketCard = SellOfferCard | StockPriceCard | StockSplitCard | WindfallCard | PayRaiseCard
+/**
+ * Событие партнёрского бизнеса. Приходит ТОЛЬКО тому, у кого этот бизнес есть —
+ * как и беды по кафе приходят владельцу кафе.
+ *
+ * 🔴 Беда здесь особого рода: она не забирает деньги, а ТОРМОЗИТ рост. Ровно
+ * одно исключение — выбывший лидер, там доход правда проседает. Так это и в
+ * жизни: худшее, что бывает, — потраченное впустую время, а не потеря вложенного.
+ */
+export interface GlEventCard {
+  kind: 'glEvent'
+  id: string
+  title: string
+  flavor: string
+  /** Разовая ступенька: доход структуры сразу вырастет на столько процентов. */
+  boostPct?: number
+  /** Насколько ускорится дальнейший рост — накопительный эффект. */
+  growthPct?: number
+  /** Просадка дохода на время (выбыл лидер, выгорел наставник). */
+  dipPct?: number
+  dipPaydays?: number
+  /** Рост встал: воронку заблокировали, команда ушла отдыхать. */
+  freezePaydays?: number
+  /** Золотой треугольник: предложение купить ещё два кабинета. */
+  triangle?: boolean
+  triangleCost?: number
+}
+
+export type MarketCard =
+  | SellOfferCard
+  | StockPriceCard
+  | StockSplitCard
+  | WindfallCard
+  | PayRaiseCard
+  | GlEventCard
 
 export interface DoodadCard {
   id: string
@@ -327,6 +384,16 @@ export interface Table {
   /** Порядок мировых событий и сколько уже сыграно. */
   worldDeck: { order: number[]; next: number }
   /** Множители рынка, накопленные мировыми событиями. */
+  /**
+   * Что сейчас творится на рынке. Три словаря — это ПРОИЗВОДНОЕ от списка
+   * живых эффектов, их пересчитывает `recalcMarket` после каждого события.
+   *
+   * 🔴 Раньше словари были источником правды и копились НАВСЕГДА: «Анталья
+   * забита» поднимала доход и не отпускала до конца партии, а «Дубай прижал
+   * посуточку» после неё не возвращала исходное из-за округления. Плюс
+   * `assetFlow` переписывал доход прямо у объектов — и купленный ПОЗЖЕ объект
+   * оставался с базовым доходом, хотя рынок для него тот же.
+   */
   market: {
     /** Цена класса активов при продаже: категория → множитель. */
     price: Record<string, number>
@@ -335,6 +402,10 @@ export interface Table {
     /** Котировки тикеров: символ → множитель. */
     stock: Record<string, number>
   }
+  /** Живые эффекты рынка со сроком годности. */
+  marketEffects: MarketEffect[]
+  /** Сколько мировых событий уже прошло — часы для срока годности эффектов. */
+  worldTick: number
   /** Последнее мировое событие — чтобы показать его всем. */
   lastWorldEvent: { id: string; at: number } | null
   /** Живые предложения между игроками. */

@@ -81,7 +81,8 @@ export function fastBoardSize(): number {
   return ACTIVE_FAST_BOARD.length
 }
 export const TICKERS = tickersJson as unknown as Record<string, { name: string; range: [number, number] }>
-export const PETS = miscJson.DOGS as { id: string; name: string }[]
+/* Только коты: собак в доме не заводим — халяльная версия. */
+export const PETS = miscJson.PETS as { id: string; name: string }[]
 export const WORLD_EVENTS = (eventsRuJson as any).WORLD_EVENTS_RU as import('./types').WorldEvent[]
 
 const D = decksJson as any

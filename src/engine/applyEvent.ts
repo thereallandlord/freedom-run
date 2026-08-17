@@ -1,6 +1,7 @@
 import type { Ledger } from './types'
 import { DEBT_TO_PAYMENT } from './types'
 import type { LedgerEvent } from './events'
+import { glInitialState, glOnPayday, glRankFor, glTotalIncome } from './greenleaf'
 import {
   MAX_PETS,
   RULES,
@@ -41,11 +42,25 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'PAYCHECK': {
       // Партнёрский бизнес растёт: структура приводит людей между зарплатами.
       for (const b of l.businesses) {
+        if (b.gl) {
+          // GreenLeaf считает свой движок: объём, ранги, просадки, разгон.
+          const { next } = glOnPayday(b.gl)
+          next.age += 1
+          b.gl = next
+          // cashFlow держим зеркалом — его показывают списки активов.
+          b.cashFlow = glTotalIncome(next)
+          const rank = glRankFor(next.volume)
+          if (rank.level > next.rankPaid) {
+            l.cash += rank.bonus
+            b.gl = { ...next, rankPaid: rank.level }
+          }
+          continue
+        }
         if (b.growthPerPayday && b.cashFlow < (b.growthCap ?? Infinity)) {
           b.cashFlow = Math.min(b.growthCap ?? Infinity, b.cashFlow + b.growthPerPayday)
         }
       }
-      l.cash += monthlyCashFlow(l)
+      l.cash += monthlyCashFlow(l, e.flowMul)
       l.paydays += 1
 
       /*
@@ -101,7 +116,9 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       const sym = e.symbol.toUpperCase()
       for (const lot of l.stocks) {
         if (lot.symbol !== sym) continue
-        lot.shares = e.direction === 'split' ? lot.shares * 2 : Math.floor(lot.shares / 2)
+        // Коэффициент настоящий: у Nvidia в 2024-м был 10:1, у Apple в 2020-м 4:1.
+        const k = e.ratio ?? 2
+        lot.shares = e.direction === 'split' ? lot.shares * k : Math.floor(lot.shares / k)
       }
       l.stocks = l.stocks.filter((x) => x.shares > 0)
       return l
@@ -147,8 +164,9 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         cashFlow: e.cashFlow,
         category: e.category,
         investorShare: e.investorShare,
-        growthPerPayday: e.growthPerPayday,
-        growthCap: e.growthCap,
+        growthPerPayday: e.glPackage ? undefined : e.growthPerPayday,
+        growthCap: e.glPackage ? undefined : e.growthCap,
+        gl: e.glPackage ? glInitialState(e.glPackage, e.glLuck ?? 1) : undefined,
         installmentMonthly: e.installmentMonthly,
         partnerId: e.partnerId,
       })

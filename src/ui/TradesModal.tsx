@@ -10,6 +10,12 @@ import { PRICE_CEIL, PRICE_FLOOR, fairAssetPrice } from '../engine/trades'
 import { RULES } from '../engine/ledger'
 import { Dropdown, type Option } from './Dropdown'
 import { money, signed } from './PlayerPanel'
+import {
+  glPackage,
+  glStructureIncome,
+  glUpgradeCost,
+  glUpgradeOptions,
+} from '../engine/greenleaf'
 import { Corridor, MoneySlider, SeatTag, TradeBlock, TradeLine, TradeShell, payback } from './TradeBits'
 import {
   assetsOf,
@@ -172,6 +178,49 @@ export function TradesModal({
       )}
 
       {/* ─── Продать свой актив ─── */}
+      {/*
+        Апгрейд пакета GreenLeaf. Живёт здесь, а не на карте: Камиль решил, что
+        поднять пакет можно В ЛЮБОЙ МОМЕНТ, доплатив разницу, — как в жизни.
+        Выгодно не на входе, а когда структура уже приносит заметные деньги.
+      */}
+      {seat.ledger.businesses
+        .filter((b) => b.gl && glUpgradeOptions(b.gl.packageId).length > 0)
+        .map((b) => (
+          <TradeBlock key={b.id} title="Поднять пакет в партнёрском бизнесе">
+            <p className="text-[12px] leading-snug text-[var(--muted)]">
+              Сейчас у вас «{glPackage(b.gl!.packageId).name}». Структура приносит{' '}
+              {money(glStructureIncome(b.gl!))} в месяц. Доплата считается разницей в цене.
+            </p>
+            <div className="mt-2 space-y-2">
+              {glUpgradeOptions(b.gl!.packageId).map((pk) => {
+                const doplata = glUpgradeCost(b.gl!.packageId, pk.id)
+                const prirost =
+                  Math.round(
+                    (glStructureIncome(b.gl!) / glPackage(b.gl!.packageId).mul) * pk.mul,
+                  ) - glStructureIncome(b.gl!)
+                const okup = prirost > 0 ? Math.ceil(doplata / prirost) : 0
+                return (
+                  <button
+                    key={pk.id}
+                    disabled={seat.ledger.cash < doplata}
+                    onClick={() => dispatch({ type: 'GL_UPGRADE', assetId: b.id, to: pk.id })}
+                    className="w-full rounded-xl border border-[var(--line)] p-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-bold">{pk.name}</span>
+                      <span className="tabnum font-black">доплата {money(doplata)}</span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-[var(--muted)]">
+                      доход вырастет на {money(prirost)}/мес
+                      {okup > 0 ? ` · окупится за ${okup} мес` : ''}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </TradeBlock>
+        ))}
+
       <TradeBlock title="Продать актив игроку">
         {!asset ? (
           <p className="text-[12px] text-[var(--muted)]">

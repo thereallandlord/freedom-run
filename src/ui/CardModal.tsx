@@ -12,10 +12,18 @@ import {
   hasConsumerDebt,
   hasSellableAssets,
 } from '../engine/table'
-import { RULES, monthlyCashFlow, totalExpenses, installmentPrice, installmentMonthly } from '../engine/ledger'
+import {
+  RULES,
+  monthlyCashFlow,
+  totalExpenses,
+  installmentPrice,
+  installmentMonthly,
+  marketStockPrice,
+} from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText } from '../engine/data'
 import { loanOutstanding } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
+import { GL_PACKAGES, glTotalIncome } from '../engine/greenleaf'
 import { HalalNote } from './HalalNote'
 import { DealTradeActions } from './DealTradeActions'
 import { artByDream, artById, artBySpace, artByTicker } from './cardArt'
@@ -307,7 +315,32 @@ export function CardModal({
             <Stat label="Ваши наличные" value={money(l.cash)} />
           </div>
 
-          {/* Выбрать надо одну цену прямо сейчас — это требование действительности сделки. */}
+          {/*
+            GreenLeaf: одна карта, три цены. Выбор игрока, а не то, что выпало —
+            иначе главный урок (когда стоит подниматься) до человека не доходит.
+          */}
+          {(card as { greenleaf?: boolean }).greenleaf ? (
+            <div className="space-y-2">
+              {GL_PACKAGES.map((pk) => (
+                <button
+                  key={pk.id}
+                  disabled={l.cash < pk.price}
+                  onClick={() => dispatch({ type: 'BUY_DEAL', glPackage: pk.id })}
+                  className="w-full rounded-xl border border-[var(--line)] p-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-black">{pk.name}</span>
+                    <span className="tabnum text-lg font-black">{money(pk.price)}</span>
+                  </div>
+                  <div className="mt-1 text-[11px] leading-snug text-[var(--muted)]">{pk.hint}</div>
+                </button>
+              ))}
+              <p className="text-[11px] leading-snug text-[var(--muted)]">
+                Поднять пакет можно в любой момент — доплатите разницу. Считать выгодно тогда,
+                когда структура уже приносит заметные деньги.
+              </p>
+            </div>
+          ) : (
           <div className="grid gap-2 sm:grid-cols-2">
             <button
               disabled={!canCash}
@@ -339,6 +372,7 @@ export function CardModal({
               </div>
             </button>
           </div>
+          )}
 
           {investorAvailable && (
             <button
@@ -421,12 +455,62 @@ export function CardModal({
         )
       }
 
+      if (card.kind === 'glEvent') {
+        const biz = seat.ledger.businesses.find((b) => b.gl)
+        return (
+          <Shell badge="Партнёрский бизнес" title={txt.title} flavor={txt.flavor} accent="#22c55e">
+            {card.triangle ? (
+              <>
+                <div className="panel-2 rounded-lg p-3">
+                  <Stat label="Стоит" value={money(card.triangleCost ?? 0)} strong />
+                  <Stat label="Доход по структуре вырастет на" value="30%" />
+                </div>
+                <button
+                  disabled={!biz || seat.ledger.cash < (card.triangleCost ?? 0)}
+                  onClick={() => dispatch({ type: 'GL_BUY_TRIANGLE', cost: card.triangleCost ?? 0 })}
+                  className="btn-primary w-full disabled:opacity-40"
+                >
+                  Открыть ещё два кабинета
+                </button>
+                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost w-full">
+                  Не сейчас
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="panel-2 space-y-1 rounded-lg p-3 text-[13px]">
+                  {card.boostPct ? <Stat label="Доход структуры" value={`+${card.boostPct}% сразу`} /> : null}
+                  {card.growthPct ? <Stat label="Дальше расти будет" value={`быстрее на ${card.growthPct}%`} /> : null}
+                  {card.dipPct ? (
+                    <Stat label="Доход просядет" value={`на ${card.dipPct}%, это ${card.dipPaydays ?? 4} зарплат`} />
+                  ) : null}
+                  {card.freezePaydays ? (
+                    <Stat label="Приток новых людей встал" value={`на ${card.freezePaydays} зарплат`} />
+                  ) : null}
+                  {biz?.gl ? <Stat label="Теперь приносит" value={`${money(glTotalIncome(biz.gl))}/мес`} strong /> : null}
+                </div>
+                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
+                  Понятно
+                </button>
+              </>
+            )}
+          </Shell>
+        )
+      }
+
       if (card.kind === 'stockPrice') {
         const holders = stockHolders(table, card.symbol)
+        // Цена с поправкой на мировые события — иначе баннер обещает одно, а платят другое.
+        const px = marketStockPrice(card.price, table.market.stock[card.symbol])
         return (
           <Shell badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
             <div className="panel-2 rounded-lg p-3">
-              <Stat label={card.symbol} value={money(card.price)} strong />
+              <Stat label={card.symbol} value={money(px)} strong />
+              {px !== card.price && (
+                <p className="mt-1 text-[11px] text-[var(--muted)]">
+                  С учётом того, что сейчас творится на рынке. По карте было {money(card.price)}.
+                </p>
+              )}
             </div>
             {holders.length === 0 ? (
               <p className="text-center text-sm text-[var(--muted)]">Ни у кого нет этих бумаг.</p>
@@ -444,7 +528,7 @@ export function CardModal({
                             seatId: h.id,
                             lotId: lot.id,
                             shares: lot.shares,
-                            pricePerShare: card.price,
+                            pricePerShare: px,
                           })
                         }
                         className="panel-2 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] hover:border-emerald-500/60"
@@ -453,8 +537,8 @@ export function CardModal({
                           <span style={{ color: h.color }}>●</span> {h.name} · {lot.shares} шт по{' '}
                           {money(lot.costPerShare)}
                         </span>
-                        <span className={`tabnum font-semibold ${tone(card.price - lot.costPerShare)}`}>
-                          {money(lot.shares * card.price)}
+                        <span className={`tabnum font-semibold ${tone(px - lot.costPerShare)}`}>
+                          {money(lot.shares * px)}
                         </span>
                       </button>
                     )),

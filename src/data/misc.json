@@ -1,30 +1,4 @@
 {
- "DOGS": [
-  {
-   "id": "dog-corgi",
-   "name": "A corgi"
-  },
-  {
-   "id": "dog-husky",
-   "name": "A husky"
-  },
-  {
-   "id": "dog-dachshund",
-   "name": "A dachshund"
-  },
-  {
-   "id": "dog-golden",
-   "name": "A golden retriever"
-  },
-  {
-   "id": "dog-pug",
-   "name": "A pug"
-  },
-  {
-   "id": "dog-shiba",
-   "name": "A shiba inu"
-  }
- ],
  "THEME_IDS": [
   "system",
   "light",
@@ -69,5 +43,39 @@
   "opportunity": "/spaces/opportunity.webp",
   "paycheck": "/spaces/paycheck.webp",
   "taxAudit": "/spaces/taxAudit.webp"
- }
+ },
+ "PETS": [
+  {
+   "id": "cat-british",
+   "name": "Британский кот"
+  },
+  {
+   "id": "cat-street",
+   "name": "Кот из подъезда"
+  },
+  {
+   "id": "cat-maine",
+   "name": "Мейн-кун"
+  },
+  {
+   "id": "cat-siamese",
+   "name": "Сиамская кошка"
+  },
+  {
+   "id": "cat-scottish",
+   "name": "Шотландская вислоухая"
+  },
+  {
+   "id": "cat-sphynx",
+   "name": "Сфинкс"
+  },
+  {
+   "id": "cat-shelter",
+   "name": "Кошка из приюта"
+  },
+  {
+   "id": "cat-persian",
+   "name": "Персидский кот"
+  }
+ ]
 }

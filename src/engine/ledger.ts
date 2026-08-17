@@ -1,4 +1,5 @@
 import type { Ledger, Profession } from './types'
+import { glTotalIncome, type GlState } from './greenleaf'
 
 /**
  * Правила режима. РУ-режим: рубли, без процентных кредитов (халяль),
@@ -63,21 +64,48 @@ export function dividendLines(l: Ledger): { symbol: string; amount: number }[] {
   return [...map.entries()].map(([symbol, amount]) => ({ symbol, amount }))
 }
 
+/**
+ * Множители дохода по классам активов — то, что сейчас творится на рынке.
+ * Приходят снаружи, из состояния стола.
+ *
+ * 🔴 Почему множитель, а не правка cashFlow у самого объекта (так было раньше
+ * и это было неверно): (1) эффект должен быть ВРЕМЕННЫМ, а переписанное число
+ * назад не вернёшь; (2) −25% и потом +25% из-за округления до сотен не давали
+ * исходное; (3) объект, купленный ПОСЛЕ события, оставался с базовым доходом,
+ * хотя рынок для него тот же.
+ */
+export type FlowMul = Record<string, number> | undefined
+
+const mulFor = (m: FlowMul, category: string) => (m && m[category]) || 1
+
 /** Доля потока, достающаяся игроку (инвестор забирает свою часть). */
 export function ownShare(a: { cashFlow: number; investorShare?: number }): number {
   return Math.round(a.cashFlow * (1 - (a.investorShare ?? 0)))
 }
 
+/**
+ * То же, но с поправкой на текущий рынок.
+ * У партнёрского бизнеса доход считает свой движок — cashFlow там не источник
+ * правды, а только зеркало для показа.
+ */
+export function ownShareAt(
+  a: { cashFlow: number; investorShare?: number; category?: string; gl?: GlState },
+  m: FlowMul,
+): number {
+  const base = a.gl ? glTotalIncome(a.gl) : ownShare(a)
+  return Math.round(base * mulFor(m, a.category ?? ''))
+}
+
 /** Аренда + дивиденды + поток бизнесов. Именно это должно перерасти расходы. */
-export function passiveIncome(l: Ledger): number {
+export function passiveIncome(l: Ledger, m?: FlowMul): number {
   const stocks = l.stocks.reduce((s, lot) => s + lot.shares * lot.dividendPerShareMonthly, 0)
-  const realEstate = l.realEstate.reduce((s, a) => s + ownShare(a), 0)
-  const businesses = l.businesses.reduce((s, a) => s + ownShare(a), 0)
+  const realEstate = l.realEstate.reduce((s, a) => s + ownShareAt(a, m), 0)
+  const businesses = l.businesses.reduce((s, a) => s + ownShareAt(a, m), 0)
   return stocks + realEstate + businesses
 }
 
-export function totalIncome(l: Ledger): number {
-  return l.salary + passiveIncome(l)
+export function totalIncome(l: Ledger, m?: FlowMul): number {
+  return l.salary + passiveIncome(l, m)
 }
 
 export function totalExpenses(l: Ledger): number {
@@ -95,8 +123,8 @@ export function totalExpenses(l: Ledger): number {
   )
 }
 
-export function monthlyCashFlow(l: Ledger): number {
-  return totalIncome(l) - totalExpenses(l)
+export function monthlyCashFlow(l: Ledger, m?: FlowMul): number {
+  return totalIncome(l, m) - totalExpenses(l)
 }
 
 /** Поток одной профессии без активов — по нему считается стартовый капитал. */
@@ -130,6 +158,19 @@ export function fastTrackProgress(l: Ledger): number {
 
 export function fastTrackTarget(): number {
   return RULES.fastTrackTarget
+}
+
+/**
+ * Цена бумаги с поправкой на рынок.
+ *
+ * 🔴 До 17.08 мировые события про котировки были ЧИСТО ДЕКОРАТИВНЫМИ: событие
+ * писало множитель в market.stock, баннер его показывал, а карта цены брала
+ * свою цену напрямую. «Золото — 5589 долларов за унцию» на золото игрока не
+ * влияло никак. Семь событий из двадцати четырёх не делали ничего.
+ */
+export function marketStockPrice(base: number, mul: number | undefined): number {
+  if (!mul || mul === 1) return base
+  return Math.max(10, Math.round((base * mul) / 10) * 10)
 }
 
 /** Цена вещи при покупке в рассрочку: цена налом плюс наценка за товар. */

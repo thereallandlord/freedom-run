@@ -15,6 +15,7 @@ import {
 } from '../engine/ledger'
 import { professionName } from '../engine/data'
 import { artById } from './cardArt'
+import { GL_RANKS, glPackage, glRankFor, glStructureIncome } from '../engine/greenleaf'
 
 export function money(n: number) {
   if (RULES.currency === 'RUB') {
@@ -287,6 +288,46 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
             {l.businesses.map((a) => (
               <AssetRow key={a.id} a={a} kind="business" />
             ))}
+            {/*
+              Партнёрский бизнес объясняет себя человеческим языком: игрок должен
+              понимать, ПОЧЕМУ доход растёт. Никаких PV и терминов — только рубли.
+            */}
+            {l.businesses
+              .filter((b) => b.gl)
+              .map((b) => {
+                const g = b.gl!
+                const rank = glRankFor(g.volume)
+                const next = GL_RANKS.find((r) => r.level === rank.level + 1)
+                return (
+                  <div
+                    key={`gl-${b.id}`}
+                    className="mt-1 rounded-lg border border-[var(--t-line, var(--line))] p-2 text-[11px] leading-snug"
+                  >
+                    <div className="font-bold">Партнёрский бизнес · {glPackage(g.packageId).name}</div>
+                    <div className="mt-0.5 text-[var(--muted)]">
+                      Структура приносит {money(glStructureIncome(g))} в месяц
+                      {rank.pension > 0 ? `, сверху пенсия за ранг ${money(rank.pension)}` : ''}.
+                    </div>
+                    {rank.level > 0 && <div className="mt-0.5">Ранг: {rank.name}</div>}
+                    {next && (
+                      <div className="mt-0.5 text-[var(--muted)]">
+                        До ранга «{next.name}» структуре осталось заработать{' '}
+                        {money(Math.max(0, next.volume - g.volume))}.
+                      </div>
+                    )}
+                    {g.dipLeft > 0 && (
+                      <div className="mt-0.5 text-amber-400">
+                        Наставник выгорел — приток новых людей просел, это ещё {g.dipLeft} зарплат.
+                      </div>
+                    )}
+                    {g.slowdownLeft > 0 && (
+                      <div className="mt-0.5 text-amber-400">
+                        Команда взяла паузу — доход пока не растёт, ещё {g.slowdownLeft} зарплат.
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             <div className="mt-1 border-t border-[var(--t-line, var(--line))] pt-1">
               <Row label="Пассивный доход" value={money(passive)} />
               <Row label="Всего доходов" value={money(income)} />
