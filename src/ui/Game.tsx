@@ -20,6 +20,7 @@ import { Wordmark } from './Wordmark'
 import { liveOffers, offerResponders, playerDebt } from './tradeHelpers'
 import type { Offer } from '../engine/trades'
 import { WorldEvents } from './WorldEvents'
+import { BOARD_SKINS, setBoardSkin, useBoardSkin } from './boardSkin'
 
 function Scoreboard({
   table,
@@ -253,6 +254,7 @@ export function Game({
   const inbox =
     openOffers.find((o) => offerResponders(table, o).some((s) => !s.isBot)) ?? openOffers[0] ?? null
 
+  const skin = useBoardSkin()
   const diceOptions = diceCountFor(seat)
   const canRoll = table.phase === 'awaitingRoll' && !seat.isBot && !rolling
   const canEscape =
@@ -415,6 +417,29 @@ export function Game({
                 </div>
                 <div className="tabnum mt-1 text-[15px] font-bold leading-none">
                   {money(seat.ledger.cash)}
+                </div>
+              </div>
+
+              {/* Поле — оформление, а не правила: меняется прямо в партии. */}
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-2.5 py-2">
+                <div className="mb-1.5 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--muted)]">
+                  Поле
+                </div>
+                <div className="grid gap-1">
+                  {BOARD_SKINS.map((s2) => (
+                    <button
+                      key={s2.id}
+                      onClick={() => setBoardSkin(s2.id)}
+                      aria-pressed={skin.id === s2.id}
+                      className={`rounded-lg px-2 py-1.5 text-left text-[11.5px] font-semibold transition ${
+                        skin.id === s2.id
+                          ? 'bg-accent text-accent-ink'
+                          : 'text-[var(--muted)] hover:bg-[var(--panel)]'
+                      }`}
+                    >
+                      {s2.name}
+                    </button>
+                  ))}
                 </div>
               </div>
 

@@ -3,6 +3,7 @@ import type { Seat, Table } from '../engine/types'
 import { artBoard } from './cardArt'
 import { FAST_ICON, RAT_ICON } from './boardIcons'
 import cellData from '../data/board-cells.json'
+import { useBoardSkin } from './boardSkin'
 
 /**
  * Доска.
@@ -50,6 +51,9 @@ interface Calib {
   cells: { x: number; y: number }[]
 }
 const CALIB = cellData as unknown as Record<string, Calib | undefined>
+
+/** Сайт живёт в подпапке — абсолютный путь к картинке улетел бы в корень. */
+const BASE = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL ?? '/'
 
 /** Ровная сетка по периметру — если калибровки для дорожки ещё нет. */
 function fallbackCells(count: number): { x: number; y: number }[] {
@@ -136,23 +140,23 @@ export function Board({ table }: { table: Table }) {
   const showFast = table.seats.some((s) => s.track === 'fast' && !s.outOfGame)
   const board = fastBoard()
 
-  const calib = CALIB[showFast ? 'fast' : 'rat']
+  // Поле выбирает игрок; координаты клеток у каждого поля свои.
+  const skin = useBoardSkin()
+  const calib = CALIB[skin.calib]
   const count = showFast ? board.length : RAT_BOARD.length
   const cells = calib && calib.cells.length === count ? calib.cells : fallbackCells(count)
   const cw = calib?.cellW ?? 0.114
   const ch = calib?.cellH ?? 0.117
-  const plate = artBoard('plate')
+  const plate = `${BASE}cards/${skin.file}`
 
   return (
     <div className="board-fit relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--panel-2)]">
-      {plate && (
-        <img
-          src={plate}
-          alt=""
-          aria-hidden
-          className="absolute inset-0 size-full object-cover dark:opacity-30"
-        />
-      )}
+      <img
+        src={plate}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 size-full object-cover"
+      />
 
       {showFast
         ? board.map((space, i) => {
@@ -197,7 +201,20 @@ export function Board({ table }: { table: Table }) {
       {/* Центр — только чей сейчас ход. Больше там ничему быть не нужно. */}
       <div className="pointer-events-none absolute inset-[28%] grid place-items-center text-center">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+          {/* Название печатается интерфейсом, а не картинкой: модели нельзя
+              доверять буквы — она их путает. */}
+          {skin.brand && (
+            <div
+              className="font-display mb-2 text-2xl font-bold tracking-[-0.03em]"
+              style={{ color: skin.dark ? '#EAF6EE' : '#0E5C3F' }}
+            >
+              GreenLeaf
+            </div>
+          )}
+          <div
+            className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+            style={{ color: skin.dark ? 'rgba(234,246,238,0.72)' : 'var(--muted)' }}
+          >
             {showFast ? 'Полоса свободы' : 'Ходит'}
           </div>
           <div

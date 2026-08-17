@@ -81,6 +81,22 @@ def find_tiles(arr):
     return boxes
 
 
+def keep_same_size(boxes, tol=0.14):
+    """
+    Оставляем только клетки ОДНОГО размера.
+
+    Клетки печатаются по сетке и совпадают с точностью до пикселя; камни,
+    кораллы и кусты — нет. Берём медиану площади и отбрасываем всё, что от
+    неё дальше tol. Это надёжнее любого порога по цвету: работает и на
+    сукне, и на карте города, и на острове.
+    """
+    if not boxes:
+        return boxes
+    areas = np.array([(b[2] - b[0]) * (b[3] - b[1]) for b in boxes], dtype=float)
+    med = float(np.median(areas))
+    return [b for b, a in zip(boxes, areas) if abs(a - med) <= med * tol]
+
+
 def dedupe(boxes, min_dist):
     """Один контур может дать два почти одинаковых бокса — оставляем по одному."""
     out = []
@@ -135,7 +151,24 @@ def main():
     im, arr = load(path)
     w, h = im.size
 
-    boxes = dedupe(find_tiles(arr), min_dist=w * 0.035)
+    raw = dedupe(find_tiles(arr), min_dist=w * 0.035)
+
+    def ring_of(bs):
+        cs = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2) for b in bs]
+        return [c for c in cs
+                if min(c[0], w - c[0]) < w * 0.30 or min(c[1], h - c[1]) < h * 0.30]
+
+    # Допуск подбираем под картинку: у ровной печати клетки совпадают
+    # попиксельно, у ретро-печати намеренно «плывут».
+    best = None
+    for tol in (0.10, 0.14, 0.20, 0.28, 0.40):
+        cand = keep_same_size(raw, tol)
+        miss = abs(len(ring_of(cand)) - a.cells)
+        if best is None or miss < best[0]:
+            best = (miss, cand)
+        if miss == 0:
+            break
+    boxes = best[1]
     centres = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2) for b in boxes]
 
     # Оставляем только те, что лежат у края: середина доски пустая.
