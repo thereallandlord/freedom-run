@@ -16,6 +16,11 @@ h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.
 /* ── Экран стола: фон + доска + панели кодом ── */
 .screen{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
   border:1px solid #24332B;box-shadow:0 24px 60px -34px #000;container-type:size}
+/* Телефон держит экран вертикально: в полосе 16:9 доска сжимается в точку. */
+@media (max-width:760px){
+  .screen{aspect-ratio:auto;width:100%;height:78svh}
+  .phones{display:none}          /* отдельные «телефоны» на телефоне не нужны */
+}
 .screen>.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .hud{position:absolute;inset:0;display:grid;gap:1.6cqw;padding:1.8cqw;
   grid-template-columns:20cqw minmax(0,1fr) 13cqw;color:var(--ink)}
@@ -47,7 +52,8 @@ h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.
 .chip.mk{margin-left:auto;color:var(--muted)}
 
 .boardwrap{display:grid;place-items:center;min-height:0}
-.board{position:relative;height:100%;aspect-ratio:1;border-radius:1.4cqw;overflow:hidden;
+.board{position:relative;height:min(100%,100cqw);width:auto;aspect-ratio:1;
+  border-radius:1.4cqw;overflow:hidden;
   border:1px solid var(--line);box-shadow:0 1.4cqw 3cqw -1.4cqw rgba(0,0,0,.6)}
 .board>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);
@@ -68,17 +74,30 @@ h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.
 .centre .nm{font-family:'Unbounded',system-ui,sans-serif;font-size:1.9cqw;margin-top:.3cqw;color:var(--ink)}
 
 /* ── Телефон: та же тема, другая раскладка. Ради этого всё и затевалось. ── */
-@container (max-width: 620px){
-  .hud{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:2.4cqw;padding:2.4cqw}
-  .side{grid-template-columns:repeat(2,1fr);order:2}
-  .right{grid-template-columns:repeat(4,1fr);order:3}
-  .mid{order:1}
-  .k{font-size:2.1cqw}.v{font-size:4cqw}.v.sm{font-size:3.2cqw}.v em{font-size:2.1cqw}
-  .chip{font-size:2.4cqw;padding:1.1cqw 2.2cqw}.chip i{width:1.5cqw;height:1.5cqw}
-  .roll{font-size:3cqw;padding:3.4cqw 1cqw;grid-column:1/-1}
-  .card{border-radius:2.6cqw;padding:2.4cqw}
-  .cell{border-radius:1.6cqw}.cell .tip{font-size:2cqw}
-  .centre .nm{font-size:4.4cqw}.centre .who{font-size:2cqw}
+@container (max-width: 700px){
+  .hud{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto auto;gap:10px;padding:10px}
+  .side{grid-template-columns:repeat(2,1fr);gap:8px;order:2}
+  .right{grid-template-columns:repeat(3,1fr);gap:8px;order:3}
+  .mid{order:1;gap:8px}
+  /* 🔴 Кегль на телефоне считаем в пикселях, а не от ширины контейнера:
+     2 cqw при экране 343 px — это 7 пикселей, то есть ничего. */
+  .k{font-size:10px;letter-spacing:.06em}
+  .v{font-size:20px}
+  .v.sm{font-size:15px}
+  .v em{font-size:10px}
+  .bar{height:5px;margin-top:5px}
+  .card{border-radius:12px;padding:9px 10px;gap:2px}
+  .chip{font-size:11px;padding:5px 10px;gap:5px}
+  .chip i{width:7px;height:7px}
+  .chip.mk{margin-left:0}
+  /* Палец меньше 44 px не бывает — кнопка и клетка обязаны это уважать. */
+  .roll{font-size:15px;padding:0;min-height:48px;border-radius:12px;grid-column:1/-1}
+  .cell{border-radius:8px;margin:1.5px}
+  .cell .tip{font-size:11px;padding:3px 7px;border-radius:6px;bottom:calc(100% + 4px)}
+  .tok i{width:7px;height:7px;box-shadow:0 0 0 1.5px #fff}
+  .centre .nm{font-size:19px}
+  .centre .who{font-size:9px}
+  .board{border-radius:14px}
 }
 .phones{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:12px}
 .phone{width:100%;max-width:380px}
