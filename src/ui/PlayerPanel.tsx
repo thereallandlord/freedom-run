@@ -12,6 +12,7 @@ import {
   totalIncome,
   fastTrackTarget,
   RULES,
+  ribaRisk,
 } from '../engine/ledger'
 import { professionName } from '../engine/data'
 import { artById } from './cardArt'
@@ -333,6 +334,32 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
               <Row label="Всего доходов" value={money(income)} />
             </div>
           </Section>
+
+          {/*
+            Долговая нагрузка. Показываем ЧЕСТНО и заранее: игра не прячет
+            последствий процентного кредита, она их показывает — а решение
+            остаётся за игроком.
+          */}
+          {l.liabilities.ribaLoan > 0 && (
+            <div className="rounded-lg border border-rose-500/40 bg-rose-500/5 p-2 text-[11px] leading-snug">
+              <div className="font-bold text-rose-300">Долговая нагрузка</div>
+              <div className="mt-0.5">
+                Кредит {money(l.liabilities.ribaLoan)}
+                {(l.ribaGraceLeft ?? 0) > 0
+                  ? ` · без платежей ещё ${l.ribaGraceLeft} зарплат`
+                  : ` · платёж ${money(l.expenses.ribaPayment)}/мес`}
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[var(--panel-2)]">
+                <div
+                  className="h-full rounded-full bg-rose-400"
+                  style={{ width: `${Math.round((ribaRisk(l) / 0.6) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-1 text-[var(--muted)]">
+                Пока кредит открыт, неприятности приходят чаще.
+              </div>
+            </div>
+          )}
 
           <Section title="Расходы" tone="expense" end={money(expenses)}>
             <Row label="Налоги" value={money(l.expenses.taxes)} dim />

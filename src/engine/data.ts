@@ -112,15 +112,22 @@ const RU_CARDS = ruCards as Record<string, { title: string; flavor: string }>
 const RU_PROF = ruProfessions as Record<string, string>
 const RU_FAST = ruFastSpaces as Record<string, { name: string; flavor: string }>
 
+/**
+ * Заголовок и описание карты для показа.
+ *
+ * 🔴 В русской колоде описание лежит в поле `text`, а не `flavor` — и до
+ * 17.08 игрок не видел описания у 90 карт из 142: в окне был только заголовок
+ * и цифры. Читаем оба поля, иначе половина работы над текстами уходит в стол.
+ */
 export function cardText(
-  card: { id: string; title: string; flavor: string },
+  card: { id: string; title: string; flavor?: string; text?: string },
   locale: Locale,
 ): { title: string; flavor: string } {
   if (locale === 'ru') {
     const t = RU_CARDS[card.id]
     if (t) return t
   }
-  return { title: card.title, flavor: card.flavor }
+  return { title: card.title, flavor: card.flavor ?? card.text ?? '' }
 }
 
 let ACTIVE_THEME: DeckTheme = 'classic'

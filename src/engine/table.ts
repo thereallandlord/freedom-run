@@ -40,14 +40,29 @@ import {
   localizedSpaceName,
   type DeckTheme,
 } from './data'
-import { RULES, setRules, installmentPrice, installmentMonthly, zakatDue, marketStockPrice } from './ledger'
+import {
+  RULES,
+  setRules,
+  installmentPrice,
+  installmentMonthly,
+  zakatDue,
+  marketStockPrice,
+  ribaRisk,
+  ribaLimit,
+  ribaMonthly,
+  RIBA,
+  CITIZENSHIP,
+  citizenshipReady,
+} from './ledger'
 import { mulberry32, shuffleIndices } from './rng'
 import {
   GL_LUCK_MAX,
   GL_LUCK_MIN,
   GL_START_FLOW,
+  GL_PROMOS,
   GL_TRIANGLE_BONUS,
   glPackage,
+  glPromoReady,
   glTotalIncome,
   glUpgradeCost,
 } from './greenleaf'
@@ -142,6 +157,7 @@ export function createTable(setup: TableSetup): Table {
     log: [],
     winnerId: null,
     turnCounter: 0,
+    idSeq: 0,
     worldDeck: { order: shuffleIndices(WORLD_EVENTS.length, setup.seed + 5), next: 0 },
     market: { price: {}, flow: {}, stock: {} },
     marketEffects: [],
@@ -156,6 +172,10 @@ export function createTable(setup: TableSetup): Table {
  * Мировое событие. Приходит по таймеру реального времени, а не по чьему-то ходу,
  * и задевает всех сразу — так в игру попадает настоящий рынок.
  */
+/** Сколько отказов от хотелок подряд приводят к выгоранию. */
+export const WANTS_BEFORE_BURNOUT = 4
+export const BURNOUT_TURNS = 4
+
 /** Сколько мировых событий держится эффект рынка. */
 export const MARKET_EFFECT_LIFE = 3
 
@@ -237,6 +257,16 @@ export function nextWorldEventIndex(t: Table): number {
 }
 
 // ─── Вспомогательные ──────────────────────────────────────────────────
+
+/**
+ * Следующий уникальный номер для идентификатора актива.
+ * 🔴 Не длина журнала: журнал обрезается на 300 строках, и номера начинали
+ * повторяться — продажа одного актива уносила другой с тем же id.
+ */
+function nextId(t: Table): number {
+  t.idSeq = (t.idSeq ?? 0) + 1
+  return t.idSeq
+}
 
 export function currentSeat(t: Table): Seat {
   return t.seats[t.turnIndex]
@@ -376,7 +406,12 @@ export function stockHolders(t: Table, symbol: string): Seat[] {
   )
 }
 
-export function sellOfferPrice(cost: number, multiplierPct: number, marketMul = 1): number {
+/**
+ * Цена выкупа с учётом того, что творится на рынке.
+ * 🔴 Множитель ОБЯЗАТЕЛЬНЫЙ, без значения по умолчанию: раньше бот забывал его
+ * передать и решал продавать по цифре, которой в игре не существует.
+ */
+export function sellOfferPrice(cost: number, multiplierPct: number, marketMul: number): number {
   return Math.round((cost * multiplierPct * marketMul) / 100)
 }
 
@@ -506,7 +541,24 @@ function resolveLanding(t: Table, seatIdx: number) {
       case 'doodad': {
         const deck = doodads(t.deckTheme)
         const idx = draw(t, 'doodad', deck.length)
-        t.pending = { kind: 'doodad', card: deck[idx] }
+        let card = deck[idx]
+        /*
+         * Долговая нагрузка: пока открыт процентный кредит, беды приходят чаще
+         * и бьют больнее. Наказание не спрятано — нагрузку видно в панели, и
+         * связь игрок достраивает сам. Ничего не запрещаем.
+         */
+        const risk = ribaRisk(l)
+        if (risk > 0 && mulberry32(t.seed + t.log.length + 991)() < risk) {
+          const idx2 = draw(t, 'doodad', deck.length)
+          const extra = deck[idx2]
+          card = {
+            ...card,
+            title: `${card.title} — и сразу следом: ${extra.title.toLowerCase()}`,
+            amount: card.amount + extra.amount,
+          }
+          log(t, seat.id, 'Долги тянут за собой: неприятности пришли парой')
+        }
+        t.pending = { kind: 'doodad', card }
         t.phase = 'resolving'
         return
       }
@@ -621,9 +673,21 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
       return true
     case 'payRaise':
       return true
-    case 'glEvent':
+    case 'glEvent': {
       // Приходит только владельцу партнёрского бизнеса — как беды по кафе владельцу кафе.
-      return t.seats.some((s) => !s.outOfGame && s.track === 'rat' && s.ledger.businesses.some((b) => b.gl))
+      const owners = t.seats.filter(
+        (s) => !s.outOfGame && s.track === 'rat' && s.ledger.businesses.some((b) => b.gl),
+      )
+      if (!owners.length) return false
+      if (!card.promo) return true
+      // Промоушен показываем, только если план правда закрыт и сроки вышли.
+      const p = GL_PROMOS.find((x) => x.id === card.promo)
+      if (!p) return false
+      return owners.some((s) => {
+        const g = s.ledger.businesses.find((b) => b.gl)?.gl
+        return !!g && glPromoReady(g, p).ready
+      })
+    }
   }
 }
 
@@ -664,6 +728,22 @@ function applyMarketAuto(t: Table, card: MarketCard) {
       })
     }
     const k = card.ratio ?? 2
+    /*
+     * 🔴 И цена по этому символу тоже делится. Иначе карта «цена бумаги» после
+     * сплита продаст удесятерённое количество по прежней цене — деньги из
+     * воздуха. Множитель живёт до конца партии: сплит не «событие рынка на
+     * три хода», а разовая и необратимая смена номинала.
+     */
+    const sym = card.symbol.toUpperCase()
+    t.marketEffects.push({
+      eventId: card.id,
+      title: card.title,
+      kind: 'stock',
+      key: sym,
+      mul: card.direction === 'split' ? 1 / k : k,
+      until: Number.MAX_SAFE_INTEGER,
+    })
+    recalcMarket(t)
     log(t, null, `${card.symbol}: ${card.direction === 'split' ? `сплит ${k}:1` : `обратный сплит 1:${k}`}`)
   } else if (card.kind === 'windfall') {
     for (const s of t.seats) {
@@ -788,7 +868,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           GL_LUCK_MIN + mulberry32(t.seed + t.log.length)() * (GL_LUCK_MAX - GL_LUCK_MIN)
         seatLedgerEvent(t, seat.id, {
           type: 'BUY_BUSINESS',
-          id: `${card.id}-${t.log.length}`,
+          id: `${card.id}-${nextId(t)}`,
           name: `${localizedCardTitle(card)} · ${glPkg.name}`,
           cost: glPkg.price,
           downPayment: glPkg.price,
@@ -827,15 +907,25 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         : Math.round(card.downPayment * (1 - (investorShare ?? 0)))
       if (l.cash < owed) return prev
 
-      // В колоде поток записан УЖЕ за вычетом платежа по рассрочке.
-      // Налом платежа нет — доход выше ровно на его величину.
-      const flow = payCash ? card.cashFlow + monthly : card.cashFlow
+      /*
+       * 🔴 В колоде поток — это ОБЫЧНАЯ чистая аренда, как если купил налом.
+       * Раньше код считал наоборот («поток уже за вычетом платежа») и при
+       * покупке налом ПРИБАВЛЯЛ платёж сверху. Получалась выдуманная доходность:
+       * апартаменты у «Сити» давали −27 500 в рассрочку и +268 300 налом, то
+       * есть 129% годовых на московскую квартиру, и убыточные карты
+       * превращались в лучшие покупки в игре.
+       *
+       * Правда простая и полезная: под длинную рассрочку объект почти всегда
+       * не кормит себя — платёж больше аренды. Поэтому в начале работают
+       * дешёвые покупки за наличные, а не плечо.
+       */
+      const flow = payCash ? card.cashFlow : card.cashFlow - monthly
       const debt = payCash ? 0 : instDebt
 
       if (card.kind === 'realEstate') {
         seatLedgerEvent(t, seat.id, {
           type: 'BUY_REAL_ESTATE',
-          id: `${card.id}-${t.log.length}`,
+          id: `${card.id}-${nextId(t)}`,
           name: localizedCardTitle(card),
           cost: card.cost,
           downPayment: payCash ? fullPrice : card.downPayment,
@@ -848,7 +938,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       } else {
         seatLedgerEvent(t, seat.id, {
           type: 'BUY_BUSINESS',
-          id: `${card.id}-${t.log.length}`,
+          id: `${card.id}-${nextId(t)}`,
           name: localizedCardTitle(card),
           cost: card.cost,
           downPayment: payCash ? fullPrice : card.downPayment,
@@ -890,7 +980,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
       seatLedgerEvent(t, buyer.id, {
         type: 'BUY_STOCK',
-        id: `${card.symbol}-${t.log.length}`,
+        id: `${card.symbol}-${nextId(t)}`,
         symbol: card.symbol,
         shares,
         costPerShare: price,
@@ -967,7 +1057,42 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         seatLedgerEvent(t, seat.id, { type: 'DOODAD', amount: card.amount })
         log(t, seat.id, `Трата: ${card.title} — ${money(card.amount)}`)
       }
+      if (card.want) {
+        // Позволил себе — счётчик отказов обнуляется.
+        seatLedgerEvent(t, seat.id, { type: 'INDULGE' })
+        if (card.upkeep) {
+          seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: card.upkeep })
+          log(t, seat.id, `С покупкой пришло содержание: +${money(card.upkeep)}/мес к расходам`)
+        }
+      }
       t.pending = null
+      t.phase = 'turnEnd'
+      return t
+    }
+
+    /**
+     * Пройти мимо хотелки. Экономить правильно — но не бесконечно.
+     * 🔴 После WANTS_BEFORE_BURNOUT отказов подряд человек выгорает и выпадает
+     * из игры на BURNOUT_TURNS ходов. Это не наказание за бережливость, а
+     * правда жизни: если годами только пахать и ни разу себя не порадовать,
+     * рано или поздно встанешь.
+     */
+    case 'SKIP_WANT': {
+      if (t.pending?.kind !== 'doodad' || !t.pending.card.want) return prev
+      const title = t.pending.card.title
+      seatLedgerEvent(t, seat.id, { type: 'REFUSE_WANT' })
+      const refused = t.seats[seatIdx].ledger.wantsRefused ?? 0
+      log(t, seat.id, `Прошёл мимо: ${title}`)
+      t.pending = null
+      if (refused >= WANTS_BEFORE_BURNOUT) {
+        seatLedgerEvent(t, seat.id, { type: 'INDULGE' })
+        t.seats[seatIdx] = { ...t.seats[seatIdx], skipTurns: BURNOUT_TURNS }
+        log(
+          t,
+          seat.id,
+          `${seat.name} выгорел: ${refused} раз подряд себе ни в чём не позволил. Пропускает ${BURNOUT_TURNS} хода`,
+        )
+      }
       t.phase = 'turnEnd'
       return t
     }
@@ -1056,7 +1181,9 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     case 'ENTER_FAST_TRACK': {
       if (seat.track !== 'rat' || !isOutOfRatRace(l)) return prev
-      const buyout = 100 * passiveIncome(l)
+      // 🔴 Множитель берём из правил: в русском режиме он 50, а не 100 —
+      // журнал обещал игроку вдвое больше, чем приходило на счёт.
+      const buyout = RULES.fastTrackMultiplier * passiveIncome(l)
       seatLedgerEvent(t, seat.id, { type: 'ENTER_FAST_TRACK' })
       t.seats[seatIdx] = { ...t.seats[seatIdx], track: 'fast', position: 0 }
       log(t, seat.id, `🎉 Вырвался из Круга! Выкуп ${money(buyout)}`)
@@ -1132,6 +1259,10 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const name = localizedSpaceName(spaceIdx)
       seatLedgerEvent(t, seat.id, { type: 'BUY_DREAM', name, pricePaid: price })
       log(t, seat.id, `🏆 Купил мечту «${name}» за ${money(price)}`)
+      // 🔴 Карту надо снять и ход закрыть: иначе окно мечты оставалось открытым
+      // и победитель мог заплатить за неё ещё раз, и ещё раз.
+      t.pending = null
+      t.phase = 'turnEnd'
       return t
     }
 
@@ -1229,6 +1360,90 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       return t
     }
 
+    /** Взять кредит. Условия заманчивые — в этом и ловушка. */
+    case 'TAKE_RIBA': {
+      const limit = ribaLimit(l)
+      const free = Math.max(0, limit - l.liabilities.ribaLoan)
+      const amount = Math.min(Math.max(0, Math.round(event.amount / 10_000) * 10_000), free)
+      if (amount <= 0) return prev
+      seatLedgerEvent(t, seat.id, {
+        type: 'TAKE_RIBA_L',
+        amount,
+        payment: ribaMonthly(l.liabilities.ribaLoan + amount),
+        grace: RIBA.gracePaydays,
+      })
+      log(
+        t,
+        seat.id,
+        `Взял кредит ${money(amount)} — первые ${RIBA.gracePaydays} зарплат без платежей`,
+      )
+      return t
+    }
+
+    case 'REPAY_RIBA': {
+      if (l.liabilities.ribaLoan <= 0) return prev
+      seatLedgerEvent(t, seat.id, { type: 'REPAY_RIBA_L', amount: event.amount })
+      const left = t.seats[seatIdx].ledger.liabilities.ribaLoan
+      log(t, seat.id, left > 0 ? `Погасил часть кредита, осталось ${money(left)}` : 'Кредит закрыт полностью')
+      return t
+    }
+
+    /**
+     * Промоушен. Автопромоушен — только деньгами. Путешествие — на выбор.
+     *
+     * 🔴 Поездка выглядит как ХУДШИЙ выбор: вместо живых денег — отдых. Но
+     * именно там знакомятся с людьми, которые потом двигают структуру. Прибавка
+     * случайная (0–20%) и на случайный срок, и в карточке о ней не сказано ни
+     * слова: узнать можно только съездив. Так это и в жизни работает.
+     */
+    case 'GL_PROMO_TAKE': {
+      const biz = l.businesses.find((b) => b.gl)
+      const promo = GL_PROMOS.find((x) => x.id === event.promo)
+      if (!biz?.gl || !promo || !glPromoReady(biz.gl, promo).ready) return prev
+
+      const mark = (g: typeof biz.gl) => ({
+        ...g,
+        lastPromo: { ...g.lastPromo, [promo.id]: g.age },
+        lastPromoVolume: { ...g.lastPromoVolume, [promo.id]: g.volume },
+      })
+
+      if (event.go && promo.id === 'travel') {
+        const r = mulberry32(t.seed + t.log.length + 3771)
+        const gainPct = Math.round(r() * 20)
+        const forPaydays = 4 + Math.floor(r() * 9)
+        const after = t.seats[seatIdx].ledger.businesses.find((b) => b.id === biz.id)
+        if (after?.gl) {
+          const g = mark(after.gl)
+          after.gl = gainPct > 0 ? { ...g, dipMul: 1 + gainPct / 100, dipLeft: forPaydays } : g
+          after.cashFlow = glTotalIncome(after.gl)
+        }
+        log(
+          t,
+          seat.id,
+          gainPct > 0
+            ? `Съездил по промоушену. Познакомился с людьми — доход по структуре вырос на ${gainPct}% на ${forPaydays} зарплат`
+            : 'Съездил по промоушену. Отдохнул, но полезных знакомств не завёл',
+        )
+      } else {
+        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: promo.amount })
+        const after = t.seats[seatIdx].ledger.businesses.find((b) => b.id === biz.id)
+        if (after?.gl) after.gl = mark(after.gl)
+        log(t, seat.id, `${promo.name}: забрал деньгами ${money(promo.amount)}`)
+      }
+      t.pending = null
+      t.phase = 'turnEnd'
+      return t
+    }
+
+    /** Второй паспорт. Покупается решением в любой момент, а не по карте. */
+    case 'GET_CITIZENSHIP': {
+      const c = CITIZENSHIP.find((x) => x.id === event.id)
+      if (!c || !citizenshipReady(l, c.id).ok) return prev
+      seatLedgerEvent(t, seat.id, { type: 'SET_CITIZENSHIP', name: c.name, fee: c.fee })
+      log(t, seat.id, `${seat.name} получил ${c.name.toLowerCase()} — дохода не прибавилось, зато стало спокойнее`)
+      return t
+    }
+
     case 'PASS_CARD': {
       if (!t.pending) return prev
       if (t.pending.kind === 'doodad' || t.pending.kind === 'bankruptcy') return prev
@@ -1259,7 +1474,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       t.offers = [
         ...t.offers,
         {
-          id: `of-${t.log.length}`,
+          id: `of-${nextId(t)}`,
           kind: 'resellCard',
           fromId: seat.id,
           toId: event.toId,
@@ -1281,7 +1496,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       t.offers = [
         ...t.offers,
         {
-          id: `of-${t.log.length}`,
+          id: `of-${nextId(t)}`,
           kind: 'coInvest',
           fromId: seat.id,
           toId: event.toId,
@@ -1309,7 +1524,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       t.offers = [
         ...t.offers,
         {
-          id: `of-${t.log.length}`,
+          id: `of-${nextId(t)}`,
           kind: 'sellAsset',
           fromId: seat.id,
           toId: event.toId,
@@ -1332,7 +1547,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       t.offers = [
         ...t.offers,
         {
-          id: `of-${t.log.length}`,
+          id: `of-${nextId(t)}`,
           kind: 'loan',
           fromId: seat.id,
           toId: to.id,
@@ -1359,7 +1574,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       t.offers = [
         ...t.offers,
         {
-          id: `of-${t.log.length}`,
+          id: `of-${nextId(t)}`,
           kind: 'loan',
           fromId: lender.id,
           toId: seat.id,
@@ -1411,7 +1626,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -price })
           seatLedgerEvent(t, from.id, { type: 'ADJUST_CASH', amount: price })
           const common = {
-            id: `${card.id}-${t.log.length}`,
+            id: `${card.id}-${nextId(t)}`,
             name: localizedCardTitle(card),
             cost: card.cost,
             downPayment: card.downPayment,
@@ -1437,12 +1652,16 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           if (!asset) return prev
           const debt = re ? re.mortgage : (biz as any).liability
           if (buyer.ledger.cash < price) return prev
-          seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -price })
+          /*
+           * 🔴 Деньги у покупателя списывает САМ BUY_REAL_ESTATE / BUY_BUSINESS
+           * (там downPayment = price). Отдельный ADJUST_CASH здесь снимал цену
+           * ВТОРОЙ раз — покупатель платил вдвое и часто уходил в минус.
+           */
           // Продавец получает цену за вычетом долга, который уходит вместе с активом.
           if (re) seatLedgerEvent(t, from.id, { type: 'SELL_REAL_ESTATE', assetId: o.assetId!, salePrice: price })
           else seatLedgerEvent(t, from.id, { type: 'SELL_BUSINESS', assetId: o.assetId!, salePrice: price })
           const common = {
-            id: `${o.assetId}-${t.log.length}`,
+            id: `${o.assetId}-${nextId(t)}`,
             name: asset.name,
             cost: asset.cost,
             downPayment: price,
@@ -1468,7 +1687,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           seatLedgerEvent(t, from.id, { type: 'ADJUST_CASH', amount: -mine })
           const share = o.share ?? 0.5
           const common = {
-            id: `${card.id}-${t.log.length}`,
+            id: `${card.id}-${nextId(t)}`,
             name: localizedCardTitle(card),
             cost: card.cost,
             downPayment: 0,
@@ -1481,6 +1700,26 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             seatLedgerEvent(t, from.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: card.mortgage })
           } else {
             seatLedgerEvent(t, from.id, { type: 'BUY_BUSINESS', ...common, liability: card.liability })
+          }
+          /*
+           * 🔴 Доля соинвестора должна лечь ЕМУ В ПОРТФЕЛЬ, иначе он платит
+           * деньги и не получает ничего: у инициатора доход уже урезан на
+           * investorShare, а этот кусок просто испарялся. Долг остаётся на том,
+           * кто ведёт объект, — соинвестор внёс живые деньги, а не обязательство.
+           */
+          const partShare = {
+            id: `${card.id}-part-${nextId(t)}`,
+            name: `${localizedCardTitle(card)} · доля ${Math.round(share * 100)}%`,
+            cost: Math.round(card.cost * share),
+            downPayment: 0,
+            cashFlow: Math.round(card.cashFlow * share),
+            category: card.category,
+            partnerId: from.id,
+          }
+          if (card.kind === 'realEstate') {
+            seatLedgerEvent(t, buyer.id, { type: 'BUY_REAL_ESTATE', ...partShare, mortgage: 0 })
+          } else {
+            seatLedgerEvent(t, buyer.id, { type: 'BUY_BUSINESS', ...partShare, liability: 0 })
           }
           log(
             t,
@@ -1500,7 +1739,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           t.loans = [
             ...t.loans,
             {
-              id: `ln-${t.log.length}`,
+              id: `ln-${nextId(t)}`,
               lenderId: from.id,
               borrowerId: buyer.id,
               amount: o.amount,

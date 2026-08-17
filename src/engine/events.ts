@@ -10,6 +10,12 @@ export type LedgerEvent =
    * доступа к столу, а повтор партии обязан давать тот же результат.
    */
   | { type: 'PAYCHECK'; flowMul?: Record<string, number> }
+  | { type: 'TAKE_RIBA_L'; amount: number; payment: number; grace: number }
+  | { type: 'REPAY_RIBA_L'; amount: number }
+  | { type: 'ADD_UPKEEP'; amount: number }
+  | { type: 'REFUSE_WANT' }
+  | { type: 'INDULGE' }
+  | { type: 'SET_CITIZENSHIP'; name: string; fee: number }
   | { type: 'SALARY_RAISE'; amount: number }
   | { type: 'ZAKAT' }
   | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
@@ -61,6 +67,15 @@ export type TableEvent =
   /** Поднять пакет GreenLeaf, доплатив разницу. Доступно в любой момент. */
   | { type: 'GL_UPGRADE'; assetId: string; to: import('./greenleaf').GlPackageId }
   | { type: 'GL_BUY_TRIANGLE'; cost: number }
+  /** Взять процентный кредит в банке. Доступно всегда, в том числе при банкротстве. */
+  | { type: 'TAKE_RIBA'; amount: number }
+  /** Погасить процентный кредит целиком или частью. */
+  | { type: 'REPAY_RIBA'; amount: number }
+  /** Пройти мимо хотелки. Копить полезно — но не всё время. */
+  | { type: 'SKIP_WANT' }
+  | { type: 'GET_CITIZENSHIP'; id: string }
+  /** Промоушен: забрать деньгами или поехать. Поездка даёт скрытую прибавку. */
+  | { type: 'GL_PROMO_TAKE'; promo: 'travel' | 'auto'; go?: boolean }
   | { type: 'BUY_STOCK_SHARES'; shares: number; seatId?: string }
   | { type: 'PASS_CARD' }
   | { type: 'SELL_STOCK_LOT'; seatId: string; lotId: string; shares: number; pricePerShare: number }

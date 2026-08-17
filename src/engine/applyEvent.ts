@@ -60,6 +60,16 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           b.cashFlow = Math.min(b.growthCap ?? Infinity, b.cashFlow + b.growthPerPayday)
         }
       }
+      /*
+       * Беспроцентный период кончается — и вот тогда появляется платёж.
+       * Считаем ДО начисления, чтобы первый же чек после льготы был честным.
+       */
+      if ((l.ribaGraceLeft ?? 0) > 0) {
+        l.ribaGraceLeft = (l.ribaGraceLeft ?? 0) - 1
+        if (l.ribaGraceLeft === 0 && l.liabilities.ribaLoan > 0) {
+          l.expenses.ribaPayment = Math.round((l.liabilities.ribaLoan * 2) / 100 / 100) * 100
+        }
+      }
       l.cash += monthlyCashFlow(l, e.flowMul)
       l.paydays += 1
 
@@ -68,6 +78,24 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
        * Процентный кредит так себя не ведёт — там платёж это плата за деньги,
        * и тело гасится только отдельным погашением.
        */
+      /*
+       * 🔴 Беспроцентная рассрочка за траты ГАСИТСЯ платежами. Раньше долг и
+       * платёж просто оставались навсегда: «10 платежей» на карточке было
+       * обещанием, а в цифрах — вечный расход, и к середине партии игрок таскал
+       * платежи за холодильник, купленный полтора часа назад.
+       */
+      if (!RULES.loansEnabled && l.liabilities.retailDebt > 0) {
+        const pay = Math.min(l.expenses.retailPayment, l.liabilities.retailDebt)
+        l.liabilities.retailDebt -= pay
+        if (l.liabilities.retailDebt <= 0) {
+          l.liabilities.retailDebt = 0
+          l.expenses.retailPayment = 0
+        }
+      }
+      if (RULES.loansEnabled && l.liabilities.creditCards > 0) {
+        // Процентная карта так себя не ведёт: платёж — плата за деньги, тело стоит.
+      }
+
       if (!RULES.loansEnabled && l.liabilities.bankLoan > 0) {
         const pay = Math.min(l.expenses.bankLoanPayment, l.liabilities.bankLoan)
         l.liabilities.bankLoan -= pay
@@ -116,9 +144,24 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       const sym = e.symbol.toUpperCase()
       for (const lot of l.stocks) {
         if (lot.symbol !== sym) continue
-        // Коэффициент настоящий: у Nvidia в 2024-м был 10:1, у Apple в 2020-м 4:1.
+        /*
+         * Коэффициент настоящий: у Nvidia в 2024-м был 10:1, у Apple в 2020-м 4:1.
+         *
+         * 🔴 Цена ОБЯЗАНА делиться вместе с количеством. Раньше делилось только
+         * количество — и карта становилась принтером денег: 100 акций после
+         * сплита 10:1 продавались по старой цене, то есть ×100 вместо ×10.
+         * Текст карты «богатства не прибавилось ни на рубль» был просто ложью.
+         */
         const k = e.ratio ?? 2
-        lot.shares = e.direction === 'split' ? lot.shares * k : Math.floor(lot.shares / k)
+        if (e.direction === 'split') {
+          lot.shares *= k
+          lot.costPerShare = Math.max(1, Math.round(lot.costPerShare / k))
+          lot.dividendPerShareMonthly = Math.round(lot.dividendPerShareMonthly / k)
+        } else {
+          lot.shares = Math.floor(lot.shares / k)
+          lot.costPerShare = Math.round(lot.costPerShare * k)
+          lot.dividendPerShareMonthly = Math.round(lot.dividendPerShareMonthly * k)
+        }
       }
       l.stocks = l.stocks.filter((x) => x.shares > 0)
       return l
@@ -149,6 +192,52 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.realEstate = l.realEstate.filter((x) => x.id !== e.assetId)
       return l
     }
+
+    case 'TAKE_RIBA_L':
+      l.cash += e.amount
+      l.liabilities.ribaLoan += e.amount
+      // Пока идёт беспроцентный период, платежа нет — в этом весь соблазн.
+      l.ribaGraceLeft = e.grace
+      l.expenses.ribaPayment = e.grace > 0 ? 0 : e.payment
+      return l
+
+    case 'REPAY_RIBA_L': {
+      const pay = Math.min(e.amount, l.cash, l.liabilities.ribaLoan)
+      if (pay <= 0) return prev
+      l.cash -= pay
+      l.liabilities.ribaLoan -= pay
+      l.expenses.ribaPayment =
+        l.liabilities.ribaLoan > 0 && !(l.ribaGraceLeft ?? 0)
+          ? Math.round((l.liabilities.ribaLoan * 2) / 100 / 100) * 100
+          : l.liabilities.ribaLoan > 0
+            ? l.expenses.ribaPayment
+            : 0
+      if (l.liabilities.ribaLoan <= 0) {
+        l.liabilities.ribaLoan = 0
+        l.expenses.ribaPayment = 0
+        l.ribaGraceLeft = 0
+      }
+      return l
+    }
+
+    /** Купил хотелку — с ней приходит содержание. Расходы растут вместе с доходом. */
+    case 'ADD_UPKEEP':
+      l.expenses.otherExpenses += e.amount
+      return l
+
+    case 'REFUSE_WANT':
+      l.wantsRefused = (l.wantsRefused ?? 0) + 1
+      return l
+
+    /** Позволил себе — счётчик отказов обнуляется, выгорание отодвигается. */
+    case 'INDULGE':
+      l.wantsRefused = 0
+      return l
+
+    case 'SET_CITIZENSHIP':
+      l.cash -= e.fee
+      l.citizenship = e.name
+      return l
 
     case 'BUY_BUSINESS':
       // Партнёрских кабинетов держат считанные штуки — иначе это принтер денег.
@@ -319,6 +408,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       if (l.phase !== 'ratRace') return prev
       const buyout = RULES.fastTrackMultiplier * passiveIncome(l)
       l.cash += buyout
+      /*
+       * 🔴 Выкуп — это ПРОДАЖА всего нажитого в Круге. Активы обязаны уйти:
+       * раньше они оставались в портфеле, и человек продавал их второй раз
+       * по картам рынка, получая за один объект деньги дважды.
+       */
+      l.realEstate = []
+      l.businesses = []
+      l.stocks = []
       l.phase = 'fastTrack'
       l.fastTrack = {
         beginningIncome: buyout,

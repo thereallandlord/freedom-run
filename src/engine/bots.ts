@@ -18,6 +18,8 @@ import {
   isOutOfRatRace,
   monthlyCashFlow,
   totalExpenses,
+  installmentPrice,
+  installmentMonthly,
 } from './ledger'
 import { fastBoard } from './data'
 
@@ -149,6 +151,24 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
         }
         return { type: 'PASS_CARD' }
       }
+
+      /*
+       * 🔴 Налом или в рассрочку — считаем, а не берём вслепую.
+       *
+       * Под длинную рассрочку платёж почти всегда БОЛЬШЕ аренды: за квартиру в
+       * Азино платишь 63 500 при доходе 31 000. Раньше бот этого не видел и
+       * всегда брал в рассрочку — за партию накапливал минусовой поток и уходил
+       * в отрицательный капитал. Теперь: хватает на всю цену — берём налом;
+       * не хватает — берём в рассрочку ТОЛЬКО если поток остаётся положительным.
+       */
+      const instTotal = installmentPrice(card.cost, card.kind === 'realEstate' ? 'realEstate' : 'business')
+      const monthly = installmentMonthly(Math.max(0, instTotal - card.downPayment))
+      const canCash = l.cash - card.cost >= cashBuffer(seat, p)
+      if (canCash) return { type: 'BUY_DEAL', payCash: true }
+      if (card.cashFlow - monthly <= 0) {
+        // В рассрочку объект будет съедать деньги каждый месяц — не берём.
+        return { type: 'PASS_CARD' }
+      }
       return { type: 'BUY_DEAL' }
     }
 
@@ -159,7 +179,7 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
         for (const m of marketMatches(t, card.category)) {
           if (m.seat.id !== seat.id) continue
           for (const a of m.assets) {
-            const price = sellOfferPrice(a.cost, card.multiplierPct)
+            const price = sellOfferPrice(a.cost, card.multiplierPct, t.market.price[card.category] ?? 1)
             if (price >= a.cost * mult) {
               return { type: 'ACCEPT_OFFER', seatId: seat.id, assetId: a.id }
             }

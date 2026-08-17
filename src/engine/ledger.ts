@@ -78,6 +78,21 @@ export type FlowMul = Record<string, number> | undefined
 
 const mulFor = (m: FlowMul, category: string) => (m && m[category]) || 1
 
+/**
+ * Применить рыночный множитель к потоку.
+ *
+ * 🔴 Знак имеет значение. Наивное `поток × 1,2` на УБЫТОЧНОМ объекте делает
+ * убыток больше: −8 200 превращается в −9 840, то есть хорошая новость бьёт по
+ * владельцу. Игрок читает зелёную плашку «аренда подорожала» и уходит в минус —
+ * объяснить это за столом нечем. Для минусового потока процент инвертируем:
+ * хорошая новость сокращает убыток, плохая — углубляет.
+ */
+function applyFlowMul(flow: number, mul: number): number {
+  if (mul === 1) return flow
+  const k = flow < 0 ? 2 - mul : mul
+  return Math.round(flow * k)
+}
+
 /** Доля потока, достающаяся игроку (инвестор забирает свою часть). */
 export function ownShare(a: { cashFlow: number; investorShare?: number }): number {
   return Math.round(a.cashFlow * (1 - (a.investorShare ?? 0)))
@@ -93,7 +108,7 @@ export function ownShareAt(
   m: FlowMul,
 ): number {
   const base = a.gl ? glTotalIncome(a.gl) : ownShare(a)
-  return Math.round(base * mulFor(m, a.category ?? ''))
+  return applyFlowMul(base, mulFor(m, a.category ?? ''))
 }
 
 /** Аренда + дивиденды + поток бизнесов. Именно это должно перерасти расходы. */
@@ -119,6 +134,7 @@ export function totalExpenses(l: Ledger): number {
     e.retailPayment +
     e.otherExpenses +
     e.bankLoanPayment +
+    e.ribaPayment +
     petExpenses(l)
   )
 }
@@ -158,6 +174,87 @@ export function fastTrackProgress(l: Ledger): number {
 
 export function fastTrackTarget(): number {
   return RULES.fastTrackTarget
+}
+
+/**
+ * Второе гражданство. Не даёт дохода — даёт устойчивость.
+ * Настоящие условия: Турция — 400 000 $ в недвижимости этой страны;
+ * Карибы — прямой взнос, недвижимость не нужна.
+ */
+export const CITIZENSHIP = [
+  {
+    id: 'tr',
+    name: 'Гражданство Турции',
+    /** Нужно держать турецкой недвижимости на эту сумму. */
+    needCategory: 'aptTUR',
+    needAmount: 31_600_000,
+    fee: 900_000,
+    note: 'Программа даёт паспорт за 400 000 $ в недвижимости. Объекты остаются вашими — их не продают, а держат три года.',
+  },
+  {
+    id: 'carib',
+    name: 'Паспорт Карибов',
+    needCategory: '',
+    needAmount: 0,
+    fee: 17_400_000,
+    note: 'Прямой взнос в фонд государства, недвижимость не нужна. Деньги уходят безвозвратно и потока не дают.',
+  },
+]
+
+export function citizenshipReady(l: Ledger, id: string): { ok: boolean; why: string } {
+  const c = CITIZENSHIP.find((x) => x.id === id)
+  if (!c) return { ok: false, why: '' }
+  if (l.citizenship) return { ok: false, why: 'Второй паспорт у вас уже есть' }
+  if (c.needAmount > 0) {
+    const held = l.realEstate
+      .filter((a) => a.category === c.needCategory)
+      .reduce((s, a) => s + a.cost, 0)
+    if (held < c.needAmount)
+      return {
+        ok: false,
+        why: `Нужно держать недвижимости этой страны на ${c.needAmount.toLocaleString('ru-RU')} ₽, у вас на ${held.toLocaleString('ru-RU')} ₽`,
+      }
+  }
+  if (l.cash < c.fee) return { ok: false, why: 'Не хватает наличных на сборы и оформление' }
+  return { ok: true, why: '' }
+}
+
+/**
+ * Процентный кредит. Условия НАМЕРЕННО заманчивые: дают много, сразу, никого
+ * просить не надо, и первые месяцы вообще без платежей. Так это и работает в
+ * жизни — иначе никто бы и не брал.
+ *
+ * 🔴 Плата не в процентах на экране, а в том, что жизнь идёт тяжелее: пока
+ * кредит открыт, неприятности приходят чаще. Игра ничего не запрещает и не
+ * читает нотаций — связь человек достраивает сам, глядя на строку «долговая
+ * нагрузка» в панели.
+ */
+export const RIBA = {
+  /** Сколько дают: кратно месячному доходу. */
+  limitIncomeMul: 6,
+  /** Месячный платёж — доля тела. Это плата за деньги, тело им не гасится. */
+  ratePctMonthly: 2,
+  /** Сколько зарплат идёт беспроцентный период. */
+  gracePaydays: 3,
+  /** Шаг долговой нагрузки: сколько тела приходится на одну «ступень» риска. */
+  loadStep: 300_000,
+  /** Потолок добавочного риска. */
+  maxRisk: 0.6,
+}
+
+/** Долговая нагрузка от 0 до 1 — её видно в панели, по ней растёт частота бед. */
+export function ribaRisk(l: Ledger): number {
+  if (l.liabilities.ribaLoan <= 0) return 0
+  return Math.min(RIBA.maxRisk, (l.liabilities.ribaLoan / RIBA.loadStep) * 0.2)
+}
+
+export function ribaLimit(l: Ledger): number {
+  const base = Math.max(l.salary, totalIncome(l))
+  return Math.round((base * RIBA.limitIncomeMul) / 10_000) * 10_000
+}
+
+export function ribaMonthly(principal: number): number {
+  return Math.round((principal * RIBA.ratePctMonthly) / 100 / 100) * 100
 }
 
 /**
@@ -201,7 +298,7 @@ export function paycheckShortfall(l: Ledger): boolean {
  */
 export function zakatBase(l: Ledger): number {
   const idle = l.cash + l.stocks.reduce((s, x) => s + x.shares * x.costPerShare, 0)
-  const owed = l.liabilities.bankLoan
+  const owed = l.liabilities.bankLoan + l.liabilities.ribaLoan
   return Math.max(0, idle - owed)
 }
 
@@ -235,8 +332,8 @@ export function createLedger(p: Profession, playerName: string): Ledger {
     cash: startingCash(p),
     profession: p,
     salary: p.salary,
-    expenses: { ...p.expenses, bankLoanPayment: 0 },
-    liabilities: { ...p.liabilities, bankLoan: 0 },
+    expenses: { ...p.expenses, bankLoanPayment: 0, ribaPayment: 0 },
+    liabilities: { ...p.liabilities, bankLoan: 0, ribaLoan: 0 },
     pets: 0,
     stocks: [],
     realEstate: [],

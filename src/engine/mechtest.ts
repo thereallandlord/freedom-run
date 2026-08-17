@@ -198,8 +198,16 @@ check('малых сделок', smallDeals('ru').length >= 30, String(smallDeal
 check('крупных сделок', bigDeals('ru').length >= 25, String(bigDeals('ru').length))
 check('карт рынка', marketCards('ru').length >= 30, String(marketCards('ru').length))
 check('трат', doodads('ru').length >= 30, String(doodads('ru').length))
-const dood = doodads('ru').map((d) => d.amount)
-check('траты скромные', Math.max(...dood) <= 30_000, `макс ${Math.max(...dood)} ₽`)
+// Обязательные траты держим скромными: от них не отказаться, они не должны разорять.
+const dood = doodads('ru').filter((d) => !d.want).map((d) => d.amount)
+check('обязательные траты скромные', Math.max(...dood) <= 30_000, `макс ${Math.max(...dood)} ₽`)
+// Хотелки — наоборот, крупные: отказ от них должен быть настоящим решением.
+const wants = doodads('ru').filter((d) => d.want)
+check('хотелки есть', wants.length >= 8, String(wants.length))
+check('хотелки ощутимые', Math.max(...wants.map((w) => w.amount)) >= 100_000,
+  `макс ${Math.max(...wants.map((w) => w.amount))} ₽`)
+check('у части хотелок есть содержание', wants.filter((w) => w.upkeep).length >= 3,
+  String(wants.filter((w) => w.upkeep).length))
 // GreenLeaf — ОДНА карта с тремя ценами внутри, а не три разные карты:
 // выбор пакета должен быть решением игрока, а не тем, что ему выпало.
 const partnerships = bigDeals('ru').filter((c: any) => c.category === 'partnership')

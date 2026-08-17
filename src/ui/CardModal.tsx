@@ -23,7 +23,8 @@ import {
 import { fastBoard, cardText, fastSpaceText } from '../engine/data'
 import { loanOutstanding } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
-import { GL_PACKAGES, glTotalIncome } from '../engine/greenleaf'
+import { GL_PACKAGES, GL_PROMOS, glTotalIncome } from '../engine/greenleaf'
+import { RIBA } from '../engine/ledger'
 import { HalalNote } from './HalalNote'
 import { DealTradeActions } from './DealTradeActions'
 import { artByDream, artById, artBySpace, artByTicker } from './cardArt'
@@ -459,7 +460,31 @@ export function CardModal({
         const biz = seat.ledger.businesses.find((b) => b.gl)
         return (
           <Shell badge="Партнёрский бизнес" title={txt.title} flavor={txt.flavor} accent="#22c55e">
-            {card.triangle ? (
+            {card.promo ? (
+              <>
+                <div className="panel-2 rounded-lg p-3">
+                  <Stat
+                    label="Компания выкупает место за"
+                    value={money(GL_PROMOS.find((p) => p.id === card.promo)?.amount ?? 0)}
+                    strong
+                  />
+                </div>
+                <button
+                  onClick={() => dispatch({ type: 'GL_PROMO_TAKE', promo: card.promo! })}
+                  className="btn-primary w-full"
+                >
+                  Взять деньгами
+                </button>
+                {card.promo === 'travel' && (
+                  <button
+                    onClick={() => dispatch({ type: 'GL_PROMO_TAKE', promo: 'travel', go: true })}
+                    className="btn-ghost w-full"
+                  >
+                    Поехать самому
+                  </button>
+                )}
+              </>
+            ) : card.triangle ? (
               <>
                 <div className="panel-2 rounded-lg p-3">
                   <Stat label="Стоит" value={money(card.triangleCost ?? 0)} strong />
@@ -576,10 +601,28 @@ export function CardModal({
           photo={artById(card.id) ?? artBySpace('doodad')}
         >
           <div className="panel-2 rounded-lg p-3">
-            <Stat label="К оплате" value={money(card.amount)} strong />
+            <Stat label={card.want ? 'Стоит' : 'К оплате'} value={money(card.amount)} strong />
+            {card.upkeep ? (
+              <Stat label="И потом каждый месяц" value={`${money(card.upkeep)} на содержание`} />
+            ) : null}
             <Stat label="Ваши наличные" value={money(l.cash)} />
           </div>
+          {/*
+            Хотелка — не обязательная трата. Можно пройти мимо, и это правильно.
+            Но кто отказывается всё время, тот в какой-то момент выгорает: жить
+            тоже надо. Счётчик отказов показываем честно, без нравоучений.
+          */}
+          {card.want && (l.wantsRefused ?? 0) >= 2 && (
+            <p className="text-center text-[12px] text-amber-400">
+              Подряд отказов: {l.wantsRefused}. Вы давно ничего себе не позволяли.
+            </p>
+          )}
           <div className="flex flex-col gap-2">
+            {card.want && (
+              <button onClick={() => dispatch({ type: 'SKIP_WANT' })} className="btn-ghost w-full">
+                Пройти мимо — не сейчас
+              </button>
+            )}
             <button
               disabled={l.cash < card.amount}
               onClick={() => dispatch({ type: 'PAY_DOODAD', financed: false })}
@@ -846,6 +889,41 @@ export function CardModal({
               ? 'Вы снова на плаву — можно вернуться в игру.'
               : 'Продавайте активы банку за полцены, пока поток не станет положительным.'}
           </p>
+
+          {/*
+            🔴 Самый нужный момент для помощи раньше был единственным, где её не
+            предлагали. Теперь развилка та же, что и в жизни: попросить у
+            человека — неловко, но чисто; взять в банке — быстро и никто не
+            увидит, но потом идёт тяжелее.
+          */}
+          {!recover && (
+            <div className="space-y-2 rounded-lg border border-[var(--line)] p-3">
+              <p className="text-[12px] font-bold">Можно не распродавать нажитое</p>
+              {table.seats
+                .filter((x) => x.id !== seat.id && !x.outOfGame && x.ledger.cash > 0)
+                .map((x) => (
+                  <button
+                    key={x.id}
+                    onClick={() =>
+                      dispatch({ type: 'ASK_LOAN', fromId: x.id, amount: Math.max(50_000, -flow * 6) })
+                    }
+                    className="btn-ghost w-full border-emerald-500/50"
+                  >
+                    Попросить {money(Math.max(50_000, -flow * 6))} у игрока{' '}
+                    <span style={{ color: x.color }}>●</span> {x.name} — без надбавки
+                  </button>
+                ))}
+              <button
+                onClick={() => dispatch({ type: 'TAKE_RIBA', amount: Math.max(100_000, -flow * 12) })}
+                className="btn-ghost w-full"
+              >
+                Взять кредит в банке — дают сразу, первые {RIBA.gracePaydays} зарплат без платежей
+              </button>
+              <p className="text-[11px] leading-snug text-[var(--muted)]">
+                Долговая нагрузка растёт вместе с кредитом, и она видна в панели.
+              </p>
+            </div>
+          )}
 
           {!recover && (
             <div className="max-h-52 space-y-1 overflow-auto">

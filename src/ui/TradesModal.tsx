@@ -10,6 +10,7 @@ import { PRICE_CEIL, PRICE_FLOOR, fairAssetPrice } from '../engine/trades'
 import { RULES } from '../engine/ledger'
 import { Dropdown, type Option } from './Dropdown'
 import { money, signed } from './PlayerPanel'
+import { RIBA, ribaLimit } from '../engine/ledger'
 import {
   glPackage,
   glStructureIncome,
@@ -220,6 +221,66 @@ export function TradesModal({
             </div>
           </TradeBlock>
         ))}
+
+      {/*
+        Кредит в банке. Условия намеренно вкусные — иначе никто бы и не брал,
+        а вся ловушка в том, что брать ХОЧЕТСЯ. Игра не запрещает и не читает
+        нотаций: показывает нагрузку и оставляет решение игроку.
+      */}
+      <TradeBlock title={seat.ledger.liabilities.ribaLoan > 0 ? 'Кредит в банке' : 'Взять кредит в банке'}>
+        {seat.ledger.liabilities.ribaLoan > 0 ? (
+          <>
+            <TradeLine label="Осталось вернуть" value={money(seat.ledger.liabilities.ribaLoan)} strong />
+            <TradeLine
+              label={(seat.ledger.ribaGraceLeft ?? 0) > 0 ? 'Платежей пока нет' : 'Платёж в месяц'}
+              value={
+                (seat.ledger.ribaGraceLeft ?? 0) > 0
+                  ? `ещё ${seat.ledger.ribaGraceLeft} зарплат`
+                  : money(seat.ledger.expenses.ribaPayment)
+              }
+            />
+            <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
+              Платёж — это плата за деньги, тело долга им не гасится. Пока кредит открыт,
+              неприятности приходят чаще.
+            </p>
+            <button
+              disabled={seat.ledger.cash <= 0}
+              onClick={() =>
+                dispatch({
+                  type: 'REPAY_RIBA',
+                  amount: Math.min(seat.ledger.cash, seat.ledger.liabilities.ribaLoan),
+                })
+              }
+              className="btn-primary mt-2 w-full disabled:opacity-40"
+            >
+              Погасить {money(Math.min(seat.ledger.cash, seat.ledger.liabilities.ribaLoan))}
+            </button>
+          </>
+        ) : (
+          <>
+            <TradeLine label="Могут дать до" value={money(ribaLimit(seat.ledger))} strong />
+            <TradeLine label="Первые зарплаты" value={`${RIBA.gracePaydays} без платежей`} />
+            <TradeLine label="Потом в месяц" value={`${RIBA.ratePctMonthly}% от суммы`} />
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {[0.25, 0.5, 1].map((k) => {
+                const amt = Math.round((ribaLimit(seat.ledger) * k) / 10_000) * 10_000
+                return (
+                  <button
+                    key={k}
+                    onClick={() => dispatch({ type: 'TAKE_RIBA', amount: amt })}
+                    className="rounded-xl border border-[var(--line)] p-2 text-center transition hover:border-rose-500/60 hover:bg-rose-500/10"
+                  >
+                    <div className="tabnum text-[13px] font-black">{money(amt)}</div>
+                    <div className="text-[10px] text-[var(--muted)]">
+                      потом {money(Math.round((amt * RIBA.ratePctMonthly) / 100 / 100) * 100)}/мес
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </TradeBlock>
 
       <TradeBlock title="Продать актив игроку">
         {!asset ? (
