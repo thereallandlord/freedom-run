@@ -1,42 +1,57 @@
 {
- "diorama": {
-  "bg": "/cards/bg-diorama.webp",
-  "board": "/cards/world-diorama.webp",
-  "dark": true,
-  "edge": "#241609",
-  "panel": "#2B1C11",
-  "ink": "#F3F7F4",
-  "muted": "#A6B6AC",
-  "accent": "#AE7226"
- },
- "isometric": {
-  "bg": "/cards/bg-isometric.webp",
-  "board": "/cards/world-isometric.webp",
-  "dark": false,
-  "edge": "#9FC7C6",
-  "panel": "#EFE6D0",
-  "ink": "#161F1A",
-  "muted": "#5C6961",
-  "accent": "#403606"
- },
- "soft": {
-  "bg": "/cards/bg-soft.webp",
-  "board": "/cards/world-soft.webp",
-  "dark": false,
-  "edge": "#D9C69C",
-  "panel": "#E6D4B0",
-  "ink": "#161F1A",
-  "muted": "#5C6961",
-  "accent": "#524327"
- },
- "night": {
-  "bg": "/cards/bg-night.webp",
+ "dusk": {
+  "name": "Сумерки",
+  "bg": "/cards/bg2-dusk.webp",
   "board": "/cards/world-night.webp",
   "dark": true,
-  "edge": "#07131B",
-  "panel": "#131419",
+  "edge": "#10252B",
+  "panel": "#1A2B46",
   "ink": "#F3F7F4",
   "muted": "#A6B6AC",
-  "accent": "#7D6E4E"
+  "accent": "#857554"
+ },
+ "sand": {
+  "name": "Песок",
+  "bg": "/cards/bg2-sand.webp",
+  "board": "/cards/world-soft.webp",
+  "dark": false,
+  "edge": "#E2D1A6",
+  "panel": "#E7D9B7",
+  "ink": "#161F1A",
+  "muted": "#5C6961",
+  "accent": "#4C3F24"
+ },
+ "emerald": {
+  "name": "Изумруд",
+  "bg": "/cards/bg2-emerald.webp",
+  "board": "/cards/world-diorama.webp",
+  "dark": true,
+  "edge": "#0C170B",
+  "panel": "#152216",
+  "ink": "#F3F7F4",
+  "muted": "#A6B6AC",
+  "accent": "#B8792A"
+ },
+ "marble": {
+  "name": "Мрамор",
+  "bg": "/cards/bg2-marble.webp",
+  "board": "/cards/world-isometric.webp",
+  "dark": false,
+  "edge": "#E6D7BB",
+  "panel": "#ECE1CE",
+  "ink": "#161F1A",
+  "muted": "#5C6961",
+  "accent": "#3C3205"
+ },
+ "ink": {
+  "name": "Тушь",
+  "bg": "/cards/bg2-ink.webp",
+  "board": "/cards/world-night.webp",
+  "dark": true,
+  "edge": "#1F2F48",
+  "panel": "#1B2A52",
+  "ink": "#F3F7F4",
+  "muted": "#A6B6AC",
+  "accent": "#857554"
  }
 }

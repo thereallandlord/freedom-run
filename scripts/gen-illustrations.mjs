@@ -536,6 +536,59 @@ const SCENES_WORLD = {
   'world-night': WORLD_RULE + ' Style: night scene, deep midnight water, cities glowing warm gold and cool cyan, reflections, cinematic.',
 }
 
+/**
+ * Фоны, заход второй. Первые Камилю не понравились.
+ *
+ * Что меняю по сравнению с первой попыткой: там были буквальные «столешница»
+ * и «небо» — узнаваемые предметы, которые спорят с доской. Теперь фон —
+ * АТМОСФЕРА, а не предмет: глубина, свет, лёгкая фактура. Середина по-прежнему
+ * пустая: там лежит доска, и любая деталь под ней превращается в грязь.
+ */
+const BG2_RULE =
+  'Wide horizontal abstract background for a game screen, 3:2. ' +
+  'The centre is calm and almost empty — a large quiet area where a board will sit on top. ' +
+  'All interest lives near the outer edges and corners, fading gently towards the middle. ' +
+  'Soft vignette, subtle depth, no hard shapes in the centre. ' +
+  'No board, no game spaces, no grid, no cards, no panels, no interface, no buildings, no people. ' +
+  'No text, no letters, no numbers, no logos.'
+
+const SCENES_BG2 = {
+  'bg2-dusk':
+    BG2_RULE + ' Deep teal-to-indigo gradient with a warm amber glow bleeding in from the lower left, ' +
+    'like city light on evening haze. Fine film grain, smooth and cinematic.',
+  'bg2-sand':
+    BG2_RULE + ' Warm sand and cream, very soft, like fine paper lit from above; ' +
+    'faint concentric ripples in the far corners, a whisper of sage green at the edges. Calm and expensive.',
+  'bg2-emerald':
+    BG2_RULE + ' Deep emerald green velvet fading to near black at the corners, ' +
+    'a soft pool of warm light in the middle, delicate golden dust motes near the edges. Rich and quiet.',
+  'bg2-marble':
+    BG2_RULE + ' Pale warm marble with faint grey-gold veining drifting only along the outer edges, ' +
+    'polished sheen, gentle soft shadow in the corners. Bright, clean, luxurious.',
+  'bg2-ink':
+    BG2_RULE + ' Dark slate blue washed like watercolour on textured paper, ' +
+    'soft indigo and teal blooms in the corners, tiny scattered gold specks. Moody and hand-made.',
+}
+
+/**
+ * Зелёные фоны — просьба Камиля: минималистично, премиально, с еле заметными
+ * листьями. Листья должны угадываться, а не читаться: фон под доской и
+ * панелями, любой заметный рисунок начнёт спорить с содержимым.
+ */
+const SCENES_GREEN = {
+  'bg3-leaf':
+    'Wide horizontal premium background, 3:2. Deep sage-and-forest green surface with a very faint, ' +
+    'barely visible pattern of large botanical leaf silhouettes — tone-on-tone, almost the same colour as the ground, ' +
+    'like blind embossing on thick paper. Leaves appear only near the outer edges and corners and fade out completely ' +
+    'towards the middle. A soft pool of light in the centre, gentle vignette. ' +
+    'Calm, expensive, minimal. No board, no spaces, no panels, no interface, no text, no letters, no numbers, no logos.',
+  'bg3-mint':
+    'Wide horizontal minimal background, 3:2. Soft pale mint and cream, a smooth wide gradient with a whisper of warm sand ' +
+    'at the lower edge. Absolutely plain and quiet in the middle, faint soft shadow in the corners, fine paper grain. ' +
+    'Bright, airy, premium and understated. No board, no spaces, no panels, no interface, no pattern in the centre, ' +
+    'no text, no letters, no numbers, no logos.',
+}
+
 /** Большие сделки — недвижимость. */
 const SCENES_BIG_RE = {
   'big-re-kzn-azino':
@@ -879,6 +932,22 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  // Зелёные фоны
+  manifest.byBg = manifest.byBg || {}
+  for (const [k, scene] of Object.entries(SCENES_GREEN)) {
+    push(k, k, scene, 'plateWide', () => {
+      manifest.byBg[k] = `/cards/${k}.webp`
+    })
+  }
+
+  // Фоны, заход второй
+  manifest.byBg = manifest.byBg || {}
+  for (const [k, scene] of Object.entries(SCENES_BG2)) {
+    push(k, k, scene, 'plateWide', () => {
+      manifest.byBg[k] = `/cards/${k}.webp`
+    })
   }
 
   // Мир доски без клеток

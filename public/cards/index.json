@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-17T12:56:51.004Z",
+ "generatedAt": "2026-08-17T14:23:41.215Z",
  "byId": {
   "sd-room-ufa-chernikovka": "/cards/sd-room-ufa-chernikovka.webp",
   "sd-room-ufa-sipailovo": "/cards/sd-room-ufa-sipailovo.webp",
@@ -175,17 +175,24 @@
   "Дом у моря": "/cards/dream-seaside-house.webp",
   "Свой самолёт и лицензия пилота": "/cards/dream-airplane-pilot.webp"
  },
+ "byBg": {
+  "bg3-leaf": "/cards/bg3-leaf.webp",
+  "bg3-mint": "/cards/bg3-mint.webp",
+  "bg2-dusk": "/cards/bg2-dusk.webp",
+  "bg2-sand": "/cards/bg2-sand.webp",
+  "bg2-emerald": "/cards/bg2-emerald.webp",
+  "bg2-marble": "/cards/bg2-marble.webp",
+  "bg2-ink": "/cards/bg2-ink.webp",
+  "bg-diorama": "/cards/bg-diorama.webp",
+  "bg-isometric": "/cards/bg-isometric.webp",
+  "bg-soft": "/cards/bg-soft.webp",
+  "bg-night": "/cards/bg-night.webp"
+ },
  "byWorld": {
   "world-diorama": "/cards/world-diorama.webp",
   "world-isometric": "/cards/world-isometric.webp",
   "world-soft": "/cards/world-soft.webp",
   "world-night": "/cards/world-night.webp"
- },
- "byBg": {
-  "bg-diorama": "/cards/bg-diorama.webp",
-  "bg-isometric": "/cards/bg-isometric.webp",
-  "bg-soft": "/cards/bg-soft.webp",
-  "bg-night": "/cards/bg-night.webp"
  },
  "byHud": {
   "r6-dubai": "/cards/r6-dubai.webp",
