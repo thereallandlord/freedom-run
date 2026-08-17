@@ -53,5 +53,27 @@
   "ink": "#F3F7F4",
   "muted": "#A6B6AC",
   "accent": "#857554"
+ },
+ "leaf": {
+  "name": "Зелёный с листьями",
+  "bg": "/cards/bg3-leaf.webp",
+  "board": "/cards/world-diorama.webp",
+  "dark": true,
+  "edge": "#253323",
+  "panel": "#41583F",
+  "ink": "#F3F7F4",
+  "muted": "#A6B6AC",
+  "accent": "#39E09B"
+ },
+ "mint": {
+  "name": "Мятный минимал",
+  "bg": "/cards/bg3-mint.webp",
+  "board": "/cards/world-soft.webp",
+  "dark": false,
+  "edge": "#D7D1AF",
+  "panel": "#DED8B6",
+  "ink": "#12201A",
+  "muted": "#566860",
+  "accent": "#0E6E4A"
  }
 }

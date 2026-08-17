@@ -324,7 +324,7 @@ h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.
 }
 '''
 
-ORDER = ['dusk', 'sand', 'emerald', 'marble', 'ink']
+ORDER = ['leaf', 'mint', 'dusk', 'sand', 'emerald', 'marble', 'ink']
 body = '\n'.join(screen(k, T[k]) for k in ORDER if k in T)
 n_assets = len(me['недвижимость']) + len(me['бизнес'])
 
@@ -332,7 +332,7 @@ page = (
     '<!doctype html><html lang="ru"><head><meta charset="utf-8">'
     '<meta name="viewport" content="width=device-width, initial-scale=1">'
     '<title>Стол · середина партии</title><style>' + CSS + '</style></head><body><div class="wrap">'
-    '<h1>Пять фонов на одних и тех же данных</h1>'
+    '<h1>Семь фонов на одних и тех же данных</h1>'
     '<p class="lede">Данные <b>настоящие</b>: движок сыграл 20 зарплат ботами. '
     f'Профессия «{html.escape(me["профессия"])}», {n_assets} купленных активов с их потоком, '
     'реальные расходы и обязательства, фишки стоят где стоят. '
