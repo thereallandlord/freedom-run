@@ -1703,8 +1703,20 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
            * ВТОРОЙ раз — покупатель платил вдвое и часто уходил в минус.
            */
           // Продавец получает цену за вычетом долга, который уходит вместе с активом.
-          if (re) seatLedgerEvent(t, from.id, { type: 'SELL_REAL_ESTATE', assetId: o.assetId!, salePrice: price })
-          else seatLedgerEvent(t, from.id, { type: 'SELL_BUSINESS', assetId: o.assetId!, salePrice: price })
+          if (re)
+            seatLedgerEvent(t, from.id, {
+              type: 'SELL_REAL_ESTATE',
+              assetId: o.assetId!,
+              salePrice: price,
+              debtTransfers: true,
+            })
+          else
+            seatLedgerEvent(t, from.id, {
+              type: 'SELL_BUSINESS',
+              assetId: o.assetId!,
+              salePrice: price,
+              debtTransfers: true,
+            })
           const common = {
             id: `${o.assetId}-${nextId(t)}`,
             name: asset.name,

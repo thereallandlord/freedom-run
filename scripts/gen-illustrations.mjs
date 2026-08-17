@@ -77,6 +77,61 @@ const STYLE = [
 
 /** Малые сделки — недвижимость Уфа / Казань / Челны. */
 const SCENES_SMALL_RE = {
+  "sd-dxb-jvc":
+    "A compact modern studio apartment in Jumeirah Village Circle, Dubai: pale wood floor, built-in kitchenette, floor-to-ceiling window with a view of low-rise beige residential towers and palm-lined streets, bright desert daylight",
+  "sd-dxb-arjan":
+    "A newly finished Dubai studio in Arjan district, warm neutral interior, sliding balcony door open onto a green landscaped courtyard with flowering pergolas, late afternoon sun",
+  "sd-dxb-south":
+    "A one-bedroom apartment in Dubai South near the new airport: minimalist interior, wide balcony overlooking a district still under construction with cranes on the horizon, clear blue sky",
+  "sd-dxb-bay":
+    "A polished studio apartment in Business Bay, Dubai, with a panoramic window onto the water canal and glass towers, evening light, city reflections on the floor",
+  "sd-dxb-jvt":
+    "A family one-bedroom in a low-rise Dubai neighbourhood: private garden terrace, outdoor table, children bicycles by the wall, palm shade, soft morning light",
+  "sd-dxb-dso-trap":
+    "An unfinished concrete apartment shell in a distant Dubai suburb: bare walls, dust, exposed wiring, a glossy marketing render board propped against the window showing a building that does not exist yet, harsh midday sun and empty sand beyond",
+  "sd-tur-mersin":
+    "A modest one-bedroom apartment on the Mersin coast of Turkey: white walls, tiled floor, balcony with drying laundry, palm trees and the Mediterranean visible between low buildings, bright sun",
+  "sd-tur-mahmutlar":
+    "A resale apartment in Mahmutlar, Alanya: simple furnished living room, balcony overlooking a residential complex swimming pool surrounded by loungers and pines, warm afternoon",
+  "sd-tur-konyaalti":
+    "A two-bedroom family flat in Konyaalti, Antalya: lived-in interior, bookshelf, balcony with a view of the Taurus mountains meeting the sea, clear day",
+  "sd-tur-lara":
+    "A short-let holiday apartment in Lara, Antalya: crisp white bedding, suitcase open on a rack, balcony over a hotel strip and the beach, strong summer light",
+  "sd-tur-istanbul":
+    "A two-bedroom apartment in a dense Istanbul suburb on the European side: modern block interior, window onto rows of residential towers and a metrobus road, hazy daylight",
+  "sd-tur-fethiye":
+    "A three-bedroom house with its own garden near Fethiye, Turkey: fig tree in the yard, stone terrace with a table, pine hills and a sliver of sea behind, golden hour",
+  "sd-tur-bodrum":
+    "A compact holiday studio in Gumbet, Bodrum: whitewashed walls, blue shutters, bougainvillea on the terrace, Aegean bay in the distance, midday brightness",
+  "sd-tur-trap":
+    "A stalled construction site in Alanya, Turkey: half-built concrete frame, rusting rebar, silent idle crane, faded developer banner sagging on the fence, overcast light and weeds growing through gravel",
+  "sd-park-ufa":
+    "A warm underground parking space in a Russian residential complex: clean painted floor markings, one empty numbered bay, concrete columns, fluorescent light, a car covered in melting snow nearby",
+  "sd-park-kzn":
+    "A modern underground parking level under a new Kazan residential building: bright LED strips, glossy sealed floor, numbered bays, a security camera on the column",
+  "sd-park-chelny":
+    "A simple covered parking bay in a provincial Russian town: corrugated roof, gravel surface, numbered marking, birch trees and panel houses beyond the fence, grey daylight",
+  "sd-store-kzn":
+    "A small basement storage unit in a Russian apartment complex: mesh partition walls, a bicycle, winter tyres stacked, plastic boxes and a folded artificial Christmas tree, bare bulb light",
+  "sd-store-ufa":
+    "A tidy new storage room in a freshly built Russian residential block: clean concrete floor, metal mesh door with a padlock, a few sealed cardboard boxes, cool overhead light",
+  "sd-land-tukay":
+    "An empty plot of rural land near Naberezhnye Chelny, Russia: flat grass field with survey stakes and a boundary marker, distant treeline, wide overcast sky",
+  "sd-land-iglino":
+    "An empty suburban land plot near Ufa with wooden corner posts and mown grass, a gravel access track, birch forest on one side, soft spring light",
+  "sd-land-laishevo":
+    "A vacant land plot near the Kama river outside Kazan: tall grass, surveyor pegs, a neighbouring plot with a half-built cottage, wide horizon, late afternoon",
+  "sd-land-m12":
+    "An empty commercial land plot beside a new Russian federal motorway exit: fresh asphalt ramp, road signs, flat field with boundary markers, trucks passing in the distance",
+  "sd-room-ufa":
+    "A single small rented room in a 1960s Soviet panel block in Ufa: narrow bed, desk with textbooks, old wardrobe, lace curtain, grey panel houses outside, warm afternoon",
+  "sd-shib":
+    "A phone showing a wildly spiking then crashing candlestick chart of a joke cryptocurrency, lying on a cluttered desk in a dim room lit by monitor glow",
+  "sd-pepe":
+    "A dark desk with two monitors showing a volatile crypto chart and a busy chat window scrolling with messages, night lighting",
+  "sd-newmeme":
+    "A brand new cryptocurrency launch page open on a laptop in a dark room, countdown timer and anonymous avatars, monitor glow on the desk",
+
   'sd-room-ufa-chernikovka':
     'A single small rented room of about 13 square metres inside a 1960s Soviet panel apartment block in a Russian industrial city: a narrow bed, a desk piled with student textbooks, an old wardrobe, lace curtain half drawn; grey panel houses and birch trees outside the window, warm afternoon light',
   'sd-room-ufa-sipailovo':
@@ -129,6 +184,31 @@ const SCENES_SMALL_RE = {
 
 /** Малые сделки — акции и активы. Одна картинка на ТИКЕР. */
 const SCENES_STOCK = {
+  'AAPL':
+    "A workbench with a laptop, phone and tablet of one ecosystem laid out neatly, clean studio light, product photography mood",
+  'NVDA':
+    "A high-end graphics card lying on an anti-static mat beside a screwdriver and a server rack blinking in the background, cool blue light",
+  'ASML':
+    "A cleanroom interior with a huge precision lithography machine, engineers in white suits at a distance, sterile bright light",
+  'TSM':
+    "A semiconductor wafer held in gloved hands under bright cleanroom light, reflections rainbowing across its surface",
+  'PLZL':
+    "An open-pit gold mine in Siberia: terraced rock walls, haul trucks far below, cold clear daylight",
+  'ISWD':
+    "A calm desk with a printed portfolio statement showing a diversified world index, a globe paperweight and a cup of tea, morning light",
+  'BTC':
+    "A hardware crypto wallet on a slate surface beside a paper seed phrase in a sealed envelope, moody directional light",
+  'ETH':
+    "A dark desk with a monitor showing a network of connected nodes, keyboard and coffee, focused night lighting",
+  'SOL':
+    "A monitor showing a steep chart that collapsed and then recovered, a notebook with handwritten dates beside it, evening desk light",
+  'ALGO':
+    "A quiet office desk with a framed certificate of compliance on the wall behind a monitor showing a flat chart, soft daylight",
+  'PEPE':
+    "A cluttered desk at night with two screens: one a volatile chart, one a fast-scrolling chat, monitor glow",
+  'MOONX':
+    "A laptop in a dark room showing a brand new token launch page with a countdown and anonymous avatars, cold screen light",
+
   GRIT: 'An industrial robotics assembly hall: a large orange articulated robot arm being calibrated on a workbench, a second robot built as a street-sweeping machine nearby, engineers in clean overalls, high factory windows with daylight streaming in',
   ZAP: 'A row of electric kick scooters docked at a charging rack on a city embankment on a bright summer morning, one rider gliding past, river and trees behind',
   MYCO: 'A biotech laboratory bench: glass flasks and trays of growing mushroom cultures under soft grow lights, a scientist in a white coat holding a petri dish up to the light, clean modern lab',
@@ -147,6 +227,76 @@ const SCENES_STOCK = {
  * модель неизбежно сводит к стрелочкам и графикам, то есть к стоку.
  */
 const SCENES_MARKET = {
+  'mkt-price-nvda-peak':
+    "A newsroom screen wall showing a technology company stock at an all-time high, analysts gesturing at charts, bright studio light",
+  'mkt-price-nvda-dip':
+    "A warehouse stacked to the ceiling with unsold boxed graphics cards, a lone forklift, cold fluorescent light",
+  'mkt-price-btc-peak':
+    "A phone on a cafe table showing a crypto price at a record high, strangers at the next table looking at their own screens, bright daylight",
+  'mkt-price-btc-dip':
+    "A dim room with a monitor showing a collapsed crypto chart and a frozen exchange notice, cold light, empty coffee cup",
+  'mkt-price-sol-dip':
+    "A monitor showing a chart that has fallen almost to the floor of the screen, sticky notes with older higher prices peeled off beside it, dim light",
+  'mkt-price-sol-peak':
+    "A monitor showing a chart that has climbed back above its previous peak, a small paper calendar with dates circled beside it, morning light",
+  'mkt-price-aapl-dip':
+    "A phone shop window in a large Asian city with fewer customers than usual, reflections of the street, overcast day",
+  'mkt-price-asml-peak':
+    "A vast cleanroom with a precision lithography machine being crated for shipment, engineers with clipboards, bright industrial light",
+  'mkt-price-tsm-dip':
+    "A newsroom map showing a narrow strait between two coastlines with naval markers, muted studio lighting",
+  'mkt-price-algo-dip':
+    "A quiet monitor showing a long flat chart far below its starting point, a dusty framed certificate on the wall behind, dim office",
+  'mkt-split-nvda':
+    "A single share certificate on a desk being replaced by ten smaller identical ones laid out in a row, overhead studio light",
+  'mkt-split-aapl':
+    "One large document divided into four equal parts on a clean desk, scissors and a ruler beside them, bright even light",
+  'mkt-split-plzl':
+    "A single heavy gold bar beside ten small identical gold coins on a dark cloth, precise directional light",
+
+  'gl-social':
+    "A person filming a short video on a phone tripod at a kitchen table, ring light glowing, laptop showing a rising audience chart, evening",
+  'gl-leader-in':
+    "Two people shaking hands across a cafe table, notebooks and coffee between them, a group of colleagues visible in the background, warm light",
+  'gl-two-legs':
+    "A community meeting room with two lively groups of people talking on either side of the room, chairs arranged in a circle, bright daylight",
+  'gl-mentor-help':
+    "An older mentor and a younger partner sitting side by side at a table with a notepad, mid-conversation, sunlit room",
+  'gl-school':
+    "A small training session: five people around a table taking notes while one explains something on a flipchart, natural light",
+  'gl-city':
+    "A modest hotel conference room in a provincial Russian city, full rows of chairs, people talking after a presentation, evening light through blinds",
+  'gl-blocked':
+    "A phone on a desk showing a blocked social media account screen, notebook and cold coffee beside it, dim room, muted mood",
+  'gl-summer':
+    "An empty office desk in summer: silent phone, dried plant, sunlight through blinds, a postcard from the seaside pinned to the wall",
+  'gl-mentor-burn':
+    "A tired person sitting alone at a kitchen table late at night, laptop closed, cold tea, dim lamp light",
+  'gl-leader-gone':
+    "An empty chair at a meeting table with an unopened notebook on it, the rest of the group visible out of focus behind, subdued light",
+  'gl-triangle':
+    "Three identical desk workspaces side by side in a home office, each with a laptop and a notebook, clean modern room, morning light",
+  'gl-promo-travel':
+    "A packed carry-on suitcase, passport and boarding pass on a bed, city skyline photograph on the wall, morning light",
+  'gl-promo-auto':
+    "A bank notification on a phone screen showing an incoming annual bonus, lying on a wooden table with a calendar and a cup of tea",
+  'gl-after-travel':
+    "Two people who met on a trip working together over a laptop in a bright cafe, a rising chart on screen, city outside the window",
+  'mkt-price-moonx-rug':
+    "A laptop screen showing a deleted project page and an empty chat, an unplugged desk lamp beside it, cold blue night light in an empty room",
+  'mkt-price-moonx-pump':
+    "A phone screen showing a vertical green price spike, held over a table crowded with notifications, bright artificial light",
+  'mkt-price-shib-dip':
+    "A quiet desk with a monitor showing a flat declining chart and an empty chat window, dust in a sunbeam, muted daytime",
+  'mkt-price-pepe-peak':
+    "A monitor showing a sharply rising chart with a crowded comment feed beside it, energetic screen glow in a dark room",
+  'friction-payment-blocked':
+    "A phone screen showing a declined international payment, a bank card lying beside it on a kitchen table, cold morning light",
+  'friction-account-closed':
+    "An official bank letter lying open on a desk beside a cut bank card and a closed laptop, grey daylight through a window",
+  'friction-visa-run':
+    "A rejected visa application form and an unused passport on a table with airline tickets, dim indoor light",
+
   'mkt-sell-room-ufa':
     'A queue of prospective tenants waiting on a stair landing outside an open apartment door in a Soviet-era block, an agent with a folder greeting them, worn tiles, daylight from a stairwell window',
   'mkt-sell-apt-kzn':
@@ -627,6 +777,9 @@ const SCENES_BIG_RE = {
 
 /** Большие сделки — бизнес (включая партнёрскую программу — только живые сцены). */
 const SCENES_BIG_BIZ = {
+  'big-greenleaf':
+    'A kitchen table meeting: a product catalogue open beside two cups of tea, a notebook with a simple hand-drawn team diagram, two people mid-conversation, warm home light',
+
   'big-biz-bakery-ufa':
     'Inside a busy bakery: a baker pulling flatbreads out of a clay tandoor oven with a long peel, trays of fresh loaves cooling on racks, flour dust hanging in the sunbeams, glowing oven mouth',
   'big-biz-halal-cafe-kzn':
@@ -666,6 +819,27 @@ const SCENES_BIG_BIZ = {
 
 /** Расходы (doodads). */
 const SCENES_DOODADS = {
+  'wt-umnye-chasy':
+    "A new smartwatch in an opened box on a kitchen table beside a coffee cup and the old scratched watch it will replace, morning window light",
+  'wt-otpusk-more':
+    "An open suitcase on a bed with folded summer clothes, sunglasses, sunscreen and printed boarding passes, a beach photograph propped against the wall, bright light",
+  'wt-mashina-poluchshe':
+    "A newer used car parked in a Russian courtyard beside an older one, keys with a dealership tag on the bonnet, autumn leaves, overcast afternoon",
+  'wt-remont-kuhni':
+    "A kitchen mid-renovation: new cabinet fronts leaning against the wall, tile samples and a magazine spread of a finished kitchen on the counter, dust sheets on the floor",
+  'wt-telefon':
+    "A brand new smartphone in its opened box on a desk next to the older phone still switched on, cables and screen protector beside them, cool daylight",
+  'wt-abonement':
+    "A gym membership card and a fresh pair of training shoes on a bench in a locker room, towel folded beside them, clean bright light",
+  'wt-svadba-plemyannika':
+    "A wedding gift envelope, a pressed suit on a hanger and polished shoes by the door of a Russian flat, ready for a family celebration, warm evening lamp",
+  'wt-kurs':
+    "A laptop open on a kitchen table showing a course lesson list, a fresh notebook and pen beside it, cup of tea, evening light",
+  'wt-dacha-bania':
+    "A newly built wooden banya at a Russian dacha: stacked firewood, steam curling from the chimney, birch branches by the door, snow on the ground, golden late light",
+  'wt-umnyi-dom':
+    "A living room with smart home devices installed: a wall panel, smart speaker, motorised curtains half open, subtle indicator lights in evening dusk",
+
   'dd-shtraf-kamera':
     'A man at a kitchen table holding an opened official envelope with a printed grainy photograph of a car on a road, morning coffee beside him, resigned expression, sunlight through the window',
   'dd-sabantuy-gostintsy':

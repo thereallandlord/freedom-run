@@ -187,7 +187,13 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'SELL_REAL_ESTATE': {
       const a = l.realEstate.find((x) => x.id === e.assetId)
       if (!a) return prev
-      const net = e.salePrice - a.mortgage
+      /*
+       * 🔴 Долг вычитаем ТОЛЬКО когда он гасится при продаже. Если объект
+       * уходит к другому игроку вместе с долгом, вычитать нельзя: покупатель
+       * долг уже принял на себя. Раньше вычитали всегда — и продавец квартиры
+       * с рассрочкой не получал выручку, а ПЛАТИЛ 6,6 млн, чтобы её отдать.
+       */
+      const net = e.debtTransfers ? e.salePrice : e.salePrice - a.mortgage
       l.cash += a.investorShare ? Math.round(net * (1 - a.investorShare)) : net
       l.realEstate = l.realEstate.filter((x) => x.id !== e.assetId)
       return l
@@ -268,7 +274,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'SELL_BUSINESS': {
       const a = l.businesses.find((x) => x.id === e.assetId)
       if (!a) return prev
-      const net = e.salePrice - a.liability
+      const net = e.debtTransfers ? e.salePrice : e.salePrice - a.liability
       l.cash += a.investorShare ? Math.round(net * (1 - a.investorShare)) : net
       l.businesses = l.businesses.filter((x) => x.id !== e.assetId)
       return l

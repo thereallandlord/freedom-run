@@ -23,9 +23,15 @@ export type LedgerEvent =
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse'; ratio?: number }
   | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string }
-  | { type: 'SELL_REAL_ESTATE'; assetId: string; salePrice: number }
+  | {
+      type: 'SELL_REAL_ESTATE'
+      assetId: string
+      salePrice: number
+      /** Долг уходит вместе с активом к покупателю — из выручки его НЕ вычитаем. */
+      debtTransfers?: boolean
+    }
   | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string; glPackage?: import('./greenleaf').GlPackageId; glLuck?: number }
-  | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number }
+  | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number; debtTransfers?: boolean }
   | { type: 'DOODAD'; amount: number }
   | { type: 'FINANCE_DOODAD'; amount: number }
   | { type: 'PET' }
