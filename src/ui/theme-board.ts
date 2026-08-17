@@ -16,8 +16,6 @@ import themes from '../data/board-themes.json'
 export interface BoardTheme {
   id: string
   name: string
-  /** Ключ калибровки клеток в board-cells.json. */
-  calib: string
   bg: string
   board: string
   /** Тёмная сцена — подписи и панели светлые. */
@@ -29,14 +27,22 @@ export interface BoardTheme {
   accent: string
 }
 
-type Raw = Omit<BoardTheme, 'id' | 'name' | 'calib'>
+type Raw = Omit<BoardTheme, 'id' | 'name'> & { name?: string }
 const RAW = themes as unknown as Record<string, Raw>
 
-const NAMES: { id: string; name: string; calib: string }[] = [
-  { id: 'diorama', name: 'Макет городов', calib: 'tbl-city-diorama' },
-  { id: 'isometric', name: 'Изометрия', calib: 'tbl-city-isometric' },
-  { id: 'soft', name: 'Мягкий современный', calib: 'tbl-city-soft' },
-  { id: 'night', name: 'Ночные города', calib: 'tbl-city-night' },
+/*
+ * Порядок = порядок в переключателе. Фирменные зелёные идут первыми.
+ * Клетки рисует код по сетке 7×7, поэтому калибровка темам больше не нужна:
+ * миры нарисованы БЕЗ клеток.
+ */
+const NAMES: { id: string; name: string }[] = [
+  { id: 'leaf', name: 'Зелёный с листьями' },
+  { id: 'mint', name: 'Мятный минимал' },
+  { id: 'dusk', name: 'Сумерки' },
+  { id: 'sand', name: 'Песок' },
+  { id: 'emerald', name: 'Изумруд' },
+  { id: 'marble', name: 'Мрамор' },
+  { id: 'ink', name: 'Тушь' },
 ]
 
 /** База сайта: на GitHub Pages приложение живёт в подпапке. */
@@ -51,7 +57,7 @@ export const BOARD_THEMES: BoardTheme[] = NAMES.filter((n) => RAW[n.id]).map((n)
 }))
 
 const KEY = 'freedom-run:board-theme:v1'
-const DEFAULT_ID = BOARD_THEMES[0]?.id ?? 'diorama'
+const DEFAULT_ID = BOARD_THEMES[0]?.id ?? 'leaf'
 
 function read(): string {
   try {
@@ -103,7 +109,10 @@ export function themeVars(t: BoardTheme): React.CSSProperties {
       '--t-muted': t.muted,
       '--t-accent': t.accent,
       '--t-line': t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(20,28,24,0.12)',
-      '--t-glass': t.dark ? 'rgba(18,24,21,0.62)' : 'rgba(255,255,255,0.72)',
+      '--t-glass': t.dark ? 'rgba(16,22,19,0.66)' : 'rgba(255,255,255,0.78)',
+      '--t-cell': t.dark ? 'rgba(12,18,15,0.38)' : 'rgba(255,255,255,0.42)',
+      '--t-cell-line': t.dark ? 'rgba(255,255,255,0.26)' : 'rgba(20,28,24,0.18)',
+      '--t-on-accent': t.dark ? '#0B1310' : '#FFFFFF',
     } as React.CSSProperties),
   }
 }

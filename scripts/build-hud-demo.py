@@ -84,7 +84,7 @@ def screen(key, t):
         toks = ''.join(f'<i style="background:{COLORS[j]}"></i>'
                        for j, s in enumerate(S['места']) if s['позиция'] == i)
         tok = f'<span class="tok">{toks}</span>' if toks else ''
-        cells += (f'<div class="cell" style="grid-row:{r+1};grid-column:{c+1}">'
+        cells += (f'<div class="cell" data-row="{r+1}" style="grid-row:{r+1};grid-column:{c+1}">'
                   f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" '
                   f'stroke-linecap="round" stroke-linejoin="round">{d}</svg>{tok}'
                   f'<span class="tip">{label}</span></div>')
@@ -260,8 +260,9 @@ h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.
 
 .boardwrap{display:grid;place-items:center;min-height:0}
 .board{position:relative;height:min(100%,100cqw);width:auto;aspect-ratio:1;border-radius:1.2cqw;
-  overflow:hidden;border:1px solid var(--line);box-shadow:0 1.2cqw 2.6cqw -1.2cqw rgba(0,0,0,.6)}
-.board>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  border:1px solid var(--line);box-shadow:0 1.2cqw 2.6cqw -1.2cqw rgba(0,0,0,.6)}
+.board>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  border-radius:inherit}
 .grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);
   grid-template-rows:repeat(7,1fr);padding:.4cqw}
 /* Клетка меньше своей ячейки и полупрозрачная: под ней должен просматриваться
@@ -272,9 +273,12 @@ h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.
   transition:transform .15s ease,background .15s ease}
 .cell>svg{width:56%;height:56%;opacity:.92}
 .cell:hover{transform:scale(1.28);z-index:5;border-color:var(--accent);background:var(--cellhi)}
+/* Подсказка над клеткой; у верхнего ряда — под ней, иначе упрётся в фишки. */
 .cell .tip{position:absolute;bottom:calc(100% + .35cqw);left:50%;transform:translateX(-50%);
   white-space:nowrap;background:#121815;color:#fff;font-size:.78cqw;font-weight:600;
-  padding:.25cqw .5cqw;border-radius:.4cqw;opacity:0;pointer-events:none;transition:opacity .15s;z-index:9}
+  padding:.25cqw .5cqw;border-radius:.4cqw;opacity:0;pointer-events:none;
+  transition:opacity .15s;z-index:9;box-shadow:0 .3cqw .9cqw -.3cqw rgba(0,0,0,.6)}
+.cell[data-row="1"] .tip{bottom:auto;top:calc(100% + .35cqw)}
 .cell:hover .tip{opacity:1}
 .tok{position:absolute;top:-.42cqw;left:50%;transform:translateX(-50%);display:flex;gap:.18cqw}
 .tok i{width:.66cqw;height:.66cqw;border-radius:50%;box-shadow:0 0 0 .14cqw #fff}
@@ -317,6 +321,7 @@ h1{font-family:'Unbounded',system-ui,sans-serif;font-size:24px;letter-spacing:-.
   .chip{font-size:10.5px;padding:4px 9px;gap:4px}.chip i{width:6px;height:6px}.chip.mk{margin-left:0}
   .log{flex:1 1 100%}.le{font-size:11px}
   .cell{border-radius:6px}.cell .tip{font-size:11px;padding:3px 6px;border-radius:6px}
+  .board{border-radius:13px}
   .tok i{width:6.5px;height:6.5px;box-shadow:0 0 0 1.5px #fff}
   .centre .n{font-size:17px}.centre .w{font-size:9px}
   .roll{font-size:14px;padding:11px 22px;min-height:44px}
