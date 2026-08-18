@@ -9,7 +9,7 @@ import {
   setActiveTheme,
   setFastBoardTheme,
 } from '../engine/data'
-import { RULES, professionMonthlyCashFlow, setRules } from '../engine/ledger'
+import { RULES, setRules } from '../engine/ledger'
 import { randomSeed } from '../engine/rng'
 import type { SeatSetup, TableSetup } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
@@ -202,19 +202,6 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
                   options={professionOptions}
                   onChange={(v) => update(i, { professionId: v })}
                 />
-                {/* Остаток после всех платежей — вторым планом, чтобы зарплата
-                    не обманывала: у большой зарплаты бывают большие расходы. */}
-                {(() => {
-                  const prof = professions.find((p) => p.id === seat.professionId)
-                  if (!prof) return null
-                  const left = professionMonthlyCashFlow(prof)
-                  return (
-                    <div className="mt-1 text-[11px] text-[var(--muted)]">
-                      после всех расходов остаётся{' '}
-                      <span className="tabnum font-semibold">{money(left, isRub)}/мес</span>
-                    </div>
-                  )
-                })()}
               </div>
               <div>
                 <div className="mb-1 text-xs text-[var(--muted)]">Мечта — победа при покупке</div>

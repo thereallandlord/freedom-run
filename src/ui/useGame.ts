@@ -21,8 +21,8 @@ const STORAGE_KEY = 'freedom-run:save:v2'
  * 🔴 Первое событие приходит раньше остальных: иначе начало партии проходит
  * в мёртвом рынке и игрок успевает решить, что мировых событий вообще нет.
  */
-export const WORLD_EVENT_MIN = 10
-export const WORLD_EVENT_FIRST_MIN = 5
+export const WORLD_EVENT_MIN = 8
+export const WORLD_EVENT_FIRST_MIN = 3
 
 interface Save {
   setup: TableSetup

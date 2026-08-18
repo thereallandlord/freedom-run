@@ -7,6 +7,15 @@
     <meta name="theme-color" content="#f7f6f2" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!--
+      Значок вкладки. SVG понимают все нынешние браузеры; Safari до 17 и
+      старый Edge берут PNG, поэтому лежат оба. apple-touch-icon нужен для
+      «на экран Домой» на айфоне — там SVG не принимается вовсе.
+    -->
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="alternate icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./site.webmanifest" />
     <title>Cashflow · GreenLeaf version</title>
     <script>
       // Ставим тему ДО первой отрисовки, иначе на секунду мигнёт светлым у тех,

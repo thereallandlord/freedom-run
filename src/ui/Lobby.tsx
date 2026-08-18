@@ -10,7 +10,6 @@ import {
   setFastBoardTheme,
   type DeckTheme,
 } from '../engine/data'
-import { professionMonthlyCashFlow } from '../engine/ledger'
 import {
   ROOM_COLORS,
   ROOM_MAX_PLAYERS,
@@ -295,18 +294,6 @@ export function SeatForm({
             options={professionOptions}
             onChange={(v) => onChange({ professionId: v })}
           />
-          {(() => {
-            const prof = professions.find((p) => p.id === draft.professionId)
-            if (!prof) return null
-            return (
-              <div className="mt-1 text-[11px] text-muted">
-                после всех расходов остаётся{' '}
-                <span className="tabnum font-semibold">
-                  {money(professionMonthlyCashFlow(prof), isRub)}/мес
-                </span>
-              </div>
-            )
-          })()}
         </div>
 
         <div>

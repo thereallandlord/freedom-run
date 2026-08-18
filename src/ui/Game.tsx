@@ -325,74 +325,11 @@ export function Game({
         окна и уходить под него при прокрутке. С py-3 они обрывались на
         двенадцать пикселей выше, и скруглённый край читался как обрезка.
       */}
-      <div className="relative flex flex-col px-3 pb-4 pt-3 lg:min-h-0 lg:flex-1 lg:pb-0">
+      <div className="relative flex flex-col px-3 pb-4 pt-0 lg:min-h-0 lg:flex-1 lg:pb-0">
       {/*
         🔴 Ряд кнопок ПЕРЕНОСИТСЯ. На телефоне он требовал 533 px при экране
         375: выбор доски и «Выйти» уезжали за край и были недоступны вовсе.
       */}
-      <header className="mb-2.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-        <Wordmark size="sm" edition={false} />
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-          {topRight}
-          <button
-            onClick={() => setTradesOpen(true)}
-            className="topbtn"
-            disabled={seat.isBot}
-            title="Сделки между игроками"
-          >
-            🤝<span className="ml-1 hidden sm:inline">Сделки</span>
-            {myDebt > 0 && <span className="ml-1 text-[10px] text-amber-400">●</span>}
-          </button>
-          <button
-            onClick={() => setBankOpen(true)}
-            className="topbtn"
-            disabled={seat.isBot}
-            title={RULES.loansEnabled ? 'Банк' : 'Финансы'}
-          >
-            {RULES.loansEnabled ? '🏦' : '💼'}
-            <span className="ml-1 hidden sm:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
-          </button>
-          <button onClick={undo} className="topbtn" title="Откатить последнее событие">
-            ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
-          </button>
-          {/*
-            🔴 «Заново» стирало партию без вопроса. Теперь выход на главную —
-            стол остаётся, на главной он ждёт карточкой «Продолжить». Начать
-            всё сначала можно оттуда же, кнопкой «Забыть».
-          */}
-          <button onClick={onExit} className="topbtn" title="На главную. Партия сохранится">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
-            <span className="ml-0.5 hidden sm:inline">Выйти</span>
-          </button>
-          {/*
-            Созвон. Неприметная кнопка (просьба Камиля: «выделять не надо»):
-            играют голосом, и опоздавший не должен искать ссылку в переписке.
-          */}
-          {callUrl && (
-            <a
-              href={callUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="topbtn"
-              title="Открыть созвон в новой вкладке"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><rect x="2" y="6" width="13" height="12" rx="2.5" /><path d="m15 11 6-3.5v9L15 13" /></svg>
-              <span className="ml-0.5 hidden sm:inline">Созвон</span>
-            </a>
-          )}
-
-          {/* Оформление поля — наверх к кнопкам: в правой колонке оно лишнее. */}
-          {/* Оформление поля — той же кнопкой, что и соседи: белая коробка
-              с обрезанным названием выпадала из ряда. */}
-          <Dropdown
-            value={theme.id}
-            onChange={(id) => setBoardTheme(id)}
-            options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
-            buttonClassName="topbtn"
-            minListWidth={210}
-          />
-        </div>
-      </header>
 
       {table.winnerId && table.phase !== 'finished' && (
         <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
@@ -434,7 +371,7 @@ export function Game({
           />
         </div>
 
-        <div className="order-1 flex lg:order-2 lg:min-h-0">
+        <div className="order-1 flex flex-col lg:order-2 lg:min-h-0">
           {/*
             🔴 Никакой подложки под доской. Задумка была такая: фон темы во весь
             экран, доска лежит НА нём, панели плавают сверху стеклом. Класс
@@ -454,6 +391,75 @@ export function Game({
             полю оставалось 19 px: доски на экране не было вовсе. Узкий экран
             складывает их друг под друга.
           */}
+      {/*
+      🔴 Логотип ушёл из общей шапки В КОЛОНКУ С ПОЛЕМ (правка Камиля): он
+        занимал строку над левой панелью, из-за чего вся панель начиналась
+        ниже кнопок и её приходилось крутить сильнее. Теперь он стоит над
+        картой, а панели поднялись на уровень кнопок.
+      */}
+            <header className="mb-2.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-3">
+              <Wordmark size="sm" edition={false} />
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          {topRight}
+          <button
+            onClick={() => setTradesOpen(true)}
+            className="topbtn"
+            disabled={seat.isBot}
+            title="Сделки между игроками"
+          >
+            🤝<span className="ml-1 hidden sm:inline">Сделки</span>
+            {myDebt > 0 && <span className="ml-1 text-[10px] text-amber-400">●</span>}
+          </button>
+          <button
+            onClick={() => setBankOpen(true)}
+            className="topbtn"
+            disabled={seat.isBot}
+            title={RULES.loansEnabled ? 'Банк' : 'Финансы'}
+          >
+            {RULES.loansEnabled ? '🏦' : '💼'}
+            <span className="ml-1 hidden sm:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
+          </button>
+          <button onClick={undo} className="topbtn" title="Откатить последнее событие">
+            ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
+          </button>
+      {/*
+      🔴 «Заново» стирало партию без вопроса. Теперь выход на главную —
+            стол остаётся, на главной он ждёт карточкой «Продолжить». Начать
+            всё сначала можно оттуда же, кнопкой «Забыть».
+      */}
+          <button onClick={onExit} className="topbtn" title="На главную. Партия сохранится">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
+            <span className="ml-0.5 hidden sm:inline">Выйти</span>
+          </button>
+      {/*
+            Созвон. Неприметная кнопка (просьба Камиля: «выделять не надо»):
+            играют голосом, и опоздавший не должен искать ссылку в переписке.
+      */}
+          {callUrl && (
+            <a
+              href={callUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="topbtn"
+              title="Открыть созвон в новой вкладке"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><rect x="2" y="6" width="13" height="12" rx="2.5" /><path d="m15 11 6-3.5v9L15 13" /></svg>
+              <span className="ml-0.5 hidden sm:inline">Созвон</span>
+            </a>
+          )}
+
+      {/* Оформление поля — наверх к кнопкам: в правой колонке оно лишнее. */}
+      {/* Оформление поля — той же кнопкой, что и соседи: белая коробка
+              с обрезанным названием выпадала из ряда. */}
+          <Dropdown
+            value={theme.id}
+            onChange={(id) => setBoardTheme(id)}
+            options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
+            buttonClassName="topbtn"
+            minListWidth={210}
+          />
+        </div>
+            </header>
           <div className="relative grid min-h-0 w-full grid-cols-1 gap-3 lg:h-full lg:grid-cols-[minmax(0,1fr)_320px]">
             <MoneyToast table={table} />
             <TradeToast table={table} />
@@ -495,7 +501,7 @@ export function Game({
               Кнопка и цифры — в правой колонке (правка Камиля). Раньше они
               лежали под доской и съедали высоту, из-за чего доска мельчала.
             */}
-            <div className="player-scroll flex flex-col gap-2 overflow-x-hidden lg:min-h-0 lg:overflow-y-auto">
+            <div className="player-scroll flex flex-col gap-2 overflow-x-hidden pb-4 lg:min-h-0 lg:overflow-y-auto">
               {seat.isBot ? (
                 <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-4 text-center text-[12px] leading-snug text-[var(--t-muted, var(--muted))]">
                   {seat.name} думает…
@@ -569,14 +575,14 @@ export function Game({
 
               {/* Сначала игроки, потом события — так стабильнее: игроки не прыгают. */}
               <div className="shrink-0">
-                <div className="mb-1 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
+                <div className="caps mb-1 px-0.5 text-[9.5px] font-bold text-[var(--t-muted, var(--muted))]">
                   Игроки
                 </div>
                 <Scoreboard table={table} viewId={viewId} onView={setViewId} stacked />
               </div>
 
               <div>
-                <div className="mb-1 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
+                <div className="caps mb-1 px-0.5 text-[9.5px] font-bold text-[var(--t-muted, var(--muted))]">
                   Что в мире
                 </div>
                 <WorldEvents table={table} compact />

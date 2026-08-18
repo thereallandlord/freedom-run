@@ -256,7 +256,7 @@ function Section({
         style={{ background: t.bar }}
       />
       <div className="mb-1 flex items-baseline gap-2">
-        <span className={`text-[10px] font-bold uppercase tracking-wider ${t.ink}`}>{title}</span>
+        <span className={`caps text-[10px] font-bold ${t.ink}`}>{title}</span>
         {end && <span className="tabnum ml-auto text-[11px] font-semibold">{end}</span>}
       </div>
       {children}
@@ -284,7 +284,7 @@ function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, numb
   return (
     <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3.5 backdrop-blur-md">
       <div className="flex items-baseline gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--t-muted, var(--muted))]">
+        <span className="caps text-[10px] font-bold text-[var(--t-muted, var(--muted))]">
           {onFast ? 'Цель Полосы свободы' : 'Цель: вырваться из крысиных бегов'}
         </span>
         <span className="tabnum ml-auto text-[11px] font-bold text-[var(--t-accent,rgb(var(--c-accent)))]">{Math.round(pct)}%</span>
@@ -302,13 +302,13 @@ function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, numb
         иначе при одном проценте кажется, что полосы нет вовсе.
       */}
       <div
-        className="mt-2.5 h-2.5 overflow-hidden rounded-full"
+        className="mt-2.5 h-[7px] overflow-hidden rounded-full"
         style={{ background: 'color-mix(in srgb, var(--t-ink, #000) 14%, transparent)' }}
       >
         <div
           className="h-full rounded-full transition-[width] duration-500"
           style={{
-            width: pct > 0 ? `max(6px, ${pct}%)` : '0%',
+            width: pct > 0 ? `max(5px, ${pct}%)` : '0%',
             background: 'var(--t-accent, rgb(var(--c-accent)))',
           }}
         />
@@ -349,7 +349,12 @@ export function PlayerPanel({
   const onFast = seat.track === 'fast'
 
   return (
-    <div className="space-y-2">
+    /*
+      Отступы сверху и снизу — внутри прокручиваемого содержимого, а не у
+      коробки. Так в покое панель не приклеена к краям, а при прокрутке
+      блоки уходят под края окна, а не обрываются об них.
+    */
+    <div className="space-y-2 pb-4 pt-3">
       <GoalCard seat={seat} flowMul={flowMul} />
       <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3 backdrop-blur-md">
         <div className="flex items-center gap-2">
@@ -363,14 +368,14 @@ export function PlayerPanel({
         </div>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-[var(--t-muted, var(--muted))]">Наличные</div>
+            <div className="caps text-[10px] text-[var(--t-muted, var(--muted))]">Наличные</div>
             <div className="relative">
               <div className="tabnum text-2xl font-black">{money(l.cash)}</div>
               <CashBump cash={l.cash} />
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-[var(--t-muted, var(--muted))]">
+            <div className="caps text-[10px] text-[var(--t-muted, var(--muted))]">
               {/* «Поток» — слово из учебника. Человеку понятнее «чистый доход». */}
               {onFast ? 'Доход свободы' : 'Чистый доход в месяц'}
             </div>
