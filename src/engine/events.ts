@@ -80,6 +80,8 @@ export type TableEvent =
       type: 'BUY_DEAL'
       withInvestor?: boolean
       payCash?: boolean
+      /** Кто покупает. Пусто — ходящий. Заполнено — вошедший по разрешению. */
+      seatId?: string
       glPackage?: import('./greenleaf').GlPackageId
     }
   /** Поднять пакет GreenLeaf, доплатив разницу. Доступно в любой момент. */

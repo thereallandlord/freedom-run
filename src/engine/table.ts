@@ -500,17 +500,42 @@ export function diceCountFor(seat: Seat): number[] {
 export function marketMatches(
   t: Table,
   category: string,
-): { seat: Seat; assets: { id: string; name: string; kind: 'realEstate' | 'business'; cost: number; debt: number }[] }[] {
+): {
+  seat: Seat
+  assets: {
+    id: string
+    name: string
+    kind: 'realEstate' | 'business'
+    cost: number
+    debt: number
+    /** Доля соинвестора — без неё окно обещало владельцу всю выручку. */
+    investorShare?: number
+  }[]
+}[] {
   const out: ReturnType<typeof marketMatches> = []
   for (const seat of t.seats) {
     if (seat.outOfGame || seat.track === 'fast') continue
     const assets = [
       ...seat.ledger.realEstate
         .filter((a) => a.category === category)
-        .map((a) => ({ id: a.id, name: a.name, kind: 'realEstate' as const, cost: a.cost, debt: a.mortgage })),
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          kind: 'realEstate' as const,
+          cost: a.cost,
+          debt: a.mortgage,
+          investorShare: a.investorShare,
+        })),
       ...seat.ledger.businesses
         .filter((a) => a.category === category)
-        .map((a) => ({ id: a.id, name: a.name, kind: 'business' as const, cost: a.cost, debt: a.liability })),
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          kind: 'business' as const,
+          cost: a.cost,
+          debt: a.liability,
+          investorShare: a.investorShare,
+        })),
     ]
     if (assets.length) out.push({ seat, assets })
   }
@@ -1063,6 +1088,16 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (card.kind === 'stock') return prev
 
       /*
+       * 🔴 В чужую находку можно войти только с разрешения того, кому она
+       * выпала, и на его условиях — ровно как у бумаг. Раньше окно выбора
+       * условий у недвижимости было пустым ритуалом: движок его не читал.
+       */
+      const dealBuyer = event.seatId ? t.seats.find((x) => x.id === event.seatId) : seat
+      if (!dealBuyer || dealBuyer.outOfGame || dealBuyer.track === 'fast') return prev
+      if (dealBuyer.id !== seat.id && !accessAllows(t.pending.access, dealBuyer.id)) return prev
+      const dealTermsAccess = dealBuyer.id !== seat.id ? t.pending.access?.terms : undefined
+
+      /*
        * GreenLeaf: цена берётся не из карты, а из ВЫБРАННОГО пакета.
        * Карта одна, цен три — решение игрока, а не то, что ему выпало.
        */
@@ -1116,7 +1151,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const owed = payCash
         ? Math.round(fullPrice * (1 - (investorShare ?? 0)))
         : Math.round(card.downPayment * (1 - (investorShare ?? 0)))
-      if (l.cash < owed) return prev
+      const entryFee = dealTermsAccess?.kind === 'fee' ? dealTermsAccess.amount : 0
+      if (dealBuyer.ledger.cash < owed + entryFee) return prev
+      if (entryFee > 0) {
+        seatLedgerEvent(t, dealBuyer.id, { type: 'ADJUST_CASH', amount: -entryFee })
+        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: entryFee })
+        log(t, dealBuyer.id, `${dealBuyer.name} заплатил ${money(entryFee)} за вход в находку ${seat.name}`)
+      }
 
       /*
        * 🔴 В колоде поток — это ОБЫЧНАЯ чистая аренда, как если купил налом.
@@ -1141,45 +1182,52 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * отрицательный капитал на ровном месте.
        */
       const bookCost = payCash ? fullPrice : instTotal
-      if (card.kind === 'realEstate') {
-        seatLedgerEvent(t, seat.id, {
-          type: 'BUY_REAL_ESTATE',
-          id: `${card.id}-${nextId(t)}`,
-          name: localizedCardTitle(card),
-          cost: bookCost,
-          downPayment: payCash ? fullPrice : card.downPayment,
-          mortgage: debt,
-          cashFlow: flow,
-          category: card.category,
-          investorShare,
-          installmentMonthly: payCash ? 0 : monthly,
-        })
-      } else {
-        seatLedgerEvent(t, seat.id, {
-          type: 'BUY_BUSINESS',
-          id: `${card.id}-${nextId(t)}`,
-          name: localizedCardTitle(card),
-          cost: bookCost,
-          downPayment: payCash ? fullPrice : card.downPayment,
-          liability: debt,
-          cashFlow: flow,
-          category: card.category,
-          growthPerPayday: (card as any).growthPerPayday,
-          growthCap: (card as any).growthCap,
-          installmentMonthly: payCash ? 0 : monthly,
-        })
-      }
+      const assetEvent =
+        card.kind === 'realEstate'
+          ? ({
+              type: 'BUY_REAL_ESTATE' as const,
+              id: `${card.id}-${nextId(t)}`,
+              name: localizedCardTitle(card),
+              cost: bookCost,
+              downPayment: payCash ? fullPrice : card.downPayment,
+              mortgage: debt,
+              cashFlow: flow,
+              category: card.category,
+              investorShare,
+              installmentMonthly: payCash ? 0 : monthly,
+            })
+          : ({
+              type: 'BUY_BUSINESS' as const,
+              id: `${card.id}-${nextId(t)}`,
+              name: localizedCardTitle(card),
+              cost: bookCost,
+              downPayment: payCash ? fullPrice : card.downPayment,
+              liability: debt,
+              cashFlow: flow,
+              category: card.category,
+              growthPerPayday: (card as { growthPerPayday?: number }).growthPerPayday,
+              growthCap: (card as { growthCap?: number }).growthCap,
+              installmentMonthly: payCash ? 0 : monthly,
+            })
+      // Актив уходит ПОКУПАТЕЛЮ: им может быть и вошедший по разрешению.
+      seatLedgerEvent(t, dealBuyer.id, assetEvent)
       log(
         t,
-        seat.id,
+        dealBuyer.id,
         withInvestor
           ? `Вошёл в долю: ${localizedCardTitle(card)} — свои ${money(owed)}, доход и убыток пополам`
           : payCash
             ? `Купил налом: ${localizedCardTitle(card)} за ${money(fullPrice)} (${money(flow)}/мес, долгов нет)`
             : `Купил в рассрочку: ${localizedCardTitle(card)} — взнос ${money(card.downPayment)}, остаток ${money(debt)} фиксирован (${money(flow)}/мес)`,
       )
-      t.pending = null
-      t.phase = 'turnEnd'
+      /*
+       * Карту снимает только тот, чей ход. Вошедший сбоку по разрешению
+       * покупает свою долю и оставляет окно открытым — как у бумаг.
+       */
+      if (dealBuyer.id === seat.id) {
+        t.pending = null
+        t.phase = 'turnEnd'
+      }
       return t
     }
 

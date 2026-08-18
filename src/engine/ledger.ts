@@ -349,6 +349,18 @@ export function dealTerms(card: { cost: number; downPayment: number; cashFlow: n
   }
 }
 
+/**
+ * Поток сделки с поправкой на текущий рынок — ТОЛЬКО ДЛЯ ПОКАЗА.
+ *
+ * 🔴 Внутрь dealTerms этот множитель вносить нельзя: её же зовёт покупка,
+ * чтобы записать БАЗОВЫЙ поток актива, и рынок применился бы второй раз на
+ * зарплате. Здесь он нужен затем, чтобы карточка не обещала 103 000, когда
+ * при живом событии придёт 77 250.
+ */
+export function marketDealFlow(base: number, mul: number | undefined): number {
+  return applyFlowMul(base, mul ?? 1)
+}
+
 /** Цена вещи при покупке в рассрочку: цена налом плюс наценка за товар. */
 export function installmentPrice(cost: number, kind: 'realEstate' | 'business'): number {
   return Math.round((cost * RULES.installmentMarkup[kind]) / 1000) * 1000

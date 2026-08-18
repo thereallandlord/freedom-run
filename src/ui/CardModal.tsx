@@ -20,11 +20,18 @@ import {
   installmentMonthly,
   marketStockPrice,
   dealTerms,
+  marketDealFlow,
 } from '../engine/ledger'
-import { fastBoard, cardText, fastSpaceText } from '../engine/data'
+import { fastBoard, cardText, fastSpaceText, smallDeals, bigDeals } from '../engine/data'
 import { loanOutstanding, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
-import { GL_PACKAGES, GL_PROMOS, glTotalIncome } from '../engine/greenleaf'
+import {
+  GL_PACKAGES,
+  GL_PROMOS,
+  glInitialState,
+  glStructureIncome,
+  glTotalIncome,
+} from '../engine/greenleaf'
 import { RIBA } from '../engine/ledger'
 import { HalalNote } from './HalalNote'
 import { DealTradeActions } from './DealTradeActions'
@@ -190,6 +197,16 @@ function SellLotRow({
   )
 }
 
+/** Диапазон взносов колоды — коротко, из настоящих карт. */
+function deckHint(cards: { downPayment?: number; price?: number }[]): string {
+  const downs = cards
+    .map((c) => c.downPayment ?? c.price ?? 0)
+    .filter((n) => n > 0)
+    .sort((a, b) => a - b)
+  if (!downs.length) return ''
+  return `взнос ${money(downs[0])} – ${money(downs[downs.length - 1])}`
+}
+
 function Stat({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-baseline justify-between text-sm">
@@ -234,8 +251,13 @@ export function CardModal({
           <div className="grid gap-2 sm:grid-cols-2">
             {(
               [
-                ['small', 'Малая', RULES.currency === 'RUB' ? 'взнос до 150 000 ₽' : 'взнос до $5 000'],
-                ['big', 'Крупная', RULES.currency === 'RUB' ? 'от 200 000 ₽' : 'от $8 000'],
+                /*
+                 * 🔴 Пороги считаются ИЗ КОЛОДЫ, а не зашиты. Зашитые
+                 * разъехались с данными: обещали «взнос до 150 000», а малые
+                 * сделки давно стоят до 9,5 млн. Так подсказка не соврёт снова.
+                 */
+                ['small', 'Малая', deckHint(smallDeals(table.deckTheme))],
+                ['big', 'Крупная', deckHint(bigDeals(table.deckTheme))],
               ] as const
             ).map(([size, name, hint]) => (
               <button
@@ -416,6 +438,9 @@ export function CardModal({
        * на машиноместе: карточка показывала 800 ₽, приходило 100.
        */
       const terms = dealTerms(card, kind)
+      // Что сейчас творится на рынке для этого класса активов.
+      const mktMul = table.market.flow[card.category] ?? 1
+      const isGl = !!(card as { greenleaf?: boolean }).greenleaf
       const instTotal = terms.instTotal
       const instDebt = terms.instDebt
       const monthly = terms.instMonthly
@@ -449,23 +474,31 @@ export function CardModal({
             секунду». Раньше половина этих чисел пряталась внутри кнопок.
           */}
           <div className="panel-2 space-y-1 rounded-lg p-3">
-            <Stat label="Стоит целиком" value={money(terms.cashPrice)} strong />
-            {terms.financeable && (
+            {/* У GreenLeaf цена и доход зависят от пакета — они на кнопках ниже. */}
+            {!isGl && <Stat label="Стоит целиком" value={money(terms.cashPrice)} strong />}
+            {terms.financeable && !isGl && (
               <>
                 <Stat label="Первый взнос" value={money(terms.instDown)} />
                 <Stat label="Платёж по рассрочке" value={`−${money(terms.instMonthly)}/мес`} />
                 <Stat label="Всего с наценкой" value={money(terms.instTotal)} />
               </>
             )}
-            <div className="my-1 border-t border-[var(--line)]" />
-            <Stat
+            {!isGl && <div className="my-1 border-t border-[var(--line)]" />}
+            {/* Показываем то, что реально придёт при нынешнем рынке. */}
+            {!isGl && <Stat
               label={kind === 'realEstate' ? 'Приносит аренды' : 'Приносит дохода'}
-              value={`${money(terms.cashFlow)}/мес`}
-            />
+              value={`${money(marketDealFlow(terms.cashFlow, mktMul))}/мес`}
+            />}
+            {mktMul !== 1 && (
+              <p className="text-[11px] leading-snug text-[var(--muted)]">
+                С учётом того, что сейчас на рынке. По карте было{' '}
+                {money(terms.cashFlow)}/мес.
+              </p>
+            )}
             {terms.financeable && (
               <Stat
                 label="Останется в рассрочку"
-                value={`${signed(terms.instFlow)}/мес`}
+                value={`${signed(marketDealFlow(terms.cashFlow, mktMul) - terms.instMonthly)}/мес`}
                 strong
               />
             )}
@@ -484,20 +517,39 @@ export function CardModal({
           */}
           {(card as { greenleaf?: boolean }).greenleaf ? (
             <div className="space-y-2">
-              {GL_PACKAGES.map((pk) => (
-                <button
-                  key={pk.id}
-                  disabled={l.cash < pk.price}
-                  onClick={() => dispatch({ type: 'BUY_DEAL', glPackage: pk.id })}
-                  className="w-full rounded-xl border border-[var(--line)] p-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
-                >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-black">{pk.name}</span>
-                    <span className="tabnum text-lg font-black">{money(pk.price)}</span>
-                  </div>
-                  <div className="mt-1 text-[11px] leading-snug text-[var(--muted)]">{pk.hint}</div>
-                </button>
-              ))}
+              {/*
+                🔴 Доход на КАЖДОЙ кнопке. Раньше в общей панели стояли цена и
+                поток только младшего пакета, и на флагманской карте два числа
+                из трёх врали: человек выбирал вслепую и не понимал, за что
+                доплачивает. Считаем движковой функцией, а не своей формулой —
+                вторая копия расчёта неизбежно разойдётся с первой.
+              */}
+              {GL_PACKAGES.map((pk) => {
+                const start = glStructureIncome(glInitialState(pk.id, 1))
+                const base = glStructureIncome(glInitialState('platinum', 1))
+                return (
+                  <button
+                    key={pk.id}
+                    disabled={l.cash < pk.price}
+                    onClick={() => dispatch({ type: 'BUY_DEAL', glPackage: pk.id })}
+                    className="w-full rounded-xl border border-[var(--line)] p-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-black">{pk.name}</span>
+                      <span className="tabnum text-lg font-black">{money(pk.price)}</span>
+                    </div>
+                    <div className="tabnum mt-0.5 text-[12px] font-semibold text-emerald-400">
+                      {money(start)}/мес на старте
+                      {start > base && (
+                        <span className="ml-1 font-normal text-[var(--muted)]">
+                          (+{money(start - base)} к Платине)
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1 text-[11px] leading-snug text-[var(--muted)]">{pk.hint}</div>
+                  </button>
+                )
+              })}
               <p className="text-[11px] leading-snug text-[var(--muted)]">
                 Поднять пакет можно в любой момент — доплатите разницу. Считать выгодно тогда,
                 когда структура уже приносит заметные деньги.
@@ -616,7 +668,12 @@ export function CardModal({
                           <span style={{ color: m.seat.color }}>●</span> {m.seat.name} · {a.name}
                         </span>
                         <span className="tabnum font-semibold text-emerald-400">
-                          {money(price - a.debt)} чистыми
+                          {/* 🔴 Доля партнёра вычитается: без неё окно обещало
+                              владельцу вдвое больше, чем придёт на руки. */}
+                          {money(
+                            Math.round((price - a.debt) * (1 - (a.investorShare ?? 0))),
+                          )}{' '}
+                          чистыми
                         </span>
                       </button>
                     )
