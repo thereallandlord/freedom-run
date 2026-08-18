@@ -8,7 +8,7 @@ import { glTotalIncome, glRankFor } from './greenleaf'
 import type { Table } from './types'
 import * as dataMod from './data'
 import { applyEvent } from './applyEvent'
-import { ribaRisk } from './ledger'
+import { ribaRisk, ownShare } from './ledger'
 import { fairAssetPrice } from './trades'
 
 setActiveTheme('ru'); setFastBoardTheme('ru')
@@ -325,4 +325,71 @@ console.log('\n\nСОХРАНЕНИЕ ДЕНЕГ В СДЕЛКАХ')
     ok('остаток пошёл в зачёт свободы',
       Math.abs(freedomIncome(after) - expect) <= 1, `${M(freedomIncome(after))}`)
   }
+}
+
+// ─── Три пути входа в сделку должны считать ОДИНАКОВО ────────────────
+
+console.log('\n\nТРИ ПУТИ ВХОДА В СДЕЛКУ')
+{
+  setRules({ currency: 'RUB' })
+  const pool = professionsFor('ru'); const dreams = dreamSpaces()
+  const mk = () => {
+    const t0 = createTable({ seed: 4, deckTheme: 'ru', seats: [0,1,2].map(i => ({
+      name: `И${i+1}`, professionId: pool[i * 4].id, dreamSpace: dreams[i].index,
+      isBot: false, botDifficulty: 'medium' as const,
+    })) })
+    return { ...t0, seats: t0.seats.map(s => ({ ...s, ledger: { ...s.ledger, cash: 40_000_000 } })) }
+  }
+  const ok = (label: string, cond: boolean, detail = '') =>
+    console.log(`  ${cond ? '✅' : '❌'} ${label}${detail ? ' — ' + detail : ''}`)
+  const M = (n: number) => Math.round(n).toLocaleString('ru-RU') + ' ₽'
+  const card = dataMod.bigDeals('ru').find((c) => c.kind === 'realEstate' && c.cashFlow > 0)!
+
+  // прямая покупка в рассрочку
+  let a = mk()
+  a = { ...a, pending: { kind: 'deal', card, deck: 'big' } as never, phase: 'resolving' }
+  a = applyTableEvent(a, { type: 'BUY_DEAL' })
+  const own = a.seats[0].ledger.realEstate[0]
+
+  // перекуп находки другим игроком
+  let b = mk()
+  b = { ...b, pending: { kind: 'deal', card, deck: 'big' } as never, phase: 'resolving' }
+  b = applyTableEvent(b, { type: 'OFFER_CARD', amount: 100_000, toId: b.seats[1].id })
+  const of1 = b.offers[b.offers.length - 1]
+  b = applyTableEvent(b, { type: 'ACCEPT_OFFER_TRADE', offerId: of1.id, seatId: b.seats[1].id })
+  const bought = b.seats[1].ledger.realEstate[0]
+
+  ok('перекуп даёт ТОТ ЖЕ поток, что своя покупка',
+    !!bought && bought.cashFlow === own.cashFlow,
+    `своя ${M(own.cashFlow)} · перекуп ${bought ? M(bought.cashFlow) : 'нет'}`)
+  ok('у перекупа тоже есть рассрочка',
+    !!bought && (bought.installmentMonthly ?? 0) === (own.installmentMonthly ?? 0),
+    `платёж ${bought ? M(bought.installmentMonthly ?? 0) : '—'}`)
+
+  // вход вдвоём
+  let c = mk()
+  c = { ...c, pending: { kind: 'deal', card, deck: 'big' } as never, phase: 'resolving' }
+  c = applyTableEvent(c, { type: 'OFFER_COINVEST', amount: Math.round(card.downPayment / 2), share: 0.5, toId: c.seats[1].id })
+  const of2 = c.offers[c.offers.length - 1]
+  c = applyTableEvent(c, { type: 'ACCEPT_OFFER_TRADE', offerId: of2.id, seatId: c.seats[1].id })
+  const lead = c.seats[0].ledger.realEstate[0]
+  const part = c.seats[1].ledger.realEstate[0]
+  const together = ownShare(lead) + (part?.cashFlow ?? 0)
+  ok('вдвоём получают НЕ больше, чем один в рассрочку',
+    together <= own.cashFlow + 2,
+    `вдвоём ${M(together)} против ${M(own.cashFlow)}`)
+
+  // рассрочка гасится
+  let d = mk()
+  d = { ...d, pending: { kind: 'deal', card, deck: 'big' } as never, phase: 'resolving' }
+  d = applyTableEvent(d, { type: 'BUY_DEAL' })
+  let led = d.seats[0].ledger
+  const debt0 = led.realEstate[0].mortgage
+  for (let i = 0; i < 6; i++) led = applyEvent(led, { type: 'PAYCHECK' })
+  const debt6 = led.realEstate[0].mortgage
+  ok('рассрочка гасится платежами', debt6 < debt0,
+    `${M(debt0)} → ${M(debt6)} за 6 зарплат`)
+  const monthly = d.seats[0].ledger.realEstate[0].installmentMonthly ?? 0
+  ok('гасится ровно на величину платежа', Math.abs((debt0 - debt6) - monthly * 6) <= 6,
+    `списано ${M(debt0 - debt6)}, платёж ${M(monthly)}`)
 }

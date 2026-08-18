@@ -398,6 +398,8 @@ export function netWorth(l: Ledger): number {
     l.liabilities.carLoans +
     l.liabilities.creditCards +
     l.liabilities.retailDebt +
+    // 🔴 Процентный кредит — такой же долг: без него капитал завышен.
+    l.liabilities.ribaLoan +
     l.liabilities.bankLoan +
     l.realEstate.reduce((s, x) => s + x.mortgage, 0) +
     l.businesses.reduce((s, x) => s + x.liability, 0)

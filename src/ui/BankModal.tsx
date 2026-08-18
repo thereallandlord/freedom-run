@@ -128,7 +128,12 @@ export function BankModal({
             Закрыть долг целиком — платёж исчезает
           </div>
           <div className="space-y-1.5">
-            {(Object.keys(debtLabel) as PayableDebt[]).map((debt) => {
+            {/*
+              🔴 Ключи берём у СЛОВАРЯ, а не у функции debtLabel: у функции их
+              нет вовсе, и список долгов был пуст ВСЕГДА. Закрыть долг досрочно
+              было физически нельзя, хотя кнопка обещала.
+            */}
+            {(Object.keys(DEBT_LABEL_RIBA) as PayableDebt[]).map((debt) => {
               const balance = l.liabilities[debt]
               if (balance <= 0) return null
               const payment = l.expenses[DEBT_TO_PAYMENT[debt]]

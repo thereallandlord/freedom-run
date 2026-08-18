@@ -314,7 +314,15 @@ export function CardModal({
       const badge = p.deck === 'small' ? 'Малая сделка' : 'Крупная сделка'
 
       if (card.kind === 'stock') {
-        const s = card as StockCard
+        const raw = card as StockCard
+        /*
+         * 🔴 Цена с поправкой на рынок — ровно та, по которой купит движок
+         * (table.ts зовёт marketStockPrice). Раньше карточка показывала цену
+         * с карты, а списывалось другое: игрок жал «купить» и не понимал,
+         * почему ушла не та сумма, а при сильном движении рынка кнопка
+         * вообще молчала — денег «не хватало» на цену, которой он не видел.
+         */
+        const s = { ...raw, price: marketStockPrice(raw.price, table.market.stock[raw.symbol]) }
         const max = Math.floor(l.cash / s.price)
         const holders = stockHolders(table, s.symbol)
         return (
@@ -687,12 +695,13 @@ export function CardModal({
                   />
                 </div>
                 <button
+                  disabled={!biz?.gl}
                   onClick={() => dispatch({ type: 'GL_PROMO_TAKE', promo: card.promo! })}
-                  className="btn-primary w-full"
+                  className="btn-primary w-full disabled:opacity-40"
                 >
                   Взять деньгами
                 </button>
-                {card.promo === 'travel' && (
+                {card.promo === 'travel' && biz?.gl && (
                   <button
                     onClick={() => dispatch({ type: 'GL_PROMO_TAKE', promo: 'travel', go: true })}
                     className="btn-ghost w-full"
@@ -700,6 +709,14 @@ export function CardModal({
                     Поехать самому
                   </button>
                 )}
+                {/*
+                  🔴 Выход обязателен. Без партнёрского бизнеса кнопки выше
+                  ничего не делают (движок возвращает prev), а закрыть карточку
+                  было нечем — партия вставала намертво.
+                */}
+                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost w-full">
+                  {biz?.gl ? 'Пропустить' : 'Это не про вас — дальше'}
+                </button>
               </>
             ) : card.triangle ? (
               <>

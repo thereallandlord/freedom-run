@@ -36,6 +36,32 @@ function clone(l: Ledger): Ledger {
  * Чистый редьюсер кошелька. Никаких побочных эффектов, никакого рандома —
  * всё, что нужно, приходит внутри события.
  */
+/**
+ * Погасить рассрочку одного актива на величину его платежа.
+ *
+ * 🔴 До 18.08 платёж списывался из потока КАЖДЫЙ месяц, но тело долга не
+ * трогал: человек платил годами, а остаток стоял на месте. При продаже
+ * выручка считалась как цена минус ПОЛНЫЙ остаток — всё уплаченное сгорало.
+ * Ровно отсюда и бралась «несходимость денег за партию».
+ *
+ * Возвращает true, если долг закрылся: тогда платёж исчезает и поток актива
+ * вырастает ровно на его величину — тот же хвост, что у досрочного закрытия.
+ */
+function amortizeAsset(a: { cashFlow: number; installmentMonthly?: number }, debtRef: { get(): number; set(v: number): void }): boolean {
+  const monthly = a.installmentMonthly ?? 0
+  const debt = debtRef.get()
+  if (monthly <= 0 || debt <= 0) return false
+  const pay = Math.min(monthly, debt)
+  debtRef.set(debt - pay)
+  if (debtRef.get() <= 0) {
+    debtRef.set(0)
+    a.cashFlow += monthly
+    a.installmentMonthly = 0
+    return true
+  }
+  return false
+}
+
 export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
   const l = clone(prev)
 
@@ -73,6 +99,17 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       }
       l.cash += monthlyCashFlow(l, e.flowMul)
       l.paydays += 1
+
+      /*
+       * Рассрочка за активы гасится ПОСЛЕ начисления потока — иначе последний
+       * платёж уйдёт дважды: и из потока этого месяца, и из тела долга.
+       */
+      for (const a of l.realEstate) {
+        amortizeAsset(a, { get: () => a.mortgage, set: (v) => (a.mortgage = v) })
+      }
+      for (const b of l.businesses) {
+        amortizeAsset(b, { get: () => b.liability, set: (v) => (b.liability = v) })
+      }
 
       /*
        * Беспроцентный заём гасится сам: платёж уменьшает тело долга.

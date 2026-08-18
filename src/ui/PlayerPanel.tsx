@@ -272,11 +272,11 @@ function Section({
  * Шкала сделана по образцу панели GreenLeaf: крупное число, под ним полоса,
  * рядом процент.
  */
-function GoalCard({ seat }: { seat: Seat }) {
+function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, number> }) {
   const l = seat.ledger
   const onFast = seat.track === 'fast'
   // 🔴 Шкала свободы считает то, что работает БЕЗ тебя, а не весь доход с активов.
-  const done = onFast ? fastTrackProgress(l) : freedomIncome(l)
+  const done = onFast ? fastTrackProgress(l) : freedomIncome(l, flowMul)
   const need = onFast ? fastTrackTarget() : totalExpenses(l)
   const pct = Math.max(0, Math.min(100, (done / Math.max(1, need)) * 100))
   const won = onFast ? done >= need : isOutOfRatRace(l)
@@ -327,17 +327,30 @@ function GoalCard({ seat }: { seat: Seat }) {
   )
 }
 
-export function PlayerPanel({ seat, dispatch }: { seat: Seat; dispatch?: (e: TableEvent) => void }) {
+/**
+ * 🔴 Панель обязана считать доход С УЧЁТОМ рынка: зарплату движок платит с
+ * ним, а панель показывала без него. «Анталья забита, +30%» — на экране
+ * прежние цифры, на счёте другие, и человек считает, что игра врёт.
+ */
+export function PlayerPanel({
+  seat,
+  dispatch,
+  flowMul,
+}: {
+  seat: Seat
+  dispatch?: (e: TableEvent) => void
+  flowMul?: Record<string, number>
+}) {
   const l = seat.ledger
-  const income = totalIncome(l)
+  const income = totalIncome(l, flowMul)
   const expenses = totalExpenses(l)
-  const flow = monthlyCashFlow(l)
-  const passive = passiveIncome(l)
+  const flow = monthlyCashFlow(l, flowMul)
+  const passive = passiveIncome(l, flowMul)
   const onFast = seat.track === 'fast'
 
   return (
     <div className="space-y-2">
-      <GoalCard seat={seat} />
+      <GoalCard seat={seat} flowMul={flowMul} />
       <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <span className="size-3 rounded-full ring-2 ring-white/15" style={{ background: seat.color }} />
@@ -392,7 +405,7 @@ export function PlayerPanel({ seat, dispatch }: { seat: Seat; dispatch?: (e: Tab
         </Section>
       ) : (
         <>
-          <Section title="Доходы" tone="income" end={money(l.salary + passiveIncome(l))}>
+          <Section title="Доходы" tone="income" end={money(l.salary + passiveIncome(l, flowMul))}>
             <Row label="Зарплата" value={money(l.salary)} />
             {dividendLines(l).map((d) => (
               <Row key={d.symbol} label={`Дивиденды ${d.symbol}`} value={money(d.amount)} dim />
@@ -450,7 +463,7 @@ export function PlayerPanel({ seat, dispatch }: { seat: Seat; dispatch?: (e: Tab
                 приходят и тратятся, но пока ты сам за прилавком — свободу они
                 не приближают. В зачёт идёт только то, что крутится без тебя.
               */}
-              <Row label="Из них работает без вас" value={money(freedomIncome(l))} />
+              <Row label="Из них работает без вас" value={money(freedomIncome(l, flowMul))} />
               <Row label="Всего доходов" value={money(income)} />
             </div>
           </Section>

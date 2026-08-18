@@ -53,10 +53,10 @@ function Scoreboard({
     >
       {table.seats.map((s, i) => {
         const active = i === table.turnIndex
-        const flow = s.track === 'fast' ? fastTrackIncome(s.ledger) : monthlyCashFlow(s.ledger)
+        const flow = s.track === 'fast' ? fastTrackIncome(s.ledger) : monthlyCashFlow(s.ledger, table.market.flow)
         // Насколько человек близок к свободе — то же, что показывает его панель.
         const need = totalExpenses(s.ledger)
-        const have = freedomIncome(s.ledger)
+        const have = freedomIncome(s.ledger, table.market.flow)
         const pct = need > 0 ? Math.min(100, Math.round((have / need) * 100)) : 0
         return (
           <button
@@ -412,7 +412,11 @@ export function Game({
           последняя строка уходит под нижний край, как в обычной странице.
         */}
         <div className="player-scroll order-2 min-h-0 overflow-y-auto overflow-x-hidden pb-0 lg:order-1">
-          <PlayerPanel seat={viewed} dispatch={viewed.id === seat.id && !seat.isBot ? dispatch : undefined} />
+          <PlayerPanel
+            seat={viewed}
+            dispatch={viewed.id === seat.id && !seat.isBot ? dispatch : undefined}
+            flowMul={table.market.flow}
+          />
         </div>
 
         <div className="order-1 flex min-h-0 lg:order-2">

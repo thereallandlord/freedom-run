@@ -201,6 +201,48 @@ export function recalcMarket(t: Table) {
   t.market = { price, flow, stock }
 }
 
+/**
+ * Событие покупки актива — ОДНА точка сборки на все пути входа в сделку.
+ *
+ * 🔴 До 18.08 актив собирали в трёх местах по-своему: обычная покупка через
+ * dealTerms, а перекуп находки и вход через партнёра — «как получится».
+ * Итог: купленный у игрока объект приносил в 5,5 раза больше, чем свой
+ * такой же, потому что рассрочки в тех ветках просто не было. Позвать
+ * партнёра или перекупить всегда было выгоднее, чем купить самому, и весь
+ * урок про то, что под рассрочку объект себя не кормит, обнулялся.
+ */
+function dealAssetEvent(
+  t: Table,
+  card: import('./types').DealCard & { category?: string },
+  id: string,
+  opts: { payCash: boolean; investorShare?: number; partnerId?: string },
+): Extract<LedgerEvent, { type: 'BUY_REAL_ESTATE' } | { type: 'BUY_BUSINESS' }> {
+  if (card.kind === 'stock') throw new Error('бумаги покупаются другим событием')
+  const kind = card.kind === 'realEstate' ? 'realEstate' : 'business'
+  const terms = dealTerms(card, kind)
+  const payCash = opts.payCash
+  const common = {
+    id,
+    name: localizedCardTitle(card),
+    cost: payCash ? terms.cashPrice : terms.instTotal,
+    downPayment: payCash ? terms.cashPrice : terms.instDown,
+    cashFlow: payCash ? terms.cashFlow : terms.instFlow,
+    category: card.category ?? '',
+    investorShare: opts.investorShare,
+    partnerId: opts.partnerId,
+    installmentMonthly: payCash ? 0 : terms.instMonthly,
+  }
+  return card.kind === 'realEstate'
+    ? { type: 'BUY_REAL_ESTATE', ...common, mortgage: payCash ? 0 : terms.instDebt }
+    : {
+        type: 'BUY_BUSINESS',
+        ...common,
+        liability: payCash ? 0 : terms.instDebt,
+        growthPerPayday: (card as { growthPerPayday?: number }).growthPerPayday,
+        growthCap: (card as { growthCap?: number }).growthCap,
+      }
+}
+
 export function applyWorldEvent(prev: Table, index: number): Table {
   const t = cloneTable(prev)
   const ev = WORLD_EVENTS[index]
@@ -753,13 +795,15 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
       )
       if (!owners.length) return false
       if (!card.promo) return true
-      // Промоушен показываем, только если план правда закрыт и сроки вышли.
+      /*
+       * Промоушен — карта ХОДЯЩЕГО: он её и разыгрывает. Раньше проверяли
+       * «есть ли за столом хоть кто-то с закрытым планом», и карта падала
+       * человеку без структуры, у которого кнопки не работали вовсе.
+       */
       const p = GL_PROMOS.find((x) => x.id === card.promo)
       if (!p) return false
-      return owners.some((s) => {
-        const g = s.ledger.businesses.find((b) => b.gl)?.gl
-        return !!g && glPromoReady(g, p).ready
-      })
+      const g = currentSeat(t).ledger.businesses.find((b) => b.gl)?.gl
+      return !!g && glPromoReady(g, p).ready
     }
   }
 }
@@ -1841,19 +1885,17 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           if (buyer.ledger.cash < total) return prev
           seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -price })
           seatLedgerEvent(t, from.id, { type: 'ADJUST_CASH', amount: price })
-          const common = {
-            id: `${card.id}-${nextId(t)}`,
-            name: localizedCardTitle(card),
-            cost: card.cost,
-            downPayment: card.downPayment,
-            cashFlow: card.cashFlow,
-            category: card.category,
-          }
-          if (card.kind === 'realEstate') {
-            seatLedgerEvent(t, buyer.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: card.mortgage })
-          } else {
-            seatLedgerEvent(t, buyer.id, { type: 'BUY_BUSINESS', ...common, liability: card.liability })
-          }
+          /*
+           * 🔴 Через ОБЩИЙ сборщик. Раньше здесь актив собирали вручную,
+           * без рассрочки, и перекупленная находка приносила в разы больше,
+           * чем та же карта, купленная самому. Перекуп берёт её в рассрочку —
+           * взнос он уже заплатил вместе с ценой права.
+           */
+          seatLedgerEvent(
+            t,
+            buyer.id,
+            dealAssetEvent(t, card, `${card.id}-${nextId(t)}`, { payCash: false }),
+          )
           log(t, buyer.id, `${buyer.name} выкупил находку у ${from.name} за ${money(price)} и вошёл в сделку`)
           t.offers = t.offers.filter((x) => x.id !== o.id)
           t.pending = null
@@ -1914,33 +1956,33 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -o.amount })
           seatLedgerEvent(t, from.id, { type: 'ADJUST_CASH', amount: -mine })
           const share = o.share ?? 0.5
-          const common = {
-            id: `${card.id}-${nextId(t)}`,
-            name: localizedCardTitle(card),
-            cost: card.cost,
-            downPayment: 0,
-            cashFlow: card.cashFlow,
-            category: card.category,
+          /*
+           * 🔴 Тот же общий сборщик, что и у обычной покупки. Раньше здесь
+           * актив собирали вручную по цифрам с карточки — и двое, сложившись,
+           * получали доход как при покупке НАЛОМ, хотя платили только взнос.
+           * Вход через партнёра был выгоднее покупки, и это ломало всю игру.
+           * Взнос уже списан выше двумя переводами, поэтому downPayment=0.
+           */
+          const base = dealAssetEvent(t, card, `${card.id}-${nextId(t)}`, {
+            payCash: false,
             investorShare: share,
             partnerId: buyer.id,
-          }
-          if (card.kind === 'realEstate') {
-            seatLedgerEvent(t, from.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: card.mortgage })
-          } else {
-            seatLedgerEvent(t, from.id, { type: 'BUY_BUSINESS', ...common, liability: card.liability })
-          }
+          })
+          seatLedgerEvent(t, from.id, { ...base, downPayment: 0 })
           /*
            * 🔴 Доля соинвестора должна лечь ЕМУ В ПОРТФЕЛЬ, иначе он платит
            * деньги и не получает ничего: у инициатора доход уже урезан на
            * investorShare, а этот кусок просто испарялся. Долг остаётся на том,
            * кто ведёт объект, — соинвестор внёс живые деньги, а не обязательство.
            */
+          // Доля партнёра — от ТОГО ЖЕ расчёта, что и у инициатора: он вошёл
+          // в объект в рассрочку, значит и его доля считается от потока в рассрочку.
           const partShare = {
             id: `${card.id}-part-${nextId(t)}`,
             name: `${localizedCardTitle(card)} · доля ${Math.round(share * 100)}%`,
-            cost: Math.round(card.cost * share),
+            cost: Math.round((base.cost as number) * share),
             downPayment: 0,
-            cashFlow: Math.round(card.cashFlow * share),
+            cashFlow: Math.round((base.cashFlow as number) * share),
             category: card.category,
             partnerId: from.id,
           }
