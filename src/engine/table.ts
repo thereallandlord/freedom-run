@@ -386,7 +386,8 @@ export function applyWorldEvent(prev: Table, index: number): Table {
   }
 
   recalcMarket(t)
-  t.lastWorldEvent = { id: ev.id, at: t.log.length }
+  // Метка «когда»: берём тик мира, а не длину журнала — она обрезается.
+  t.lastWorldEvent = { id: ev.id, at: t.worldTick }
   log(t, null, `🌍 ${ev.title}`)
   return t
 }
@@ -458,11 +459,26 @@ function money(n: number): string {
   return n < 0 ? `−$${s}` : `$${s}`
 }
 
+/**
+ * Случайное число стола.
+ *
+ * 🔴 РАНЬШЕ СЛУЧАЙНОСТЬ ЗАВИСЕЛА ОТ ДЛИНЫ ЖУРНАЛА (`t.log.length`), а журнал
+ * обрезается на 300 строках и вообще пишется по-разному в разных ветках.
+ * В сетевой партии этого достаточно, чтобы у двоих разошлись колоды: у
+ * одного выпадает Apple, у другого на том же ходу — Tesla. Теперь у стола
+ * есть свой счётчик обращений: он часть состояния, едет вместе с журналом
+ * ходов и одинаков у всех.
+ */
+function rng(t: Table, salt: number): number {
+  t.rngCursor = (t.rngCursor ?? 0) + 1
+  return mulberry32(t.seed + t.rngCursor * 2654435761 + salt)()
+}
+
 /** Взять следующую карту колоды, перетасовав её при исчерпании. */
 function draw(t: Table, deck: 'small' | 'big' | 'market' | 'doodad', size: number): number {
   const d = t.decks[deck]
   if (d.next >= d.order.length) {
-    d.order = shuffleIndices(size, t.seed + t.log.length + deck.length * 7919)
+    d.order = shuffleIndices(size, t.seed + (t.rngCursor = (t.rngCursor ?? 0) + 1) + deck.length * 7919)
     d.next = 0
   }
   const idx = d.order[d.next]
@@ -669,7 +685,7 @@ function dealDrawOk(t: Table, card: import('./types').DealCard, size: 'small' | 
     if (owned === 0) return true
     // 1 бизнес → 55%, 2 → 30%, 3 → 17%, дальше всё реже, но никогда не ноль.
     const chance = Math.pow(0.55, owned)
-    return mulberry32(t.seed + t.log.length + 4241)() < chance
+    return rng(t, 4241) < chance
   }
   return true
 }
@@ -803,7 +819,7 @@ function resolveLanding(t: Table, seatIdx: number) {
          * связь игрок достраивает сам. Ничего не запрещаем.
          */
         const risk = ribaRisk(l)
-        if (risk > 0 && mulberry32(t.seed + t.log.length + 991)() < risk) {
+        if (risk > 0 && rng(t, 991) < risk) {
           const idx2 = draw(t, 'doodad', deck.length)
           const extra = deck[idx2]
           card = {
@@ -832,9 +848,13 @@ function resolveLanding(t: Table, seatIdx: number) {
         t.pending = { kind: 'downsized' }
         t.phase = 'resolving'
         return
-      case 'paycheck':
-        t.phase = 'turnEnd'
+      case 'paycheck': {
+        // Встал ровно на зарплату — показываем это окном, а не молчанием.
+        const paid =
+          seat.track === 'rat' ? monthlyCashFlow(l, t.market.flow) : fastTrackIncome(l)
+        t.pending = { kind: 'payday', amount: paid }
         return
+      }
     }
   }
 
@@ -1204,7 +1224,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         // Разброс удачи: у двух одинаково старательных структура растёт по-разному.
         // Детерминированно от зерна и длины журнала — повтор партии даст то же.
         const luck =
-          GL_LUCK_MIN + mulberry32(t.seed + t.log.length)() * (GL_LUCK_MAX - GL_LUCK_MIN)
+          GL_LUCK_MIN + rng(t, 0) * (GL_LUCK_MAX - GL_LUCK_MIN)
         seatLedgerEvent(t, seat.id, {
           type: 'BUY_BUSINESS',
           id: `${card.id}-${nextId(t)}`,
@@ -1822,7 +1842,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       })
 
       if (event.go && promo.id === 'travel') {
-        const r = mulberry32(t.seed + t.log.length + 3771)
+        const r = () => rng(t, 3771)
         const gainPct = Math.round(r() * 20)
         const forPaydays = 4 + Math.floor(r() * 9)
         const after = t.seats[seatIdx].ledger.businesses.find((b) => b.id === biz.id)

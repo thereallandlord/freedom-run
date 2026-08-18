@@ -451,6 +451,12 @@ export type Pending =
     }
   | { kind: 'market'; card: MarketCard; access?: DealAccess; decided?: string[] }
   | { kind: 'doodad'; card: DoodadCard }
+  /**
+   * Встал ровно на клетку зарплаты. Отдельное окно, потому что иначе ход
+   * выглядел как «ничего не произошло»: деньги приходили молча, а карточки
+   * не было — человек не понимал, за что.
+   */
+  | { kind: 'payday'; amount: number }
   | { kind: 'charity' }
   | { kind: 'downsized' }
   | { kind: 'ftBusiness'; space: number }

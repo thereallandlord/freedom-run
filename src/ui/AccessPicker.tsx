@@ -34,6 +34,7 @@ export function AccessPicker({
   const [fee, setFee] = useState(20_000)
   const [picked, setPicked] = useState<string[]>([])
   const [openTerms, setOpenTerms] = useState(false)
+  const [termKind, setTermKind] = useState<'profitShare' | 'fee' | 'free'>('profitShare')
 
   if (!others.length) return null
   const a = access ?? CLOSED
@@ -128,75 +129,104 @@ export function AccessPicker({
           </div>
 
           <div>
-            <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-              На каких условиях
+            {/*
+              🔴 Сначала ВЫБИРАЕМ, что получаем, потом настраиваем сумму, и
+              только затем подтверждаем. Раньше здесь стояли два ползунка, у
+              каждого своя кнопка, и нажатие на кнопку одновременно выбирало
+              условие и применяло его — понять, что выбрано сейчас, было
+              нельзя вовсе.
+            */}
+            <div className="mb-1 caps text-[10px] font-bold text-[var(--muted)]">
+              Что вы за это получаете
             </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min={5}
-                  max={50}
-                  step={5}
-                  value={pct}
-                  onChange={(e) => setPct(Number(e.target.value))}
-                  className="flex-1 accent-emerald-500"
-                />
+            <div className="grid grid-cols-3 gap-1.5">
+              {(
+                [
+                  ['profitShare', 'Доля с прибыли'],
+                  ['fee', 'Плата за вход'],
+                  ['free', 'Ничего'],
+                ] as const
+              ).map(([k, label]) => (
                 <button
-                  disabled={!picked.length}
-                  onClick={() =>
-                    set({
-                      mode: picked.length === others.length ? 'open' : 'chosen',
-                      allow: picked,
-                      terms: { kind: 'profitShare', pct },
-                    })
-                  }
-                  className="btn-ghost whitespace-nowrap text-[11.5px] disabled:opacity-40"
+                  key={k}
+                  onClick={() => setTermKind(k)}
+                  className={`rounded-lg border px-2 py-2 text-[11.5px] font-semibold leading-tight transition ${
+                    termKind === k
+                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                      : 'border-[var(--line)] text-[var(--muted)] hover:border-emerald-500/50'
+                  }`}
                 >
-                  {pct}% с прибыли
+                  {label}
                 </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min={10_000}
-                  max={300_000}
-                  step={10_000}
-                  value={fee}
-                  onChange={(e) => setFee(Number(e.target.value))}
-                  className="flex-1 accent-emerald-500"
-                />
-                <button
-                  disabled={!picked.length}
-                  onClick={() =>
-                    set({
-                      mode: picked.length === others.length ? 'open' : 'chosen',
-                      allow: picked,
-                      terms: { kind: 'fee', amount: fee },
-                    })
-                  }
-                  className="btn-ghost whitespace-nowrap text-[11.5px] disabled:opacity-40"
-                >
-                  {money(fee)} за вход
-                </button>
-              </div>
-              <button
-                disabled={!picked.length}
-                onClick={() =>
-                  set({
-                    mode: picked.length === others.length ? 'open' : 'chosen',
-                    allow: picked,
-                    terms: { kind: 'free' },
-                  })
-                }
-                className="btn-ghost w-full text-[11.5px] disabled:opacity-40"
-              >
-                Пустить бесплатно
-              </button>
+              ))}
             </div>
-            <p className="mt-1.5 text-[10.5px] leading-snug text-[var(--muted)]">
-              Доля берётся только с прибыли: продаст в минус — не отдаст ничего.
-            </p>
+
+            {termKind === 'profitShare' && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={5}
+                    max={50}
+                    step={5}
+                    value={pct}
+                    onChange={(e) => setPct(Number(e.target.value))}
+                    className="flex-1 accent-emerald-500"
+                  />
+                  <span className="tabnum w-14 text-right text-[15px] font-bold">{pct}%</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-snug text-[var(--muted)]">
+                  Отдаст {pct}% СВОЕЙ прибыли, когда будет продавать. Продаст в минус — не
+                  отдаст ничего.
+                </p>
+              </div>
+            )}
+
+            {termKind === 'fee' && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={10_000}
+                    max={300_000}
+                    step={10_000}
+                    value={fee}
+                    onChange={(e) => setFee(Number(e.target.value))}
+                    className="flex-1 accent-emerald-500"
+                  />
+                  <span className="tabnum w-24 text-right text-[15px] font-bold">{money(fee)}</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-snug text-[var(--muted)]">
+                  Заплатит {money(fee)} сразу при входе, сверх цены покупки. Дальше никаких
+                  хвостов.
+                </p>
+              </div>
+            )}
+
+            {termKind === 'free' && (
+              <p className="mt-2 text-[10.5px] leading-snug text-[var(--muted)]">
+                Пустите просто так — иногда это выгоднее: сосед запомнит.
+              </p>
+            )}
+
+            <button
+              disabled={!picked.length}
+              onClick={() =>
+                set({
+                  mode: picked.length === others.length ? 'open' : 'chosen',
+                  allow: picked,
+                  terms:
+                    termKind === 'profitShare'
+                      ? { kind: 'profitShare', pct }
+                      : termKind === 'fee'
+                        ? { kind: 'fee', amount: fee }
+                        : { kind: 'free' },
+                })
+              }
+              className="btn-primary mt-2.5 w-full disabled:opacity-40"
+            >
+              {picked.length ? 'Открыть вход' : 'Сначала выберите, кого пускать'}
+            </button>
           </div>
         </>
       )}

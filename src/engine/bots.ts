@@ -255,6 +255,10 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     case 'downsized':
       return { type: 'PAY_DOWNSIZED' }
 
+    // Бот на зарплате просто закрывает окно: деньги уже начислены.
+    case 'payday':
+      return { type: 'PASS_CARD' }
+
     case 'ftBusiness': {
       const space = fastBoard()[pending.space]
       if (space.type !== 'business') return { type: 'END_TURN' }

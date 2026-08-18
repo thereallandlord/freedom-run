@@ -127,7 +127,7 @@ function Shell({
         </div>
         {watching && (
           <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-center text-[12px] text-[var(--muted)]">
-            Ходит {watching} — вы смотрите
+            {watching}
           </div>
         )}
       </div>
@@ -264,6 +264,27 @@ function S(props: React.ComponentProps<typeof Shell>) {
   return <Shell {...props} watching={useContext(WatchingCtx)} />
 }
 
+/** Подпись внизу карточки: почему кнопки не нажимаются. */
+function watchNote(table: Table, seat: Seat, spectate: boolean): string | null {
+  const p = table.pending
+  const actor = table.seats[table.turnIndex]
+  const decided = p && (p.kind === 'deal' || p.kind === 'market') ? (p.decided ?? []) : []
+  const waiting = pendingUndecided(table).filter((x: Seat) => x.id !== seat.id)
+  /*
+   * 🔴 Человек, который уже решил, должен видеть ЧТО ПРОИСХОДИТ. Раньше он
+   * жал «Пропустить», карточка оставалась на месте и никак не отзывалась —
+   * выглядело как сломанная кнопка, хотя решение записано и мы просто ждём
+   * остальных.
+   */
+  if (decided.includes(seat.id)) {
+    return waiting.length
+      ? `Вы решили. Ждём: ${waiting.map((x: Seat) => x.name).join(', ')}`
+      : 'Вы решили'
+  }
+  if (spectate) return `Ходит ${actor?.name ?? ''} — вы смотрите`
+  return null
+}
+
 export function CardModal(props: {
   table: Table
   seat: Seat
@@ -275,9 +296,10 @@ export function CardModal(props: {
   /** Условия входа назначает ТОЛЬКО владелец находки. */
   canSetAccess?: boolean
 }) {
-  const actor = props.table.seats[props.table.turnIndex]
   return (
-    <WatchingCtx.Provider value={props.spectate ? (actor?.name ?? null) : null}>
+    <WatchingCtx.Provider
+      value={watchNote(props.table, props.seat, props.spectate ?? false)}
+    >
       <CardBody {...props} />
     </WatchingCtx.Provider>
   )
@@ -776,6 +798,23 @@ function CardBody({
         </S>
       )
     }
+
+    case 'payday':
+      return (
+        <S badge="Зарплата" title="Пришли деньги" accent="#10b981" art="💰">
+          <div className="rounded-lg bg-emerald-500/10 px-3 py-3 text-center">
+            <div className="tabnum text-[26px] font-black leading-none text-emerald-600 dark:text-emerald-400">
+              {signed(p.amount)}
+            </div>
+            <div className="mt-1 text-[12px] text-[var(--muted)]">
+              Зарплата минус расходы — то, что реально осталось
+            </div>
+          </div>
+          <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
+            Понятно
+          </button>
+        </S>
+      )
 
     case 'market': {
       const card = p.card

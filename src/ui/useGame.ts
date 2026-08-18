@@ -44,6 +44,8 @@ export function useGame(net?: {
   /** Кубик уже остановился, но фишка ещё не пошла — показываем результат. */
   const [rolled, setRolled] = useState<number[] | null>(null)
   const botTimer = useRef<number | null>(null)
+  /** Свежий стол для таймеров: они живут дольше одного рендера. */
+  const tableRef = useRef<Table | null>(null)
   /** Отдельный таймер: на предложение бот отвечает и вне своего хода. */
   const offerTimer = useRef<number | null>(null)
 
@@ -70,6 +72,10 @@ export function useGame(net?: {
       /* приватный режим — играем без сохранения */
     }
   }, [setup, events])
+
+  useEffect(() => {
+    tableRef.current = table
+  }, [table])
 
   const start = useCallback((s: TableSetup) => {
     setSetup(s)
@@ -230,22 +236,16 @@ export function useGame(net?: {
       !!t && t.phase === 'awaitingRoll' && !t.pending && !t.lastRoll
 
     const fire = () => {
-      setTable((prev) => {
-        if (!prev || prev.phase === 'finished') return prev
-        if (!quiet(prev)) {
-          waiting = true
-          return prev
-        }
-        waiting = false
-        const ev = { type: 'WORLD_EVENT' as const, index: nextWorldEventIndex(prev) }
-        if (netSend) {
-          netSend(ev)
-          return prev
-        }
-        const next = applyTableEvent(prev, ev)
-        if (next !== prev) setEvents((evs) => [...evs, ev])
-        return next
-      })
+      const now = tableRef.current
+      if (!now || now.phase === 'finished') return
+      if (!quiet(now)) {
+        waiting = true
+        return
+      }
+      waiting = false
+      const ev = { type: 'WORLD_EVENT' as const, index: nextWorldEventIndex(now) }
+      if (netSend) netSend(ev)
+      else applyLocal(ev)
     }
 
     scheduleWorldEvent(first)
@@ -280,25 +280,33 @@ export function useGame(net?: {
     if (!table || table.phase !== 'turnEnd' || !drivesTable) return
     const seat = currentSeat(table)
     if (seat.isBot) return
+    /*
+     * 🔴 Отправка в сеть НЕ ВНУТРИ setTable. Обновляющая функция обязана быть
+     * чистой: React зовёт её когда захочет и сколько захочет, и отправка
+     * оттуда уходила то дважды, то ни разу — ход «переходил через раз», а
+     * иногда только после отмены. Здесь простой таймер и прямой вызов.
+     */
     const id = window.setTimeout(() => {
-      setTable((prev) => {
-        if (!prev || prev.phase !== 'turnEnd') return prev
-        /*
-         * 🔴 Передача хода — такое же событие, как остальные, и в сетевой
-         * партии оно ОБЯЗАНО уйти в канал. Раньше хозяин закрывал ход у себя
-         * молча: у него ходил уже второй игрок, а у второго — по-прежнему
-         * первый. Партия вставала намертво, и оба видели разное.
-         */
-        if (netSend) {
-          netSend({ type: 'END_TURN' } as TableEvent)
-          return prev
-        }
-        const next = applyTableEvent(prev, { type: 'END_TURN' })
-        if (next !== prev) setEvents((evs) => [...evs, { type: 'END_TURN' } as TableEvent])
-        return next
-      })
+      if (netSend) netSend({ type: 'END_TURN' } as TableEvent)
+      else applyLocal({ type: 'END_TURN' } as TableEvent)
     }, 1100)
-    return () => window.clearTimeout(id)
+
+    /*
+     * Страховка: если через три секунды стол ВСЁ ЕЩЁ в конце хода, значит
+     * событие где-то потерялось — повторяем. Повтор безопасен: применить
+     * конец хода дважды нельзя, второй раз движок его отклонит.
+     */
+    const retry = window.setInterval(() => {
+      const now = tableRef.current
+      if (!now || now.phase !== 'turnEnd') return
+      if (netSend) netSend({ type: 'END_TURN' } as TableEvent)
+      else applyLocal({ type: 'END_TURN' } as TableEvent)
+    }, 3000)
+
+    return () => {
+      window.clearTimeout(id)
+      window.clearInterval(retry)
+    }
   }, [table])
 
   // ─── Водитель ботов ───
@@ -327,23 +335,11 @@ export function useGame(net?: {
     const delay =
       ev.type === 'ROLL' ? 1000 : ev.type === 'END_TURN' ? 1600 : prev0.pending ? 3600 : 2000
     botTimer.current = window.setTimeout(() => {
-      setTable((prev) => {
-        if (!prev) return prev
-        if (netSend) {
-          // Ход бота ведёт хозяин стола, но применяют его все — через канал.
-          netSend(applyTableEvent(prev, ev) !== prev ? ev : ({ type: 'END_TURN' } as TableEvent))
-          return prev
-        }
-        const next = applyTableEvent(prev, ev)
-        if (next !== prev) {
-          setEvents((evs) => [...evs, ev])
-          return next
-        }
-        // Событие отклонено — не зацикливаемся, закрываем ход.
-        const forced = applyTableEvent(prev, { type: 'END_TURN' })
-        if (forced !== prev) setEvents((evs) => [...evs, { type: 'END_TURN' } as TableEvent])
-        return forced
-      })
+      // Ход бота ведёт хозяин стола, но применяют его все — через канал.
+      const accepted = applyTableEvent(table, ev) !== table
+      const out = accepted ? ev : ({ type: 'END_TURN' } as TableEvent)
+      if (netSend) netSend(out)
+      else applyLocal(out)
     }, delay)
 
     return () => {
@@ -363,23 +359,12 @@ export function useGame(net?: {
     if (!reply) return
 
     offerTimer.current = window.setTimeout(() => {
-      setTable((prev) => {
-        if (!prev) return prev
-        if (netSend) {
-          netSend(applyTableEvent(prev, reply.event) !== prev ? reply.event : reply.fallback)
-          return prev
-        }
-        const next = applyTableEvent(prev, reply.event)
-        if (next !== prev) {
-          setEvents((evs) => [...evs, reply.event])
-          return next
-        }
-        // Движок отклонил согласие (цена уже не та, денег не хватило) — снимаем
-        // предложение, иначе человек будет ждать ответа, которого не будет.
-        const off = applyTableEvent(prev, reply.fallback)
-        if (off !== prev) setEvents((evs) => [...evs, reply.fallback])
-        return off
-      })
+      // Движок мог отклонить согласие (цена уже не та, денег не хватило) —
+      // тогда снимаем предложение, иначе человек ждёт ответа, которого не будет.
+      const accepted = applyTableEvent(table, reply.event) !== table
+      const out = accepted ? reply.event : reply.fallback
+      if (netSend) netSend(out)
+      else applyLocal(out)
     }, 1200)
 
     return () => {
