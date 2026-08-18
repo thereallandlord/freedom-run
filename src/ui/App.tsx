@@ -144,10 +144,18 @@ export function App() {
   const roomStatus = room.room?.status
   const started = roomStatus === 'playing'
   useEffect(() => {
+    /*
+     * 🔴 Стол открывается, ТОЛЬКО пока человек сидит в лобби этой самой
+     * комнаты. Раньше условия не было — и на любом заходе, если в браузере
+     * лежала комната со статусом «играем», приложение молча собирало стол и
+     * бросало туда человека. Он открывал ссылку, а его выкидывало в старую
+     * партию, и назад дороги не было.
+     */
+    if (screen !== 'lobby') return
     if (!started || !room.room || game.table) return
     game.start(toTableSetup(room.room))
     setScreen('game')
-  }, [started, room.room, game])
+  }, [screen, started, room.room, game])
 
   /*
    * 🔴 Сохранённая партия САМА на экран не выходит. Раньше стол открывался

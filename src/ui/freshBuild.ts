@@ -37,6 +37,24 @@ export async function ensureFreshBuild(): Promise<void> {
      * страница снова оказывается старой (спасал только режим инкогнито).
      * Ссылка с новым параметром — другой адрес, кэшу нечего подставить.
      */
+    /*
+     * Перед уходом вычищаем всё, что браузер мог сохранить сам: хранилище
+     * Cache API и служебные воркеры. У игры их нет, но если когда-то
+     * появятся — старая копия страницы переживёт любую перезагрузку.
+     */
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys()
+        await Promise.all(names.map((n) => caches.delete(n)))
+      }
+      if (navigator.serviceWorker) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((r) => r.unregister()))
+      }
+    } catch {
+      /* чистить нечего — идём дальше */
+    }
+
     const next = new URL(window.location.href)
     next.searchParams.set('v', build)
     location.replace(next.toString())
