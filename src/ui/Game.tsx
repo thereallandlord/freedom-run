@@ -316,6 +316,34 @@ export function Game({
     warmNow([theme.bg, theme.board])
     warmRestWhenIdle()
   }, [theme])
+
+  /*
+   * 🔴 Название стоит по центру КАРТЫ, а не колонки. Поле квадратное и в
+   * невысоком окне уже своей колонки — центр колонки тогда не совпадает с
+   * центром карты, и надпись съезжает вбок. Считать это в CSS нечем: ширину
+   * поля задаёт запрос к контейнеру, наружу она не видна. Поэтому меряем
+   * само поле и кладём центр в переменную корня.
+   */
+  const rootRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const board = root.querySelector('.board-fit')
+    const head = root.querySelector('header')
+    if (!board || !head) return
+    const put = () => {
+      const r = board.getBoundingClientRect()
+      // 🔴 Отсчёт от ШАПКИ: название лежит внутри неё, и её левый край — не ноль экрана.
+      const h = head.getBoundingClientRect()
+      head.style.setProperty('--board-cx', `${Math.round(r.left - h.left + r.width / 2)}px`)
+    }
+    put()
+    const ro = new ResizeObserver(put)
+    ro.observe(board)
+    ro.observe(head)
+    ro.observe(root)
+    return () => ro.disconnect()
+  }, [table.phase, theme])
   const diceOptions = diceCountFor(seat)
   const canRoll = table.phase === 'awaitingRoll' && !seat.isBot && !rolling && !rolled
   const canEscape =
@@ -323,6 +351,7 @@ export function Game({
 
   return (
     <div
+      ref={rootRef}
       className="relative flex h-[100dvh] flex-col"
       style={{ ...themeVars(theme, isDark), color: 'var(--t-ink)' }}
     >
@@ -415,8 +444,22 @@ export function Game({
         ниже кнопок и её приходилось крутить сильнее. Теперь он стоит над
         картой, а панели поднялись на уровень кнопок.
       */}
-            <header className="mb-2.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-3">
-              <Wordmark size="sm" edition={false} />
+            {/*
+              🔴 Название стоит ПО СЕРЕДИНЕ поля (правка Камиля), кнопки — у
+              правого края. Раскладка повторяет колонки стола, поэтому центр
+              названия совпадает с центром карты, а не с центром всей строки.
+              На узком экране колонка одна, и всё честно переносится.
+            */}
+            <header className="relative mb-2.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-3">
+              {/* Позиция инлайном: в классе Tailwind запятая внутри var(...)
+                  не разбирается, и правило молча не создавалось. */}
+              <Wordmark
+                size="sm"
+                edition={false}
+                style={{ left: 'var(--board-cx, 50%)' }}
+                className="pointer-events-none absolute top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex"
+              />
+              <Wordmark size="sm" edition={false} className="lg:hidden" />
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           {topRight}
           <button
@@ -490,7 +533,7 @@ export function Game({
               по ШИРИНЕ, а «во весь остаток высоты» включается с большого
               экрана, где стол помещается целиком.
             */}
-            <div className="board-slot grid aspect-square min-h-0 w-full flex-1 place-items-center lg:aspect-auto lg:h-full lg:place-items-start">
+            <div className="board-slot grid aspect-square min-h-0 w-full flex-1 place-items-center lg:aspect-auto lg:h-full">
               <Board table={table}>
                 <span
                   className="text-[10px] font-semibold uppercase tracking-[0.16em]"
@@ -505,14 +548,33 @@ export function Game({
                   {seat.name}
                 </span>
                 {!seat.isBot && canRoll && (
-                  <button
-                    onClick={() => roll(diceOptions[0])}
-                    className="mt-1 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[15px] font-bold shadow-lg transition hover:scale-[1.03]"
-                    style={{ background: 'var(--t-accent)', color: 'var(--t-on-accent)' }}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" /><circle cx="12" cy="12" r="1.1" fill="currentColor" /></svg>
-                    Бросок
-                  </button>
+                  /*
+                   * 🔴 Благотворительность даёт ПРАВО ВЫБОРА: один кубик или
+                   * два. Кнопка звала roll(diceOptions[0]) — то есть всегда
+                   * первый вариант, всегда один кубик. Механика была
+                   * оплачена, но недоступна: игрок жертвовал деньги и не
+                   * получал ничего.
+                   */
+                  <div className="mt-1 flex flex-col items-center gap-1.5">
+                    <button
+                      onClick={() => roll(diceOptions[diceOptions.length - 1])}
+                      className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[15px] font-bold shadow-lg transition hover:scale-[1.03]"
+                      style={{ background: 'var(--t-accent)', color: 'var(--t-on-accent)' }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" /><circle cx="12" cy="12" r="1.1" fill="currentColor" /></svg>
+                      {diceOptions.length > 1 ? 'Бросок · 2 кубика' : 'Бросок'}
+                    </button>
+                    {diceOptions.length > 1 && (
+                      <button
+                        onClick={() => roll(1)}
+                        className="text-[11px] underline decoration-dotted underline-offset-2"
+                        style={{ color: 'var(--t-muted)' }}
+                        title="Благотворительность позволяет выбрать, сколько кубиков бросать"
+                      >
+                        бросить один
+                      </button>
+                    )}
+                  </div>
                 )}
               </Board>
             </div>

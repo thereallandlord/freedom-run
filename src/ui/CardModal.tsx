@@ -212,11 +212,36 @@ function deckHint(cards: { downPayment?: number; price?: number }[]): string {
   return `взнос от ${money(downs[0])}`
 }
 
-function Stat({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+/**
+ * Строка показателя. `big` — для главного числа карточки (обычно доход):
+ * оно набирается заметно крупнее остальных, чтобы считываться первым.
+ */
+function Stat({
+  label,
+  value,
+  strong,
+  big,
+  good,
+}: {
+  label: string
+  value: string
+  strong?: boolean
+  big?: boolean
+  /** Зелёным — приход, красным — расход. */
+  good?: boolean
+}) {
   return (
-    <div className="flex items-baseline justify-between text-sm">
+    <div className={`flex items-baseline justify-between ${big ? 'text-sm' : 'text-sm'}`}>
       <span className="text-[var(--muted)]">{label}</span>
-      <span className={`tabnum ${strong ? 'font-bold' : ''}`}>{value}</span>
+      <span
+        className={`tabnum ${strong || big ? 'font-bold' : ''} ${
+          big ? 'text-[19px] leading-tight' : ''
+        } ${good === true ? 'text-emerald-600 dark:text-emerald-400' : ''} ${
+          good === false ? 'text-rose-600 dark:text-rose-400' : ''
+        }`}
+      >
+        {value}
+      </span>
     </div>
   )
 }
@@ -519,6 +544,8 @@ function CardBody({
             {!isGl && <Stat
               label={kind === 'realEstate' ? 'Приносит аренды' : 'Приносит дохода'}
               value={`${signed(marketDealFlow(terms.cashFlow, mktMul))}/мес`}
+              big
+              good
             />}
             {mktMul !== 1 && (
               <p className="text-[11px] leading-snug text-[var(--muted)]">
@@ -569,10 +596,12 @@ function CardBody({
                       <span className="font-black">{pk.name}</span>
                       <span className="tabnum text-lg font-black">{money(pk.price)}</span>
                     </div>
-                    <div className="tabnum mt-0.5 text-[12px] font-semibold text-emerald-400">
-                      {signed(start)}/мес на старте
+                    {/* Приход крупнее цены пакета: решение принимают по нему. */}
+                    <div className="tabnum mt-1 text-[17px] font-bold leading-tight text-emerald-600 dark:text-emerald-400">
+                      {signed(start)}
+                      <span className="text-[12px] font-semibold"> /мес на старте</span>
                       {start > base && (
-                        <span className="ml-1 font-normal text-[var(--muted)]">
+                        <span className="ml-1 text-[12px] font-normal text-[var(--muted)]">
                           (+{money(start - base)} к Платине)
                         </span>
                       )}
@@ -788,7 +817,7 @@ function CardBody({
                   {card.freezePaydays ? (
                     <Stat label="Приток новых людей встал" value={`на ${card.freezePaydays} зарплат`} />
                   ) : null}
-                  {biz?.gl ? <Stat label="Теперь приносит" value={`${signed(glTotalIncome(biz.gl))}/мес`} strong /> : null}
+                  {biz?.gl ? <Stat label="Теперь приносит" value={`${signed(glTotalIncome(biz.gl))}/мес`} big good /> : null}
                 </div>
                 <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
                   Понятно

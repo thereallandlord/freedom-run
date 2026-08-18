@@ -1065,16 +1065,26 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const list = event.size === 'small' ? smallDeals(t.deckTheme) : bigDeals(t.deckTheme)
 
       /*
-       * Партнёрский бизнес показываем ОДНИМ ИЗ ПЕРВЫХ (решение Камиля).
-       * Причина: карта лежит в общей колоде и может не выпасть за всю партию,
-       * а весь смысл игры — чтобы человек её увидел и попробовал. Вход у неё
-       * самый дешёвый в игре, так что ранний показ никого не ломает.
+       * Партнёрский бизнес показываем СРЕДИ ПЕРВЫХ ЧЕТЫРЁХ малых сделок, на
+       * случайной из них (правка Камиля 18.08: «не обязательно самым первым»).
+       * Причина показывать рано прежняя: карта лежит в общей колоде и может не
+       * выпасть за всю партию, а смысл в том, чтобы человек её увидел. Но
+       * первая же карта каждой партии — это предсказуемо и выглядит подставой.
+       *
+       * Номер слота разыгрывается один раз на игрока и живёт в его месте,
+       * поэтому переигровка журнала даёт тот же результат.
        */
-      const glCard = list.find((c) => (c as { greenleaf?: boolean }).greenleaf)
+      const glCard =
+        event.size === 'small' ? list.find((c) => (c as { greenleaf?: boolean }).greenleaf) : null
       if (glCard && !seat.ledger.businesses.some((b) => b.gl) && seat.glSeen !== true) {
-        t.seats[seatIdx] = { ...t.seats[seatIdx], glSeen: true }
-        t.pending = { kind: 'deal', deck: event.size, card: scaled(glCard) }
-        return t
+        const seen = (seat.smallSeen ?? 0) + 1
+        const slot = seat.glSlot ?? 1 + Math.floor(mulberry32(t.seed + seatIdx * 7717 + 55)() * 4)
+        t.seats[seatIdx] = { ...t.seats[seatIdx], smallSeen: seen, glSlot: slot }
+        if (seen >= slot) {
+          t.seats[seatIdx] = { ...t.seats[seatIdx], glSeen: true }
+          t.pending = { kind: 'deal', deck: event.size, card: scaled(glCard) }
+          return t
+        }
       }
 
       let card = scaled(list[draw(t, event.size, list.length)])

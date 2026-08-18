@@ -303,14 +303,24 @@ function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void
 
           </div>
 
-          <h3 className="mt-2.5 text-base font-bold leading-tight">{event.title}</h3>
-          <p className="mt-1.5 text-[13px] leading-snug text-[var(--muted)]">{event.flavor}</p>
+          {/* Крупнее: раньше в новость приходилось вчитываться. */}
+          <h3 className="mt-2.5 text-xl font-bold leading-tight">{event.title}</h3>
+          <p className="mt-2 text-[14.5px] leading-relaxed text-[var(--muted)]">{event.flavor}</p>
 
           {/* Пилюлей не делаем: на телефоне длинная фраза в неразрывном чипе уезжает за край. */}
           <div className="hairline mt-3 pt-3">
-            <div className="flex items-baseline gap-2 text-[13px]">
-              <span className="shrink-0 text-[var(--muted)]">{effectKindLabel(event.effect)}:</span>
-              <span className={`font-semibold ${good > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {/*
+              🔴 Главное в новости — САМА ЦИФРА. Её читают первой и по ней
+              принимают решение, поэтому она набрана крупно, а подпись
+              «Котировки»/«Цены» ушла мелким прописным над ней.
+            */}
+            <div className="flex flex-col gap-0.5">
+              <span className="caps text-[10px] font-bold text-[var(--muted)]">
+                {effectKindLabel(event.effect)}
+              </span>
+              <span
+                className={`text-[19px] font-bold leading-tight ${good > 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}
+              >
                 {effectText(event.effect)}
               </span>
             </div>

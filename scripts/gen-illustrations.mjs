@@ -79,6 +79,16 @@ const STYLE = [
 
 /** Малые сделки — недвижимость Уфа / Казань / Челны. */
 const SCENES_SMALL_RE = {
+  'sd-park-msk-center':
+    'An underground parking garage in a central city district: numbered bays, a polished concrete floor, one empty space with a reserved sign, warm strip lighting, a car waiting in the ramp',
+  'sd-loft-kzn':
+    'A converted workshop loft: exposed brick wall, four-metre ceilings, tall arched windows, a photographer setting up a light stand, wooden floor, afternoon sun',
+  'sd-dag-derbent':
+    'A stone house in an ancient walled quarter at golden hour: narrow cobbled lane, a fortress on the hill above, grapevine over the courtyard, mountains and sea in the distance',
+  'sd-dag-sulak':
+    'A small guest house on the very edge of a deep river canyon: turquoise water seven hundred metres below, wooden terrace with chairs facing the drop, clear morning light',
+  'sd-ufa-center':
+    'A studio flat on a high floor of a new tower: floor-to-ceiling window with a wide river bend below, minimal furniture, morning light, city rooftops in the haze',
   "sd-dxb-jvc":
     "A compact modern studio apartment in Jumeirah Village Circle, Dubai: pale wood floor, built-in kitchenette, floor-to-ceiling window with a view of low-rise beige residential towers and palm-lined streets, bright desert daylight",
   "sd-dxb-arjan":
@@ -186,6 +196,15 @@ const SCENES_SMALL_RE = {
 
 /** Малые сделки — акции и активы. Одна картинка на ТИКЕР. */
 const SCENES_STOCK = {
+  /* Бумаги регионального расширения: сцен не было, и карточка выходила пустой.
+     🔴 Ключ у акций — ТИКЕР, а не id карты: рисунок один на бумагу, а карт с
+     разной ценой покупки у одной бумаги несколько. */
+  TSLA: 'An electric car assembly line at night: a sleek sedan body on the line, robotic arms welding, blue sparks, clean white factory floor, engineers at a control screen',
+  MSFT: 'A quiet corporate office floor at dusk: rows of laptops on clean desks, a cloud-server diagram glowing on a wall screen, city lights through floor-to-ceiling glass',
+  GOOGL:
+    'A search bar glowing on a huge screen in a dark room, video thumbnails tiling the wall behind it, a phone on the desk showing an app grid, cool blue light',
+  TON: 'A smartphone on a wooden table showing a messenger chat, a glowing coin icon floating above the screen, soft evening light, minimal and clean',
+
   'AAPL':
     "A workbench with a laptop, phone and tablet of one ecosystem laid out neatly, clean studio light, product photography mood",
   'NVDA':
@@ -846,9 +865,41 @@ const SCENES_BIG_RE = {
 
 /** Большие сделки — бизнес (включая партнёрскую программу — только живые сцены). */
 const SCENES_BIG_BIZ = {
-  'big-greenleaf':
-    'A kitchen table meeting: a product catalogue open beside two cups of tea, a notebook with a simple hand-drawn team diagram, two people mid-conversation, warm home light',
+  'big-biz-pvz-ufa':
+    'A parcel pickup point in a residential block: shelves stacked with cardboard boxes, a customer collecting a package at the counter, a fitting-room curtain, bright cheap lighting',
+  'big-biz-barbershop-kzn':
+    'A busy barbershop: four chairs occupied, a barber trimming a beard, mirrors and warm bulbs, tiled floor, clients waiting on a leather sofa',
+  'big-biz-kids-center-ufa':
+    "A children's activity centre: a small group at low tables painting, soft play mats, alphabet posters, a teacher kneeling beside a child, bright daylight",
+  'big-biz-online-store':
+    'A small gift-shop stockroom turned dispatch desk: gift boxes and ribbon, a laptop showing an order list, packed parcels stacked ready for the courier, warm lamp light',
+  'big-biz-carwash-kzn':
+    'A six-bay self-service car wash beside a motorway exit: one car under white foam, card payment terminal glowing, no staff, bright floodlights at dusk',
 
+  /*
+   * 🔴 Партнёрский бизнес — это ВИТРИНА, а не кухонный стол (правка Камиля
+   * 18.08). Просили современный красивый магазин с вывеской GreenLeaf. Имя
+   * пишем в промпте отдельной строкой: модель ставит текст на вывеску
+   * увереннее, когда его назвали дословно.
+   */
+  'big-greenleaf':
+    'Storefront photo of a modern wellness shop at dusk. The illuminated sign above the entrance reads exactly: GreenLeaf. The word GreenLeaf is spelled G-r-e-e-n-L-e-a-f in large clean sans-serif letters, clearly legible, centred on the sign board, with a small leaf symbol to the left of the word. Below: floor-to-ceiling glass, warm interior light, tidy shelves of green-and-white supplement boxes, a wooden counter with a plant, potted greenery at the entrance, pale stone pavement. Upscale contemporary retail, no people.',
+
+
+
+  /* Недвижимость регионального расширения. */
+  'big-re-msk-loft':
+    'A red-brick former chocolate factory converted into design studios, riverside embankment, arched industrial windows lit warm from inside, historic city skyline across the water at dusk',
+  'big-re-kzn-center':
+    'A bright two-room flat in a historic city centre: white kremlin walls and a mosque visible through the window, tourist suitcases by the door, summer light',
+  'big-re-dag-hotel':
+    'A small mountain guest house with eight rooms: stone terrace overlooking a vast highland plateau, breakfast table set outside, morning mist in the valley',
+  'big-re-ufa-house':
+    'A new riverside house with a lawn running down to the water, a jetty with a small boat, a bridge to the city visible in the distance, warm summer evening',
+  'big-re-msk-apart-new':
+    'A serviced apartment on a very high floor of a glass tower: panoramic window over a river bend and city towers, a suitcase by the wall, evening lights coming on',
+  'big-re-ufa-loft':
+    'Two adjacent studio flats in a new building, doors side by side in a clean corridor, one interior visible with hotel-style bedding, keys on the counter',
   'big-biz-bakery-ufa':
     'Inside a busy bakery: a baker pulling flatbreads out of a clay tandoor oven with a long peel, trays of fresh loaves cooling on racks, flour dust hanging in the sunbeams, glowing oven mouth',
   'big-biz-halal-cafe-kzn':
@@ -1131,7 +1182,11 @@ function buildJobs() {
         manifest.byTicker[c.symbol] = `/cards/${file}.webp`
       })
     } else {
-      push(c.id, c.id, SCENES_SMALL_RE[c.id], 'small-deal', () => {
+      /* 🔴 Часть бизнесов живёт в колоде МАЛЫХ сделок (их перенесли туда,
+         чтобы бизнес попадался раньше) — сцены им искать надо и в бизнес-таблице,
+         иначе у них не будет картинки вовсе. */
+      const scene = SCENES_SMALL_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_BIG_RE[c.id]
+      push(c.id, c.id, scene, 'small-deal', () => {
         manifest.byId[c.id] = `/cards/${c.id}.webp`
       })
     }

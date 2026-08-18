@@ -36,15 +36,17 @@ export function Wordmark({
   size = 'md',
   edition = true,
   className = '',
+  style,
 }: {
   size?: keyof typeof SIZES
   /** Строку издания можно убрать там, где место дорого (шапка стола). */
   edition?: boolean
   className?: string
+  style?: React.CSSProperties
 }) {
   const s = SIZES[size]
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+    <span className={`inline-flex items-center gap-2.5 ${className}`} style={style}>
       <span
         className={`grid shrink-0 place-items-center bg-accent text-accent-ink shadow-glow ${s.box}`}
       >
