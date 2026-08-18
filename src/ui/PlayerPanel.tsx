@@ -214,6 +214,20 @@ function AssetRow({
               {(a as RealEstateAsset).installmentMonthly
                 ? ` — доход вырастет на ${money((a as RealEstateAsset).installmentMonthly ?? 0)}/мес`
                 : ''}
+              {/*
+                🔴 Говорим ПРЯМО, куда пойдут освободившиеся деньги. У жилья
+                они целиком идут в зачёт свободы, у бизнеса — никуда, пока нет
+                управляющего: бизнес без него считается работой, а не доходом.
+                Камиль увидел, что «часть в пассивку, часть в активный», и это
+                как раз оно — но об этом нигде не было сказано.
+              */}
+              {kind === 'business' &&
+                !(a as BusinessAsset).gl &&
+                !(a as BusinessAsset).managerPct && (
+                <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+                  в зачёт свободы это не пойдёт, пока в бизнесе нет управляющего
+                </span>
+                )}
             </button>
           )}
         </div>
