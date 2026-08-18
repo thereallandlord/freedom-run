@@ -243,6 +243,57 @@ function dealAssetEvent(
       }
 }
 
+/**
+ * Расчёт с соинвестором при продаже объекта.
+ *
+ * 🔴 Партнёр вкладывал живые деньги и при продаже не получал НИЧЕГО, а его
+ * зеркальная доля продолжала приносить доход с уже проданного объекта —
+ * деньги из воздуха с одной стороны и обман с другой. Делить выручку можно
+ * только на уровне стола: applyEvent видит один кошелёк и не может двигать
+ * деньги между игроками.
+ */
+function settleCoInvestor(
+  t: Table,
+  owner: Seat,
+  asset: { id: string; investorShare?: number; partnerId?: string },
+  net: number,
+) {
+  if (!asset.partnerId || !asset.investorShare) return
+  const partner = t.seats.find((x) => x.id === asset.partnerId)
+  if (!partner) return
+  const cut = Math.round(net * asset.investorShare)
+  if (cut !== 0) {
+    seatLedgerEvent(t, partner.id, { type: 'ADJUST_CASH', amount: cut })
+    log(
+      t,
+      partner.id,
+      `${partner.name} получил ${money(cut)} — доля ${Math.round(asset.investorShare * 100)}% с продажи «${
+        (asset as { name?: string }).name ?? 'объекта'
+      }» у ${owner.name}`,
+    )
+  }
+  // Зеркальная доля партнёра снимается вместе с объектом — иначе она платила бы вечно.
+  const idx = t.seats.findIndex((x) => x.id === partner.id)
+  if (idx < 0) return
+  const pl = t.seats[idx].ledger
+  /*
+   * Зеркало партнёра — это `<id карты>-part-<номер>`, а у владельца
+   * `<id карты>-<номер>`. Номера разные, поэтому сверяем по ИМЕНИ КАРТЫ:
+   * снимаем у владельца хвост «-цифры» и ищем то же начало с «-part-».
+   */
+  const cardKey = asset.id.replace(/-\d+$/, '')
+  const mirror = (a: { partnerId?: string; id: string }) =>
+    a.partnerId === owner.id && a.id.startsWith(`${cardKey}-part-`)
+  t.seats[idx] = {
+    ...t.seats[idx],
+    ledger: {
+      ...pl,
+      realEstate: pl.realEstate.filter((a) => !mirror(a)),
+      businesses: pl.businesses.filter((a) => !mirror(a)),
+    },
+  }
+}
+
 export function applyWorldEvent(prev: Table, index: number): Table {
   const t = cloneTable(prev)
   const ev = WORLD_EVENTS[index]
@@ -1216,6 +1267,9 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (!asset || asset.category !== card.category) return prev
 
       const price = sellOfferPrice(asset.cost, card.multiplierPct, t.market.price[asset.category] ?? 1)
+      const debtOnSale = re ? re.mortgage : (biz as { liability: number }).liability
+      // Расчёт с партнёром — до снятия актива, пока его доля ещё видна.
+      settleCoInvestor(t, holder, asset, price - debtOnSale)
       if (re) {
         seatLedgerEvent(t, event.seatId, { type: 'SELL_REAL_ESTATE', assetId: event.assetId, salePrice: price })
       } else {

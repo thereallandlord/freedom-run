@@ -393,3 +393,37 @@ console.log('\n\nТРИ ПУТИ ВХОДА В СДЕЛКУ')
   ok('гасится ровно на величину платежа', Math.abs((debt0 - debt6) - monthly * 6) <= 6,
     `списано ${M(debt0 - debt6)}, платёж ${M(monthly)}`)
 }
+
+// ─── Соинвестор получает долю при продаже ────────────────────────────
+console.log('\n\nРАСЧЁТ С СОИНВЕСТОРОМ')
+{
+  setRules({ currency: 'RUB' })
+  const pool = professionsFor('ru'); const dreams = dreamSpaces()
+  let t = createTable({ seed: 6, deckTheme: 'ru', seats: [0,1].map(i => ({
+    name: `И${i+1}`, professionId: pool[i * 4].id, dreamSpace: dreams[i].index,
+    isBot: false, botDifficulty: 'medium' as const,
+  })) })
+  t = { ...t, seats: t.seats.map(s => ({ ...s, ledger: { ...s.ledger, cash: 40_000_000 } })) }
+  const ok = (l: string, c: boolean, d = '') => console.log(`  ${c ? '✅' : '❌'} ${l}${d ? ' — ' + d : ''}`)
+  const M = (n: number) => Math.round(n).toLocaleString('ru-RU') + ' ₽'
+
+  const card = dataMod.bigDeals('ru').find((c) => c.kind === 'realEstate' && c.cashFlow > 0)!
+  t = { ...t, pending: { kind: 'deal', card, deck: 'big' } as never, phase: 'resolving' }
+  t = applyTableEvent(t, { type: 'OFFER_COINVEST', amount: Math.round(card.downPayment / 2), share: 0.5, toId: t.seats[1].id })
+  const of = t.offers[t.offers.length - 1]
+  t = applyTableEvent(t, { type: 'ACCEPT_OFFER_TRADE', offerId: of.id, seatId: t.seats[1].id })
+  ok('у партнёра появилась доля', t.seats[1].ledger.realEstate.length === 1)
+
+  const asset = t.seats[0].ledger.realEstate[0]
+  const partnerBefore = t.seats[1].ledger.cash
+  const sellCard = dataMod.marketCards('ru').find(
+    (c) => c.kind === 'sellOffer' && c.category === asset.category,
+  )!
+  t = { ...t, pending: { kind: 'market', card: sellCard } as never, phase: 'resolving' }
+  t = applyTableEvent(t, { type: 'ACCEPT_OFFER', seatId: t.seats[0].id, assetId: asset.id })
+
+  ok('партнёр получил деньги с продажи', t.seats[1].ledger.cash > partnerBefore,
+    `${M(partnerBefore)} → ${M(t.seats[1].ledger.cash)}`)
+  ok('фантомная доля партнёра исчезла', t.seats[1].ledger.realEstate.length === 0)
+  ok('объект снят у владельца', t.seats[0].ledger.realEstate.length === 0)
+}

@@ -428,35 +428,32 @@ export function CardModal({
             )}
 
             {holders.length > 0 && (
-              <div className="panel-2 rounded-lg p-2">
+              <div className="panel-2 space-y-1 rounded-lg p-2">
                 <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                  Продать по этой цене может любой держатель
+                  {/* 🔴 Продажа идёт по РЫНОЧНОЙ цене — той же, что списывает движок.
+                      Раньше карточка продавала по цене с карты: при обвале держатель
+                      сбрасывал бумагу по докризисной цене, то есть делал деньги из воздуха. */}
+                  Продать по цене сегодня — {money(s.price)}
                 </div>
                 {holders.map((h) =>
                   h.ledger.stocks
                     .filter((lot) => lot.symbol === s.symbol)
                     .map((lot) => (
-                      <button
+                      <SellLotRow
                         key={lot.id}
-                        onClick={() =>
+                        holder={h}
+                        lot={lot}
+                        price={s.price}
+                        onSell={(n) =>
                           dispatch({
                             type: 'SELL_STOCK_LOT',
                             seatId: h.id,
                             lotId: lot.id,
-                            shares: lot.shares,
+                            shares: n,
                             pricePerShare: s.price,
                           })
                         }
-                        className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[var(--panel)]"
-                      >
-                        <span>
-                          <span style={{ color: h.color }}>●</span> {h.name} · {lot.shares} шт по{' '}
-                          {money(lot.costPerShare)}
-                        </span>
-                        <span className={`tabnum ${tone(s.price - lot.costPerShare)}`}>
-                          {money(lot.shares * s.price)}
-                        </span>
-                      </button>
+                      />
                     )),
                 )}
               </div>
