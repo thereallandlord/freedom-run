@@ -1404,6 +1404,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     /** Продать может любой держатель, пока карта на столе. */
     case 'SELL_STOCK_LOT': {
+      /*
+       * 🔴 СВОИ БУМАГИ ПРОДАЁТ ТОЛЬКО ВЛАДЕЛЕЦ. Раньше карточка рынка
+       * показывала строки продажи по ВСЕМ держателям, и любой участник мог
+       * продать чужие акции за него — деньги списывались и начислялись
+       * человеку, который об этом даже не знал.
+       */
+      if (event.by && event.seatId !== event.by) return prev
       const holder = t.seats.find((s) => s.id === event.seatId)
       if (!holder || holder.outOfGame) return prev
       const lot = holder.ledger.stocks.find((x) => x.id === event.lotId)

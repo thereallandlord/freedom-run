@@ -91,6 +91,7 @@ function Shell({
   children,
   accent = '#10b981',
   watching,
+  note,
   art,
   photo,
 }: {
@@ -101,8 +102,14 @@ function Shell({
   accent?: string
   art?: string
   photo?: string | null
-  /** Имя того, чей сейчас ход, если смотрим со стороны. */
+  /** Имя того, чей сейчас ход, если смотрим со стороны. Гасит кнопки. */
   watching?: string | null
+  /**
+   * Подпись без гашения кнопок: «вы решили, ждём остальных».
+   * 🔴 Раньше это состояние гасило карточку целиком — человек нажимал
+   * «Купить» и терял возможность докупить или передумать, пока сосед думает.
+   */
+  note?: string | null
 }) {
   return (
     <div className="modal-layer fixed inset-0 z-40 grid place-items-center bg-black/70 p-4">
@@ -125,9 +132,9 @@ function Shell({
         >
           {children}
         </div>
-        {watching && (
+        {(watching || note) && (
           <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-center text-[12px] text-[var(--muted)]">
-            {watching}
+            {watching || note}
           </div>
         )}
       </div>
@@ -258,14 +265,22 @@ function Stat({
  * число было почти невозможно. Компонент, объявленный в рендере, обязан жить
  * снаружи — иначе любое локальное состояние под ним обречено.
  */
-const WatchingCtx = createContext<string | null>(null)
+const WatchingCtx = createContext<{ watching: string | null; note: string | null }>({
+  watching: null,
+  note: null,
+})
 
 function S(props: React.ComponentProps<typeof Shell>) {
-  return <Shell {...props} watching={useContext(WatchingCtx)} />
+  const ctx = useContext(WatchingCtx)
+  return <Shell {...props} watching={ctx.watching} note={ctx.note} />
 }
 
 /** Подпись внизу карточки: почему кнопки не нажимаются. */
-function watchNote(table: Table, seat: Seat, spectate: boolean): string | null {
+function watchNote(
+  table: Table,
+  seat: Seat,
+  spectate: boolean,
+): { watching: string | null; note: string | null } {
   const p = table.pending
   const actor = table.seats[table.turnIndex]
   const decided = p && (p.kind === 'deal' || p.kind === 'market') ? (p.decided ?? []) : []
@@ -276,13 +291,16 @@ function watchNote(table: Table, seat: Seat, spectate: boolean): string | null {
    * выглядело как сломанная кнопка, хотя решение записано и мы просто ждём
    * остальных.
    */
+  if (spectate) return { watching: `Ходит ${actor?.name ?? ''} — вы смотрите`, note: null }
   if (decided.includes(seat.id)) {
-    return waiting.length
-      ? `Вы решили. Ждём: ${waiting.map((x: Seat) => x.name).join(', ')}`
-      : 'Вы решили'
+    return {
+      watching: null,
+      note: waiting.length
+        ? `Вы решили. Ждём: ${waiting.map((x: Seat) => x.name).join(', ')} · передумать ещё можно`
+        : 'Вы решили',
+    }
   }
-  if (spectate) return `Ходит ${actor?.name ?? ''} — вы смотрите`
-  return null
+  return { watching: null, note: null }
 }
 
 export function CardModal(props: {
@@ -297,9 +315,7 @@ export function CardModal(props: {
   canSetAccess?: boolean
 }) {
   return (
-    <WatchingCtx.Provider
-      value={watchNote(props.table, props.seat, props.spectate ?? false)}
-    >
+    <WatchingCtx.Provider value={watchNote(props.table, props.seat, props.spectate ?? false)}>
       <CardBody {...props} />
     </WatchingCtx.Provider>
   )
@@ -509,7 +525,7 @@ function CardBody({
             )}
 
 
-            {holders.length > 0 && (
+            {holders.some((h) => h.id === seat.id) && (
               <div className="panel-2 space-y-1 rounded-lg p-2">
                 <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
                   {/* 🔴 Продажа идёт по РЫНОЧНОЙ цене — той же, что списывает движок.
@@ -517,7 +533,11 @@ function CardBody({
                       сбрасывал бумагу по докризисной цене, то есть делал деньги из воздуха. */}
                   Продать по цене сегодня — {money(s.price)}
                 </div>
-                {holders.map((h) =>
+                {/* 🔴 Только СВОИ лоты: раньше здесь были строки всех держателей,
+                    и любой участник мог продать чужие бумаги за него. */}
+                {holders
+                  .filter((h) => h.id === seat.id)
+                  .map((h) =>
                   h.ledger.stocks
                     .filter((lot) => lot.symbol === s.symbol)
                     .map((lot) => (
@@ -963,11 +983,14 @@ function CardBody({
                 </p>
               )}
             </div>
-            {holders.length === 0 ? (
+            {!holders.some((h) => h.id === seat.id) ? (
               <p className="text-center text-sm text-[var(--muted)]">Ни у кого нет этих бумаг.</p>
             ) : (
               <div className="space-y-1">
-                {holders.map((h) =>
+                {/* Только свои бумаги: чужими распоряжается их владелец. */}
+                {holders
+                  .filter((h) => h.id === seat.id)
+                  .map((h) =>
                   h.ledger.stocks
                     .filter((lot) => lot.symbol === card.symbol)
                     .map((lot) => (
