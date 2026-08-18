@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { Table, WorldEffect, WorldEvent } from '../engine/types'
 import { WORLD_EVENTS } from '../engine/data'
+import { MARKET_EFFECT_LIFE } from '../engine/table'
 import { artByWorld } from './cardArt'
 import { money } from './PlayerPanel'
 import { WORLD_EVENT_MIN } from './useGame'
@@ -313,7 +314,15 @@ function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void
                 {effectText(event.effect)}
               </span>
             </div>
-            <div className="mt-1 text-[11px] text-[var(--muted)]">сразу у всех за столом</div>
+            {/*
+              🔴 Срок жизни эффекта проговариваем ВСЛУХ. Он тихо истекал через
+              три события, и для игрока это выглядело так, будто доход
+              «сам собой» вернулся к прежнему — без причины и без объявления.
+            */}
+            <div className="mt-1 text-[11px] text-[var(--muted)]">
+              сразу у всех за столом · держится {MARKET_EFFECT_LIFE} следующих события, потом рынок
+              возвращается к своему
+            </div>
           </div>
 
           <button onClick={onClose} className="btn-primary mt-4 w-full">

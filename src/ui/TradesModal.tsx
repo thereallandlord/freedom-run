@@ -316,7 +316,25 @@ export function TradesModal({
               {asset.debt > 0 && (
                 <TradeLine label="Остаток рассрочки уйдёт с активом" value={money(asset.debt)} />
               )}
-              <TradeLine label="Вам придёт" value={/* Долг уже вычтен в справедливой цене и уходит к покупателю. */ money(price)} strong />
+              {/*
+                🔴 Доля партнёра показывается ЗДЕСЬ, а не выясняется постфактум.
+                Движок отдаёт её при расчёте (settleCoInvestor), а окно писало
+                владельцу всю цену — человек продавал, ожидая одну сумму, и
+                получал меньше без объяснения.
+              */}
+              {!!asset.investorShare && (
+                <TradeLine
+                  label={`Партнёру — его ${Math.round(asset.investorShare * 100)}%`}
+                  value={`−${money(Math.round(price * asset.investorShare))}`}
+                />
+              )}
+              <TradeLine
+                label="Вам придёт"
+                value={/* Долг уже вычтен в справедливой цене и уходит к покупателю. */ money(
+                  Math.round(price * (1 - (asset.investorShare ?? 0))),
+                )}
+                strong
+              />
               <TradeLine label="Покупателю окупится за" value={payback(price, asset.cashFlow)} />
             </div>
 
@@ -345,16 +363,35 @@ export function TradesModal({
         попробовав, а не прочитав нотацию.
       */}
       {others.length > 0 && (
-        <TradeBlock title="Дать в долг с надбавкой" accent="warn">
+        <TradeBlock title="Дать в долг" accent="warn">
           <p className="mb-2 text-[12px] leading-snug text-[var(--muted)]">
-            Вернут больше, чем дали. Пока такой долг открыт, неприятности будут приходить чаще —
-            и к должнику, и к вам.
+            По-хорошему — сколько дали, столько и вернут. С надбавкой вернут больше, но пока такой
+            долг открыт, неприятности будут приходить чаще — и к должнику, и к вам.
           </p>
           {others.map((o) => (
             <div key={o.id} className="mt-1 flex items-center gap-2">
               <span className="flex-1 text-[13px]">
                 <span style={{ color: o.color }}>●</span> {o.name}
               </span>
+              {/*
+                🔴 «Без надбавки» стоит ПЕРВЫМ и живёт в движке давно
+                (OFFER_LOAN) — а кнопки на него не было вовсе: предложить
+                беспроцентный заём было нельзя, только под процент. Мёртвая
+                механика в игре, которая как раз про заём без надбавки.
+              */}
+              <button
+                disabled={Math.min(seat.ledger.cash, 200_000) < 10_000}
+                onClick={() =>
+                  dispatch({
+                    type: 'OFFER_LOAN',
+                    toId: o.id,
+                    amount: Math.min(seat.ledger.cash, 200_000),
+                  })
+                }
+                className="rounded-lg border border-emerald-500/50 px-2 py-1 text-[11px] transition hover:bg-emerald-500/10 disabled:opacity-40"
+              >
+                {money(Math.min(seat.ledger.cash, 200_000))} без надбавки
+              </button>
               {[10, 25].map((pct) => {
                 const amt = Math.min(seat.ledger.cash, 200_000)
                 return (

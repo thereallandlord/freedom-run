@@ -29,6 +29,8 @@ export interface TradeAsset {
   /** Остаток рассрочки — уходит к покупателю вместе с активом. */
   debt: number
   cashFlow: number
+  /** Доля соинвестора: с продажи она уходит партнёру, а не владельцу. */
+  investorShare?: number
 }
 
 export function seatOf(t: Table, id?: string): Seat | undefined {
@@ -44,6 +46,7 @@ export function assetsOf(seat: Seat): TradeAsset[] {
       cost: a.cost,
       debt: a.mortgage,
       cashFlow: a.cashFlow,
+      investorShare: a.investorShare,
     })),
     ...seat.ledger.businesses.map((a) => ({
       id: a.id,
@@ -52,6 +55,7 @@ export function assetsOf(seat: Seat): TradeAsset[] {
       cost: a.cost,
       debt: a.liability,
       cashFlow: a.cashFlow,
+      investorShare: a.investorShare,
     })),
   ]
 }

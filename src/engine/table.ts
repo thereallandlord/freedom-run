@@ -968,8 +968,11 @@ function applyMarketAuto(t: Table, card: MarketCard) {
     recalcMarket(t)
     log(t, null, `${card.symbol}: ${card.direction === 'split' ? `сплит ${k}:1` : `обратный сплит 1:${k}`}`)
   } else if (card.kind === 'windfall') {
+    // Личная выплата — только вытянувшему; общая — всем в Рутине.
+    const only = card.scope === 'self' ? currentSeat(t).id : null
     for (const s of t.seats) {
       if (s.outOfGame || s.track === 'fast') continue
+      if (only && s.id !== only) continue
       let amount = card.flatAmount ?? 0
       if (card.amountPerRealEstate) amount += card.amountPerRealEstate * s.ledger.realEstate.length
       if (card.amountPerPartnership)
