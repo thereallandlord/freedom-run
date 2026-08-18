@@ -446,15 +446,24 @@ function MarketBar({
    * часы налезали на текст. Здесь ширина конечна — значит, переносим.
    */
   if (compact) {
+    /*
+     * Пока на рынке тихо — строка ОДНОЭТАЖНАЯ. Два этажа нужны только под
+     * длинные фразы событий; ради одного слова «спокойно» разгонять полосу
+     * на две строки незачем — в колонке это выглядит дырой.
+     */
+    const twoRows = shown.length > 0
     return (
       <button
         onClick={onOpen}
         title="История мировых событий"
         aria-label="Состояние рынка и история мировых событий"
-        className="flex w-full flex-col gap-1.5 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2.5 py-2 text-left text-[var(--t-ink)] backdrop-blur-md transition hover:border-[var(--t-accent)]"
+        className={`flex w-full rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2.5 py-2 text-left text-[var(--t-ink)] backdrop-blur-md transition hover:border-[var(--t-accent)] ${
+          twoRows ? 'flex-col gap-1.5' : 'items-center gap-1.5'
+        }`}
       >
-        <span className="flex w-full items-center gap-1.5">
+        <span className={twoRows ? 'flex w-full items-center gap-1.5' : 'contents'}>
           <span className="shrink-0 text-sm leading-none">🌍</span>
+          {!twoRows && <span className="chip">спокойно</span>}
           <span
             className="tabnum ml-auto shrink-0 text-[12px] font-semibold text-[var(--muted)]"
             title={`До следующего мирового события. Мир двигается раз в ${WORLD_EVENT_MIN} минут.`}
@@ -463,21 +472,19 @@ function MarketBar({
           </span>
           <span className="shrink-0 text-[10px] text-[var(--muted)]">›</span>
         </span>
-        <span className="flex flex-wrap gap-1">
-          {shown.length ? (
-            shown.map((m, i) => (
+        {twoRows && (
+          <span className="flex flex-wrap gap-1">
+            {shown.map((m, i) => (
               <span
                 key={i}
                 className={`chip max-w-full whitespace-normal text-left leading-snug ${m.pct > 0 ? 'chip-good' : 'chip-bad'}`}
               >
                 {movePhrase(m, true)}
               </span>
-            ))
-          ) : (
-            <span className="chip">спокойно</span>
-          )}
-          {hidden > 0 && <span className="chip">+{hidden}</span>}
-        </span>
+            ))}
+            {hidden > 0 && <span className="chip">+{hidden}</span>}
+          </span>
+        )}
       </button>
     )
   }
