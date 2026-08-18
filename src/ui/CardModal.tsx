@@ -32,7 +32,7 @@ import {
   glStructureIncome,
   glTotalIncome,
 } from '../engine/greenleaf'
-import { RIBA } from '../engine/ledger'
+import { RIBA, ribaLimit } from '../engine/ledger'
 import { HalalNote } from './HalalNote'
 import { DealTradeActions } from './DealTradeActions'
 import { AccessPicker } from './AccessPicker'
@@ -295,6 +295,8 @@ function CardBody({
 }) {
   /** Соседи по столу — у кого вообще можно занять. */
   const others = table.seats.filter((x) => x.id !== seat.id && !x.outOfGame)
+  /** Сколько банк ещё готов дать сверх уже взятого. */
+  const ribaFree = Math.max(0, ribaLimit(seat.ledger) - seat.ledger.liabilities.ribaLoan)
   const p = table.pending
   const [shares, setShares] = useState(1)
   if (!p) return null
@@ -511,6 +513,11 @@ function CardBody({
       const canCash = l.cash >= card.cost
       // Рассрочки нет там, где взнос равен цене — не показываем пустой выбор.
       const canInstallment = terms.financeable && l.cash >= card.downPayment
+      /* Сколько не хватает до взноса — столько и просим у банка, с округлением. */
+      const ribaWant = Math.min(
+        ribaFree,
+        Math.max(10_000, Math.ceil(Math.max(0, card.downPayment - l.cash) / 10_000) * 10_000),
+      )
       // 🔴 И на ПОЛОВИНУ взноса деньги тоже нужны: кнопка была активна при пустом кошельке.
       const investorHalf = Math.round(card.downPayment / 2)
       const investorAvailable =
@@ -703,10 +710,36 @@ function CardBody({
                   ? 'Не хватает даже на взнос — займите у соседей по столу или дождитесь сделки по карману'
                   : 'Не хватает наличных — займите у соседей или возьмите кредит в банке'}
               </p>
-              {onOpenTrades && others.length > 0 && (
-                <button onClick={onOpenTrades} className="btn-ghost w-full">
-                  🤝 Попросить в долг
-                </button>
+              {/*
+                🔴 Оба пути к деньгам стоят ПРЯМО ЗДЕСЬ. Кредит в игре был
+                всегда, но жил внутри окна «Сделки» — то есть ровно там, куда
+                из карточки не попасть. Камиль его не нашёл и решил, что
+                механики нет вовсе. Долг у соседей — без надбавки; кредит —
+                сразу и без спроса, но пока он открыт, неприятности приходят
+                чаще; это написано на самой кнопке, а не мелким шрифтом.
+              */}
+              <div className="grid gap-2 sm:grid-cols-2">
+                {onOpenTrades && others.length > 0 && (
+                  <button onClick={onOpenTrades} className="btn-ghost w-full">
+                    🤝 Занять у игроков
+                  </button>
+                )}
+                {ribaFree > 0 && (
+                  <button
+                    onClick={() => dispatch({ type: 'TAKE_RIBA', amount: ribaWant })}
+                    className="btn-ghost w-full border-rose-500/40 hover:border-rose-500/70"
+                    title={`Дадут до ${money(ribaFree)}. Первые ${RIBA.gracePaydays} зарплат без платежей, потом ${RIBA.ratePctMonthly}% в месяц`}
+                  >
+                    🏦 Кредит {money(ribaWant)}
+                  </button>
+                )}
+              </div>
+              {ribaFree > 0 && (
+                <p className="text-center text-[11px] leading-snug text-[var(--muted)]">
+                  Кредит дают сразу: первые {RIBA.gracePaydays} зарплат без платежей, потом{' '}
+                  {RIBA.ratePctMonthly}% в месяц от суммы. Пока он открыт, неприятности приходят
+                  чаще, а хорошие карты — реже.
+                </p>
               )}
             </div>
           )}
