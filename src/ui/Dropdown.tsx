@@ -22,12 +22,18 @@ export function Dropdown<T extends string | number>({
   onChange,
   placeholder = 'Выбрать',
   className = '',
+  buttonClassName,
+  minListWidth = 0,
 }: {
   value: T | null
   options: Option<T>[]
   onChange: (v: T) => void
   placeholder?: string
   className?: string
+  /** Другой облик кнопки — например, чтобы встать в ряд к кнопкам верхней строки. */
+  buttonClassName?: string
+  /** Список бывает шире кнопки: узкая кнопка не должна резать названия. */
+  minListWidth?: number
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -87,9 +93,12 @@ export function Dropdown<T extends string | number>({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`flex w-full items-center justify-between gap-2 rounded-xl border bg-panel px-3.5 py-2.5 text-left text-sm outline-none transition duration-150 ${
-          open ? 'border-accent' : 'border-line hover:border-accent/55'
-        }`}
+        className={
+          buttonClassName ??
+          `flex w-full items-center justify-between gap-2 rounded-xl border bg-panel px-3.5 py-2.5 text-left text-sm outline-none transition duration-150 ${
+            open ? 'border-accent' : 'border-line hover:border-accent/55'
+          }`
+        }
       >
         <span className={`truncate ${current ? '' : 'text-muted'}`}>
           {current ? current.label : placeholder}
@@ -118,7 +127,7 @@ export function Dropdown<T extends string | number>({
               left: pos.left,
               top: pos.up ? undefined : pos.top,
               bottom: pos.up ? window.innerHeight - pos.top : undefined,
-              width: pos.width,
+              width: Math.max(pos.width, minListWidth),
               maxHeight: pos.maxHeight,
             }}
           >

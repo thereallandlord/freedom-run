@@ -122,9 +122,12 @@ function Cell({
   ring,
   active,
   tint,
+  side,
 }: {
   row: number
   col: number
+  /** Сколько клеток в ряду — чтобы подпись у края не уезжала за поле. */
+  side: number
   label: string
   icon: ReactNode
   seats: Seat[]
@@ -155,11 +158,16 @@ function Cell({
       <span className="block size-[54%] opacity-90 [&>svg]:size-full">{icon}</span>
       <Tokens seats={seats} active={active} />
 
-      {/* У верхнего ряда подпись уходит вниз — сверху её перекрыли бы фишки. */}
+      {/*
+        У верхнего ряда подпись уходит вниз — сверху её перекрыли бы фишки.
+        🔴 У крайних столбцов подпись прижимается к своему краю клетки, а не
+        центрируется: по центру она вылезала за поле, и снаружи её срезал
+        контейнер — у левого края читалось «озможность».
+      */}
       <span
-        className={`pointer-events-none absolute left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#121815] px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 ${
+        className={`pointer-events-none absolute z-30 whitespace-nowrap rounded-md bg-[#121815] px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 ${
           row === 0 ? 'top-[calc(100%+5px)]' : 'bottom-[calc(100%+5px)]'
-        }`}
+        } ${col === 0 ? 'left-0' : col === side - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2'}`}
       >
         {label}
       </span>
@@ -207,6 +215,7 @@ export function Board({ table, children }: { table: Table; children?: ReactNode 
                   key={`f${i}`}
                   row={r}
                   col={c}
+                  side={side}
                   label={name}
                   icon={FAST_ICON[space.type]}
                   tint={FAST_TINT[space.type]}
@@ -226,6 +235,7 @@ export function Board({ table, children }: { table: Table; children?: ReactNode 
                   key={`r${i}`}
                   row={r}
                   col={c}
+                  side={side}
                   label={RAT_LABEL[space]}
                   icon={RAT_ICON[space]}
                   tint={RAT_TINT[space]}

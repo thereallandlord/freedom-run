@@ -112,12 +112,13 @@ export function App() {
   }, [started, room.room, game])
 
   /*
-   * Сохранённая партия подхватывается сама — но только если человек не пришёл
-   * по ссылке-приглашению и не сидит в лобби: иначе вместо входа в комнату
-   * ему открылся бы вчерашний стол.
+   * 🔴 Сохранённая партия САМА на экран не выходит. Раньше стол открывался
+   * сразу, как только в браузере лежало сохранение, — и человек, перешедший
+   * по обычной ссылке, попадал не на главную, а в чей-то вчерашний стол, без
+   * пути обратно. Теперь главная показывается всегда, а прошлая партия ждёт
+   * на ней отдельной карточкой «Продолжить».
    */
-  const roomFlow = screen === 'join' || screen === 'create' || screen === 'lobby'
-  if (game.table && !roomFlow) {
+  if (game.table && screen === 'game') {
     return (
       <Game
         table={game.table}
@@ -204,6 +205,17 @@ export function App() {
   return (
     <Landing
       joinCode={room.urlCode ?? undefined}
+      saved={
+        game.table
+          ? {
+              players: game.table.seats.filter((x) => !x.isBot).map((x) => x.name),
+              bots: game.table.seats.filter((x) => x.isBot).length,
+              turn: game.table.turnCounter,
+              onResume: () => setScreen('game'),
+              onDiscard: () => game.reset(),
+            }
+          : undefined
+      }
       onLocal={() => setScreen('local')}
       onCreate={() => setScreen('create')}
       onJoin={() => setScreen('join')}

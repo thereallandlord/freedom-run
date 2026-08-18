@@ -12,6 +12,14 @@ import { Wordmark } from './Wordmark'
 export interface LandingProps {
   /** Код из ссылки ?room=. Есть — показываем приглашение первым экраном. */
   joinCode?: string | null
+  /** Незаконченная партия в этом браузере. Сама на экран не выходит. */
+  saved?: {
+    players: string[]
+    bots: number
+    turn: number
+    onResume: () => void
+    onDiscard: () => void
+  }
   onLocal: () => void
   onCreate: () => void
   onJoin: (code: string, role: 'player' | 'spectator') => void
@@ -108,7 +116,7 @@ const STEPS: { Icon: () => ReactNode; title: string; text: string }[] = [
   },
 ]
 
-export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight }: LandingProps) {
+export function Landing({ joinCode, saved, onLocal, onCreate, onJoin, onRules, topRight }: LandingProps) {
   const [code, setCode] = useState('')
   const typed = normalizeRoomCode(code)
   const canJoinTyped = isValidRoomCode(typed)
@@ -121,6 +129,36 @@ export function Landing({ joinCode, onLocal, onCreate, onJoin, onRules, topRight
           <Wordmark />
           <div className="ml-auto flex items-center gap-2">{topRight}</div>
         </header>
+
+        {/* ─── Прошлая партия ждёт, но в неё не забрасывает ─── */}
+        {saved && !joinCode && (
+          <section className="pop-in panel mb-8 overflow-hidden rounded-2xl">
+            <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold uppercase tracking-wider text-accent">
+                  Незаконченная партия
+                </div>
+                <p className="mt-1.5 text-[15px] font-semibold">
+                  {saved.players.join(', ') || 'Партия'}
+                  {saved.bots > 0 && <span className="text-muted"> и боты ({saved.bots})</span>}
+                </p>
+                <p className="mt-0.5 text-sm text-muted">Ход {saved.turn}. Можно продолжить с того же места.</p>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <button onClick={saved.onResume} className="btn-primary flex-1 px-5 py-3 text-base sm:flex-none">
+                  Продолжить
+                </button>
+                <button
+                  onClick={saved.onDiscard}
+                  className="btn-ghost flex-1 px-4 py-3 sm:flex-none"
+                  title="Стереть сохранение и начать с чистого листа"
+                >
+                  Забыть
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ─── Приглашение по ссылке ─── */}
         {joinCode && (

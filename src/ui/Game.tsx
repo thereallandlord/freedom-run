@@ -369,13 +369,15 @@ export function Game({
           )}
 
           {/* Оформление поля — наверх к кнопкам: в правой колонке оно лишнее. */}
-          <div className="w-[132px] text-[var(--t-ink)]">
-            <Dropdown
-              value={theme.id}
-              onChange={(id) => setBoardTheme(id)}
-              options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
-            />
-          </div>
+          {/* Оформление поля — той же кнопкой, что и соседи: белая коробка
+              с обрезанным названием выпадала из ряда. */}
+          <Dropdown
+            value={theme.id}
+            onChange={(id) => setBoardTheme(id)}
+            options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
+            buttonClassName="topbtn"
+            minListWidth={210}
+          />
         </div>
       </header>
 
@@ -433,7 +435,7 @@ export function Game({
             её размер считается от свободного места. Теперь место под колонку
             занято заранее и не двигается.
           */}
-          <div className="relative grid h-full min-h-0 w-full grid-cols-[minmax(0,1fr)_252px] gap-3">
+          <div className="relative grid h-full min-h-0 w-full grid-cols-[minmax(0,1fr)_320px] gap-3">
             <MoneyToast table={table} />
             <TradeToast table={table} />
 

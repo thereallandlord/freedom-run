@@ -436,26 +436,65 @@ function MarketBar({
 }) {
   const left = useWorldCountdown()
   const moves = marketMoves(table.market)
-  const shown = moves.slice(0, compact ? 2 : 3)
+  const shown = moves.slice(0, 3)
   const hidden = moves.length - shown.length
+
+  /*
+   * 🔴 В колонке рядом с игроками полоса раскладывается В ДВА ЭТАЖА, а не в
+   * одну строку с горизонтальной прокруткой. Одной строкой фраза «Казань и
+   * Уфа дешевле на 12%» не помещалась и обрывалась на полуслове, а песочные
+   * часы налезали на текст. Здесь ширина конечна — значит, переносим.
+   */
+  if (compact) {
+    return (
+      <button
+        onClick={onOpen}
+        title="История мировых событий"
+        aria-label="Состояние рынка и история мировых событий"
+        className="flex w-full flex-col gap-1.5 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2.5 py-2 text-left text-[var(--t-ink)] backdrop-blur-md transition hover:border-[var(--t-accent)]"
+      >
+        <span className="flex w-full items-center gap-1.5">
+          <span className="shrink-0 text-sm leading-none">🌍</span>
+          <span
+            className="tabnum ml-auto shrink-0 text-[12px] font-semibold text-[var(--muted)]"
+            title={`До следующего мирового события. Мир двигается раз в ${WORLD_EVENT_MIN} минут.`}
+          >
+            ⏳ {left === null ? '—:—' : clock(left)}
+          </span>
+          <span className="shrink-0 text-[10px] text-[var(--muted)]">›</span>
+        </span>
+        <span className="flex flex-wrap gap-1">
+          {shown.length ? (
+            shown.map((m, i) => (
+              <span
+                key={i}
+                className={`chip max-w-full whitespace-normal text-left leading-snug ${m.pct > 0 ? 'chip-good' : 'chip-bad'}`}
+              >
+                {movePhrase(m, true)}
+              </span>
+            ))
+          ) : (
+            <span className="chip">спокойно</span>
+          )}
+          {hidden > 0 && <span className="chip">+{hidden}</span>}
+        </span>
+      </button>
+    )
+  }
 
   return (
     <button
       onClick={onOpen}
       title="История мировых событий"
       aria-label="Состояние рынка и история мировых событий"
-      className={`flex items-center gap-1.5 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] text-left text-[var(--t-ink)] backdrop-blur-md transition hover:border-[var(--t-accent)] ${
-        compact ? 'shrink-0 px-2 py-1.5' : 'mb-3 w-full px-2.5 py-2'
-      }`}
+      className="mb-3 flex w-full items-center gap-1.5 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2.5 py-2 text-left text-[var(--t-ink)] backdrop-blur-md transition hover:border-[var(--t-accent)]"
     >
       <span className="shrink-0 text-sm leading-none">🌍</span>
-      {!compact && (
-        <span className="hidden shrink-0 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)] xs:inline">
-          Рынок
-        </span>
-      )}
+      <span className="hidden shrink-0 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)] xs:inline">
+        Рынок
+      </span>
 
-      <span className={`no-scrollbar flex min-w-0 items-center gap-1.5 overflow-x-auto ${compact ? '' : 'flex-1'}`}>
+      <span className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
         {shown.length ? (
           shown.map((m, i) => (
             <span key={i} className={`chip ${m.pct > 0 ? 'chip-good' : 'chip-bad'}`}>

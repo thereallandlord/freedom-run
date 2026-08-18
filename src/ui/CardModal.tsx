@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 import type { Seat, StockCard, Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import {
@@ -204,7 +204,12 @@ function deckHint(cards: { downPayment?: number; price?: number }[]): string {
     .filter((n) => n > 0)
     .sort((a, b) => a - b)
   if (!downs.length) return ''
-  return `взнос ${money(downs[0])} – ${money(downs[downs.length - 1])}`
+  /*
+   * Показываем ПОРОГ входа, а не весь размах. Размах у малых сделок идёт от
+   * трёхсот рублей за акцию до девяти миллионов за дом — такая «подсказка»
+   * не подсказывает ничего.
+   */
+  return `взнос от ${money(downs[0])}`
 }
 
 function Stat({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
@@ -216,7 +221,39 @@ function Stat({ label, value, strong }: { label: string; value: string; strong?:
   )
 }
 
-export function CardModal({
+/**
+ * Имя ходящего, когда мы смотрим со стороны. Через контекст, а НЕ через
+ * обёртку внутри рендера.
+ *
+ * 🔴 Здесь была одна из самых злых поломок: `const S = (props) => <Shell/>`
+ * объявлялся ВНУТРИ компонента, и React на каждом рендере видел новый тип —
+ * то есть сносил всю карточку и собирал заново. Стоило тронуть ползунок, как
+ * карточка «открывалась заново» с анимацией, состояние обнулялось и выбрать
+ * число было почти невозможно. Компонент, объявленный в рендере, обязан жить
+ * снаружи — иначе любое локальное состояние под ним обречено.
+ */
+const WatchingCtx = createContext<string | null>(null)
+
+function S(props: React.ComponentProps<typeof Shell>) {
+  return <Shell {...props} watching={useContext(WatchingCtx)} />
+}
+
+export function CardModal(props: {
+  table: Table
+  seat: Seat
+  dispatch: (e: TableEvent) => void
+  /** Чужой ход: карту показываем, но решать нечего — кнопок нет. */
+  spectate?: boolean
+}) {
+  const actor = props.table.seats[props.table.turnIndex]
+  return (
+    <WatchingCtx.Provider value={props.spectate ? (actor?.name ?? null) : null}>
+      <CardBody {...props} />
+    </WatchingCtx.Provider>
+  )
+}
+
+function CardBody({
   table,
   seat,
   dispatch,
@@ -225,7 +262,6 @@ export function CardModal({
   table: Table
   seat: Seat
   dispatch: (e: TableEvent) => void
-  /** Чужой ход: карту показываем, но решать нечего — кнопок нет. */
   spectate?: boolean
 }) {
   const p = table.pending
@@ -233,15 +269,6 @@ export function CardModal({
   if (!p) return null
   const l = seat.ledger
   const actor = table.seats[table.turnIndex]
-  /*
-   * Один переходник вместо правки тридцати мест: каждая карточка рисуется
-   * через Shell, и всем сразу проставляется, смотрим мы или играем.
-   */
-  const S = (props: React.ComponentProps<typeof Shell>) => (
-    // 🔴 Именно Shell, а не S. Автозамена тегов однажды переписала и это место —
-    // обёртка стала звать сама себя, и ЛЮБАЯ карточка вешала браузер намертво.
-    <Shell {...props} watching={spectate ? (actor?.name ?? null) : null} />
-  )
   const locale = 'ru' as const
 
   switch (p.kind) {
