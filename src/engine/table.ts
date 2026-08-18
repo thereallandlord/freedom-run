@@ -454,6 +454,42 @@ export function ftCharityCost(l: Ledger): number {
   return Math.ceil(0.1 * fastTrackIncome(l))
 }
 
+/**
+ * Годится ли вытянутая карта этому игроку прямо сейчас.
+ *
+ * Кроме «по карману ли» тут два правила, о которых просил Камиль:
+ *
+ * 🔴 Партнёрский бизнес не показываем тому, у кого он уже есть, — КРОМЕ случая,
+ * когда за столом остался кто-то без него: тогда карту можно вытянуть, чтобы
+ * перепродать соседу. Если он есть у всех — карта из игры уходит совсем.
+ *
+ * 🔴 Чем больше у игрока бизнесов, тем реже выпадает следующий. Никто не
+ * покупает пятьдесят бизнесов подряд. Шанс падает, но в ноль не уходит.
+ */
+function dealDrawOk(t: Table, card: import('./types').DealCard, size: 'small' | 'big'): boolean {
+  const seat = currentSeat(t)
+  const l = seat.ledger
+  if (!dealAffordable(t, card, size)) return false
+
+  if ((card as { greenleaf?: boolean }).greenleaf) {
+    const mineAlready = l.businesses.some((b) => b.gl)
+    if (!mineAlready) return true
+    const someoneWithout = t.seats.some(
+      (s) => !s.outOfGame && s.id !== seat.id && !s.ledger.businesses.some((b) => b.gl),
+    )
+    return someoneWithout
+  }
+
+  if (card.kind === 'business') {
+    const owned = l.businesses.filter((b) => !b.gl).length
+    if (owned === 0) return true
+    // 1 бизнес → 55%, 2 → 30%, 3 → 17%, дальше всё реже, но никогда не ноль.
+    const chance = Math.pow(0.55, owned)
+    return mulberry32(t.seed + t.log.length + 4241)() < chance
+  }
+  return true
+}
+
 /** Хватает ли игроку на сделку — наличными или через инвестора. */
 export function dealAffordable(t: Table, card: import('./types').DealCard, deckSize: 'small' | 'big'): boolean {
   const l = currentSeat(t).ledger
@@ -871,10 +907,22 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'CHOOSE_DEAL': {
       if (t.pending?.kind !== 'chooseDeal') return prev
       const list = event.size === 'small' ? smallDeals(t.deckTheme) : bigDeals(t.deckTheme)
-      // Сделка не по карману = сгоревший ход. До 4 перетягов ищем ту, на которую
-      // хватает наличных (или инвестора на крупную в халяль-режиме).
+
+      /*
+       * Партнёрский бизнес показываем ОДНИМ ИЗ ПЕРВЫХ (решение Камиля).
+       * Причина: карта лежит в общей колоде и может не выпасть за всю партию,
+       * а весь смысл игры — чтобы человек её увидел и попробовал. Вход у неё
+       * самый дешёвый в игре, так что ранний показ никого не ломает.
+       */
+      const glCard = list.find((c) => (c as { greenleaf?: boolean }).greenleaf)
+      if (glCard && !seat.ledger.businesses.some((b) => b.gl) && seat.glSeen !== true) {
+        t.seats[seatIdx] = { ...t.seats[seatIdx], glSeen: true }
+        t.pending = { kind: 'deal', deck: event.size, card: scaled(glCard) }
+        return t
+      }
+
       let card = scaled(list[draw(t, event.size, list.length)])
-      for (let tries = 0; tries < 4 && !dealAffordable(t, card, event.size); tries++) {
+      for (let tries = 0; tries < 6 && !dealDrawOk(t, card, event.size); tries++) {
         card = scaled(list[draw(t, event.size, list.length)])
       }
       t.pending = { kind: 'deal', deck: event.size, card }

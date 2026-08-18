@@ -81,6 +81,7 @@ function Shell({
   flavor,
   children,
   accent = '#10b981',
+  watching,
   art,
   photo,
 }: {
@@ -91,6 +92,8 @@ function Shell({
   accent?: string
   art?: string
   photo?: string | null
+  /** Имя того, чей сейчас ход, если смотрим со стороны. */
+  watching?: string | null
 }) {
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4">
@@ -104,7 +107,20 @@ function Shell({
         </div>
         <h2 className="text-lg font-bold leading-tight">{title}</h2>
         {flavor && <p className="mt-1.5 text-sm italic text-[var(--muted)]">{flavor}</p>}
-        <div className="mt-4 space-y-3">{children}</div>
+        {/*
+          На чужом ходу кнопки не просто выключены, а не нажимаются вовсе:
+          показываем карту как зрителю. Так за столом видно, что тянет сосед.
+        */}
+        <div
+          className={`mt-4 space-y-3 ${watching ? 'pointer-events-none select-none opacity-70' : ''}`}
+        >
+          {children}
+        </div>
+        {watching && (
+          <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-center text-[12px] text-[var(--muted)]">
+            Ходит {watching} — вы смотрите
+          </div>
+        )}
       </div>
     </div>
   )
@@ -123,21 +139,32 @@ export function CardModal({
   table,
   seat,
   dispatch,
+  spectate = false,
 }: {
   table: Table
   seat: Seat
   dispatch: (e: TableEvent) => void
+  /** Чужой ход: карту показываем, но решать нечего — кнопок нет. */
+  spectate?: boolean
 }) {
   const p = table.pending
   const [shares, setShares] = useState(1)
   if (!p) return null
   const l = seat.ledger
+  const actor = table.seats[table.turnIndex]
+  /*
+   * Один переходник вместо правки тридцати мест: каждая карточка рисуется
+   * через Shell, и всем сразу проставляется, смотрим мы или играем.
+   */
+  const S = (props: React.ComponentProps<typeof Shell>) => (
+    <S {...props} watching={spectate ? (actor?.name ?? null) : null} />
+  )
   const locale = 'ru' as const
 
   switch (p.kind) {
     case 'chooseDeal':
       return (
-        <Shell badge="Возможность" title="Малая или крупная сделка?">
+        <S badge="Возможность" title="Малая или крупная сделка?">
           <div className="grid gap-2 sm:grid-cols-2">
             {(
               [
@@ -155,7 +182,7 @@ export function CardModal({
               </button>
             ))}
           </div>
-        </Shell>
+        </S>
       )
 
     case 'deal': {
@@ -168,7 +195,7 @@ export function CardModal({
         const max = Math.floor(l.cash / s.price)
         const holders = stockHolders(table, s.symbol)
         return (
-          <Shell
+          <S
             badge={badge}
             title={txt.title}
             flavor={txt.flavor}
@@ -280,7 +307,7 @@ export function CardModal({
                 )}
               </div>
             )}
-          </Shell>
+          </S>
         )
       }
 
@@ -306,7 +333,7 @@ export function CardModal({
       const investorAvailable =
         halal && !canInstallment && p.deck === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
       return (
-        <Shell
+        <S
           badge={card.category === 'partnership' ? 'Партнёрский бизнес' : badge}
           title={txt.title}
           flavor={txt.flavor}
@@ -408,7 +435,7 @@ export function CardModal({
                 : 'Не хватает наличных — возьмите кредит в банке'}
             </p>
           )}
-        </Shell>
+        </S>
       )
     }
 
@@ -419,7 +446,7 @@ export function CardModal({
       if (card.kind === 'sellOffer') {
         const matches = marketMatches(table, card.category)
         return (
-          <Shell
+          <S
             badge="Рынок"
             title={txt.title}
             flavor={txt.flavor}
@@ -460,14 +487,14 @@ export function CardModal({
             <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-ghost w-full">
               Дальше
             </button>
-          </Shell>
+          </S>
         )
       }
 
       if (card.kind === 'glEvent') {
         const biz = seat.ledger.businesses.find((b) => b.gl)
         return (
-          <Shell badge="Партнёрский бизнес" title={txt.title} flavor={txt.flavor} accent="#22c55e">
+          <S badge="Партнёрский бизнес" title={txt.title} flavor={txt.flavor} accent="#22c55e">
             {card.promo ? (
               <>
                 <div className="panel-2 rounded-lg p-3">
@@ -527,7 +554,7 @@ export function CardModal({
                 </button>
               </>
             )}
-          </Shell>
+          </S>
         )
       }
 
@@ -536,7 +563,7 @@ export function CardModal({
         // Цена с поправкой на мировые события — иначе баннер обещает одно, а платят другое.
         const px = marketStockPrice(card.price, table.market.stock[card.symbol])
         return (
-          <Shell badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
+          <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
             <div className="panel-2 rounded-lg p-3">
               <Stat label={card.symbol} value={money(px)} strong />
               {px !== card.price && (
@@ -581,17 +608,17 @@ export function CardModal({
             <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-ghost w-full">
               Дальше
             </button>
-          </Shell>
+          </S>
         )
       }
 
       // Сплит и разовая выплата применились автоматически.
       return (
-        <Shell badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
+        <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
           <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-primary w-full">
             Понятно
           </button>
-        </Shell>
+        </S>
       )
     }
 
@@ -600,7 +627,7 @@ export function CardModal({
       const txt = cardText(card, locale)
       const monthly = Math.ceil(0.03 * card.amount)
       return (
-        <Shell
+        <S
           badge="Трата"
           title={txt.title}
           flavor={txt.flavor}
@@ -651,14 +678,14 @@ export function CardModal({
               </p>
             )}
           </div>
-        </Shell>
+        </S>
       )
     }
 
     case 'charity': {
       const cost = charityCost(l)
       return (
-        <Shell
+        <S
           badge="Благотворительность"
           title="Пожертвовать 10% дохода?"
           accent="#f59e0b"
@@ -680,14 +707,14 @@ export function CardModal({
               Нет
             </button>
           </div>
-        </Shell>
+        </S>
       )
     }
 
     case 'downsized': {
       const cost = totalExpenses(l)
       return (
-        <Shell
+        <S
           badge="Увольнение"
           title="Вы временно потеряли работу"
           accent="#64748b"
@@ -709,7 +736,7 @@ export function CardModal({
             Заплатить {money(cost)} и пропустить 2 хода
           </button>
 
-        </Shell>
+        </S>
       )
     }
 
@@ -718,7 +745,7 @@ export function CardModal({
       if (space.type !== 'business') return null
       const txt = fastSpaceText(p.space, locale)
       return (
-        <Shell
+        <S
           badge="Инвестиция Полосы"
           title={txt?.name ?? space.name}
           flavor={txt?.flavor}
@@ -742,7 +769,7 @@ export function CardModal({
               Мимо
             </button>
           </div>
-        </Shell>
+        </S>
       )
     }
 
@@ -751,7 +778,7 @@ export function CardModal({
       if (space.type !== 'venture') return null
       const txt = fastSpaceText(p.space, locale)
       return (
-        <Shell
+        <S
           badge="Рисковый проект"
           title={txt?.name ?? space.name}
           flavor={txt?.flavor}
@@ -778,7 +805,7 @@ export function CardModal({
               Мимо
             </button>
           </div>
-        </Shell>
+        </S>
       )
     }
 
@@ -795,7 +822,7 @@ export function CardModal({
         .map((ln) => seatOf(table, ln.lenderId)?.name ?? 'игрок')
         .join(', ')
       return (
-        <Shell
+        <S
           badge="Ваша мечта"
           title={txt?.name ?? space.name}
           flavor={txt?.flavor}
@@ -850,14 +877,14 @@ export function CardModal({
               Пока нет
             </button>
           </div>
-        </Shell>
+        </S>
       )
     }
 
     case 'ftCharity': {
       const cost = ftCharityCost(l)
       return (
-        <Shell
+        <S
           badge="Благотворительность"
           title="Пожертвовать 10% дохода свободы?"
           accent="#f59e0b"
@@ -879,7 +906,7 @@ export function CardModal({
               Нет
             </button>
           </div>
-        </Shell>
+        </S>
       )
     }
 
@@ -887,7 +914,7 @@ export function CardModal({
       const flow = monthlyCashFlow(l)
       const recover = canRecover(l)
       return (
-        <Shell badge="Банкротство" title={`${seat.name} не свёл концы с концами`} accent="#f43f5e" art="🆘">
+        <S badge="Банкротство" title={`${seat.name} не свёл концы с концами`} accent="#f43f5e" art="🆘">
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Наличные" value={money(l.cash)} strong />
             <Stat label="Поток в месяц" value={signed(flow)} strong />
@@ -988,7 +1015,7 @@ export function CardModal({
               </>
             )}
           </div>
-        </Shell>
+        </S>
       )
     }
 

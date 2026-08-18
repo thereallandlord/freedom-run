@@ -503,11 +503,21 @@ export function Game({
 
       </div>
 
-      {table.pending &&
-        table.pending.kind !== 'gameOver' &&
-        (!seat.isBot || pendingInvolvesOthers(table)) && (
-          <CardModal table={table} seat={seat} dispatch={dispatch} />
-        )}
+      {/*
+        🔴 Карточку видно ВСЕГДА, чей бы ход ни был. Раньше на ходу бота её
+        просто не рисовали, если она тебя не касается, — и человек не видел,
+        что выпадает соперникам. За настоящим столом карту видят все,
+        и половина интереса именно в этом.
+        На чужом ходу окно показывается без кнопок: смотреть можно, жать нечего.
+      */}
+      {table.pending && table.pending.kind !== 'gameOver' && (
+        <CardModal
+          table={table}
+          seat={seat}
+          dispatch={dispatch}
+          spectate={seat.isBot && !pendingInvolvesOthers(table)}
+        />
+      )}
       {bankOpen && <BankModal seat={seat} dispatch={dispatch} onClose={() => setBankOpen(false)} />}
       {tradesOpen && !seat.isBot && (
         <TradesModal

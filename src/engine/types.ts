@@ -380,6 +380,8 @@ export interface Seat {
   outOfGame: boolean
   /** Уже победил — выходит из очереди ходов, остальные доигрывают. */
   won: boolean
+  /** Показывали ли уже карту партнёрского бизнеса — она выдаётся одной из первых. */
+  glSeen?: boolean
   isBot: boolean
   botDifficulty: BotDifficulty
   /** Пожертвование на Полосе свободы: даёт 3 кубика до конца партии. */

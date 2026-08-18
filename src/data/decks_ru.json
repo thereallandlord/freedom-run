@@ -456,6 +456,73 @@
    "mortgage": 0,
    "cashFlow": 29000,
    "kind": "realEstate"
+  },
+  {
+   "id": "big-biz-bakery-ufa",
+   "kind": "business",
+   "category": "bizFood",
+   "title": "Пекарня в Уфе",
+   "text": "Запах свежего хлеба продаёт сам. Печи, тандыр и обученная смена — хозяин уходит на покой, остаток в рассрочку.",
+   "cost": 3500000,
+   "downPayment": 500000,
+   "liability": 3000000,
+   "cashFlow": 70500
+  },
+  {
+   "id": "big-greenleaf",
+   "kind": "business",
+   "category": "partnership",
+   "greenleaf": true,
+   "title": "Партнёрский бизнес GreenLeaf",
+   "text": "Компания продаёт экопродукцию и платит партнёрам за товарооборот команды. Вход разовый, дальше доход зависит от того, растёт структура или стоит. Три пакета на выбор — старший даёт больше с тех же людей. Поднять пакет можно в любой момент, доплатив разницу.",
+   "cost": 28900,
+   "downPayment": 28900,
+   "liability": 0,
+   "cashFlow": 1700
+  },
+  {
+   "id": "big-biz-pvz-ufa",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Пункт выдачи заказов (Уфа)",
+   "text": "Люди заказывают всё подряд — выдавать кому-то надо. Аренда копеечная, район растёт. Рассрочка от владельца.",
+   "cost": 1500000,
+   "downPayment": 300000,
+   "liability": 1200000,
+   "cashFlow": 26000
+  },
+  {
+   "id": "big-biz-barbershop-kzn",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Барбершоп в Казани",
+   "text": "Кресла заняты, борода в моде десять лет и сдаваться не собирается. Мастера остаются, остаток — в рассрочку.",
+   "cost": 2500000,
+   "downPayment": 400000,
+   "liability": 2100000,
+   "cashFlow": 39000
+  },
+  {
+   "id": "big-biz-kids-center-ufa",
+   "kind": "business",
+   "category": "bizService",
+   "title": "Детский центр в Уфе",
+   "text": "Родители готовы платить за час тишины. Группы набраны до лета, лицензия есть, владелица даёт рассрочку.",
+   "cost": 4000000,
+   "downPayment": 600000,
+   "liability": 3400000,
+   "cashFlow": 86000
+  },
+  {
+   "id": "big-biz-online-store",
+   "kind": "business",
+   "category": "bizDigital",
+   "title": "Интернет-магазин подарков",
+   "text": "Сайт, склад у поставщика и постоянные покупатели. Работает из любой точки, где ловит интернет. Остаток — в рассрочку.",
+   "cost": 3000000,
+   "downPayment": 500000,
+   "liability": 2500000,
+   "cashFlow": 56500
   }
  ],
  "BIG_DEALS_RU": [
@@ -592,17 +659,6 @@
    "cashFlow": -13000
   },
   {
-   "id": "big-biz-bakery-ufa",
-   "kind": "business",
-   "category": "bizFood",
-   "title": "Пекарня в Уфе",
-   "text": "Запах свежего хлеба продаёт сам. Печи, тандыр и обученная смена — хозяин уходит на покой, остаток в рассрочку.",
-   "cost": 3500000,
-   "downPayment": 500000,
-   "liability": 3000000,
-   "cashFlow": 70500
-  },
-  {
    "id": "big-biz-halal-cafe-kzn",
    "kind": "business",
    "category": "bizFood",
@@ -623,39 +679,6 @@
    "downPayment": 1500000,
    "liability": 10500000,
    "cashFlow": 228500
-  },
-  {
-   "id": "big-biz-pvz-ufa",
-   "kind": "business",
-   "category": "bizService",
-   "title": "Пункт выдачи заказов (Уфа)",
-   "text": "Люди заказывают всё подряд — выдавать кому-то надо. Аренда копеечная, район растёт. Рассрочка от владельца.",
-   "cost": 1500000,
-   "downPayment": 300000,
-   "liability": 1200000,
-   "cashFlow": 26000
-  },
-  {
-   "id": "big-biz-barbershop-kzn",
-   "kind": "business",
-   "category": "bizService",
-   "title": "Барбершоп в Казани",
-   "text": "Кресла заняты, борода в моде десять лет и сдаваться не собирается. Мастера остаются, остаток — в рассрочку.",
-   "cost": 2500000,
-   "downPayment": 400000,
-   "liability": 2100000,
-   "cashFlow": 39000
-  },
-  {
-   "id": "big-biz-kids-center-ufa",
-   "kind": "business",
-   "category": "bizService",
-   "title": "Детский центр в Уфе",
-   "text": "Родители готовы платить за час тишины. Группы набраны до лета, лицензия есть, владелица даёт рассрочку.",
-   "cost": 4000000,
-   "downPayment": 600000,
-   "liability": 3400000,
-   "cashFlow": 86000
   },
   {
    "id": "big-biz-shaurma-spb",
@@ -680,17 +703,6 @@
    "cashFlow": 74500
   },
   {
-   "id": "big-biz-online-store",
-   "kind": "business",
-   "category": "bizDigital",
-   "title": "Интернет-магазин подарков",
-   "text": "Сайт, склад у поставщика и постоянные покупатели. Работает из любой точки, где ловит интернет. Остаток — в рассрочку.",
-   "cost": 3000000,
-   "downPayment": 500000,
-   "liability": 2500000,
-   "cashFlow": 56500
-  },
-  {
    "id": "big-biz-scooters-kzn",
    "kind": "business",
    "category": "bizService",
@@ -700,18 +712,6 @@
    "downPayment": 900000,
    "liability": 6100000,
    "cashFlow": 128000
-  },
-  {
-   "id": "big-greenleaf",
-   "kind": "business",
-   "category": "partnership",
-   "greenleaf": true,
-   "title": "Партнёрский бизнес GreenLeaf",
-   "text": "Компания продаёт экопродукцию и платит партнёрам за товарооборот команды. Вход разовый, дальше доход зависит от того, растёт структура или стоит. Три пакета на выбор — старший даёт больше с тех же людей. Поднять пакет можно в любой момент, доплатив разницу.",
-   "cost": 28900,
-   "downPayment": 28900,
-   "liability": 0,
-   "cashFlow": 1700
   },
   {
    "id": "big-re-msk-loft",

@@ -51,7 +51,9 @@ console.log('\n=== Заём есть, но беспроцентный (кард 
 }
 
 console.log('\n=== Партнёрский бизнес GreenLeaf ===')
-const pn = bigDeals('ru').find((c: any) => c.category === 'partnership') as any
+// 🔴 GreenLeaf переехал в МАЛЫЕ сделки: вход 28 900 — самый дешёвый в игре,
+// в крупных он был заперт за деньгами и мог не выпасть за всю партию.
+const pn = smallDeals('ru').find((c: any) => c.category === 'partnership') as any
 check('карта партнёрки есть', !!pn, pn?.title)
 let led = t.seats[0].ledger
 led = applyEvent(led, { type: 'ADJUST_CASH', amount: 300_000 })
@@ -200,7 +202,10 @@ check('жильё в рассрочку на 25 лет', RULES.installmentTerm.r
 
 console.log('\n=== Колоды RU ===')
 check('малых сделок', smallDeals('ru').length >= 30, String(smallDeals('ru').length))
-check('крупных сделок', bigDeals('ru').length >= 25, String(bigDeals('ru').length))
+check('крупных сделок', bigDeals('ru').length >= 20, String(bigDeals('ru').length))
+// Мелкие бизнесы переехали в малые сделки: их тянет и рассрочка, и соинвестор.
+const smallBiz = smallDeals('ru').filter((c: any) => c.kind === 'business')
+check('бизнесы есть и в малых сделках', smallBiz.length >= 5, String(smallBiz.length))
 check('карт рынка', marketCards('ru').length >= 30, String(marketCards('ru').length))
 check('трат', doodads('ru').length >= 30, String(doodads('ru').length))
 // Обязательные траты держим скромными: от них не отказаться, они не должны разорять.
@@ -215,7 +220,7 @@ check('у части хотелок есть содержание', wants.filter
   String(wants.filter((w) => w.upkeep).length))
 // GreenLeaf — ОДНА карта с тремя ценами внутри, а не три разные карты:
 // выбор пакета должен быть решением игрока, а не тем, что ему выпало.
-const partnerships = bigDeals('ru').filter((c: any) => c.category === 'partnership')
+const partnerships = smallDeals('ru').filter((c: any) => c.category === 'partnership')
 check('карта GreenLeaf одна', partnerships.length === 1, String(partnerships.length))
 check('у неё три цены', GL_PACKAGES.length === 3, GL_PACKAGES.map((p) => p.name).join('/'))
 const glEvents = marketCards('ru').filter((c: any) => c.kind === 'glEvent')
