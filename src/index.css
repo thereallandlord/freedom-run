@@ -744,3 +744,35 @@
 }
 .topbtn:hover:not(:disabled) { border-color: var(--t-accent, var(--accent)); }
 .topbtn:disabled { opacity: 0.45; }
+
+/* ─── Конфетти на выходе из Круга ───────────────────────────────────
+   Главный момент партии должен выглядеть как праздник, а не как
+   заполнившаяся полоска. Рисуем лоскуты одним контейнером: сорок
+   элементов с разными задержками и траекториями, никакого JS. */
+.confetti {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.confetti span {
+  position: absolute;
+  top: -12px;
+  left: calc(var(--i) * 2.5%);
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0;
+  background: hsl(calc(var(--i) * 37deg) 85% 58%);
+  animation: confetti-fall 2.6s cubic-bezier(0.25, 0.6, 0.3, 1) forwards;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes confetti-fall {
+  0% { opacity: 0; transform: translateY(-20px) rotate(0deg); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(420px) rotate(540deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+}

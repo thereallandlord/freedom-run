@@ -1783,6 +1783,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       seatLedgerEvent(t, seat.id, { type: 'ENTER_FAST_TRACK' })
       t.seats[seatIdx] = { ...t.seats[seatIdx], track: 'fast', position: 0 }
       log(t, seat.id, `🎉 Вырвался из Круга! Выкуп ${money(buyout)}`)
+      /*
+       * 🔴 Показываем это ВСЕМ отдельным окном. Раньше выход из Круга
+       * выглядел так: полоска цели дошла до ста процентов — и всё. Главный
+       * момент игры проходил незамеченным.
+       */
+      t.pending = { kind: 'freedom', seatId: seat.id, buyout }
       return t
     }
 

@@ -257,6 +257,8 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
     // Бот на зарплате просто закрывает окно: деньги уже начислены.
     case 'payday':
+    // Поздравление с выходом из Круга — тоже просто закрыть.
+    case 'freedom':
       return { type: 'PASS_CARD' }
 
     case 'ftBusiness': {

@@ -950,6 +950,45 @@ function CardBody({
       )
     }
 
+    case 'freedom': {
+      const hero = table.seats.find((x) => x.id === p.seatId)
+      const mine = hero?.id === seat.id
+      return (
+        <S
+          badge="Свобода"
+          title={mine ? 'Вы вырвались из Круга!' : `${hero?.name ?? 'Игрок'} вырвался из Круга`}
+          accent="#f59e0b"
+          art="🎉"
+        >
+          {/* Конфетти рисует CSS: полсотни лоскутов, у каждого свой путь. */}
+          <div className="confetti" aria-hidden>
+            {Array.from({ length: 40 }, (_, i) => (
+              <span key={i} style={{ '--i': i } as React.CSSProperties} />
+            ))}
+          </div>
+          <div className="rounded-lg bg-amber-500/10 px-3 py-3 text-center">
+            <div className="text-[13px] text-[var(--muted)]">
+              Доход, который работает без него, перерос расходы
+            </div>
+            <div className="tabnum mt-1 text-[24px] font-black leading-none text-amber-600 dark:text-amber-400">
+              {money(p.buyout)}
+            </div>
+            <div className="mt-1 text-[12px] text-[var(--muted)]">
+              выкуп на Полосу свободы — пятьдесят месячных доходов сразу
+            </div>
+          </div>
+          <p className="text-center text-[13px] leading-snug text-[var(--muted)]">
+            {mine
+              ? 'Дальше — Полоса свободы: там уже не про выживание, а про мечту.'
+              : 'Партия продолжается: остальные доигрывают, как за настоящим столом.'}
+          </p>
+          <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
+            {mine ? 'Вперёд' : 'Понятно'}
+          </button>
+        </S>
+      )
+    }
+
     case 'payday':
       return (
         <S badge="Зарплата" title="Пришли деньги" accent="#10b981" art="💰">

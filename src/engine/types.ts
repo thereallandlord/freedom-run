@@ -463,6 +463,11 @@ export type Pending =
    * не было — человек не понимал, за что.
    */
   | { kind: 'payday'; amount: number }
+  /**
+   * Кто-то вырвался из Круга. Событие стола, а не личное: за настоящим столом
+   * это видят все и это главный момент партии.
+   */
+  | { kind: 'freedom'; seatId: string; buyout: number }
   | { kind: 'charity' }
   | { kind: 'downsized' }
   | { kind: 'ftBusiness'; space: number }
