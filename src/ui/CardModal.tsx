@@ -271,6 +271,8 @@ export function CardModal(props: {
   spectate?: boolean
   /** Открыть экран сделок поверх карточки: занять, позвать в долю. */
   onOpenTrades?: () => void
+  /** Условия входа назначает ТОЛЬКО владелец находки. */
+  canSetAccess?: boolean
 }) {
   const actor = props.table.seats[props.table.turnIndex]
   return (
@@ -286,12 +288,14 @@ function CardBody({
   dispatch,
   spectate = false,
   onOpenTrades,
+  canSetAccess = false,
 }: {
   table: Table
   seat: Seat
   dispatch: (e: TableEvent) => void
   spectate?: boolean
   onOpenTrades?: () => void
+  canSetAccess?: boolean
 }) {
   /** Соседи по столу — у кого вообще можно занять. */
   const others = table.seats.filter((x) => x.id !== seat.id && !x.outOfGame)
@@ -447,7 +451,7 @@ function CardBody({
             </div>
 
             {/* Кто нашёл — тот и решает, кого пускать и на каких условиях. */}
-            {!spectate && (
+            {canSetAccess && (
               <div className="hairline mt-3 pt-3">
                 <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />
               </div>
@@ -720,7 +724,7 @@ function CardBody({
           )}
 
           {/* Кто нашёл — тот и решает, кого пускать и на каких условиях. */}
-          {!spectate && (
+          {canSetAccess && (
               <div className="hairline mt-3 pt-3">
                 <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />
               </div>

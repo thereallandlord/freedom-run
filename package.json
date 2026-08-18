@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "export BUILD_ID=$(date +%s) && vite build && node scripts/write-version.mjs dist $BUILD_ID",
     "preview": "vite preview",
     "test": "esbuild src/engine/selftest.ts --bundle --platform=node --format=esm --outfile=.selftest.mjs --log-level=error && node .selftest.mjs",
     "test:mech": "esbuild src/engine/mechtest.ts --bundle --platform=node --format=esm --outfile=.mech.mjs --log-level=error && node .mech.mjs",

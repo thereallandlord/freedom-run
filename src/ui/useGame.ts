@@ -263,6 +263,16 @@ export function useGame(net?: {
     const id = window.setTimeout(() => {
       setTable((prev) => {
         if (!prev || prev.phase !== 'turnEnd') return prev
+        /*
+         * 🔴 Передача хода — такое же событие, как остальные, и в сетевой
+         * партии оно ОБЯЗАНО уйти в канал. Раньше хозяин закрывал ход у себя
+         * молча: у него ходил уже второй игрок, а у второго — по-прежнему
+         * первый. Партия вставала намертво, и оба видели разное.
+         */
+        if (netSend) {
+          netSend({ type: 'END_TURN' } as TableEvent)
+          return prev
+        }
         const next = applyTableEvent(prev, { type: 'END_TURN' })
         if (next !== prev) setEvents((evs) => [...evs, { type: 'END_TURN' } as TableEvent])
         return next
@@ -299,6 +309,11 @@ export function useGame(net?: {
     botTimer.current = window.setTimeout(() => {
       setTable((prev) => {
         if (!prev) return prev
+        if (netSend) {
+          // Ход бота ведёт хозяин стола, но применяют его все — через канал.
+          netSend(applyTableEvent(prev, ev) !== prev ? ev : ({ type: 'END_TURN' } as TableEvent))
+          return prev
+        }
         const next = applyTableEvent(prev, ev)
         if (next !== prev) {
           setEvents((evs) => [...evs, ev])
@@ -330,6 +345,10 @@ export function useGame(net?: {
     offerTimer.current = window.setTimeout(() => {
       setTable((prev) => {
         if (!prev) return prev
+        if (netSend) {
+          netSend(applyTableEvent(prev, reply.event) !== prev ? reply.event : reply.fallback)
+          return prev
+        }
         const next = applyTableEvent(prev, reply.event)
         if (next !== prev) {
           setEvents((evs) => [...evs, reply.event])

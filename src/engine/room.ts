@@ -612,6 +612,7 @@ export function canStart(room: RoomState): RoomResult {
  */
 export function toTableSetup(room: RoomState): TableSetup {
   const seats: SeatSetup[] = room.players.map((p) => ({
+    id: p.id,
     name: p.name,
     professionId: p.professionId,
     dreamSpace: p.dreamSpace,

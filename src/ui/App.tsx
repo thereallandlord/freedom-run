@@ -99,12 +99,13 @@ export function App() {
     }
   }, [room.room?.code])
 
-  /** Моё место за столом: порядок мест совпадает с порядком игроков комнаты. */
-  const meSeatId = (() => {
-    if (!room.room) return undefined
-    const i = room.room.players.findIndex((p) => p.id === room.me.id)
-    return i >= 0 ? `seat-${i}` : undefined
-  })()
+  /**
+   * Моё место за столом — это МОЙ идентификатор из комнаты.
+   * 🔴 Раньше место вычислялось как «мой номер в списке» (`seat-0`, `seat-1`).
+   * Списки у двух клиентов могли разойтись — и тогда у одного «ходит Анвар», у
+   * другого «ходит Камиль», при том что номер хода совпадал. Партия вставала.
+   */
+  const meSeatId = room.me.id
 
   // Пришли по ссылке-приглашению — сразу показываем вход в эту комнату.
   const [screen, setScreen] = useState<Screen>(() => (room.urlCode ? 'join' : 'landing'))

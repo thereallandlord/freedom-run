@@ -84,6 +84,14 @@ import {
 } from './trades'
 
 export interface SeatSetup {
+  /**
+   * Идентификатор игрока из комнаты.
+   * 🔴 Раньше место звали просто `seat-0`, `seat-1` — по порядку в списке. В
+   * сетевой партии порядок у двух клиентов мог разойтись, и тогда «ходит
+   * Анвар» на одном экране означало «ходит Камиль» на другом: номер тот же,
+   * человек другой. Теперь личность приезжает вместе с составом.
+   */
+  id?: string
   name: string
   professionId: string
   dreamSpace: number
@@ -127,7 +135,7 @@ export function createTable(setup: TableSetup): Table {
   const seats: Seat[] = setup.seats.map((s, i) => {
     const profession = pool.find((p) => p.id === s.professionId) ?? pool[0]
     return {
-      id: `seat-${i}`,
+      id: s.id ?? `seat-${i}`,
       name: s.name,
       color: TOKEN_COLORS[i % TOKEN_COLORS.length],
       track: 'rat',

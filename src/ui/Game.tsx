@@ -323,6 +323,16 @@ export function Game({
   useEffect(() => setViewId(seat.id), [seat.id])
 
   const myDebt = playerDebt(table, seat.id)
+
+  /** Пустил ли меня владелец находки в свою сделку. */
+  const pendingAccess =
+    table.pending && (table.pending.kind === 'deal' || table.pending.kind === 'market')
+      ? table.pending.access
+      : undefined
+  const allowedIn =
+    !!pendingAccess &&
+    (pendingAccess.mode === 'open' ||
+      (pendingAccess.mode === 'chosen' && pendingAccess.allow.includes(seat.id)))
   // Сначала показываем то, где ответ за человеком; предложения ботам — фоном.
   const openOffers = liveOffers(table).filter((o) => !hiddenOffers.includes(o.id))
   const inbox =
@@ -765,7 +775,15 @@ export function Game({
           table={table}
           seat={seat}
           dispatch={dispatch}
-          spectate={(actor.isBot || !myTurn) && !pendingInvolvesOthers(table)}
+          /*
+           * 🔴 Карточка принадлежит ТОМУ, КОМУ ВЫПАЛА. Остальные её видят, но
+           * нажимать могут, только если владелец открыл вход — им или всем.
+           * Раньше правило было «карта касается других, если у кого-то за
+           * столом хватает денег»: тогда кнопки оживали у ВСЕХ, и любой
+           * посторонний покупал бумаги за чужой счёт.
+           */
+          spectate={!myTurn && !allowedIn}
+          canSetAccess={myTurn && !actor.isBot}
           onOpenTrades={seat.isBot || !myTurn ? undefined : () => setTradesOpen(true)}
         />
       )}
