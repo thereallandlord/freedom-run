@@ -5,6 +5,7 @@ import {
   fastTrackIncome,
   fastTrackProgress,
   isOutOfRatRace,
+  freedomIncome,
   monthlyCashFlow,
   passiveIncome,
   petExpenses,
@@ -13,6 +14,7 @@ import {
   fastTrackTarget,
   RULES,
   ribaRisk,
+  MANAGER_PCT,
 } from '../engine/ledger'
 import type { TableEvent } from '../engine/events'
 import { professionName } from '../engine/data'
@@ -176,6 +178,32 @@ function AssetRow({
             величину: это самый наглядный способ показать, чем рассрочка
             отличается от покупки за наличные.
           */}
+          {/*
+            🔴 Управляющий — переход от самозанятости к владению. Пока его нет,
+            бизнес приносит деньги, но не приближает свободу: перестал ходить —
+            перестало платить. Нанял — отдал долю, зато остаток пошёл в зачёт.
+          */}
+          {kind === 'business' && !(a as BusinessAsset).gl && dispatch && (
+            (a as BusinessAsset).managerPct ? (
+              <div className="mt-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[11px] leading-snug">
+                Управляющий забирает {(a as BusinessAsset).managerPct}% — остальное работает без вас
+                и идёт в зачёт свободы
+              </div>
+            ) : (
+              <button
+                disabled={(cash ?? 0) < Math.max(30_000, Math.round((mine * MANAGER_PCT * 3) / 100 / 1000) * 1000)}
+                onClick={() => dispatch({ type: 'HIRE_MANAGER', assetId: a.id, pct: MANAGER_PCT })}
+                className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold leading-snug transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+              >
+                Нанять управляющего за{' '}
+                {money(Math.max(30_000, Math.round((mine * MANAGER_PCT * 3) / 100 / 1000) * 1000))}
+                <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+                  заберёт {MANAGER_PCT}%, зато {money(Math.round((mine * (100 - MANAGER_PCT)) / 100))}/мес
+                  пойдут в зачёт свободы
+                </span>
+              </button>
+            )
+          )}
           {debt > 0 && dispatch && (
             <button
               disabled={(cash ?? 0) < debt}
@@ -247,7 +275,8 @@ function Section({
 function GoalCard({ seat }: { seat: Seat }) {
   const l = seat.ledger
   const onFast = seat.track === 'fast'
-  const done = onFast ? fastTrackProgress(l) : passiveIncome(l)
+  // 🔴 Шкала свободы считает то, что работает БЕЗ тебя, а не весь доход с активов.
+  const done = onFast ? fastTrackProgress(l) : freedomIncome(l)
   const need = onFast ? fastTrackTarget() : totalExpenses(l)
   const pct = Math.max(0, Math.min(100, (done / Math.max(1, need)) * 100))
   const won = onFast ? done >= need : isOutOfRatRace(l)
@@ -403,7 +432,13 @@ export function PlayerPanel({ seat, dispatch }: { seat: Seat; dispatch?: (e: Tab
                 )
               })}
             <div className="mt-1 border-t border-[var(--t-line, var(--line))] pt-1">
-              <Row label="Пассивный доход" value={money(passive)} />
+              <Row label="Доход с активов" value={money(passive)} />
+              {/*
+                🔴 Две разные вещи, и в этом весь смысл игры. Деньги от кафе
+                приходят и тратятся, но пока ты сам за прилавком — свободу они
+                не приближают. В зачёт идёт только то, что крутится без тебя.
+              */}
+              <Row label="Из них работает без вас" value={money(freedomIncome(l))} />
               <Row label="Всего доходов" value={money(income)} />
             </div>
           </Section>

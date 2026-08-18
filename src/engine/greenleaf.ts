@@ -249,6 +249,28 @@ export function glStructureIncome(g: GlState): number {
   return Math.round(withDip / 100) * 100
 }
 
+/**
+ * Какая доля дохода партнёрского бизнеса работает БЕЗ тебя.
+ *
+ * 🔴 Поправка Камиля 18.08: «в GreenLeaf ты тоже сначала работаешь сам, как в
+ * любом бизнесе». Управляющего здесь не нанимают — его роль играет САМА
+ * структура: чем она больше и чем больше в ней выросло лидеров, тем меньше
+ * зависит от тебя лично. Поэтому доля растёт вместе с рангом, а не даётся
+ * сразу.
+ */
+export function glFreedomShare(g: GlState): number {
+  switch (glRankFor(g.volume).level) {
+    case 0:
+      return 0 // сам бегаешь, сам приводишь — это работа
+    case 1:
+      return 40 // появились первые самостоятельные люди
+    case 2:
+      return 70 // под ними уже свои команды
+    default:
+      return 100 // структура живёт без тебя
+  }
+}
+
 /** Всё, что партнёрский бизнес приносит в месяц: структура плюс пенсия за ранг. */
 export function glTotalIncome(g: GlState): number {
   return glStructureIncome(g) + glRankFor(g.volume).pension

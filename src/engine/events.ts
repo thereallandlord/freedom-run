@@ -17,6 +17,7 @@ export type LedgerEvent =
   | { type: 'INDULGE' }
   | { type: 'SET_CITIZENSHIP'; name: string; fee: number }
   | { type: 'ADJUST_RIBA_EXPOSURE'; amount: number }
+  | { type: 'SET_MANAGER'; assetId: string; pct: number }
   | { type: 'SALARY_RAISE'; amount: number }
   | { type: 'ZAKAT' }
   | {
@@ -93,6 +94,8 @@ export type TableEvent =
   | { type: 'GET_CITIZENSHIP'; id: string }
   /** Владелец находки решает, кого и на каких условиях пускать в сделку. */
   | { type: 'SET_ACCESS'; access: import('./types').DealAccess }
+  /** Нанять управляющего в бизнес: доход начинает работать без тебя. */
+  | { type: 'HIRE_MANAGER'; assetId: string; pct: number }
   /** Промоушен: забрать деньгами или поехать. Поездка даёт скрытую прибавку. */
   | { type: 'GL_PROMO_TAKE'; promo: 'travel' | 'auto'; go?: boolean }
   | { type: 'BUY_STOCK_SHARES'; shares: number; seatId?: string }

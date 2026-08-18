@@ -8,6 +8,7 @@ import {
   zakatDue,
   fastTrackProgress,
   monthlyCashFlow,
+  freedomIncome,
   passiveIncome,
   totalExpenses,
   totalIncome,
@@ -253,6 +254,13 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.ribaExposure = Math.max(0, (l.ribaExposure ?? 0) + e.amount)
       return l
 
+    case 'SET_MANAGER': {
+      const b = l.businesses.find((x) => x.id === e.assetId)
+      if (!b) return prev
+      b.managerPct = e.pct
+      return l
+    }
+
     case 'SET_CITIZENSHIP':
       l.cash -= e.fee
       l.citizenship = e.name
@@ -443,7 +451,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
      */
     case 'ENTER_FAST_TRACK': {
       if (l.phase !== 'ratRace') return prev
-      const buyout = RULES.fastTrackMultiplier * passiveIncome(l)
+      const buyout = RULES.fastTrackMultiplier * freedomIncome(l)
       l.cash += buyout
       /*
        * 🔴 Выкуп — это ПРОДАЖА всего нажитого в Круге. Активы обязаны уйти:

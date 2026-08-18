@@ -3,7 +3,7 @@ import { createTable, applyTableEvent, applyWorldEvent, nextWorldEventIndex, cur
 import { decideBotEvent } from './bots'
 import { mulberry32 } from './rng'
 import { professionsFor, dreamSpaces, setActiveTheme, setFastBoardTheme } from './data'
-import { setRules, monthlyCashFlow, passiveIncome, totalExpenses, netWorth, RULES } from './ledger'
+import { setRules, monthlyCashFlow, passiveIncome, freedomIncome, totalExpenses, netWorth, RULES } from './ledger'
 import { glTotalIncome, glRankFor } from './greenleaf'
 import type { Table } from './types'
 import * as dataMod from './data'
@@ -49,7 +49,9 @@ const rows: string[] = []
 for (const [seats, diff] of [[2,'easy'],[3,'medium'],[4,'medium'],[4,'high'],[6,'unreal']] as const) {
   for (const seed of [11, 42, 777]) {
     const r = play(seed, seats as number, diff as any)
-    rows.push(`  мест ${seats} · ${String(diff).padEnd(7)} · зерно ${String(seed).padStart(3)} → ходов ${String(r.turns).padStart(3)}  на Полосе ${r.fast}  победа ${r.won}  банкротов ${r.bankrupt}  с GreenLeaf ${r.gl}  минус-касса ${r.negCash}  макс.капитал ${M(r.maxNet).padStart(16)}  тупиков ${r.stuck}`)
+    const mgr = r.table.seats.reduce((n: number, s: any) => n + s.ledger.businesses.filter((b: any) => b.managerPct).length, 0)
+    const freeMax = Math.max(...r.table.seats.map((s: any) => freedomIncome(s.ledger)))
+    rows.push(`  мест ${seats} · ${String(diff).padEnd(7)} · зерно ${String(seed).padStart(3)} → ходов ${String(r.turns).padStart(3)}  на Полосе ${r.fast}  победа ${r.won}  банкротов ${r.bankrupt}  управляющих ${mgr}  свобода макс ${M(freeMax).padStart(13)}  капитал ${M(r.maxNet).padStart(15)}`)
   }
 }
 rows.forEach(r => console.log(r))

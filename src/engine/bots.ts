@@ -18,8 +18,9 @@ import {
   isOutOfRatRace,
   monthlyCashFlow,
   totalExpenses,
-  installmentPrice,
-  installmentMonthly,
+  dealTerms,
+  ownShare,
+  MANAGER_PCT,
 } from './ledger'
 import { fastBoard } from './data'
 
@@ -109,6 +110,21 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     return null
   }
 
+  /*
+   * Перед разбором карты: если есть бизнес без управляющего и хватает денег —
+   * нанимаем. Без этого бот копил бы доход, который никогда не станет свободой,
+   * и прогон показал бы длину партии неверно.
+   */
+  {
+    const hireable = seat.ledger.businesses.find((b) => !b.gl && !b.managerPct)
+    if (hireable && seat.track === 'rat') {
+      const cost = Math.max(30_000, Math.round((ownShare(hireable) * MANAGER_PCT * 3) / 100 / 1000) * 1000)
+      if (seat.ledger.cash - cost >= cashBuffer(seat, p)) {
+        return { type: 'HIRE_MANAGER', assetId: hireable.id, pct: MANAGER_PCT }
+      }
+    }
+  }
+
   switch (pending.kind) {
     case 'chooseDeal': {
       const canBig = l.cash >= inf(p.bigDealCash)
@@ -132,13 +148,22 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
       if (p.requirePositiveFlow && card.cashFlow <= 0) return { type: 'PASS_CARD' }
 
       const need = card.downPayment
+      /*
+       * 🔴 Считаем НАСТОЯЩИЙ поток, а не цифру с карточки. Гостевой дом обещает
+       * 165 000, но в рассрочку после платежа остаётся 25 700 — и бот брал под
+       * него заём с платежом 163 000 в месяц, после чего разорялся за десять
+       * ходов. Ровно та же ошибка, что была у окна карточки: заголовок карты
+       * и то, что реально придёт на счёт, — разные числа.
+       */
+      const realTerms = dealTerms(card, card.kind === 'realEstate' ? 'realEstate' : 'business')
+      const flowIfFinanced = realTerms.financeable ? realTerms.instFlow : realTerms.cashFlow
       if (l.cash - need < cashBuffer(seat, p)) {
         const step = RULES.currency === 'RUB' ? 10_000 : 1000
-        if (p.leverage && seat.track === 'rat' && card.cashFlow > 0) {
+        if (p.leverage && seat.track === 'rat' && flowIfFinanced > 0) {
           const short = need + cashBuffer(seat, p) - l.cash
           const loan = Math.ceil(short / step) * step
-          // Платёж по займу обязан отбиваться потоком сделки — в обоих режимах.
-          if (loan > 0 && card.cashFlow > loan / 10) return { type: 'TAKE_LOAN', amount: loan }
+          // Платёж по займу обязан отбиваться НАСТОЯЩИМ потоком сделки.
+          if (loan > 0 && flowIfFinanced > loan / 10) return { type: 'TAKE_LOAN', amount: loan }
         }
         if (
           !RULES.loansEnabled &&
@@ -161,15 +186,9 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
        * в отрицательный капитал. Теперь: хватает на всю цену — берём налом;
        * не хватает — берём в рассрочку ТОЛЬКО если поток остаётся положительным.
        */
-      // Взнос равен цене — рассрочки нет, платить нечего сверх.
-      const financeable = card.downPayment < card.cost
-      const instTotal = financeable
-        ? installmentPrice(card.cost, card.kind === 'realEstate' ? 'realEstate' : 'business')
-        : card.cost
-      const monthly = financeable ? installmentMonthly(Math.max(0, instTotal - card.downPayment)) : 0
       const canCash = l.cash - card.cost >= cashBuffer(seat, p)
       if (canCash) return { type: 'BUY_DEAL', payCash: true }
-      if (card.cashFlow - monthly <= 0) {
+      if (flowIfFinanced <= 0) {
         // В рассрочку объект будет съедать деньги каждый месяц — не берём.
         return { type: 'PASS_CARD' }
       }

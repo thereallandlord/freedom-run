@@ -1,5 +1,5 @@
 import type { Ledger, Profession } from './types'
-import { glTotalIncome, type GlState } from './greenleaf'
+import { glFreedomShare, glTotalIncome, type GlState } from './greenleaf'
 
 /**
  * Правила режима. РУ-режим: рубли, без процентных кредитов (халяль),
@@ -112,11 +112,18 @@ export function ownShare(a: { cashFlow: number; investorShare?: number }): numbe
  * правды, а только зеркало для показа.
  */
 export function ownShareAt(
-  a: { cashFlow: number; investorShare?: number; category?: string; gl?: GlState },
+  a: { cashFlow: number; investorShare?: number; category?: string; gl?: GlState; managerPct?: number },
   m: FlowMul,
 ): number {
   const base = a.gl ? glTotalIncome(a.gl) : ownShare(a)
-  return applyFlowMul(base, mulFor(m, a.category ?? ''))
+  /*
+   * 🔴 Управляющий забирает долю из ЖИВЫХ ДЕНЕГ, а не только из зачёта свободы.
+   * Иначе найм был бы бесплатной выгодой: доход тот же, а к свободе ближе.
+   * Настоящий размен именно в этом — платишь частью дохода за то, чтобы
+   * бизнес крутился без тебя.
+   */
+  const afterManager = a.managerPct ? Math.round((base * (100 - a.managerPct)) / 100) : base
+  return applyFlowMul(afterManager, mulFor(m, a.category ?? ''))
 }
 
 /** Аренда + дивиденды + поток бизнесов. Именно это должно перерасти расходы. */
@@ -170,9 +177,41 @@ export function startingCash(p: Profession): number {
   return professionMonthlyCashFlow(p) + p.savings
 }
 
+/**
+ * Управляющий: сколько забирает и сколько остаётся владельцу.
+ * Обычного нанимают за деньги в любой момент, редкий приходит картой.
+ */
+export const MANAGER_PCT = 35
+export const MANAGER_RARE_PCT = 20
+
+/**
+ * Доход, который работает БЕЗ ТЕБЯ. Именно он выводит из круга.
+ *
+ * 🔴 Это НЕ то же самое, что пассивный доход в старом смысле. Деньги от кафе
+ * приходят и тратятся как обычно — но пока ты сам стоишь за прилавком, они
+ * не приближают свободу: перестал ходить, перестало платить. Свободу даёт
+ * только то, что крутится само:
+ *   · аренда и дивиденды — сразу;
+ *   · бизнес — после того, как нанят управляющий, и только его остаток;
+ *   · партнёрский бизнес — по мере роста структуры (см. glFreedomShare):
+ *     в начале ты в нём работаешь так же, как в любом деле.
+ */
+export function freedomIncome(l: Ledger, m?: FlowMul): number {
+  const stocks = l.stocks.reduce((s, lot) => s + lot.shares * lot.dividendPerShareMonthly, 0)
+  const realEstate = l.realEstate.reduce((s, a) => s + ownShareAt(a, m), 0)
+  const businesses = l.businesses.reduce((s, a) => {
+    // ownShareAt уже вычел долю управляющего — здесь только решаем,
+    // идёт ли остаток в зачёт свободы.
+    const mine = ownShareAt(a, m)
+    if (a.gl) return s + Math.round((mine * glFreedomShare(a.gl)) / 100)
+    return a.managerPct ? s + mine : s
+  }, 0)
+  return stocks + realEstate + businesses
+}
+
 /** Условие выхода из Круга: строго больше, не «больше или равно». */
 export function isOutOfRatRace(l: Ledger): boolean {
-  return passiveIncome(l) > totalExpenses(l)
+  return freedomIncome(l) > totalExpenses(l)
 }
 
 /** Новый доход, собранный на Полосе свободы. */

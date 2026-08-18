@@ -17,7 +17,9 @@ import {
   fastTrackIncome,
   fastTrackProgress,
   isOutOfRatRace,
+  freedomIncome,
   monthlyCashFlow,
+  ownShare,
   passiveIncome,
   totalExpenses,
   totalIncome,
@@ -1326,7 +1328,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (seat.track !== 'rat' || !isOutOfRatRace(l)) return prev
       // 🔴 Множитель берём из правил: в русском режиме он 50, а не 100 —
       // журнал обещал игроку вдвое больше, чем приходило на счёт.
-      const buyout = RULES.fastTrackMultiplier * passiveIncome(l)
+      const buyout = RULES.fastTrackMultiplier * freedomIncome(l)
       seatLedgerEvent(t, seat.id, { type: 'ENTER_FAST_TRACK' })
       t.seats[seatIdx] = { ...t.seats[seatIdx], track: 'fast', position: 0 }
       log(t, seat.id, `🎉 Вырвался из Круга! Выкуп ${money(buyout)}`)
@@ -1632,6 +1634,29 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             ? `плата за вход ${money(a.terms.amount)}`
             : `${a.terms.pct}% с прибыли при продаже`
       log(t, seat.id, `${seat.name} ${who}${a.mode === 'closed' ? '' : ` — ${how}`}`)
+      return t
+    }
+
+    /**
+     * Нанять управляющего. Решение, а не удача: в жизни ты решаешь нанять,
+     * а потом ищешь. Берёт свою долю навсегда, зато остаток идёт в свободу.
+     */
+    case 'HIRE_MANAGER': {
+      const b = l.businesses.find((x) => x.id === event.assetId)
+      if (!b || b.gl || b.managerPct) return prev
+      // Найм стоит трёх месяцев его доли — поиск, ввод в дело, первый аванс.
+      const hireCost = Math.max(30_000, Math.round((ownShare(b) * event.pct * 3) / 100 / 1000) * 1000)
+      if (l.cash < hireCost) return prev
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -hireCost })
+      seatLedgerEvent(t, seat.id, { type: 'SET_MANAGER', assetId: event.assetId, pct: event.pct })
+      const after = t.seats[seatIdx].ledger.businesses.find((x) => x.id === event.assetId)
+      log(
+        t,
+        seat.id,
+        `Нанял управляющего в «${b.name}» за ${money(hireCost)}: забирает ${event.pct}%, остальное теперь работает без вас — ${money(
+          Math.round((ownShare(after ?? b) * (100 - event.pct)) / 100),
+        )}/мес в зачёт свободы`,
+      )
       return t
     }
 

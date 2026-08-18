@@ -6,6 +6,7 @@ import {
   RULES,
   fastTrackIncome,
   isOutOfRatRace,
+  freedomIncome,
   monthlyCashFlow,
   netWorth,
   passiveIncome,
@@ -398,7 +399,7 @@ export function Game({
                 >
                   Выйти из Круга
                   <span className="mt-0.5 block text-[11px] font-normal opacity-80">
-                    выкуп {money(100 * passiveIncome(seat.ledger))}
+                    выкуп {money(RULES.fastTrackMultiplier * freedomIncome(seat.ledger))}
                   </span>
                 </button>
               ) : canRoll ? (
