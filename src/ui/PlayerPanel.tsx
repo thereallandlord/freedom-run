@@ -593,6 +593,44 @@ export function PlayerPanel({
         </Section>
       )}
 
+      {/*
+        🔴 ПЛАТЕЖИ ПО РАССРОЧКАМ ОТДЕЛЬНЫМ БЛОКОМ. Их не было видно нигде:
+        человек покупал студию, видел «приносит 12 150 ₽», а что внутри уже
+        вычтен платёж 35 700 ₽ — узнавал, только раскрыв карточку объекта. И
+        не понимал, что рассрочку можно закрыть досрочно и вернуть себе этот
+        платёж. В сумму «Расходы» они НЕ входят: платёж уже вычтен из дохода
+        объекта, иначе он посчитался бы дважды.
+      */}
+      {[...l.realEstate, ...l.businesses].some((a) => (a.installmentMonthly ?? 0) > 0) && (
+        <Section title="Платежи по рассрочкам" tone="debt">
+          {[...l.realEstate, ...l.businesses]
+            .filter((a) => (a.installmentMonthly ?? 0) > 0)
+            .map((a) => {
+              const left = 'mortgage' in a ? a.mortgage : a.liability
+              return (
+                <div key={`inst-${a.id}`} className="py-0.5">
+                  <Row
+                    label={a.name}
+                    value={`−${money(a.installmentMonthly ?? 0)}/мес`}
+                    dim
+                  />
+                  {dispatch && left > 0 && (
+                    <button
+                      disabled={l.cash < left}
+                      onClick={() =>
+                        dispatch({ type: 'PAYOFF_ASSET', assetId: a.id, discountPct: 0 })
+                      }
+                      className="mt-0.5 w-full rounded-lg border border-[var(--t-line,var(--line))] px-2 py-1 text-[10.5px] font-semibold transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                    >
+                      Закрыть за {money(left)} · доход +{money(a.installmentMonthly ?? 0)}/мес
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+        </Section>
+      )}
+
       <Section title="Обязательства" tone="debt">
         {[
           // 🔴 В халяль-режиме это РАССРОЧКИ, а не кредиты: слово «автокредит»

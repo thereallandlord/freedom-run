@@ -1133,6 +1133,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
    * дополнительно проверяются ниже: их принимаем только от того, чей ход.
    */
   const byIdx = event.by ? t.seats.findIndex((s2) => s2.id === event.by) : -1
+  /*
+   * 🔴 Подпись есть, а места с таким идентификатором за столом НЕТ — событие
+   * отклоняем. Раньше в этом случае действие молча применялось к ходящему:
+   * второй игрок жал «Погасить» у себя, а гасилась рассрочка соседа. Лучше
+   * ничего, чем чужой кошелёк.
+   */
+  if (event.by && byIdx < 0) return prev
   const seatIdx = byIdx >= 0 ? byIdx : t.turnIndex
   const seat = t.seats[seatIdx]
   const l = seat.ledger

@@ -156,7 +156,21 @@ export function App() {
    * Списки у двух клиентов могли разойтись — и тогда у одного «ходит Анвар», у
    * другого «ходит Камиль», при том что номер хода совпадал. Партия вставала.
    */
-  const meSeatId = room.me.id
+  /*
+   * 🔴 Если мой идентификатор почему-то не совпал с местом за столом (человек
+   * перезашёл и получил новый), ищем себя по имени в составе. Иначе действия
+   * уходят без адреса и движок их отклоняет — «кнопки не работают только у
+   * одного игрока».
+   */
+  const meSeatId = (() => {
+    const r = room.room
+    if (!r) return room.me.id
+    if (r.players.some((p) => p.id === room.me.id)) return room.me.id
+    const byName = r.players.find(
+      (p) => p.name.trim().toLowerCase() === room.me.name.trim().toLowerCase(),
+    )
+    return byName?.id ?? room.me.id
+  })()
 
   /*
    * 🔴 ОБНОВЛЕНИЕ СТРАНИЦЫ ВНУТРИ КОМНАТЫ НЕ ВЫБРАСЫВАЕТ ИЗ НЕЁ.
