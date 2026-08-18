@@ -652,15 +652,21 @@
    overscroll-contain — чтобы колесо не уводило страницу целиком;
    content-visibility — чтобы длинный список не пересчитывался каждый кадр
    (на этом и были подтормаживания). */
+/*
+ * Левая панель прокручивается КАК ОБЫЧНАЯ СТРАНИЦА: содержимое уходит вниз
+ * за край окна и просто крутится.
+ *
+ * 🔴 Убраны две вещи, которые я добавил зря:
+ *   · mask-image с растворением сверху и снизу — Камиль: «блюр портит весь
+ *     вид», и он прав: обрезанный градиентом край читается как поломка;
+ *   · content-visibility на каждом блоке — из-за него браузер пересчитывал
+ *     раскладку прямо во время прокрутки, отсюда и рывки. Это была попытка
+ *     ускорить, которая ровно всё и тормозила.
+ */
 .player-scroll {
   scrollbar-width: thin;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
-}
-.player-scroll > * {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 600px;
 }
 
 /* Кубик крутится, пока считается бросок, и мягко замирает на результате. */
@@ -679,3 +685,26 @@
 @media (prefers-reduced-motion: reduce) {
   .dice-spin, .dice-stop { animation: none; }
 }
+
+/* Кнопки верхней панели: тоньше и спокойнее.
+   🔴 Были жирные и «уродские» (Камиль) — сбавлен вес, убрана разрядка,
+   размер чуть больше, чтобы читались, а не кричали. */
+.topbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--t-line, var(--line));
+  background: var(--t-glass, var(--panel-2));
+  color: var(--t-ink, var(--ink));
+  padding: 0.45rem 0.7rem;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  transition: border-color var(--dur) var(--ease-pop), background var(--dur);
+}
+.topbtn:hover:not(:disabled) { border-color: var(--t-accent, var(--accent)); }
+.topbtn:disabled { opacity: 0.45; }

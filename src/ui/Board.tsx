@@ -42,6 +42,33 @@ const FAST_LABEL: Record<string, string> = {
   charity: 'Благотворительность',
 }
 
+/**
+ * Цвет клетки по её роли. Одинаково серые плашки не читались: чтобы понять,
+ * куда ты попал, приходилось наводить мышь. Теперь видно с одного взгляда.
+ * Цвета мягкие — доска под ними нарисована, забивать её нельзя.
+ */
+const RAT_TINT: Record<string, string> = {
+  opportunity: '#2f7d5b', // сделки — фирменный зелёный
+  market: '#2563a8', // рынок — синий
+  doodad: '#b4713a', // траты — охра
+  charity: '#7d5bb0', // благотворительность — лиловый
+  paycheck: '#1f8a4c', // зарплата — насыщенный зелёный
+  baby: '#c2833c', // питомец — тёплый песочный
+  downsized: '#b03a4a', // увольнение — красный
+}
+
+const FAST_TINT: Record<string, string> = {
+  cashflowDay: '#1f8a4c',
+  business: '#2f7d5b',
+  dream: '#c98a2b',
+  venture: '#2563a8',
+  taxAudit: '#b03a4a',
+  lawsuit: '#b03a4a',
+  divorce: '#b03a4a',
+  downsized: '#b03a4a',
+  charity: '#7d5bb0',
+}
+
 /** Клетки по периметру сетки: верх слева направо, дальше по часовой. */
 function perimeter(side: number): [number, number][] {
   const p: [number, number][] = []
@@ -94,6 +121,7 @@ function Cell({
   dim,
   ring,
   active,
+  tint,
 }: {
   row: number
   col: number
@@ -103,6 +131,8 @@ function Cell({
   dim?: boolean
   ring?: string
   active?: string
+  /** Цвет по роли клетки — чтобы поле читалось без наведения. */
+  tint?: string
 }) {
   return (
     <div
@@ -112,8 +142,10 @@ function Cell({
         gridColumn: col + 1,
         width: '72%',
         height: '72%',
-        background: 'var(--t-cell)',
-        borderColor: ring ?? 'var(--t-cell-line)',
+        background: tint
+          ? `color-mix(in srgb, ${tint} 34%, var(--t-cell))`
+          : 'var(--t-cell)',
+        borderColor: ring ?? (tint ? `color-mix(in srgb, ${tint} 60%, transparent)` : 'var(--t-cell-line)'),
         boxShadow: ring ? `0 0 0 2px ${ring}` : undefined,
         color: 'var(--t-ink)',
         opacity: dim ? 0.4 : 1,
@@ -177,6 +209,7 @@ export function Board({ table, children }: { table: Table; children?: ReactNode 
                   col={c}
                   label={name}
                   icon={FAST_ICON[space.type]}
+                  tint={FAST_TINT[space.type]}
                   seats={table.seats.filter(
                     (s) => s.track === 'fast' && s.position === i && !s.outOfGame,
                   )}
@@ -195,6 +228,7 @@ export function Board({ table, children }: { table: Table; children?: ReactNode 
                   col={c}
                   label={RAT_LABEL[space]}
                   icon={RAT_ICON[space]}
+                  tint={RAT_TINT[space]}
                   seats={table.seats.filter(
                     (s) => s.track === 'rat' && s.position === i && !s.outOfGame,
                   )}

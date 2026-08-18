@@ -285,7 +285,7 @@ function GoalCard({ seat }: { seat: Seat }) {
     <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3.5 backdrop-blur-md">
       <div className="flex items-baseline gap-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--t-muted, var(--muted))]">
-          {onFast ? 'Цель Полосы свободы' : 'Цель: выйти из Круга'}
+          {onFast ? 'Цель Полосы свободы' : 'Цель: вырваться из крысиных бегов'}
         </span>
         <span className="tabnum ml-auto text-[11px] font-bold text-[var(--t-accent,rgb(var(--c-accent)))]">{Math.round(pct)}%</span>
       </div>
@@ -295,10 +295,22 @@ function GoalCard({ seat }: { seat: Seat }) {
         <span className="text-[11px] text-[var(--t-muted, var(--muted))]">из {money(need)}</span>
       </div>
 
-      <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[var(--t-line, var(--line))]">
+      {/*
+        🔴 Дорожка должна быть ВИДНА и пустой. Раньше она красилась в --t-line,
+        а это почти прозрачная линия: на светлой панели шкалы просто не было.
+        Теперь заметная подложка, и заполнение никогда не тоньше волоска —
+        иначе при одном проценте кажется, что полосы нет вовсе.
+      */}
+      <div
+        className="mt-2.5 h-2.5 overflow-hidden rounded-full"
+        style={{ background: 'color-mix(in srgb, var(--t-ink, #000) 14%, transparent)' }}
+      >
         <div
-          className="h-full rounded-full bg-[var(--t-accent,rgb(var(--c-accent)))] transition-[width] duration-500"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-[width] duration-500"
+          style={{
+            width: pct > 0 ? `max(6px, ${pct}%)` : '0%',
+            background: 'var(--t-accent, rgb(var(--c-accent)))',
+          }}
         />
       </div>
 
@@ -306,10 +318,10 @@ function GoalCard({ seat }: { seat: Seat }) {
         {won
           ? onFast
             ? 'Цель достигнута — победа ваша.'
-            : 'Пассивный доход перерос расходы — можно уходить из Круга.'
+            : 'Доход, который работает без вас, перерос расходы — можно уходить.'
           : onFast
             ? 'Соберите новый доход на Полосе свободы.'
-            : 'Пассивный доход должен перерасти расходы — тогда работа больше не нужна.'}
+            : 'Доход, который работает без вас, должен перерасти расходы — тогда работа больше не нужна.'}
       </p>
     </div>
   )

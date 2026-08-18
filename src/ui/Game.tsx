@@ -316,12 +316,12 @@ export function Game({
       />
       <div className="relative flex min-h-0 flex-1 flex-col px-3 py-3">
       <header className="mb-2.5 flex shrink-0 items-center gap-2">
-        <Wordmark size="sm" />
+        <Wordmark size="sm" edition={false} />
         <div className="ml-auto flex items-center gap-1.5">
           {topRight}
           <button
             onClick={() => setTradesOpen(true)}
-            className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md"
+            className="topbtn"
             disabled={seat.isBot}
             title="Сделки между игроками"
           >
@@ -330,19 +330,27 @@ export function Game({
           </button>
           <button
             onClick={() => setBankOpen(true)}
-            className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md"
+            className="topbtn"
             disabled={seat.isBot}
             title={RULES.loansEnabled ? 'Банк' : 'Финансы'}
           >
             {RULES.loansEnabled ? '🏦' : '💼'}
             <span className="ml-1 hidden sm:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
           </button>
-          <button onClick={undo} className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md" title="Откатить последнее событие">
+          <button onClick={undo} className="topbtn" title="Откатить последнее событие">
             ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
           </button>
-          <button onClick={reset} className="btn-ghost border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] !text-[var(--t-ink)] text-xs backdrop-blur-md" title="Начать заново">
+          <button onClick={reset} className="topbtn" title="Начать заново">
             🔄<span className="ml-1 hidden sm:inline">Заново</span>
           </button>
+          {/* Оформление поля — наверх к кнопкам: в правой колонке оно лишнее. */}
+          <div className="w-[132px] text-[var(--t-ink)]">
+            <Dropdown
+              value={theme.id}
+              onChange={(id) => setBoardTheme(id)}
+              options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
+            />
+          </div>
         </div>
       </header>
 
@@ -378,7 +386,7 @@ export function Game({
           сетки: обрубленный список выглядит поломкой. Отступ снизу нулевой,
           последняя строка уходит под нижний край, как в обычной странице.
         */}
-        <div className="player-scroll order-2 min-h-0 overflow-y-auto overflow-x-hidden pb-6 lg:order-1">
+        <div className="player-scroll order-2 min-h-0 overflow-y-auto overflow-x-hidden pb-0 lg:order-1">
           <PlayerPanel seat={viewed} dispatch={viewed.id === seat.id && !seat.isBot ? dispatch : undefined} />
         </div>
 
@@ -396,7 +404,7 @@ export function Game({
             её размер считается от свободного места. Теперь место под колонку
             занято заранее и не двигается.
           */}
-          <div className="relative grid h-full min-h-0 w-full grid-cols-[minmax(0,1fr)_196px] gap-3">
+          <div className="relative grid h-full min-h-0 w-full grid-cols-[minmax(0,1fr)_252px] gap-3">
             <MoneyToast table={table} />
             <TradeToast table={table} />
 
@@ -441,29 +449,14 @@ export function Game({
                   onClick={() => dispatch({ type: 'ENTER_FAST_TRACK' })}
                   className="btn-primary w-full px-3 py-3.5 text-[13px] leading-tight"
                 >
-                  Выйти из Круга
+                  Вырваться из крысиных бегов
                   <span className="mt-0.5 block text-[11px] font-normal opacity-80">
                     выкуп {money(RULES.fastTrackMultiplier * freedomIncome(seat.ledger))}
                   </span>
                 </button>
               ) : canRoll ? (
-                <>
-                  {diceOptions.map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => roll(n)}
-                      className="btn-primary flex w-full items-center justify-center gap-2 px-3 py-4 text-[15px]"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" /><circle cx="12" cy="12" r="1.1" fill="currentColor" /></svg>
-                      Бросок
-                      {diceOptions.length > 1 && (
-                        <span className="mt-0.5 block text-[11px] font-normal opacity-80">
-                          {n} {n === 1 ? 'кубик' : 'кубика'}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </>
+                /* Кнопка броска живёт ТОЛЬКО по центру доски — там, куда смотрят. */
+                null
               ) : rolling ? (
                 <div className="dice-rolling grid place-items-center rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] py-5">
                   <Pips n={0} spinning />
@@ -518,32 +511,8 @@ export function Game({
                 )}
               </div>
 
-              <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-2.5 text-[var(--t-ink)] backdrop-blur-md">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
-                  Наличные
-                </div>
-                <div className="tabnum mt-1 text-[15px] font-bold leading-none">
-                  {money(seat.ledger.cash)}
-                </div>
-              </div>
-
-              {/*
-                Поле — оформление, а не правила: меняется прямо в партии.
-                🔴 Одной кнопкой со списком: семь строк подряд съедали половину
-                колонки, а место справа нужно под игроков и события.
-              */}
-              <div className="text-[var(--t-ink)]">
-                <div className="mb-1 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
-                  Поле
-                </div>
-                <Dropdown
-                  value={theme.id}
-                  onChange={(id) => setBoardTheme(id)}
-                  options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
-                />
-              </div>
-
-              <div className="min-h-0 shrink overflow-auto">
+              {/* Сначала игроки, потом события — так стабильнее: игроки не прыгают. */}
+              <div className="shrink-0">
                 <div className="mb-1 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
                   Игроки
                 </div>

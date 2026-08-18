@@ -278,7 +278,9 @@ export function CardModal({
    * через Shell, и всем сразу проставляется, смотрим мы или играем.
    */
   const S = (props: React.ComponentProps<typeof Shell>) => (
-    <S {...props} watching={spectate ? (actor?.name ?? null) : null} />
+    // 🔴 Именно Shell, а не S. Автозамена тегов однажды переписала и это место —
+    // обёртка стала звать сама себя, и ЛЮБАЯ карточка вешала браузер намертво.
+    <Shell {...props} watching={spectate ? (actor?.name ?? null) : null} />
   )
   const locale = 'ru' as const
 

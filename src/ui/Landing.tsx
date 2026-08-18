@@ -103,7 +103,7 @@ const STEPS: { Icon: () => ReactNode; title: string; text: string }[] = [
   },
   {
     Icon: IconTrophy,
-    title: 'Выход из Круга',
+    title: 'Побег из крысиных бегов',
     text: 'Пассивный доход перерос расходы — работа больше не нужна. Дальше мечта.',
   },
 ]
