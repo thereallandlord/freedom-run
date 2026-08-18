@@ -317,7 +317,12 @@ export function Game({
         aria-hidden
         className="pointer-events-none absolute inset-0 size-full object-cover"
       />
-      <div className="relative flex min-h-0 flex-1 flex-col px-3 py-3">
+      {/*
+        🔴 Снизу отступа НЕТ. Боковые колонки должны доходить до самого края
+        окна и уходить под него при прокрутке. С py-3 они обрывались на
+        двенадцать пикселей выше, и скруглённый край читался как обрезка.
+      */}
+      <div className="relative flex min-h-0 flex-1 flex-col px-3 pb-0 pt-3">
       <header className="mb-2.5 flex shrink-0 items-center gap-2">
         <Wordmark size="sm" edition={false} />
         <div className="ml-auto flex items-center gap-1.5">
