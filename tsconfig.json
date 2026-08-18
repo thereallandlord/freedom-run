@@ -14,5 +14,5 @@
     "noUnusedLocals": false
   },
   "include": ["src"],
-  "exclude": ["src/engine/fuzz.ts", "src/engine/scenarios.ts", "src/engine/__ftdown.ts", "src/engine/__scratch", "src/engine/selftest.ts", "src/engine/dumpstate.ts", "src/engine/dumpgame.ts", "src/engine/mechtest.ts", "src/engine/calib.ts", "src/engine/sweep.ts", "src/engine/diag.ts"]
+  "exclude": ["src/engine/audit.ts", "src/engine/fuzz.ts", "src/engine/scenarios.ts", "src/engine/__ftdown.ts", "src/engine/__scratch", "src/engine/selftest.ts", "src/engine/dumpstate.ts", "src/engine/dumpgame.ts", "src/engine/mechtest.ts", "src/engine/calib.ts", "src/engine/sweep.ts", "src/engine/diag.ts"]
 }

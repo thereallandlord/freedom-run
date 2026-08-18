@@ -193,7 +193,10 @@ console.log('\n=== Партнёрский бизнес не принтер ===')
 }
 
 console.log('\n=== Масштаб доходности ===')
-check('в RU-режиме игровой масштаб', RULES.yieldScale === 0.3, String(RULES.yieldScale))
+// 🔴 Доходность НАСТОЯЩАЯ, без урезания: с тройкой аренда однушки в Казани
+// считалась за 1,7% годовых, и ни одна покупка в рассрочку не сходилась.
+check('доходность настоящая, не урезана', RULES.yieldScale === 1, String(RULES.yieldScale))
+check('жильё в рассрочку на 25 лет', RULES.installmentTerm.realEstate === 300, String(RULES.installmentTerm.realEstate))
 
 console.log('\n=== Колоды RU ===')
 check('малых сделок', smallDeals('ru').length >= 30, String(smallDeals('ru').length))

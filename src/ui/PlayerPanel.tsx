@@ -14,6 +14,7 @@ import {
   RULES,
   ribaRisk,
 } from '../engine/ledger'
+import type { TableEvent } from '../engine/events'
 import { professionName } from '../engine/data'
 import { artById } from './cardArt'
 import { GL_RANKS, glPackage, glRankFor, glStructureIncome } from '../engine/greenleaf'
@@ -69,7 +70,17 @@ const IconShop = () => (
   </svg>
 )
 
-function AssetRow({ a, kind }: { a: RealEstateAsset | BusinessAsset; kind: 'realEstate' | 'business' }) {
+function AssetRow({
+  a,
+  kind,
+  dispatch,
+  cash,
+}: {
+  a: RealEstateAsset | BusinessAsset
+  kind: 'realEstate' | 'business'
+  dispatch?: (e: TableEvent) => void
+  cash?: number
+}) {
   const [open, setOpen] = useState(false)
   const shot = artById(a.id)
   const debt = kind === 'realEstate' ? (a as RealEstateAsset).mortgage : (a as BusinessAsset).liability
@@ -115,10 +126,35 @@ function AssetRow({ a, kind }: { a: RealEstateAsset | BusinessAsset; kind: 'real
               <span className="tabnum">{money(debt)}</span>
             </div>
           )}
+          {(a as RealEstateAsset).installmentMonthly ? (
+            <div className="flex justify-between">
+              <span>Платёж по рассрочке</span>
+              <span className="tabnum">−{money((a as RealEstateAsset).installmentMonthly ?? 0)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between">
             <span>Приносит в месяц</span>
             <span className="tabnum">{signed(mine)}</span>
           </div>
+          {/*
+            🔴 Закрыть рассрочку можно ПРЯМО ЗДЕСЬ. Движок это умел с самого
+            начала, а кнопки не было нигде — Камиль искал её и не нашёл.
+            После погашения платёж исчезает и доход по объекту растёт на его
+            величину: это самый наглядный способ показать, чем рассрочка
+            отличается от покупки за наличные.
+          */}
+          {debt > 0 && dispatch && (
+            <button
+              disabled={(cash ?? 0) < debt}
+              onClick={() => dispatch({ type: 'PAYOFF_ASSET', assetId: a.id, discountPct: 0 })}
+              className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+            >
+              Закрыть рассрочку за {money(debt)}
+              {(a as RealEstateAsset).installmentMonthly
+                ? ` — доход вырастет на ${money((a as RealEstateAsset).installmentMonthly ?? 0)}/мес`
+                : ''}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -217,7 +253,7 @@ function GoalCard({ seat }: { seat: Seat }) {
   )
 }
 
-export function PlayerPanel({ seat }: { seat: Seat }) {
+export function PlayerPanel({ seat, dispatch }: { seat: Seat; dispatch?: (e: TableEvent) => void }) {
   const l = seat.ledger
   const income = totalIncome(l)
   const expenses = totalExpenses(l)
@@ -284,10 +320,10 @@ export function PlayerPanel({ seat }: { seat: Seat }) {
               <Row key={d.symbol} label={`Дивиденды ${d.symbol}`} value={money(d.amount)} dim />
             ))}
             {l.realEstate.map((a) => (
-              <AssetRow key={a.id} a={a} kind="realEstate" />
+              <AssetRow key={a.id} a={a} kind="realEstate" dispatch={dispatch} cash={l.cash} />
             ))}
             {l.businesses.map((a) => (
-              <AssetRow key={a.id} a={a} kind="business" />
+              <AssetRow key={a.id} a={a} kind="business" dispatch={dispatch} cash={l.cash} />
             ))}
             {/*
               Партнёрский бизнес объясняет себя человеческим языком: игрок должен

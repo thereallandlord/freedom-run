@@ -161,8 +161,12 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
        * в отрицательный капитал. Теперь: хватает на всю цену — берём налом;
        * не хватает — берём в рассрочку ТОЛЬКО если поток остаётся положительным.
        */
-      const instTotal = installmentPrice(card.cost, card.kind === 'realEstate' ? 'realEstate' : 'business')
-      const monthly = installmentMonthly(Math.max(0, instTotal - card.downPayment))
+      // Взнос равен цене — рассрочки нет, платить нечего сверх.
+      const financeable = card.downPayment < card.cost
+      const instTotal = financeable
+        ? installmentPrice(card.cost, card.kind === 'realEstate' ? 'realEstate' : 'business')
+        : card.cost
+      const monthly = financeable ? installmentMonthly(Math.max(0, instTotal - card.downPayment)) : 0
       const canCash = l.cash - card.cost >= cashBuffer(seat, p)
       if (canCash) return { type: 'BUY_DEAL', payCash: true }
       if (card.cashFlow - monthly <= 0) {

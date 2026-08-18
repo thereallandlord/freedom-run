@@ -55,15 +55,30 @@ function perimeter(side: number): [number, number][] {
 /** Сторона сетки под нужное число клеток: периметр = 4·side − 4. */
 const sideFor = (count: number) => Math.round((count + 4) / 4)
 
-function Tokens({ seats }: { seats: Seat[] }) {
+/**
+ * Фишки игроков.
+ *
+ * 🔴 Крупные и с именем: раньше это были точки по десять пикселей, и на доске
+ * их приходилось искать. Доска нужна, чтобы видеть, кто где стоит, —
+ * иначе она просто картинка.
+ *
+ * Переход между клетками анимируется в CSS: фишка едет, а не телепортируется.
+ */
+function Tokens({ seats, active }: { seats: Seat[]; active?: string }) {
   if (!seats.length) return null
   return (
-    <span className="pointer-events-none absolute -top-1.5 left-1/2 z-20 flex -translate-x-1/2 gap-[3px]">
+    <span className="pointer-events-none absolute -top-2.5 left-1/2 z-20 flex -translate-x-1/2 gap-[3px]">
       {seats.map((s) => (
         <span
           key={s.id}
-          className="block size-[10px] rounded-full ring-2 ring-white"
-          style={{ background: s.color, boxShadow: '0 2px 5px rgb(0 0 0 / 0.32)' }}
+          className={`block rounded-full ring-[2.5px] ring-white transition-transform duration-200 ${
+            s.id === active ? 'size-[19px] scale-110' : 'size-[15px]'
+          }`}
+          style={{
+            background: s.color,
+            boxShadow: s.id === active ? `0 0 0 3px ${s.color}55, 0 3px 8px rgb(0 0 0 / 0.4)` : '0 2px 6px rgb(0 0 0 / 0.35)',
+          }}
+          title={s.name}
         />
       ))}
     </span>
@@ -78,6 +93,7 @@ function Cell({
   seats,
   dim,
   ring,
+  active,
 }: {
   row: number
   col: number
@@ -86,6 +102,7 @@ function Cell({
   seats: Seat[]
   dim?: boolean
   ring?: string
+  active?: string
 }) {
   return (
     <div
@@ -104,7 +121,7 @@ function Cell({
       }}
     >
       <span className="block size-[54%] opacity-90 [&>svg]:size-full">{icon}</span>
-      <Tokens seats={seats} />
+      <Tokens seats={seats} active={active} />
 
       {/* У верхнего ряда подпись уходит вниз — сверху её перекрыли бы фишки. */}
       <span
@@ -163,6 +180,7 @@ export function Board({ table, children }: { table: Table; children?: ReactNode 
                   seats={table.seats.filter(
                     (s) => s.track === 'fast' && s.position === i && !s.outOfGame,
                   )}
+                  active={table.seats[table.turnIndex]?.id}
                   dim={!!table.ftOwnership[i]}
                   ring={dreamOf?.color}
                 />
@@ -180,6 +198,7 @@ export function Board({ table, children }: { table: Table; children?: ReactNode 
                   seats={table.seats.filter(
                     (s) => s.track === 'rat' && s.position === i && !s.outOfGame,
                   )}
+                  active={table.seats[table.turnIndex]?.id}
                 />
               )
             })}

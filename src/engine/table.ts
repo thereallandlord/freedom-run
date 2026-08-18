@@ -47,6 +47,7 @@ import {
   installmentMonthly,
   zakatDue,
   marketStockPrice,
+  dealTerms,
   ribaRisk,
   ribaLimit,
   ribaMonthly,
@@ -106,7 +107,7 @@ export function createTable(setup: TableSetup): Table {
       fastTrackMultiplier: 50,
       fastTrackTarget: 1_000_000,
       loansEnabled: false,
-      yieldScale: 0.3,
+      yieldScale: 1,
       zakat: { enabled: true, pct: 2.5, everyPaydays: 12 },
     })
   } else {
@@ -928,10 +929,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        *   в рассрочку — платишь взнос, остаток с наценкой ЗА ТОВАР зафиксирован
        *                 навсегда, платёж по нему съедает часть дохода
        */
-      const fullPrice = card.cost
-      const instTotal = installmentPrice(card.cost, kind)
-      const instDebt = Math.max(0, instTotal - card.downPayment)
-      const monthly = installmentMonthly(instDebt)
+      // Условия считает общая функция — та же, что показывает окно карточки.
+      const terms = dealTerms(card, kind)
+      const fullPrice = terms.cashPrice
+      const instTotal = terms.instTotal
+      const instDebt = terms.instDebt
+      const monthly = terms.instMonthly
 
       const payCash = !!event.payCash
       const owed = payCash
@@ -951,7 +954,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * не кормит себя — платёж больше аренды. Поэтому в начале работают
        * дешёвые покупки за наличные, а не плечо.
        */
-      const flow = payCash ? card.cashFlow : card.cashFlow - monthly
+      const flow = payCash ? terms.cashFlow : terms.instFlow
       const debt = payCash ? 0 : instDebt
 
       /*

@@ -17,8 +17,11 @@ export interface Rules {
    * Масштаб доходности активов.
    * 1.0 — реальные рыночные цифры (недвижимость 3–6% годовых, бизнес 18–26%):
    *       честно, но одна удачная сделка выносит из Рутины, партия ~110 ходов.
-   * 0.3 — игровой баланс: сделка даёт 15–30% от расходов, как в классике,
-   *       нужно 4–8 покупок, партия ~210 ходов. 🔴 Дефолт: Камиль выбрал длину.
+   * 🔴 В русском режиме теперь 1.0 — НАСТОЯЩИЕ цифры (правка 18.08).
+   * Урезание втрое считало аренду однушки в Казани за 9 300 ₽ при цене
+   * 6,5 млн, то есть 1,7% годовых. Такой доходности не бывает, и на ней не
+   * сходилась ни одна покупка в рассрочку: платёж выходил вчетверо больше
+   * аренды, и пассивный доход у всех уходил в минус.
    */
   yieldScale: number
   /**
@@ -27,8 +30,13 @@ export interface Rules {
    * 🔴 Привязана к ТОВАРУ и фиксируется в момент сделки — от срока и просрочки не растёт.
    */
   installmentMarkup: { realEstate: number; business: number }
-  /** На сколько месяцев расписывается рассрочка. */
-  installmentTerm: number
+  /**
+   * На сколько месяцев расписывается рассрочка, по видам.
+   * 🔴 Жильё покупают на четверть века, а не на десять лет. При сроке 120
+   * платёж выходил вдвое-втрое больше аренды, и любая покупка в рассрочку
+   * гарантированно уводила пассивный доход в минус.
+   */
+  installmentTerm: { realEstate: number; business: number }
   /** Закят: доля в процентах и период в «зарплатах» (12 = раз в год). */
   zakat: { enabled: boolean; pct: number; everyPaydays: number }
 }
@@ -40,7 +48,7 @@ export const RULES: Rules = {
   loansEnabled: true,
   yieldScale: 1,
   installmentMarkup: { realEstate: 1.25, business: 1.2 },
-  installmentTerm: 120,
+  installmentTerm: { realEstate: 300, business: 84 },
   zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
 }
 
@@ -271,14 +279,45 @@ export function marketStockPrice(base: number, mul: number | undefined): number 
   return Math.max(10, Math.round((base * mul) / 10) * 10)
 }
 
+/**
+ * Условия сделки: что заплатишь и что будешь получать при каждом из двух
+ * способов покупки.
+ *
+ * 🔴 ОДНА функция на движок и на интерфейс. Раньше окно карточки считало поток
+ * своей формулой, а движок — своей, и они разошлись: карточка обещала одно,
+ * начислялось другое. Игрок это видит сразу и перестаёт верить цифрам.
+ *
+ * 🔴 Если взнос равен цене, рассрочки НЕТ. У машиномест, кладовок и участков
+ * так и заведено в колоде: их покупают целиком. Начислять им наценку за
+ * рассрочку — выдумывать долг, которого нет.
+ */
+export function dealTerms(card: { cost: number; downPayment: number; cashFlow: number }, kind: 'realEstate' | 'business') {
+  const financeable = card.downPayment < card.cost
+  const instTotal = financeable ? installmentPrice(card.cost, kind) : card.cost
+  const instDebt = financeable ? Math.max(0, instTotal - card.downPayment) : 0
+  const monthly = financeable ? installmentMonthly(instDebt, kind) : 0
+  return {
+    financeable,
+    /** Налом: платишь всю цену, долгов нет, доход весь твой. */
+    cashPrice: card.cost,
+    cashFlow: card.cashFlow,
+    /** В рассрочку: платишь взнос, остаток с наценкой, платёж съедает доход. */
+    instTotal,
+    instDebt,
+    instDown: card.downPayment,
+    instMonthly: monthly,
+    instFlow: card.cashFlow - monthly,
+  }
+}
+
 /** Цена вещи при покупке в рассрочку: цена налом плюс наценка за товар. */
 export function installmentPrice(cost: number, kind: 'realEstate' | 'business'): number {
   return Math.round((cost * RULES.installmentMarkup[kind]) / 1000) * 1000
 }
 
 /** Ежемесячный платёж по рассрочке — тело, разложенное на срок. Процентов нет. */
-export function installmentMonthly(debt: number): number {
-  return Math.round(debt / RULES.installmentTerm / 100) * 100
+export function installmentMonthly(debt: number, kind: 'realEstate' | 'business' = 'realEstate'): number {
+  return Math.round(debt / RULES.installmentTerm[kind] / 100) * 100
 }
 
 export function fastTrackIncome(l: Ledger): number {

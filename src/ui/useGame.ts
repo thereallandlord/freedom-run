@@ -158,6 +158,26 @@ export function useGame() {
     }
   }, [worldClockOn])
 
+  /*
+   * Ход уходит САМ. Кнопки «Передать ход» нет — за настоящим столом никто не
+   * жмёт кнопку, чтобы отдать кубик соседу. Пауза нужна ровно для того, чтобы
+   * человек успел прочитать, что с ним только что произошло.
+   */
+  useEffect(() => {
+    if (!table || table.phase !== 'turnEnd') return
+    const seat = currentSeat(table)
+    if (seat.isBot) return
+    const id = window.setTimeout(() => {
+      setTable((prev) => {
+        if (!prev || prev.phase !== 'turnEnd') return prev
+        const next = applyTableEvent(prev, { type: 'END_TURN' })
+        if (next !== prev) setEvents((evs) => [...evs, { type: 'END_TURN' } as TableEvent])
+        return next
+      })
+    }, 1100)
+    return () => window.clearTimeout(id)
+  }, [table])
+
   // ─── Водитель ботов ───
   useEffect(() => {
     if (!table || table.phase === 'finished') return

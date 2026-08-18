@@ -19,6 +19,7 @@ import {
   installmentPrice,
   installmentMonthly,
   marketStockPrice,
+  dealTerms,
 } from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText } from '../engine/data'
 import { loanOutstanding } from '../engine/trades'
@@ -288,13 +289,20 @@ export function CardModal({
       const kind = card.kind === 'realEstate' ? 'realEstate' : 'business'
 
       // Две цены: налом дороже на входе, но доход весь твой и долгов нет.
-      const instTotal = installmentPrice(card.cost, kind)
-      const instDebt = Math.max(0, instTotal - card.downPayment)
-      const monthly = installmentMonthly(instDebt)
-      const flowCash = card.cashFlow + monthly
+      /*
+       * 🔴 Условия берём из ОБЩЕЙ функции движка. Раньше здесь была своя
+       * формула, и окно обещало одно, а начислялось другое — Камиль поймал это
+       * на машиноместе: карточка показывала 800 ₽, приходило 100.
+       */
+      const terms = dealTerms(card, kind)
+      const instTotal = terms.instTotal
+      const instDebt = terms.instDebt
+      const monthly = terms.instMonthly
+      const flowCash = terms.cashFlow
 
       const canCash = l.cash >= card.cost
-      const canInstallment = l.cash >= card.downPayment
+      // Рассрочки нет там, где взнос равен цене — не показываем пустой выбор.
+      const canInstallment = terms.financeable && l.cash >= card.downPayment
       const investorAvailable =
         halal && !canInstallment && p.deck === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
       return (
@@ -367,7 +375,7 @@ export function CardModal({
                 В рассрочку · {money(instTotal)}
               </div>
               <div className="tabnum mt-0.5 text-lg font-black">{money(card.downPayment)}</div>
-              <div className={`tabnum mt-1 text-[13px] ${tone(card.cashFlow)}`}>{signed(card.cashFlow)}/мес</div>
+              <div className={`tabnum mt-1 text-[13px] ${tone(terms.instFlow)}`}>{signed(terms.instFlow)}/мес</div>
               <div className="mt-0.5 text-[11px] text-[var(--muted)]">
                 остаток {money(instDebt)} · платёж {money(monthly)}/мес
               </div>

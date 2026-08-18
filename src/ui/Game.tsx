@@ -335,11 +335,17 @@ export function Game({
       */}
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="order-2 min-h-0 overflow-auto lg:order-1">
-          <PlayerPanel seat={viewed} />
+          <PlayerPanel seat={viewed} dispatch={viewed.id === seat.id && !seat.isBot ? dispatch : undefined} />
         </div>
 
         <div className="order-1 flex min-h-0 lg:order-2">
-          <div className="panel relative flex h-full min-h-0 w-full gap-3 rounded-2xl p-4">
+          {/*
+            🔴 Никакой подложки под доской. Задумка была такая: фон темы во весь
+            экран, доска лежит НА нём, панели плавают сверху стеклом. Класс
+            panel рисовал белый прямоугольник, и получалась «карта внутри
+            коробочки» — Камиль это и поймал.
+          */}
+          <div className="relative flex h-full min-h-0 w-full gap-3">
             <MoneyToast table={table} />
             <TradeToast table={table} />
 
@@ -365,15 +371,6 @@ export function Game({
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" /><circle cx="12" cy="12" r="1.1" fill="currentColor" /></svg>
                     Бросок
-                  </button>
-                )}
-                {!seat.isBot && table.phase === 'turnEnd' && (
-                  <button
-                    onClick={() => dispatch({ type: 'END_TURN' })}
-                    className="mt-1 rounded-full px-5 py-2.5 text-[14px] font-bold shadow-lg transition hover:scale-[1.03]"
-                    style={{ background: 'var(--t-accent)', color: 'var(--t-on-accent)' }}
-                  >
-                    Передать ход
                   </button>
                 )}
               </Board>
@@ -421,12 +418,15 @@ export function Game({
                   🎲
                 </div>
               ) : table.phase === 'turnEnd' ? (
-                <button
-                  onClick={() => dispatch({ type: 'END_TURN' })}
-                  className="btn-primary w-full px-3 py-4 text-[14px]"
-                >
-                  Передать ход
-                </button>
+                /*
+                 * 🔴 Кнопки «Передать ход» нет. Ход отработан — он уходит сам,
+                 * как за настоящим столом: там никто не жмёт кнопку, чтобы
+                 * отдать кубик соседу. Пауза нужна только чтобы человек успел
+                 * прочитать, что произошло.
+                 */
+                <div className="grid place-items-center rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] py-4 text-[13px] text-[var(--t-muted, var(--muted))]">
+                  Ход переходит дальше…
+                </div>
               ) : null}
 
               {canEscape && (
