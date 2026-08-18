@@ -562,7 +562,16 @@ export function WorldEvents({ table, compact }: { table: Table; compact?: boolea
   return (
     <>
       <MarketBar table={table} compact={compact} onOpen={() => setHistory(true)} />
-      {fresh && <EventToast key={fresh.key} event={fresh.ev} onClose={() => setFresh(null)} />}
+      {/*
+        🔴 Событие ЖДЁТ, пока человек разбирается с картой. Мир двигается по
+        часам и не спрашивает, чем ты занят: новость накрывала открытую
+        сделку ровно в тот момент, когда игрок выбирал, сколько купить.
+        Сам рынок сдвигается сразу — ждёт только уведомление, и как только
+        карта закрыта, оно выходит само.
+      */}
+      {fresh && !table.pending && (
+        <EventToast key={fresh.key} event={fresh.ev} onClose={() => setFresh(null)} />
+      )}
       {history && <HistoryModal table={table} onClose={() => setHistory(false)} />}
     </>
   )
