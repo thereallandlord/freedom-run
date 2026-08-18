@@ -77,6 +77,17 @@ export function useGame(net?: {
     tableRef.current = table
   }, [table])
 
+  /**
+   * Вернуться в идущую партию: тот же состав, весь журнал ходов с начала.
+   * 🔴 Без этого перезагрузка начинала игру заново — журнал приезжал от
+   * соседа, но применять его было некуда.
+   */
+  const resume = useCallback((s: TableSetup, journal: TableEvent[]) => {
+    setSetup(s)
+    setEvents(journal)
+    setTable(replayTable(s, journal))
+  }, [])
+
   const start = useCallback((s: TableSetup) => {
     setSetup(s)
     setEvents([])
@@ -380,6 +391,7 @@ export function useGame(net?: {
     dispatch,
     applyLocal,
     undoLocal,
+    resume,
     undo,
     redo,
     canRedo: undone.length > 0,

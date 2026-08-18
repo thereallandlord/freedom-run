@@ -57,12 +57,19 @@ export function App() {
   const sendGameRef = useRef<((ev: TableEvent) => void) | null>(null)
   const applyRef = useRef<((ev: TableEvent) => void) | null>(null)
   const undoRef = useRef<(() => void) | null>(null)
+  const resumeRef = useRef<((moves: TableEvent[]) => void) | null>(null)
 
   // В разработке транспорт видно из консоли — иначе связь не продиагностировать.
   ;(window as unknown as { __net?: unknown }).__net = transport
 
   const room = useRoom({
     transport,
+    /*
+     * Вернулись в идущую партию: сосед прислал весь журнал ходов. Собираем
+     * стол с нуля по составу комнаты и проигрываем журнал — состояние
+     * получается ровно то же, что у него.
+     */
+    onGameJournal: (moves) => resumeRef.current?.(moves as TableEvent[]),
     onGameEvent: (ev) => {
       // Команда отмены не является ходом: она снимает последний ход у всех.
       if ((ev as { type?: string })?.type === '__UNDO') {
@@ -88,6 +95,12 @@ export function App() {
   sendGameRef.current = (ev) => room.sendGame(ev)
   applyRef.current = (ev) => game.applyLocal(ev)
   undoRef.current = () => game.undoLocal()
+  resumeRef.current = (moves) => {
+    const r = room.room
+    if (!r) return
+    game.resume(toTableSetup(r), moves)
+    setScreen('game')
+  }
 
   /**
    * Моё место за столом — это МОЙ идентификатор из комнаты.
@@ -174,6 +187,12 @@ export function App() {
     const returning = screen === 'game' && room.urlCode === room.room?.code
     if (screen !== 'lobby' && !returning) return
     if (!started || !room.room || game.table) return
+    /*
+     * 🔴 При ВОЗВРАЩЕНИИ пустой стол не собираем: журнал ходов приедет от
+     * соседа снимком и восстановит партию с того же места. Иначе игра
+     * начиналась с нуля, хотя у второго она продолжалась.
+     */
+    if (returning && online) return
     game.start(toTableSetup(room.room))
     setScreen('game')
   }, [screen, started, room.room, game])

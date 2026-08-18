@@ -100,6 +100,8 @@ export interface UseRoomOptions {
   origin?: string
   /** Ход за столом, пришедший от любого игрока (включая эхо своего). */
   onGameEvent?: (ev: unknown) => void
+  /** Весь журнал ходов из снимка — для возвращения в идущую партию. */
+  onGameJournal?: (events: unknown[]) => void
 }
 
 export interface UseRoomApi {
@@ -136,7 +138,7 @@ export interface UseRoomApi {
 }
 
 export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
-  const { transport = null, onGameEvent } = options
+  const { transport = null, onGameEvent, onGameJournal } = options
 
   const [me, setMe] = useState<Identity>(() => {
     const saved = readJson<Identity>(ME_KEY)
@@ -252,13 +254,28 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
 
       onSnapshot: ({ snapshot, events }) => {
         if (!snapshot) return
+        /*
+         * 🔴 В журнале канала лежат ДВА потока: действия комнаты и ходы за
+         * столом (последние помечены обёрткой `__g`). Раньше снимок прогонял
+         * их все через комнату — ходы для неё мусор, а сама партия при
+         * возвращении не восстанавливалась вовсе и начиналась с нуля.
+         */
         let base = snapshot as RoomState
-        for (const ev of events ?? []) base = applyRoomAction(base, ev as RoomAction)
+        const moves: unknown[] = []
+        for (const ev of events ?? []) {
+          const wrapped = ev as { __g?: unknown }
+          if (wrapped && typeof wrapped === 'object' && '__g' in wrapped) {
+            moves.push(wrapped.__g)
+            continue
+          }
+          base = applyRoomAction(base, ev as RoomAction)
+        }
         setRoom(base)
         setConnecting(false)
+        if (moves.length) onGameJournal?.(moves)
       },
     }),
-    [apply, transport],
+    [apply, onGameEvent, onGameJournal, transport],
   )
 
   const setIdentity = useCallback((patch: Partial<Identity>) => {
