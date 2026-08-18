@@ -762,7 +762,7 @@ export function Game({
                 <div className="caps mb-1 px-0.5 text-[9.5px] font-bold text-[var(--t-muted, var(--muted))]">
                   Что в мире
                 </div>
-                <WorldEvents table={table} compact />
+                <WorldEvents table={table} seat={seat} compact />
               </div>
 
               {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — загадка. */}

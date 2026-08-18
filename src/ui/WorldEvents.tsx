@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import type { Table, WorldEffect, WorldEvent } from '../engine/types'
+import type { Seat, Table, WorldEffect, WorldEvent } from '../engine/types'
 import { WORLD_EVENTS } from '../engine/data'
+import { stockBasePrice } from '../engine/table'
 import { MARKET_EFFECT_LIFE } from '../engine/table'
 import { artByWorld } from './cardArt'
-import { money } from './PlayerPanel'
+import { money, signed } from './PlayerPanel'
 import { WORLD_EVENT_MIN } from './useGame'
 import { scheduleWorldEvent, subscribeWorldClock, worldEventDeadline } from './worldClock'
 
@@ -293,7 +294,15 @@ function ago(at: number, now: number): string {
  * потом его нельзя посмотреть заново». Мир двигается редко и сильно —
  * все за столом должны успеть прочитать. Перечитать можно в истории.
  */
-function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void }) {
+function EventToast({
+  event,
+  impact,
+  onClose,
+}: {
+  event: WorldEvent
+  impact: { text: string; delta: number }[]
+  onClose: () => void
+}) {
   const good = goodness(event.effect)
 
   return (
@@ -345,6 +354,31 @@ function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void
               сразу у всех за столом · держится {MARKET_EFFECT_LIFE} следующих события, потом рынок
               возвращается к своему
             </div>
+
+            {/* Что это значит лично для меня — у каждого за столом своё. */}
+            {impact.length > 0 && (
+              <div className="hairline mt-3 pt-3">
+                <div className="caps mb-1 text-[10px] font-bold text-[var(--muted)]">У вас</div>
+                <div className="space-y-0.5">
+                  {impact.map((r, i) => (
+                    <div key={i} className="flex items-baseline justify-between gap-2 text-[12.5px]">
+                      <span className="min-w-0 flex-1 truncate">{r.text}</span>
+                      <span
+                        className={`tabnum shrink-0 font-semibold ${
+                          r.delta >= 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400'
+                        }`}
+                      >
+                        {event.effect.kind === 'glGrowthAll'
+                          ? `${r.delta > 0 ? '+' : ''}${r.delta} пункта`
+                          : signed(r.delta)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <button onClick={onClose} className="btn-primary mt-4 w-full">
@@ -562,7 +596,62 @@ function MarketBar({
  * Мировые события целиком: полоса состояния рынка, карточка нового события
  * и история партии. В Game.tsx вставляется одной строкой.
  */
-export function WorldEvents({ table, compact }: { table: Table; compact?: boolean }) {
+/**
+ * Как событие задело ЛИЧНО МЕНЯ.
+ *
+ * 🔴 Новость сообщала «криптовалюты −60%» и на этом останавливалась. Что
+ * именно просело у тебя и на сколько — приходилось считать в уме, а у
+ * каждого за столом ответ свой. Считаем по портфелю: бумаги — по их числу и
+ * цене, объекты — по категории.
+ */
+function personalImpact(
+  table: Table,
+  seat: Seat,
+  ev: WorldEvent,
+): { text: string; delta: number }[] {
+  const e = ev.effect
+  const l = seat.ledger
+  const out: { text: string; delta: number }[] = []
+
+  if (e.kind === 'stockPrice') {
+    for (const lot of l.stocks) {
+      if (!e.symbols.includes(lot.symbol)) continue
+      const base = stockBasePrice(table.deckTheme, lot.symbol)
+      const delta = Math.round((base * (e.pct / 100)) * lot.shares)
+      out.push({ text: `${lot.symbol} × ${lot.shares}`, delta })
+    }
+  }
+  if (e.kind === 'assetPrice') {
+    for (const a of [...l.realEstate, ...l.businesses]) {
+      if (!a.category || !e.categories.includes(a.category)) continue
+      out.push({ text: a.name, delta: Math.round(a.cost * (e.pct / 100)) })
+    }
+  }
+  if (e.kind === 'assetFlow') {
+    for (const a of [...l.realEstate, ...l.businesses]) {
+      if (!a.category || !e.categories.includes(a.category)) continue
+      out.push({ text: `${a.name} · доход`, delta: Math.round(a.cashFlow * (e.pct / 100)) })
+    }
+  }
+  if (e.kind === 'glGrowthAll' && l.businesses.some((b) => b.gl)) {
+    out.push({
+      text: 'Партнёрский бизнес · темп роста',
+      delta: e.points,
+    })
+  }
+  return out
+}
+
+export function WorldEvents({
+  table,
+  seat,
+  compact,
+}: {
+  table: Table
+  /** Чей портфель считать в «как это задело меня». */
+  seat?: Seat
+  compact?: boolean
+}) {
   const [history, setHistory] = useState(false)
   const [fresh, setFresh] = useState<{ ev: WorldEvent; key: string } | null>(null)
   const stamp = table.lastWorldEvent ? `${table.lastWorldEvent.id}#${table.lastWorldEvent.at}` : ''
@@ -608,7 +697,12 @@ export function WorldEvents({ table, compact }: { table: Table; compact?: boolea
         карта закрыта, оно выходит само.
       */}
       {fresh && !table.pending && (
-        <EventToast key={fresh.key} event={fresh.ev} onClose={() => setFresh(null)} />
+        <EventToast
+          key={fresh.key}
+          event={fresh.ev}
+          impact={seat ? personalImpact(table, seat, fresh.ev) : []}
+          onClose={() => setFresh(null)}
+        />
       )}
       {history && <HistoryModal table={table} onClose={() => setHistory(false)} />}
     </>
