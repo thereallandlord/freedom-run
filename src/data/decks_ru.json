@@ -19,7 +19,7 @@
    "cost": 11200000,
    "downPayment": 2300000,
    "mortgage": 8900000,
-   "cashFlow": 70000,
+   "cashFlow": 79300,
    "kind": "realEstate"
   },
   {
@@ -30,7 +30,7 @@
    "cost": 18300000,
    "downPayment": 3700000,
    "mortgage": 14600000,
-   "cashFlow": 114400,
+   "cashFlow": 129600,
    "kind": "realEstate"
   },
   {
@@ -41,7 +41,7 @@
    "cost": 20400000,
    "downPayment": 4100000,
    "mortgage": 16300000,
-   "cashFlow": 127500,
+   "cashFlow": 144500,
    "kind": "realEstate"
   },
   {
@@ -73,7 +73,7 @@
    "cost": 4460000,
    "downPayment": 1340000,
    "mortgage": 3120000,
-   "cashFlow": 24000,
+   "cashFlow": 27900,
    "kind": "realEstate"
   },
   {
@@ -84,7 +84,7 @@
    "cost": 6320000,
    "downPayment": 1900000,
    "mortgage": 4420000,
-   "cashFlow": 33000,
+   "cashFlow": 39500,
    "kind": "realEstate"
   },
   {
@@ -95,7 +95,7 @@
    "cost": 12550000,
    "downPayment": 3800000,
    "mortgage": 8750000,
-   "cashFlow": 52000,
+   "cashFlow": 78400,
    "kind": "realEstate"
   },
   {
@@ -106,7 +106,7 @@
    "cost": 10230000,
    "downPayment": 3100000,
    "mortgage": 7130000,
-   "cashFlow": 44000,
+   "cashFlow": 63900,
    "kind": "realEstate"
   },
   {
@@ -117,7 +117,7 @@
    "cost": 8835000,
    "downPayment": 2650000,
    "mortgage": 6185000,
-   "cashFlow": 38000,
+   "cashFlow": 55200,
    "kind": "realEstate"
   },
   {
@@ -128,7 +128,7 @@
    "cost": 14880000,
    "downPayment": 4500000,
    "mortgage": 10380000,
-   "cashFlow": 56000,
+   "cashFlow": 93000,
    "kind": "realEstate"
   },
   {
@@ -139,7 +139,7 @@
    "cost": 9300000,
    "downPayment": 2800000,
    "mortgage": 6500000,
-   "cashFlow": 35000,
+   "cashFlow": 58100,
    "kind": "realEstate"
   },
   {
@@ -160,7 +160,7 @@
    "cost": 1100000,
    "downPayment": 1100000,
    "mortgage": 0,
-   "cashFlow": 7000,
+   "cashFlow": 7800,
    "kind": "realEstate"
   },
   {
@@ -376,7 +376,7 @@
    "cost": 4200000,
    "downPayment": 4200000,
    "mortgage": 0,
-   "cashFlow": 29000,
+   "cashFlow": 29800,
    "kind": "realEstate"
   },
   {
@@ -387,7 +387,7 @@
    "cost": 1100000,
    "downPayment": 1100000,
    "mortgage": 0,
-   "cashFlow": 7500,
+   "cashFlow": 7800,
    "kind": "realEstate"
   },
   {
@@ -409,7 +409,7 @@
    "cost": 500000,
    "downPayment": 500000,
    "mortgage": 0,
-   "cashFlow": 3400,
+   "cashFlow": 3500,
    "kind": "realEstate"
   },
   {
@@ -420,7 +420,7 @@
    "cost": 9500000,
    "downPayment": 9500000,
    "mortgage": 0,
-   "cashFlow": 62000,
+   "cashFlow": 67300,
    "kind": "realEstate"
   },
   {
@@ -431,7 +431,7 @@
    "cost": 7800000,
    "downPayment": 7800000,
    "mortgage": 0,
-   "cashFlow": 52000,
+   "cashFlow": 55200,
    "kind": "realEstate"
   },
   {
@@ -442,7 +442,7 @@
    "cost": 5400000,
    "downPayment": 5400000,
    "mortgage": 0,
-   "cashFlow": 36000,
+   "cashFlow": 38200,
    "kind": "realEstate"
   },
   {
@@ -453,7 +453,7 @@
    "cost": 4600000,
    "downPayment": 4600000,
    "mortgage": 0,
-   "cashFlow": 29000,
+   "cashFlow": 32600,
    "kind": "realEstate"
   },
   {
@@ -534,7 +534,7 @@
    "cost": 6500000,
    "downPayment": 500000,
    "mortgage": 6000000,
-   "cashFlow": 31000
+   "cashFlow": 40600
   },
   {
    "id": "big-re-kzn-pobedy",
@@ -545,7 +545,7 @@
    "cost": 9000000,
    "downPayment": 700000,
    "mortgage": 8300000,
-   "cashFlow": 39400
+   "cashFlow": 56200
   },
   {
    "id": "big-re-kzn-itpark",
@@ -556,7 +556,7 @@
    "cost": 5000000,
    "downPayment": 400000,
    "mortgage": 4600000,
-   "cashFlow": 22500
+   "cashFlow": 31200
   },
   {
    "id": "big-re-msk-butovo",
@@ -567,7 +567,7 @@
    "cost": 12000000,
    "downPayment": 1000000,
    "mortgage": 11000000,
-   "cashFlow": 47500
+   "cashFlow": 75000
   },
   {
    "id": "big-re-msk-ttk",
@@ -578,7 +578,7 @@
    "cost": 22000000,
    "downPayment": 1800000,
    "mortgage": 20200000,
-   "cashFlow": 87100
+   "cashFlow": 137500
   },
   {
    "id": "big-re-msk-city",
@@ -600,7 +600,7 @@
    "cost": 8000000,
    "downPayment": 600000,
    "mortgage": 7400000,
-   "cashFlow": 35000
+   "cashFlow": 50000
   },
   {
    "id": "big-re-spb-vasilevsky",
@@ -611,7 +611,7 @@
    "cost": 14000000,
    "downPayment": 1200000,
    "mortgage": 12800000,
-   "cashFlow": 61500
+   "cashFlow": 87500
   },
   {
    "id": "big-re-dxb-jvc",
@@ -622,7 +622,7 @@
    "cost": 18000000,
    "downPayment": 1500000,
    "mortgage": 16500000,
-   "cashFlow": 112500
+   "cashFlow": 127500
   },
   {
    "id": "big-re-dxb-marina",
@@ -633,7 +633,7 @@
    "cost": 28000000,
    "downPayment": 2000000,
    "mortgage": 26000000,
-   "cashFlow": 175000
+   "cashFlow": 198300
   },
   {
    "id": "big-re-tur-alanya",
@@ -644,7 +644,7 @@
    "cost": 7500000,
    "downPayment": 600000,
    "mortgage": 6900000,
-   "cashFlow": 30000
+   "cashFlow": 46900
   },
   {
    "id": "big-re-tur-istanbul",
@@ -721,7 +721,7 @@
    "cost": 28000000,
    "downPayment": 2300000,
    "mortgage": 25700000,
-   "cashFlow": 134000
+   "cashFlow": 175000
   },
   {
    "id": "big-re-kzn-center",
@@ -732,7 +732,7 @@
    "cost": 14000000,
    "downPayment": 1200000,
    "mortgage": 12800000,
-   "cashFlow": 73500
+   "cashFlow": 87500
   },
   {
    "id": "big-re-dag-hotel",
@@ -754,7 +754,7 @@
    "cost": 16000000,
    "downPayment": 1400000,
    "mortgage": 14600000,
-   "cashFlow": 84000
+   "cashFlow": 100000
   },
   {
    "id": "big-biz-carwash-kzn",
@@ -776,7 +776,7 @@
    "cost": 26000000,
    "downPayment": 2200000,
    "mortgage": 23800000,
-   "cashFlow": 112000
+   "cashFlow": 162500
   },
   {
    "id": "big-re-ufa-loft",
@@ -787,7 +787,7 @@
    "cost": 9200000,
    "downPayment": 800000,
    "mortgage": 8400000,
-   "cashFlow": 60000
+   "cashFlow": 65200
   }
  ],
  "MARKET_CARDS_RU": [
