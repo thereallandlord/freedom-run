@@ -335,7 +335,7 @@ function CardBody({
                 <Stat label="Диапазон" value={`${money(s.range[0])} – ${money(s.range[1])}`} />
               )}
               {!!s.dividendPerShare && (
-                <Stat label="Дивиденд" value={`${money(s.dividendPerShare)}/шт/мес`} />
+                <Stat label="Дивиденд" value={`${signed(s.dividendPerShare)}/шт/мес`} />
               )}
               <Stat label="Ваши наличные" value={money(l.cash)} />
             </div>
@@ -364,13 +364,17 @@ function CardBody({
               >
                 Купить
               </button>
-              <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost">
+              <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
                 Пропустить
               </button>
             </div>
 
             {/* Кто нашёл — тот и решает, кого пускать и на каких условиях. */}
-            {!spectate && <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />}
+            {!spectate && (
+              <div className="hairline mt-3 pt-3">
+                <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />
+              </div>
+            )}
 
             {p.access &&
               p.access.mode !== 'closed' &&
@@ -514,12 +518,12 @@ function CardBody({
             {/* Показываем то, что реально придёт при нынешнем рынке. */}
             {!isGl && <Stat
               label={kind === 'realEstate' ? 'Приносит аренды' : 'Приносит дохода'}
-              value={`${money(marketDealFlow(terms.cashFlow, mktMul))}/мес`}
+              value={`${signed(marketDealFlow(terms.cashFlow, mktMul))}/мес`}
             />}
             {mktMul !== 1 && (
               <p className="text-[11px] leading-snug text-[var(--muted)]">
                 С учётом того, что сейчас на рынке. По карте было{' '}
-                {money(terms.cashFlow)}/мес.
+                {signed(terms.cashFlow)}/мес.
               </p>
             )}
             {terms.financeable && (
@@ -566,7 +570,7 @@ function CardBody({
                       <span className="tabnum text-lg font-black">{money(pk.price)}</span>
                     </div>
                     <div className="tabnum mt-0.5 text-[12px] font-semibold text-emerald-400">
-                      {money(start)}/мес на старте
+                      {signed(start)}/мес на старте
                       {start > base && (
                         <span className="ml-1 font-normal text-[var(--muted)]">
                           (+{money(start - base)} к Платине)
@@ -630,7 +634,11 @@ function CardBody({
           )}
 
           {/* Кто нашёл — тот и решает, кого пускать и на каких условиях. */}
-          {!spectate && <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />}
+          {!spectate && (
+              <div className="hairline mt-3 pt-3">
+                <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />
+              </div>
+            )}
 
           {/*
             🔴 «Предложить свою цену» — обратная сторона «продать находку».
@@ -641,7 +649,7 @@ function CardBody({
           {/* Сделку можно не только купить: право на неё продаётся, а вход делится с партнёром. */}
           <DealTradeActions table={table} seat={seat} card={card} dispatch={dispatch} />
 
-          <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost w-full">
+          <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
             Пропустить
           </button>
 
@@ -708,7 +716,7 @@ function CardBody({
                 )}
               </div>
             )}
-            <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-ghost w-full">
+            <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-quiet w-full">
               Дальше
             </button>
           </S>
@@ -748,7 +756,7 @@ function CardBody({
                   ничего не делают (движок возвращает prev), а закрыть карточку
                   было нечем — партия вставала намертво.
                 */}
-                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost w-full">
+                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
                   {biz?.gl ? 'Пропустить' : 'Это не про вас — дальше'}
                 </button>
               </>
@@ -765,7 +773,7 @@ function CardBody({
                 >
                   Открыть ещё два кабинета
                 </button>
-                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost w-full">
+                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
                   Не сейчас
                 </button>
               </>
@@ -780,7 +788,7 @@ function CardBody({
                   {card.freezePaydays ? (
                     <Stat label="Приток новых людей встал" value={`на ${card.freezePaydays} зарплат`} />
                   ) : null}
-                  {biz?.gl ? <Stat label="Теперь приносит" value={`${money(glTotalIncome(biz.gl))}/мес`} strong /> : null}
+                  {biz?.gl ? <Stat label="Теперь приносит" value={`${signed(glTotalIncome(biz.gl))}/мес`} strong /> : null}
                 </div>
                 <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
                   Понятно
@@ -832,7 +840,7 @@ function CardBody({
                 )}
               </div>
             )}
-            <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-ghost w-full">
+            <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-quiet w-full">
               Дальше
             </button>
           </S>
@@ -995,7 +1003,7 @@ function CardBody({
             >
               Инвестировать {money(space.downPayment)}
             </button>
-            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost">
+            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
               Мимо
             </button>
           </div>
@@ -1031,7 +1039,7 @@ function CardBody({
             >
               🎲 Рискнуть — {money(space.downPayment)}
             </button>
-            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost">
+            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
               Мимо
             </button>
           </div>
@@ -1103,7 +1111,7 @@ function CardBody({
             >
               🏆 Купить мечту и выиграть
             </button>
-            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost">
+            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
               Пока нет
             </button>
           </div>
@@ -1132,7 +1140,7 @@ function CardBody({
             >
               Пожертвовать {money(cost)}
             </button>
-            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-ghost">
+            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
               Нет
             </button>
           </div>

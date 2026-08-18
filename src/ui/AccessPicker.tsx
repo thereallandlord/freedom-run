@@ -70,7 +70,13 @@ export function AccessPicker({
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-[var(--line)] p-3">
+    /*
+      🔴 Блок отделён от самой сделки. Это ДРУГОЙ вопрос: сделку ты решаешь
+      про себя, а вход — про соседей по столу. Раньше он шёл сплошняком следом
+      за кнопками покупки, и человек видел пять почти одинаковых кнопок подряд.
+    */
+    <div className="space-y-2 rounded-xl border border-dashed border-[var(--line)] bg-[var(--panel-2)] p-3">
+      <p className="caps text-[10px] font-bold text-[var(--muted)]">Условия для других игроков</p>
       <p className="text-[12px] font-bold">Пускать остальных в эту сделку?</p>
       <p className="text-[11px] leading-snug text-[var(--muted)]">
         Карта выпала вам — вы решаете, войдёт ли кто-то ещё и что вам за это будет.
@@ -78,10 +84,10 @@ export function AccessPicker({
 
       {!openTerms ? (
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={() => set(CLOSED)} className="btn-ghost text-[12px]">
+          <button onClick={() => set(CLOSED)} className="btn-quiet">
             Никого не пускаю
           </button>
-          <button onClick={() => setOpenTerms(true)} className="btn-ghost border-emerald-500/50 text-[12px]">
+          <button onClick={() => setOpenTerms(true)} className="btn-quiet border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
             Открыть вход
           </button>
         </div>

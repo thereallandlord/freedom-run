@@ -23,6 +23,8 @@ import { liveOffers, offerResponders, playerDebt } from './tradeHelpers'
 import type { Offer } from '../engine/trades'
 import { WorldEvents } from './WorldEvents'
 import { BOARD_THEMES, setBoardTheme, themeVars, useBoardTheme } from './theme-board'
+import { warmNow, warmRestWhenIdle } from './preloadArt'
+import { useTheme } from './theme'
 import { Dropdown } from './Dropdown'
 
 /**
@@ -303,6 +305,17 @@ export function Game({
     openOffers.find((o) => offerResponders(table, o).some((s) => !s.isBot)) ?? openOffers[0] ?? null
 
   const theme = useBoardTheme()
+  const { isDark } = useTheme()
+
+  /*
+   * Картинки греем заранее: ближний круг — то, что вот-вот выпадет, дальше в
+   * простое дотягиваем остальное. Иначе иллюстрация карточки проявляется уже
+   * после того, как человек её прочитал.
+   */
+  useEffect(() => {
+    warmNow([theme.bg, theme.board])
+    warmRestWhenIdle()
+  }, [theme])
   const diceOptions = diceCountFor(seat)
   const canRoll = table.phase === 'awaitingRoll' && !seat.isBot && !rolling && !rolled
   const canEscape =
@@ -311,7 +324,7 @@ export function Game({
   return (
     <div
       className="relative flex h-[100dvh] flex-col"
-      style={{ ...themeVars(theme), color: 'var(--t-ink)' }}
+      style={{ ...themeVars(theme, isDark), color: 'var(--t-ink)' }}
     >
       {/* Фон темы — отдельный слой: доска и панели ложатся поверх. */}
       <img
@@ -319,6 +332,11 @@ export function Game({
         alt=""
         aria-hidden
         className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
+      {/* Затемнение сцены в тёмной теме: светлая карта иначе слепит. */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-[#12151A]"
+        style={{ opacity: 'var(--t-scene-dim, 0)' }}
       />
       {/*
         🔴 Снизу отступа НЕТ. Боковые колонки должны доходить до самого края
@@ -451,13 +469,15 @@ export function Game({
       {/* Оформление поля — наверх к кнопкам: в правой колонке оно лишнее. */}
       {/* Оформление поля — той же кнопкой, что и соседи: белая коробка
               с обрезанным названием выпадала из ряда. */}
-          <Dropdown
-            value={theme.id}
-            onChange={(id) => setBoardTheme(id)}
-            options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
-            buttonClassName="topbtn"
-            minListWidth={210}
-          />
+          {BOARD_THEMES.length > 1 && (
+            <Dropdown
+              value={theme.id}
+              onChange={(id) => setBoardTheme(id)}
+              options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
+              buttonClassName="topbtn"
+              minListWidth={210}
+            />
+          )}
         </div>
             </header>
           <div className="relative grid min-h-0 w-full grid-cols-1 gap-3 lg:h-full lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -470,7 +490,7 @@ export function Game({
               по ШИРИНЕ, а «во весь остаток высоты» включается с большого
               экрана, где стол помещается целиком.
             */}
-            <div className="board-slot grid aspect-square min-h-0 w-full flex-1 place-items-center lg:aspect-auto lg:h-full">
+            <div className="board-slot grid aspect-square min-h-0 w-full flex-1 place-items-center lg:aspect-auto lg:h-full lg:place-items-start">
               <Board table={table}>
                 <span
                   className="text-[10px] font-semibold uppercase tracking-[0.16em]"

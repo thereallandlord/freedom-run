@@ -51,14 +51,21 @@ export function Dropdown<T extends string | number>({
     const above = r.top - gap - margin
     // Не хватает места снизу — открываемся вверх, а не упираемся в край экрана.
     const up = below < 200 && above > below
+    /*
+     * 🔴 По горизонтали список ПРИЖИМАЕТСЯ К ОКНУ. Раньше он рисовался ровно
+     * от левого края кнопки: у кнопки в правом углу список уезжал за границу
+     * экрана вместе с названиями — выбирать приходилось вслепую.
+     */
+    const width = Math.max(r.width, minListWidth)
+    const maxLeft = window.innerWidth - width - margin
     setPos({
-      left: r.left,
+      left: Math.max(margin, Math.min(r.left, maxLeft)),
       top: up ? r.top - gap : r.bottom + gap,
-      width: r.width,
+      width,
       maxHeight: Math.max(140, Math.min(288, up ? above : below)),
       up,
     })
-  }, [])
+  }, [minListWidth])
 
   useLayoutEffect(() => {
     if (open) place()
@@ -127,7 +134,7 @@ export function Dropdown<T extends string | number>({
               left: pos.left,
               top: pos.up ? undefined : pos.top,
               bottom: pos.up ? window.innerHeight - pos.top : undefined,
-              width: Math.max(pos.width, minListWidth),
+              width: pos.width,
               maxHeight: pos.maxHeight,
             }}
           >

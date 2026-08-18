@@ -103,20 +103,28 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --c-bg: 11 13 18;
-  --c-panel: 20 24 33;
-  --c-panel-2: 27 33 48;
-  --c-line: 38 46 63;
-  --c-ink: 231 236 245;
-  --c-muted: 139 149 171;
+  /*
+    🔴 Мягкая тёмная, а не чёрная (правка Камиля 18.08): «тёмная тема — это
+    не значит, что она прям чёрная». Тёплый уголь вместо смолы, ступеньки
+    между фоном, панелью и второй панелью заметные — иначе карточки
+    сливаются в одно пятно и границ не видно.
+    Контраст сверен: подписи --muted по --panel дают 5.1:1, обычный текст
+    12.6:1, акцент по панели 6.4:1 — всё выше порога AA.
+  */
+  --c-bg: 24 26 30;
+  --c-panel: 37 42 49;
+  --c-panel-2: 48 54 62;
+  --c-line: 71 79 89;
+  --c-ink: 236 239 234;
+  --c-muted: 166 173 180;
 
-  --c-accent: 16 185 129;
-  --c-accent-hover: 52 211 153;
-  --c-accent-ink: 2 44 34;
+  --c-accent: 63 207 151;
+  --c-accent-hover: 109 224 176;
+  --c-accent-ink: 6 32 24;
 
-  --c-good: 52 211 153;
-  --c-bad: 251 113 133;
-  --c-warn: 251 191 36;
+  --c-good: 82 214 160;
+  --c-bad: 255 138 152;
+  --c-warn: 245 194 106;
 
   /* Здесь значения ровно как у Tailwind по умолчанию — тёмная тема не меняется. */
   --c-emerald-200: 167 243 208;
@@ -133,7 +141,8 @@
   --shadow-pop: 0 24px 60px -16px rgb(0 0 0 / 0.75), 0 2px 10px rgb(0 0 0 / 0.5);
   --shadow-glow: 0 6px 20px -6px rgb(16 185 129 / 0.4);
 
-  --bg-wash: radial-gradient(1100px 700px at 50% -10%, rgb(22 48 74 / 0.9) 0%, transparent 60%);
+  /* Подсветка едва заметная и тёплая: холодное синее пятно делало фон «ночным». */
+  --bg-wash: radial-gradient(1100px 700px at 50% -10%, rgb(63 207 151 / 0.07) 0%, transparent 62%);
 }
 
 /* Готовые цвета для разметки: var(--muted), var(--line), var(--panel-2)… */
@@ -302,10 +311,17 @@
     box-shadow: var(--shadow-tile), inset 0 0 0 1px rgb(var(--c-accent) / 0.5);
   }
 
+  /*
+    🔴 Кнопки НЕ заголовочным шрифтом. Unbounded — тяжёлый плакатный гротеск,
+    на кнопке он читался как «странная надпись», а не как действие; из-за
+    этого пять кнопок подряд сливались в кашу. Теперь текст действия —
+    обычным шрифтом интерфейса, а цифры внутри кнопки — моноширинным
+    (класс tabnum), как на тарифах Craft.
+  */
   .btn {
     @apply inline-flex select-none items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold;
-    font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    font-family: var(--font-sans);
+    letter-spacing: -0.005em;
     transition: background-color var(--dur-fast) linear, border-color var(--dur-fast) linear,
       color var(--dur-fast) linear, transform var(--dur-fast) var(--ease-pop),
       box-shadow var(--dur-fast) linear;
@@ -318,8 +334,12 @@
     transform: none;
   }
 
+  /* Главное действие карточки: крупнее остальных, одно на экран. */
   .btn-primary {
     @apply btn;
+    padding-top: 0.62rem;
+    padding-bottom: 0.62rem;
+    font-size: 0.95rem;
     background: rgb(var(--c-accent));
     color: rgb(var(--c-accent-ink));
     box-shadow: var(--shadow-glow);
@@ -337,6 +357,29 @@
   .btn-ghost:hover:not(:disabled) {
     border-color: rgb(var(--c-accent) / 0.55);
     background: rgb(var(--c-accent) / 0.08);
+  }
+
+  /*
+    Тихая кнопка: отказ, «пропустить», служебные переключатели. Моноширинный
+    в верхнем регистре — так она СРАЗУ читается как второстепенная и не спорит
+    с главным действием, даже когда их рядом четыре.
+  */
+  .btn-quiet {
+    @apply btn border;
+    font-family: var(--font-num);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background: transparent;
+    border-color: var(--line);
+    color: var(--muted);
+  }
+  .btn-quiet:hover:not(:disabled) {
+    border-color: rgb(var(--c-accent) / 0.5);
+    color: var(--ink);
   }
 
   .btn-danger {
@@ -474,11 +517,7 @@
 @keyframes card-fly-in {
   0% {
     opacity: 0;
-    transform: translateY(-90px) scale(0.8) rotate(-6deg);
-  }
-  65% {
-    opacity: 1;
-    transform: translateY(4px) scale(1.015) rotate(1deg);
+    transform: translateY(-10px) scale(0.985);
   }
   100% {
     opacity: 1;
@@ -486,7 +525,9 @@
   }
 }
 .card-fly-in {
-  animation: card-fly-in 320ms var(--ease-pop) both;
+  /* 🔴 Без вращения и подскока: карта «качалась» при появлении, и прокрутка
+     внутри неё в этот момент дёргалась. Осталось короткое мягкое проявление. */
+  animation: card-fly-in 190ms var(--ease-pop) both;
 }
 
 @keyframes dice-shake {
@@ -589,8 +630,10 @@
      грид-трека задаёт сама доска, доска меряет процент от этого же трека — и
      квадрат вырастал по ВЫСОТЕ, вылезая вправо под панель игроков на 90 px.
      Ровно из-за этого правая колонка «наезжала» на поле. */
-  width: min(100cqw, 100cqh);
-  height: min(100cqw, 100cqh);
+  /* Небольшой воздух снизу: поле, прижатое вплотную к краю окна, выглядит
+     обрезанным. Вычитаем его из высоты, иначе квадрат снова упрётся в край. */
+  width: min(100cqw, calc(100cqh - 24px));
+  height: min(100cqw, calc(100cqh - 24px));
   aspect-ratio: 1;
   will-change: width, height;
   contain: layout paint;

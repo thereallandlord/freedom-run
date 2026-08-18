@@ -204,7 +204,13 @@ export function useGame() {
     const ev = decideBotEvent(table, rnd)
     if (!ev) return
 
-    const delay = ev.type === 'ROLL' ? 700 : 480
+    /*
+     * 🔴 Бот думает ЗАМЕТНО. Раньше он решал за полсекунды: карточка
+     * появлялась и исчезала быстрее, чем её можно прочесть, и половина
+     * партии проходила мимо человека. За настоящим столом сосед тоже берёт
+     * паузу — и именно в эту паузу ты видишь, что ему выпало.
+     */
+    const delay = ev.type === 'ROLL' ? 900 : 2100
     botTimer.current = window.setTimeout(() => {
       setTable((prev) => {
         if (!prev) return prev

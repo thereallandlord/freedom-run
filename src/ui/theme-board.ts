@@ -35,15 +35,16 @@ const RAW = themes as unknown as Record<string, Raw>
  * Клетки рисует код по сетке 7×7, поэтому калибровка темам больше не нужна:
  * миры нарисованы БЕЗ клеток.
  */
-const NAMES: { id: string; name: string }[] = [
-  { id: 'leaf', name: 'Зелёный с листьями' },
-  { id: 'mint', name: 'Мятный минимал' },
-  { id: 'dusk', name: 'Сумерки' },
-  { id: 'sand', name: 'Песок' },
-  { id: 'emerald', name: 'Изумруд' },
-  { id: 'marble', name: 'Мрамор' },
-  { id: 'ink', name: 'Тушь' },
-]
+/*
+ * 🔴 Оформление стола ОДНО (решение Камиля 18.08): семь вариантов никто не
+ * перебирал, а каждый требовал своей проверки на контраст — и половина
+ * подписей на них не читалась. Оставлен бывший «Мятный минимал» под именем
+ * «Классический». Переключатель сам исчезает, пока вариант один: выпадающий
+ * список из одного пункта — это не выбор, а мусор в строке кнопок.
+ * Остальные картинки лежат в public и ждут: чтобы вернуть, достаточно
+ * дописать строку сюда.
+ */
+const NAMES: { id: string; name: string }[] = [{ id: 'mint', name: 'Классический' }]
 
 /** База сайта: на GitHub Pages приложение живёт в подпапке. */
 const BASE = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL ?? '/'
@@ -99,21 +100,33 @@ export function useBoardTheme(): BoardTheme {
  * Переменные темы для CSS. Вешаются на корень экрана стола, дальше панели
  * берут цвета оттуда — ни один цвет не зашит в разметку.
  */
-export function themeVars(t: BoardTheme): React.CSSProperties {
+export function themeVars(t: BoardTheme, appDark = false): React.CSSProperties {
+  /*
+   * 🔴 Тёмная тема ИНТЕРФЕЙСА перекрашивает и стол. Раньше палитра зависела
+   * только от картинки поля: карта светлая — значит светлые панели, хоть весь
+   * остальной сайт в тёмной теме. На тёмном экране это и давало «элементы,
+   * которые нельзя прочитать»: тёмный текст на тёмном стекле.
+   *
+   * Тёмный набор мягкий, а не чёрный: тёплый уголь вместо смолы, подписи
+   * приглушённые, но выше порога читаемости, рамки видны.
+   */
+  const dark = appDark || t.dark
   return {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     ...({
-      '--t-edge': t.edge,
-      '--t-panel': t.panel,
-      '--t-ink': t.ink,
-      '--t-muted': t.muted,
-      '--t-accent': t.accent,
-      '--t-line': t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(20,28,24,0.12)',
-      '--t-glass': t.dark ? 'rgba(16,22,19,0.66)' : 'rgba(255,255,255,0.78)',
-      '--t-panel-2': t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(20,28,24,0.04)',
-      '--t-cell': t.dark ? 'rgba(12,18,15,0.38)' : 'rgba(255,255,255,0.42)',
-      '--t-cell-line': t.dark ? 'rgba(255,255,255,0.26)' : 'rgba(20,28,24,0.18)',
-      '--t-on-accent': t.dark ? '#0B1310' : '#FFFFFF',
+      '--t-edge': dark ? '#20242A' : t.edge,
+      '--t-panel': dark ? '#252A31' : t.panel,
+      '--t-ink': dark ? '#ECEFEA' : t.ink,
+      '--t-muted': dark ? '#A6ADB4' : t.muted,
+      '--t-accent': dark ? '#3FCF97' : t.accent,
+      '--t-line': dark ? 'rgba(255,255,255,0.16)' : 'rgba(20,28,24,0.12)',
+      '--t-glass': dark ? 'rgba(32,36,42,0.82)' : 'rgba(255,255,255,0.78)',
+      '--t-panel-2': dark ? 'rgba(255,255,255,0.07)' : 'rgba(20,28,24,0.04)',
+      '--t-cell': dark ? 'rgba(24,28,33,0.62)' : 'rgba(255,255,255,0.42)',
+      '--t-cell-line': dark ? 'rgba(255,255,255,0.22)' : 'rgba(20,28,24,0.18)',
+      '--t-on-accent': dark ? '#0B1310' : '#FFFFFF',
+      /* Светлую карту под тёмной темой приглушаем — иначе она бьёт по глазам. */
+      '--t-scene-dim': dark ? '0.55' : '0',
     } as React.CSSProperties),
   }
 }
