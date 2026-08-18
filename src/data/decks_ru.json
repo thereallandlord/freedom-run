@@ -314,17 +314,6 @@
    "flavor": "Запустили на прошлой неделе, в чате пятьдесят тысяч человек, все пишут «в космос». Разработчики анонимны. Может вырасти в тридцать раз, а может обнулиться за час."
   },
   {
-   "id": "sd-park-msk-center",
-   "category": "parking",
-   "title": "Машиноместо в центре Москвы",
-   "text": "Подземный паркинг в переулке у Патриарших. Мест меньше, чем машин, очередь стоит годами — арендатор не съедет никогда.",
-   "cost": 4200000,
-   "downPayment": 1260000,
-   "mortgage": 0,
-   "cashFlow": 29800,
-   "kind": "realEstate"
-  },
-  {
    "id": "sd-loft-kzn",
    "category": "aptKZN",
    "title": "Лофт в старом здании на Баумана",
@@ -333,17 +322,6 @@
    "downPayment": 2850000,
    "mortgage": 0,
    "cashFlow": 67300,
-   "kind": "realEstate"
-  },
-  {
-   "id": "sd-dag-derbent",
-   "category": "houseRF",
-   "title": "Дом в старом Дербенте у крепости",
-   "text": "Каменный дом в квартале под стенами Нарын-Калы, самому городу пять тысяч лет. Туристов всё больше, гостевые дома забиты с мая по октябрь.",
-   "cost": 7800000,
-   "downPayment": 2340000,
-   "mortgage": 0,
-   "cashFlow": 55200,
    "kind": "realEstate"
   },
   {
@@ -423,20 +401,97 @@
    "downPayment": 500000,
    "liability": 2500000,
    "cashFlow": 56500
+  },
+  {
+   "id": "sd-re-bali-canggu",
+   "kind": "realEstate",
+   "category": "aptBALI",
+   "title": "Студия в Чангу, Бали",
+   "text": "Пять минут до сёрф-спота, кофейни на каждом углу. Сдаётся посуточно круглый год: сезон здесь не кончается, меняется только цена.",
+   "cost": 7200000,
+   "downPayment": 2160000,
+   "mortgage": 5040000,
+   "cashFlow": 66000
+  },
+  {
+   "id": "sd-re-bali-ubud",
+   "kind": "realEstate",
+   "category": "aptBALI",
+   "title": "Бунгало в рисовых полях, Убуд",
+   "text": "Дерево, стекло и вид на террасы. Живут в нём по месяцу-два: работают удалённо и не хотят уезжать.",
+   "cost": 5800000,
+   "downPayment": 1740000,
+   "mortgage": 4060000,
+   "cashFlow": 48300
+  },
+  {
+   "id": "sd-re-dxb-jvt",
+   "kind": "realEstate",
+   "category": "aptDXB",
+   "title": "Студия в Дубае, район JVT",
+   "text": "Тихие малоэтажки, свой парк, до метро десять минут. Берут те, кто переехал работать и не хочет платить за вид на Бурдж.",
+   "cost": 8400000,
+   "downPayment": 2520000,
+   "mortgage": 5880000,
+   "cashFlow": 59500
+  },
+  {
+   "id": "sd-re-dxb-silicon",
+   "kind": "realEstate",
+   "category": "aptDXB",
+   "title": "Однушка в Дубае, Силикон-Оазис",
+   "text": "Технопарк, университет и семьи инженеров вокруг. Арендатор въезжает на год и продлевает без разговоров.",
+   "cost": 9900000,
+   "downPayment": 2970000,
+   "mortgage": 6930000,
+   "cashFlow": 70100
+  },
+  {
+   "id": "sd-re-tur-mersin2",
+   "kind": "realEstate",
+   "category": "aptTUR",
+   "title": "1+1 у моря, Мерсин, Эрдемли",
+   "text": "Дом первой линии, бассейн во дворе. Летом сдаётся посуточно, зимой — тем, кто приехал зимовать.",
+   "cost": 3400000,
+   "downPayment": 1020000,
+   "mortgage": 2380000,
+   "cashFlow": 25500
+  },
+  {
+   "id": "sd-re-tur-alanya2",
+   "kind": "realEstate",
+   "category": "aptTUR",
+   "title": "2+1 в Оба, Алания",
+   "text": "Русскоязычный район, школа и рынок рядом. Стабильные годовые арендаторы, без сезонных провалов.",
+   "cost": 4900000,
+   "downPayment": 1470000,
+   "mortgage": 3430000,
+   "cashFlow": 34700
+  },
+  {
+   "id": "sd-re-sau-riyadh",
+   "kind": "realEstate",
+   "category": "aptSAU",
+   "title": "Квартира в Эр-Рияде, район Хиттин",
+   "text": "С января иностранцам можно владеть напрямую. Город растёт стройками, аренда идёт вверх вместе с ними.",
+   "cost": 12500000,
+   "downPayment": 3750000,
+   "mortgage": 8750000,
+   "cashFlow": 83300
+  },
+  {
+   "id": "sd-re-sau-jeddah",
+   "kind": "realEstate",
+   "category": "aptSAU",
+   "title": "Апартаменты в Джидде, у Корниша",
+   "text": "Набережная, море и поток паломников круглый год. Сдаётся и помесячно, и посуточно.",
+   "cost": 9800000,
+   "downPayment": 2940000,
+   "mortgage": 6860000,
+   "cashFlow": 69400
   }
  ],
  "BIG_DEALS_RU": [
-  {
-   "id": "big-re-kzn-azino",
-   "kind": "realEstate",
-   "category": "aptKZN",
-   "title": "Однушка в Азино (Казань)",
-   "text": "Хозяйка уезжает к дочери и торопится. Рассрочка от продавца без переплат, жильцы уже внутри и платят вовремя.",
-   "cost": 6500000,
-   "downPayment": 500000,
-   "mortgage": 6000000,
-   "cashFlow": 40600
-  },
   {
    "id": "big-re-kzn-pobedy",
    "kind": "realEstate",
@@ -480,17 +535,6 @@
    "downPayment": 1800000,
    "mortgage": 20200000,
    "cashFlow": 137500
-  },
-  {
-   "id": "big-re-spb-kupchino",
-   "kind": "realEstate",
-   "category": "aptSPB",
-   "title": "Однушка в Купчино (Питер)",
-   "text": "Классика Питера: серый дом, тёплые батареи, надёжный жилец. Продавец даёт рассрочку — торопится на дачу.",
-   "cost": 8000000,
-   "downPayment": 600000,
-   "mortgage": 7400000,
-   "cashFlow": 50000
   },
   {
    "id": "big-re-spb-vasilevsky",
@@ -645,6 +689,105 @@
    "downPayment": 2200000,
    "mortgage": 23800000,
    "cashFlow": 162500
+  },
+  {
+   "id": "big-re-bali-villa",
+   "kind": "realEstate",
+   "category": "aptBALI",
+   "title": "Вилла с бассейном в Убуде (Бали)",
+   "text": "Две спальни, свой бассейн, обслуживание местной командой. Ставка за ночь в высокий сезон — как за неделю в регионах.",
+   "cost": 18500000,
+   "downPayment": 5550000,
+   "mortgage": 12950000,
+   "cashFlow": 169600
+  },
+  {
+   "id": "big-re-bali-seminyak",
+   "kind": "realEstate",
+   "category": "aptBALI",
+   "title": "Апартаменты в Семиньяке (Бали)",
+   "text": "Дом с общим бассейном и охраной в двух шагах от пляжа. Управляющая компания берёт своё и сдаёт круглый год.",
+   "cost": 14000000,
+   "downPayment": 4200000,
+   "mortgage": 9800000,
+   "cashFlow": 116700
+  },
+  {
+   "id": "big-re-dxb-marina",
+   "kind": "realEstate",
+   "category": "aptDXB",
+   "title": "Однушка в Дубай Марине",
+   "text": "Вид на яхты, до метро пешком. Самый ликвидный район города: пустует не дольше недели.",
+   "cost": 26000000,
+   "downPayment": 7800000,
+   "mortgage": 18200000,
+   "cashFlow": 173300
+  },
+  {
+   "id": "big-re-dxb-business",
+   "kind": "realEstate",
+   "category": "aptDXB",
+   "title": "Апартаменты в Бизнес-Бей (Дубай)",
+   "text": "Офисный район у канала. Живут те, кто ходит на работу пешком и готов платить за это.",
+   "cost": 22000000,
+   "downPayment": 6600000,
+   "mortgage": 15400000,
+   "cashFlow": 155800
+  },
+  {
+   "id": "big-re-dxb-hills",
+   "kind": "realEstate",
+   "category": "aptDXB",
+   "title": "Таунхаус в Дубай Хиллс",
+   "text": "Семейный район с парком и школой. Арендаторы въезжают на несколько лет и не торгуются.",
+   "cost": 38000000,
+   "downPayment": 11400000,
+   "mortgage": 26600000,
+   "cashFlow": 237500
+  },
+  {
+   "id": "big-re-tur-istanbul2",
+   "kind": "realEstate",
+   "category": "aptTUR",
+   "title": "2+1 в Кадыкёе (Стамбул)",
+   "text": "Азиатский берег, набережная и кафе. Сдаётся студентам и молодым семьям, спрос не кончается.",
+   "cost": 13500000,
+   "downPayment": 4050000,
+   "mortgage": 9450000,
+   "cashFlow": 84400
+  },
+  {
+   "id": "big-re-tur-antalya2",
+   "kind": "realEstate",
+   "category": "aptTUR",
+   "title": "3+1 в Лара, Анталия",
+   "text": "Пять минут до пляжа, дом с бассейном. Летом посуточно по высокой ставке, зимой — долгосрочно.",
+   "cost": 11800000,
+   "downPayment": 3540000,
+   "mortgage": 8260000,
+   "cashFlow": 88500
+  },
+  {
+   "id": "big-re-tur-bodrum",
+   "kind": "realEstate",
+   "category": "aptTUR",
+   "title": "Дом с видом на залив, Бодрум",
+   "text": "Терраса, олива во дворе, море внизу. Три летних месяца дают половину годовой выручки.",
+   "cost": 16500000,
+   "downPayment": 4950000,
+   "mortgage": 11550000,
+   "cashFlow": 130600
+  },
+  {
+   "id": "big-re-sau-riyadh-big",
+   "kind": "realEstate",
+   "category": "aptSAU",
+   "title": "Две квартиры в новом районе Эр-Рияда",
+   "text": "Взяли сразу две рядом: одну сдают семье, вторую — командированным помесячно.",
+   "cost": 24000000,
+   "downPayment": 7200000,
+   "mortgage": 16800000,
+   "cashFlow": 160000
   }
  ],
  "MARKET_CARDS_RU": [

@@ -190,7 +190,9 @@
    "effect": {
     "kind": "assetPrice",
     "categories": [
-     "aptDXB"
+     "aptDXB",
+     "aptBALI",
+     "aptSAU"
     ],
     "pct": -15
    },
@@ -203,7 +205,9 @@
    "effect": {
     "kind": "assetFlow",
     "categories": [
-     "aptDXB"
+     "aptDXB",
+     "aptBALI",
+     "aptSAU"
     ],
     "pct": -25
    },

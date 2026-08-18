@@ -78,7 +78,24 @@ const STYLE = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Малые сделки — недвижимость Уфа / Казань / Челны. */
-const SCENES_SMALL_RE = {
+const SCENES_SMALL_RE = {  /* Зарубежное расширение: Бали, Саудия, ещё Дубай и Турция. */
+  'sd-re-bali-canggu':
+    'A compact modern studio villa in a tropical surf town at golden hour: open sliding doors, plunge pool, palm shadows on white walls, a surfboard leaning by the door, scooters passing on the lane',
+  'sd-re-bali-ubud':
+    'A wooden bungalow on stilts overlooking terraced rice fields at sunrise, mist in the valley, a laptop and coffee on the open terrace, tropical plants framing the view',
+  'sd-re-dxb-jvt':
+    'A quiet low-rise residential cluster in a desert city: clean beige facades, palm-lined pavement, a small community park, warm late-afternoon light',
+  'sd-re-dxb-silicon':
+    'A modern mid-rise apartment block beside a technology park: glass office buildings behind, families walking, landscaped lawns, clear evening sky',
+  'sd-re-tur-mersin2':
+    'A seafront apartment building with a courtyard pool on the Turkish Mediterranean coast, bougainvillea on the balconies, calm sea and mountains behind, bright summer morning',
+  'sd-re-tur-alanya2':
+    'A residential complex in a Turkish coastal town: pool, playground, small market across the street, mountains in the background, families outside in the evening',
+  'sd-re-sau-riyadh':
+    'A new residential district in a Gulf capital: clean modern low-rise blocks in pale stone, wide boulevard with young palms, construction cranes on the horizon, warm dusk',
+  'sd-re-sau-jeddah':
+    'Apartments overlooking a Red Sea corniche promenade: white facades, palm trees, families walking along the waterfront at sunset, calm sea',
+
   'sd-park-msk-center':
     'An underground parking garage in a central city district: numbered bays, a polished concrete floor, one empty space with a reserved sign, warm strip lighting, a car waiting in the ramp',
   'sd-loft-kzn':
@@ -828,7 +845,26 @@ const SCENES_GREEN = {
 }
 
 /** Большие сделки — недвижимость. */
-const SCENES_BIG_RE = {
+const SCENES_BIG_RE = {  /* Зарубежное расширение: крупные объекты. */
+  'big-re-bali-villa':
+    'A two-bedroom tropical villa with a private pool at dusk: warm lanterns, thatched roof, lush garden, rice terraces beyond the fence',
+  'big-re-bali-seminyak':
+    'A modern apartment complex near a tropical beach: shared pool lit at night, palm trees, guard at the gate, scooters parked outside',
+  'big-re-dxb-marina':
+    'A high-floor apartment view over a marina full of yachts, glass towers on both sides, blue water, bright clear day',
+  'big-re-dxb-business':
+    'A canal-side residential tower in a business district: office buildings, waterfront promenade, joggers at sunrise',
+  'big-re-dxb-hills':
+    'A family townhouse in a green suburb of a desert city: lawn, park across the street, school building visible, children on bicycles, clear morning',
+  'big-re-tur-istanbul2':
+    'A flat in an Istanbul neighbourhood on the Asian side: seaside promenade, ferries crossing the Bosphorus, cafes with people, soft afternoon light',
+  'big-re-tur-antalya2':
+    'A spacious apartment near a Mediterranean beach: building with a large pool, palm trees, sun loungers, families arriving with luggage in summer',
+  'big-re-tur-bodrum':
+    'A whitewashed house with a terrace above a blue Aegean bay, olive tree in the yard, bougainvillea, boats anchored below, late afternoon',
+  'big-re-sau-riyadh-big':
+    'Two adjacent apartments in a brand-new Gulf district: modern facade, wide clean street, palm saplings, one interior visible with hotel-style furnishing',
+
   'big-re-kzn-azino':
     'A tidy one-room apartment in a large Russian residential district: a suitcase by the door, family photographs on a shelf, tenants’ belongings still in place, tea things on the table, warm daylight',
   'big-re-kzn-pobedy':
