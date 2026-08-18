@@ -97,7 +97,10 @@ export function App() {
    * момент, а перезагрузка возвращает в ту же комнату.
    */
   useEffect(() => {
-    const code = room.room?.code
+    // Код комнаты держим в адресе, только пока человек в ней: на главной он
+    // читался бы как приглашение в партию, из которой мы только что вышли.
+    const inRoom = screen === 'lobby' || screen === 'game'
+    const code = inRoom ? room.room?.code : undefined
     const url = new URL(window.location.href)
     // ?v= ставит сторож свежести сборки; в адресе комнаты он лишний.
     url.searchParams.delete('v')
@@ -109,7 +112,7 @@ export function App() {
       url.searchParams.delete('room')
       window.history.replaceState(null, '', url)
     }
-  }, [room.room?.code])
+  }, [room.room?.code, screen])
 
   /**
    * Моё место за столом — это МОЙ идентификатор из комнаты.
