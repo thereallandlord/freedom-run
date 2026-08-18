@@ -269,6 +269,8 @@ export function CardModal(props: {
   dispatch: (e: TableEvent) => void
   /** Чужой ход: карту показываем, но решать нечего — кнопок нет. */
   spectate?: boolean
+  /** Открыть экран сделок поверх карточки: занять, позвать в долю. */
+  onOpenTrades?: () => void
 }) {
   const actor = props.table.seats[props.table.turnIndex]
   return (
@@ -283,12 +285,16 @@ function CardBody({
   seat,
   dispatch,
   spectate = false,
+  onOpenTrades,
 }: {
   table: Table
   seat: Seat
   dispatch: (e: TableEvent) => void
   spectate?: boolean
+  onOpenTrades?: () => void
 }) {
+  /** Соседи по столу — у кого вообще можно занять. */
+  const others = table.seats.filter((x) => x.id !== seat.id && !x.outOfGame)
   const p = table.pending
   const [shares, setShares] = useState(1)
   if (!p) return null
@@ -685,11 +691,24 @@ function CardBody({
           {halal && <HalalNote topic={investorAvailable ? 'musharaka' : 'murabaha'} />}
 
           {!canInstallment && !investorAvailable && (
-            <p className="text-center text-xs text-amber-400">
-              {halal
-                ? 'Не хватает даже на взнос — накопите или дождитесь сделки по карману'
-                : 'Не хватает наличных — возьмите кредит в банке'}
-            </p>
+            /*
+             * 🔴 Тупик убран. Раньше здесь просто сообщали «не хватает» — и
+             * человек оставался без единого хода, хотя занять у соседей можно
+             * было всегда: кнопка «Сделки» скрыта под карточкой, и до неё
+             * было не дотянуться. Теперь заём предлагается прямо тут.
+             */
+            <div className="space-y-2">
+              <p className="text-center text-xs text-amber-500 dark:text-amber-400">
+                {halal
+                  ? 'Не хватает даже на взнос — займите у соседей по столу или дождитесь сделки по карману'
+                  : 'Не хватает наличных — займите у соседей или возьмите кредит в банке'}
+              </p>
+              {onOpenTrades && others.length > 0 && (
+                <button onClick={onOpenTrades} className="btn-ghost w-full">
+                  🤝 Попросить в долг
+                </button>
+              )}
+            </div>
           )}
         </S>
       )

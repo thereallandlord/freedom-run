@@ -203,6 +203,7 @@ export function useGame() {
     const rnd = mulberry32(table.seed + events.length * 7919)
     const ev = decideBotEvent(table, rnd)
     if (!ev) return
+    const prev0 = table
 
     /*
      * 🔴 Бот думает ЗАМЕТНО. Раньше он решал за полсекунды: карточка
@@ -210,7 +211,14 @@ export function useGame() {
      * партии проходила мимо человека. За настоящим столом сосед тоже берёт
      * паузу — и именно в эту паузу ты видишь, что ему выпало.
      */
-    const delay = ev.type === 'ROLL' ? 900 : 2100
+    /*
+     * 🔴 Пауза РАЗНАЯ по смыслу события. Раньше все решения бота шли за
+     * полсекунды, потом за две — Камиль всё равно не успевал прочитать, что
+     * соседу выпало. Дольше всего держим момент, когда на экране лежит его
+     * карточка: это единственный способ увидеть чужой ход.
+     */
+    const delay =
+      ev.type === 'ROLL' ? 1000 : ev.type === 'END_TURN' ? 1600 : prev0.pending ? 3600 : 2000
     botTimer.current = window.setTimeout(() => {
       setTable((prev) => {
         if (!prev) return prev

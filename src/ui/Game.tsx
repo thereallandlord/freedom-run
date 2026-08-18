@@ -368,7 +368,7 @@ export function Game({
   return (
     <div
       ref={rootRef}
-      className="relative flex h-[100dvh] flex-col"
+      className="relative flex h-[100dvh] flex-col bg-[var(--t-edge)]"
       style={{ ...themeVars(theme, isDark), color: 'var(--t-ink)' }}
     >
       {/* Фон темы — отдельный слой: доска и панели ложатся поверх. */}
@@ -376,7 +376,14 @@ export function Game({
         src={theme.bg}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute inset-0 size-full object-cover"
+        /*
+          🔴 Картинка вылезает на несколько пикселей ВЫШЕ окна, а под ней лежит
+          заливка цветом края сцены. Светлая полоска сверху бралась именно из
+          этого зазора: где картинка не доставала до края, просвечивал фон
+          страницы. Теперь просвечивать нечему.
+        */
+        className="pointer-events-none absolute -inset-y-2 inset-x-0 w-full object-cover"
+        style={{ height: 'calc(100% + 1rem)' }}
       />
       {/* Затемнение сцены в тёмной теме: светлая карта иначе слепит. */}
       <div
@@ -716,6 +723,7 @@ export function Game({
           seat={seat}
           dispatch={dispatch}
           spectate={seat.isBot && !pendingInvolvesOthers(table)}
+          onOpenTrades={seat.isBot ? undefined : () => setTradesOpen(true)}
         />
       )}
       {bankOpen && <BankModal seat={seat} dispatch={dispatch} onClose={() => setBankOpen(false)} />}
