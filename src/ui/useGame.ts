@@ -34,6 +34,8 @@ export function useGame() {
   const [events, setEvents] = useState<TableEvent[]>([])
   const [table, setTable] = useState<Table | null>(null)
   const [rolling, setRolling] = useState(false)
+  /** Кубик уже остановился, но фишка ещё не пошла — показываем результат. */
+  const [rolled, setRolled] = useState<number[] | null>(null)
   const botTimer = useRef<number | null>(null)
   /** Отдельный таймер: на предложение бот отвечает и вне своего хода. */
   const offerTimer = useRef<number | null>(null)
@@ -103,15 +105,29 @@ export function useGame() {
     setTable(null)
   }, [])
 
-  /** Бросок с анимацией: сами кубики попадают в событие, поэтому партия воспроизводима. */
+  /**
+   * Бросок с анимацией: сами кубики попадают в событие, поэтому партия
+   * воспроизводима.
+   *
+   * 🔴 Две паузы, а не одна. Сначала кубик крутится, потом ОСТАНАВЛИВАЕТСЯ на
+   * выпавшем числе и его видно — и только после этого фишка идёт. Раньше по
+   * нажатию мгновенно открывалась карточка, и человек не понимал, сколько
+   * выпало и почему он там оказался. Камиль: «мы же бросок кубика делаем,
+   * должны видеть, сколько выпало».
+   */
   const roll = useCallback(
     (count: number) => {
+      const dice = Array.from({ length: count }, () => 1 + Math.floor(Math.random() * 6))
       setRolling(true)
+      setRolled(null)
       window.setTimeout(() => {
-        const dice = Array.from({ length: count }, () => 1 + Math.floor(Math.random() * 6))
-        dispatch({ type: 'ROLL', dice })
         setRolling(false)
-      }, 600)
+        setRolled(dice) // кубик замер — число видно
+        window.setTimeout(() => {
+          dispatch({ type: 'ROLL', dice })
+          setRolled(null)
+        }, 850)
+      }, 700)
     },
     [dispatch],
   )
@@ -241,5 +257,5 @@ export function useGame() {
     }
   }, [table, events.length])
 
-  return { setup, table, events, start, dispatch, undo, reset, rematch, roll, rolling }
+  return { setup, table, events, start, dispatch, undo, reset, rematch, roll, rolling, rolled }
 }

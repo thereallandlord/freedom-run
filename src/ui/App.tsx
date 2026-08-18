@@ -124,6 +124,7 @@ export function App() {
         dispatch={game.dispatch}
         roll={game.roll}
         rolling={game.rolling}
+          rolled={game.rolled}
         undo={game.undo}
         reset={() => {
           game.reset()

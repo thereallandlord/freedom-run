@@ -190,3 +190,139 @@ console.log('\n\nВЗАИМОДЕЙСТВИЯ МЕЖДУ ИГРОКАМИ')
       `расходы ${e0.toLocaleString('ru-RU')} → ${totalExpenses(t2.seats[0].ledger).toLocaleString('ru-RU')}`)
   }
 }
+
+// ─── Деньги не берутся из ниоткуда и не пропадают ────────────────────
+
+console.log('\n\nСОХРАНЕНИЕ ДЕНЕГ В СДЕЛКАХ')
+{
+  setRules({ currency: 'RUB' })
+  const pool = professionsFor('ru'); const dreams = dreamSpaces()
+  const mk = () => {
+    let t = createTable({ seed: 3, deckTheme: 'ru', seats: [0,1,2].map(i => ({
+      name: `И${i+1}`, professionId: pool[i * 5].id, dreamSpace: dreams[i].index,
+      isBot: false, botDifficulty: 'medium' as const,
+    })) })
+    return { ...t, seats: t.seats.map(s => ({ ...s, ledger: { ...s.ledger, cash: 30_000_000 } })) }
+  }
+  const purse = (t: Table) => t.seats.reduce((s, x) => s + x.ledger.cash, 0)
+  const ok = (label: string, cond: boolean, detail = '') =>
+    console.log(`  ${cond ? '✅' : '❌'} ${label}${detail ? ' — ' + detail : ''}`)
+  const M = (n: number) => Math.round(n).toLocaleString('ru-RU') + ' ₽'
+
+  // 1. Заём между игроками: сколько ушло, столько и пришло
+  {
+    let t = mk()
+    const before = purse(t)
+    t = applyTableEvent(t, { type: 'ASK_LOAN', fromId: t.seats[1].id, amount: 300_000 })
+    const o = t.offers[t.offers.length - 1]
+    // 🔴 В займе принимающая сторона — ЗАЁМЩИК (o.toId), а не тот, у кого просят:
+    // движок сверяет seatId с адресатом предложения. Так же делает и интерфейс.
+    t = applyTableEvent(t, { type: 'ACCEPT_OFFER_TRADE', offerId: o.id, seatId: o.toId! })
+    ok('заём не меняет общую кассу', purse(t) === before, `${M(before)} → ${M(purse(t))}`)
+    ok('деньги реально перешли', t.seats[0].ledger.cash > 30_000_000 && t.seats[1].ledger.cash < 30_000_000)
+  }
+
+  // 2. Продажа актива игроку: касса цела, актив один
+  {
+    let t = mk()
+    const card = dataMod.bigDeals('ru').find((c) => c.kind === 'realEstate' && c.cashFlow > 0)!
+    t = { ...t, pending: { kind: 'deal', card, deck: 'big' } as never, phase: 'resolving' }
+    t = applyTableEvent(t, { type: 'BUY_DEAL', payCash: true })
+    const a = t.seats[0].ledger.realEstate[0]
+    const before = purse(t)
+    const price = Math.max(1, fairAssetPrice(a.cost, a.mortgage))
+    t = applyTableEvent(t, { type: 'OFFER_ASSET', assetId: a.id, amount: price, toId: t.seats[1].id })
+    const o = t.offers[t.offers.length - 1]
+    t = applyTableEvent(t, { type: 'ACCEPT_OFFER_TRADE', offerId: o.id, seatId: t.seats[1].id })
+    ok('продажа актива не меняет общую кассу', purse(t) === before, `${M(before)} → ${M(purse(t))}`)
+    const total = t.seats.reduce((n, s) => n + s.ledger.realEstate.length, 0)
+    ok('актив не размножился и не пропал', total === 1, `объектов на столе: ${total}`)
+  }
+
+  // 3. Вход в чужую находку: плата за вход уходит владельцу карты
+  {
+    let t = mk()
+    const stock = dataMod.smallDeals('ru').find((c) => c.kind === 'stock')! as never as { price: number; symbol: string }
+    t = { ...t, pending: { kind: 'deal', card: stock as never, deck: 'small' } as never, phase: 'resolving' }
+    t = applyTableEvent(t, {
+      type: 'SET_ACCESS',
+      access: { mode: 'open', allow: t.seats.slice(1).map((s) => s.id), terms: { kind: 'fee', amount: 50_000 } },
+    })
+    const before = purse(t)
+    const c0 = t.seats[0].ledger.cash, c1 = t.seats[1].ledger.cash
+    t = applyTableEvent(t, { type: 'BUY_STOCK_SHARES', shares: 2, seatId: t.seats[1].id })
+    // Стоимость самих бумаг уходит «в рынок» — это не перевод между игроками.
+    // А вот плата за вход обязана остаться за столом, целиком у владельца карты.
+    ok('за столом убыло ровно на стоимость бумаг',
+      purse(t) === before - 2 * stock.price, `${M(before)} → ${M(purse(t))}`)
+    ok('плата ушла владельцу находки', t.seats[0].ledger.cash === c0 + 50_000,
+      `${M(c0)} → ${M(t.seats[0].ledger.cash)}`)
+    ok('вошедший заплатил и бумаги, и вход',
+      c1 - t.seats[1].ledger.cash === 2 * stock.price + 50_000,
+      `списано ${M(c1 - t.seats[1].ledger.cash)}`)
+  }
+
+  // 4. Закрытый вход: чужого не пускает
+  {
+    let t = mk()
+    const stock = dataMod.smallDeals('ru').find((c) => c.kind === 'stock')!
+    t = { ...t, pending: { kind: 'deal', card: stock, deck: 'small' } as never, phase: 'resolving' }
+    const c1 = t.seats[1].ledger.cash
+    t = applyTableEvent(t, { type: 'BUY_STOCK_SHARES', shares: 2, seatId: t.seats[1].id })
+    ok('без разрешения в чужую находку не войти', t.seats[1].ledger.cash === c1)
+  }
+
+  // 5. Доля с прибыли: берётся только с прибыли и уходит владельцу
+  {
+    let t = mk()
+    const stock = dataMod.smallDeals('ru').find((c) => c.kind === 'stock' && c.price > 1000)! as never as { price: number; symbol: string }
+    t = { ...t, pending: { kind: 'deal', card: stock as never, deck: 'small' } as never, phase: 'resolving' }
+    t = applyTableEvent(t, {
+      type: 'SET_ACCESS',
+      access: { mode: 'open', allow: t.seats.slice(1).map((s) => s.id), terms: { kind: 'profitShare', pct: 20 } },
+    })
+    t = applyTableEvent(t, { type: 'BUY_STOCK_SHARES', shares: 10, seatId: t.seats[1].id })
+    const lot = t.seats[1].ledger.stocks[0]
+    ok('условие записалось на лот', lot?.profitSharePct === 20 && lot?.profitShareTo === t.seats[0].id)
+
+    // продаём вдвое дороже — доля должна уйти
+    const before = purse(t), c0 = t.seats[0].ledger.cash
+    const sellAt = lot.costPerShare * 2
+    t = applyTableEvent(t, { type: 'SELL_STOCK_LOT', seatId: t.seats[1].id, lotId: lot.id, shares: 10, pricePerShare: sellAt })
+    const profit = (sellAt - lot.costPerShare) * 10
+    ok('доля с прибыли ушла владельцу находки',
+      t.seats[0].ledger.cash === c0 + Math.round(profit * 0.2),
+      `ожидали ${M(c0 + Math.round(profit * 0.2))}, вышло ${M(t.seats[0].ledger.cash)}`)
+    ok('продажа не меняет общую кассу сверх выручки',
+      purse(t) === before + 10 * sellAt, `${M(purse(t))}`)
+
+    // продажа в убыток — доля НЕ берётся
+    let t2 = mk()
+    t2 = { ...t2, pending: { kind: 'deal', card: stock as never, deck: 'small' } as never, phase: 'resolving' }
+    t2 = applyTableEvent(t2, { type: 'SET_ACCESS', access: { mode: 'open', allow: [t2.seats[1].id], terms: { kind: 'profitShare', pct: 20 } } })
+    t2 = applyTableEvent(t2, { type: 'BUY_STOCK_SHARES', shares: 10, seatId: t2.seats[1].id })
+    const lot2 = t2.seats[1].ledger.stocks[0]
+    const owner0 = t2.seats[0].ledger.cash
+    t2 = applyTableEvent(t2, { type: 'SELL_STOCK_LOT', seatId: t2.seats[1].id, lotId: lot2.id, shares: 10, pricePerShare: Math.round(lot2.costPerShare / 2) })
+    ok('с убытка доля НЕ берётся', t2.seats[0].ledger.cash === owner0)
+  }
+
+  // 6. Управляющий: забирает свою долю и из денег, и переводит остаток в свободу
+  {
+    let t = mk()
+    const biz = dataMod.smallDeals('ru').find((c) => c.kind === 'business' && !(c as never as {greenleaf?:boolean}).greenleaf)!
+    t = { ...t, pending: { kind: 'deal', card: biz, deck: 'small' } as never, phase: 'resolving' }
+    t = applyTableEvent(t, { type: 'BUY_DEAL', payCash: true })
+    const b = t.seats[0].ledger.businesses[0]
+    const flowBefore = passiveIncome(t.seats[0].ledger)
+    ok('без управляющего бизнес НЕ идёт в свободу', freedomIncome(t.seats[0].ledger) === 0,
+      `в свободу ${M(freedomIncome(t.seats[0].ledger))} при доходе ${M(flowBefore)}`)
+    t = applyTableEvent(t, { type: 'HIRE_MANAGER', assetId: b.id, pct: 35 })
+    const after = t.seats[0].ledger
+    const expect = Math.round(b.cashFlow * 0.65)
+    ok('управляющий забрал свою долю из денег',
+      Math.abs(passiveIncome(after) - expect) <= 1, `${M(passiveIncome(after))} против ожидаемых ${M(expect)}`)
+    ok('остаток пошёл в зачёт свободы',
+      Math.abs(freedomIncome(after) - expect) <= 1, `${M(freedomIncome(after))}`)
+  }
+}

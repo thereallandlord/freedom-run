@@ -22,12 +22,13 @@ import {
   dealTerms,
 } from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText } from '../engine/data'
-import { loanOutstanding } from '../engine/trades'
+import { loanOutstanding, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
 import { GL_PACKAGES, GL_PROMOS, glTotalIncome } from '../engine/greenleaf'
 import { RIBA } from '../engine/ledger'
 import { HalalNote } from './HalalNote'
 import { DealTradeActions } from './DealTradeActions'
+import { AccessPicker } from './AccessPicker'
 import { artByDream, artById, artBySpace, artByTicker } from './cardArt'
 import { debtsOf, seatOf } from './tradeHelpers'
 
@@ -122,6 +123,126 @@ function Shell({
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Строка продажи бумаги: сколько продать и подтверждение.
+ *
+ * 🔴 Раньше нажатие сразу продавало ВЕСЬ лот, без вопроса и без выбора
+ * количества. Продать часть было нельзя вовсе, а промах по кнопке стоил
+ * позиции целиком. Камиль: «продать сколько? Может, ты только часть хочешь».
+ */
+function SellLotRow({
+  holder,
+  lot,
+  price,
+  onSell,
+}: {
+  holder: Seat
+  lot: { id: string; shares: number; costPerShare: number }
+  price: number
+  onSell: (shares: number) => void
+}) {
+  const [n, setN] = useState(lot.shares)
+  const [armed, setArmed] = useState(false)
+  const take = Math.min(n, lot.shares)
+  const profit = (price - lot.costPerShare) * take
+  return (
+    <div className="panel-2 rounded-lg px-3 py-2 text-[13px]">
+      <div className="flex items-center justify-between gap-2">
+        <span>
+          <span style={{ color: holder.color }}>●</span> {holder.name} · {lot.shares} шт по{' '}
+          {money(lot.costPerShare)}
+        </span>
+        <span className={`tabnum font-semibold ${tone(profit)}`}>{signed(profit)}</span>
+      </div>
+      {lot.shares > 1 && (
+        <div className="mt-1.5 flex items-center gap-2">
+          <input
+            type="range"
+            min={1}
+            max={lot.shares}
+            value={take}
+            onChange={(e) => {
+              setN(Number(e.target.value))
+              setArmed(false)
+            }}
+            className="flex-1 accent-emerald-500"
+          />
+          <span className="tabnum w-20 text-right text-[12px]">{take} шт</span>
+        </div>
+      )}
+      <button
+        onClick={() => (armed ? onSell(take) : setArmed(true))}
+        className={`mt-1.5 w-full rounded-lg px-2 py-1.5 text-[12px] font-semibold transition ${
+          armed
+            ? 'bg-emerald-500 text-[#08150e]'
+            : 'border border-[var(--line)] hover:border-emerald-500/60'
+        }`}
+      >
+        {armed
+          ? `Точно продать ${take} шт за ${money(take * price)}?`
+          : `Продать ${take} шт · ${money(take * price)}`}
+      </button>
+    </div>
+  )
+}
+
+/**
+ * Перебить чужую находку своей ценой. Владелец увидит предложение и решит.
+ * Цена держится в честном коридоре — иначе «продам другу за рубль».
+ */
+function BidOnFinding({
+  table,
+  seat,
+  card,
+  dispatch,
+}: {
+  table: Table
+  seat: Seat
+  card: { downPayment: number; id: string }
+  dispatch: (e: TableEvent) => void
+}) {
+  const fair = fairCardPrice(card.downPayment)
+  const [price, setPrice] = useState(fair)
+  const actor = table.seats[table.turnIndex]
+  if (seat.isBot || !actor || actor.id === seat.id) return null
+  const mine = table.offers.find((o) => o.kind === 'resellCard' && o.bids.some((b) => b.seatId === seat.id))
+  if (mine) {
+    return (
+      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-[12px]">
+        Ваша цена предложена — ждём решения {actor.name}
+      </div>
+    )
+  }
+  return (
+    <div className="space-y-2 rounded-xl border border-[var(--line)] p-3">
+      <p className="text-[12px] font-bold">Хотите перекупить находку?</p>
+      <p className="text-[11px] leading-snug text-[var(--muted)]">
+        Предложите {actor.name} свою цену за право на эту сделку. Взнос по карточке вы платите
+        отдельно.
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={Math.round(fair * PRICE_FLOOR)}
+          max={Math.round(fair * PRICE_CEIL)}
+          step={10_000}
+          value={price}
+          onChange={(e) => setPrice(Number(e.target.value))}
+          className="flex-1 accent-emerald-500"
+        />
+        <span className="tabnum w-28 text-right text-[12px] font-semibold">{money(price)}</span>
+      </div>
+      <button
+        disabled={seat.ledger.cash < price + card.downPayment}
+        onClick={() => dispatch({ type: 'OFFER_CARD', amount: price, toId: actor.id })}
+        className="btn-ghost w-full border-emerald-500/50 text-[12px] disabled:opacity-40"
+      >
+        Предложить {money(price)}
+      </button>
     </div>
   )
 }
@@ -246,13 +367,36 @@ export function CardModal({
               </button>
             </div>
 
-            {table.seats.filter((x) => !x.outOfGame && x.track === 'rat' && x.id !== seat.id && x.ledger.cash >= s.price).length > 0 && (
+            {/* Кто нашёл — тот и решает, кого пускать и на каких условиях. */}
+            {!spectate && <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />}
+
+            {p.access &&
+              p.access.mode !== 'closed' &&
+              table.seats.filter(
+                (x) =>
+                  !x.outOfGame &&
+                  x.track === 'rat' &&
+                  x.id !== seat.id &&
+                  x.ledger.cash >= s.price &&
+                  (p.access!.mode === 'open' || p.access!.allow.includes(x.id)),
+              ).length > 0 && (
               <div className="panel-2 rounded-lg p-2">
                 <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                  Купить по этой цене может любой игрок Круга
+                  {p.access.terms.kind === 'free'
+                    ? 'Вход открыт — можно войти по этой цене'
+                    : p.access.terms.kind === 'fee'
+                      ? `Вход открыт · плата ${money(p.access.terms.amount)}`
+                      : `Вход открыт · ${p.access.terms.pct}% с прибыли при продаже`}
                 </div>
                 {table.seats
-                  .filter((x) => !x.outOfGame && x.track === 'rat' && x.id !== seat.id && x.ledger.cash >= s.price)
+                  .filter(
+                    (x) =>
+                      !x.outOfGame &&
+                      x.track === 'rat' &&
+                      x.id !== seat.id &&
+                      x.ledger.cash >= s.price &&
+                      (p.access!.mode === 'open' || p.access!.allow.includes(x.id)),
+                  )
                   .map((x) => {
                     const canBuy = Math.floor(x.ledger.cash / s.price)
                     return (
@@ -341,7 +485,30 @@ export function CardModal({
           art={CARD_ART[card.category] ?? (card.kind === 'business' ? '🏭' : '🏠')}
           photo={artById(card.id) ?? artByTicker((card as any).symbol)}
         >
+          {/*
+            🔴 Все числа сделки на виду и подписаны словами, а не терминами.
+            Требование Камиля: «сразу должно быть видно, сколько съедает платёж,
+            сколько объект приносит и сколько сам стоит — чтобы посчитать за
+            секунду». Раньше половина этих чисел пряталась внутри кнопок.
+          */}
           <div className="panel-2 space-y-1 rounded-lg p-3">
+            <Stat label="Стоит целиком" value={money(terms.cashPrice)} strong />
+            {terms.financeable && (
+              <>
+                <Stat label="Первый взнос" value={money(terms.instDown)} />
+                <Stat label="Платёж по рассрочке" value={`−${money(terms.instMonthly)}/мес`} />
+                <Stat label="Всего с наценкой" value={money(terms.instTotal)} />
+              </>
+            )}
+            <div className="my-1 border-t border-[var(--line)]" />
+            <Stat label="Приносит аренды" value={`${money(terms.cashFlow)}/мес`} />
+            {terms.financeable && (
+              <Stat
+                label="Останется в рассрочку"
+                value={`${signed(terms.instFlow)}/мес`}
+                strong
+              />
+            )}
             {growth ? (
               <Stat
                 label="Рост структуры"
@@ -417,6 +584,19 @@ export function CardModal({
             >
               🤝 Войти в долю с партнёром — пополам взнос, пополам доход и убыток
             </button>
+          )}
+
+          {/* Кто нашёл — тот и решает, кого пускать и на каких условиях. */}
+          {!spectate && <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />}
+
+          {/*
+            🔴 «Предложить свою цену» — обратная сторона «продать находку».
+            Раньше цену называл только владелец; теперь и остальные могут
+            перебить друг друга, а он выбирает. Механика ставок в движке лежала
+            готовая (BID_OFFER), ей просто никто не пользовался.
+          */}
+          {spectate && (
+            <BidOnFinding table={table} seat={seat} card={card} dispatch={dispatch} />
           )}
 
           {/* Сделку можно не только купить: право на неё продаётся, а вход делится с партнёром. */}
@@ -580,27 +760,21 @@ export function CardModal({
                   h.ledger.stocks
                     .filter((lot) => lot.symbol === card.symbol)
                     .map((lot) => (
-                      <button
+                      <SellLotRow
                         key={lot.id}
-                        onClick={() =>
+                        holder={h}
+                        lot={lot}
+                        price={px}
+                        onSell={(n) =>
                           dispatch({
                             type: 'SELL_STOCK_LOT',
                             seatId: h.id,
                             lotId: lot.id,
-                            shares: lot.shares,
+                            shares: n,
                             pricePerShare: px,
                           })
                         }
-                        className="panel-2 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] hover:border-emerald-500/60"
-                      >
-                        <span>
-                          <span style={{ color: h.color }}>●</span> {h.name} · {lot.shares} шт по{' '}
-                          {money(lot.costPerShare)}
-                        </span>
-                        <span className={`tabnum font-semibold ${tone(px - lot.costPerShare)}`}>
-                          {money(lot.shares * px)}
-                        </span>
-                      </button>
+                      />
                     )),
                 )}
               </div>

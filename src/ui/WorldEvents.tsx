@@ -6,7 +6,7 @@ import { WORLD_EVENT_MIN } from './useGame'
 import { subscribeWorldClock, worldEventDeadline } from './worldClock'
 
 /** Сколько карточка события висит на экране. Ход она не блокирует — только показывается. */
-const TOAST_MS = 9000
+// Карточка события больше не уходит по таймеру — закрывается кнопкой «Понятно».
 
 /**
  * Когда какое событие выпало — в этой сессии. В сохранение попадают только
@@ -264,30 +264,25 @@ function ago(at: number, now: number): string {
 
 // ─── Карточка события: прилетает на стол, ход не блокирует ────────────
 
+/**
+ * Карточка мирового события.
+ *
+ * 🔴 Сама НЕ исчезает и закрывается кнопкой «Понятно». Раньше уходила по
+ * таймеру, и Камиль не успевал прочитать: «уведомление уходит очень быстро,
+ * потом его нельзя посмотреть заново». Мир двигается редко и сильно —
+ * все за столом должны успеть прочитать. Перечитать можно в истории.
+ */
 function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void }) {
-  const [fill, setFill] = useState(100)
   const good = goodness(event.effect)
 
-  // Полоска убывает ровно столько, сколько карточка живёт — видно, что она уйдёт сама.
-  useEffect(() => {
-    const id = window.requestAnimationFrame(() => setFill(0))
-    return () => window.cancelAnimationFrame(id)
-  }, [])
-
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-50 flex justify-center px-3 sm:top-4">
-      <div className="card-fly-in panel pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl shadow-[var(--shadow-pop)]">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
+      <div className="card-fly-in panel w-full max-w-md overflow-hidden rounded-2xl shadow-[var(--shadow-pop)]">
         <div className="p-4">
           <div className="flex items-center gap-2">
             <span className="chip chip-accent">🌍 Мировое событие</span>
             <span className="text-[11px] text-[var(--muted)]">{event.severity}</span>
-            <button
-              onClick={onClose}
-              aria-label="Скрыть"
-              className="-m-2 ml-auto p-2 text-[var(--muted)] hover:text-[var(--ink)]"
-            >
-              ✕
-            </button>
+
           </div>
 
           <h3 className="mt-2.5 text-base font-bold leading-tight">{event.title}</h3>
@@ -303,13 +298,13 @@ function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void
             </div>
             <div className="mt-1 text-[11px] text-[var(--muted)]">сразу у всех за столом</div>
           </div>
-        </div>
 
-        <div className="h-0.5 w-full bg-line">
-          <div
-            className="h-full bg-accent transition-[width] ease-linear"
-            style={{ width: `${fill}%`, transitionDuration: `${TOAST_MS}ms` }}
-          />
+          <button onClick={onClose} className="btn-primary mt-4 w-full">
+            Понятно
+          </button>
+          <p className="mt-2 text-center text-[11px] text-[var(--muted)]">
+            Перечитать можно в строке рынка наверху
+          </p>
         </div>
       </div>
     </div>
@@ -494,11 +489,12 @@ export function WorldEvents({ table, compact }: { table: Table; compact?: boolea
     if (ev) setFresh({ ev, key: stamp })
   }, [stamp, table])
 
-  useEffect(() => {
-    if (!fresh) return
-    const id = window.setTimeout(() => setFresh(null), TOAST_MS)
-    return () => window.clearTimeout(id)
-  }, [fresh])
+  /*
+   * 🔴 Событие само НЕ исчезает. Камиль: «уведомление уходит очень быстро,
+   * потом его нельзя посмотреть заново». Мир двигается редко и сильно — все
+   * за столом должны успеть прочитать, что произошло, и закрыть по кнопке.
+   * История всё равно остаётся: её открывает строка рынка.
+   */
 
   return (
     <>

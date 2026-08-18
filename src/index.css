@@ -619,9 +619,15 @@
 /* Доска — квадрат по МЕНЬШЕЙ стороне свободного места. Одним aspect-ratio это
    не выразить: он растянет квадрат по ширине и вылезет за низ. */
 .board-fit {
+  /* Квадрат по МЕНЬШЕЙ стороне свободного места. Одним aspect-ratio это не
+     выразить: он растянет квадрат по ширине и вылезет за низ.
+     🔴 will-change + округление до целых пикселей: без них доска дрожала на
+     доли пикселя при каждом пересчёте раскладки. */
   width: min(100%, 100cqh);
   height: min(100cqh, 100%);
   aspect-ratio: 1;
+  will-change: width, height;
+  contain: layout paint;
 }
 .board-slot {
   container-type: size;
@@ -655,4 +661,21 @@
 .player-scroll > * {
   content-visibility: auto;
   contain-intrinsic-size: auto 600px;
+}
+
+/* Кубик крутится, пока считается бросок, и мягко замирает на результате. */
+@keyframes dice-spin-turn {
+  from { transform: rotate(0) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.08); }
+  to   { transform: rotate(360deg) scale(1); }
+}
+.dice-spin { animation: dice-spin-turn 0.42s linear infinite; }
+@keyframes dice-stop-pop {
+  from { transform: scale(0.86); opacity: 0; }
+  60%  { transform: scale(1.05); opacity: 1; }
+  to   { transform: scale(1); }
+}
+.dice-stop { animation: dice-stop-pop 0.28s cubic-bezier(0.2, 0.9, 0.25, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .dice-spin, .dice-stop { animation: none; }
 }

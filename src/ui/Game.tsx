@@ -10,6 +10,7 @@ import {
   monthlyCashFlow,
   netWorth,
   passiveIncome,
+  totalExpenses,
 } from '../engine/ledger'
 import { Board } from './Board'
 import { PlayerPanel, money, signed, tone } from './PlayerPanel'
@@ -24,40 +25,77 @@ import { WorldEvents } from './WorldEvents'
 import { BOARD_THEMES, setBoardTheme, themeVars, useBoardTheme } from './theme-board'
 import { Dropdown } from './Dropdown'
 
+/**
+ * Игроки за столом.
+ *
+ * 🔴 Столбиком в правой колонке (правка Камиля): полоской наверху они съедали
+ * высоту у доски, а справа было пусто. Столбиком помещается больше — видно и
+ * наличные, и доход, и насколько человек близок к свободе.
+ */
 function Scoreboard({
   table,
   viewId,
   onView,
+  stacked,
 }: {
   table: Table
   viewId: string
   onView: (id: string) => void
+  stacked?: boolean
 }) {
   return (
-    <div className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+    <div
+      className={
+        stacked
+          ? 'grid gap-1.5'
+          : '-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0'
+      }
+    >
       {table.seats.map((s, i) => {
         const active = i === table.turnIndex
         const flow = s.track === 'fast' ? fastTrackIncome(s.ledger) : monthlyCashFlow(s.ledger)
+        // Насколько человек близок к свободе — то же, что показывает его панель.
+        const need = totalExpenses(s.ledger)
+        const have = freedomIncome(s.ledger)
+        const pct = need > 0 ? Math.min(100, Math.round((have / need) * 100)) : 0
         return (
           <button
             key={s.id}
             onClick={() => onView(s.id)}
-            className={`flex shrink-0 items-center gap-2 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2.5 py-1.5 text-xs text-[var(--t-ink)] backdrop-blur-md transition ${
-              viewId === s.id ? 'border-emerald-500/70' : ''
-            } ${s.outOfGame ? 'opacity-40' : ''}`}
+            className={`shrink-0 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2.5 py-1.5 text-left text-xs text-[var(--t-ink)] backdrop-blur-md transition ${
+              stacked ? 'w-full' : 'flex items-center gap-2'
+            } ${viewId === s.id ? 'border-emerald-500/70' : ''} ${s.outOfGame ? 'opacity-40' : ''}`}
           >
-            <span
-              className={`size-2.5 rounded-full ${active ? 'ring-2 ring-white/70' : ''}`}
-              style={{ background: s.color }}
-            />
-            <span className="font-semibold">{s.name}</span>
-            <span className="tabnum text-[var(--t-muted, var(--muted))]">{money(s.ledger.cash)}</span>
-            <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>
-            {s.won && <span className="text-[10px]">🏆</span>}
-            {!s.won && s.track === 'fast' && (
-              <span className="text-[10px] text-emerald-400">свобода</span>
+            <span className={stacked ? 'flex items-center gap-2' : 'contents'}>
+              <span
+                className={`size-2.5 shrink-0 rounded-full ${active ? 'ring-2 ring-white/70' : ''}`}
+                style={{ background: s.color }}
+              />
+              <span className="font-semibold">{s.name}</span>
+              <span className={`tabnum text-[var(--t-muted, var(--muted))] ${stacked ? 'ml-auto' : ''}`}>
+                {money(s.ledger.cash)}
+              </span>
+              {!stacked && <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>}
+              {s.won && <span className="text-[10px]">🏆</span>}
+              {!s.won && s.track === 'fast' && (
+                <span className="text-[10px] text-emerald-400">свобода</span>
+              )}
+              {s.skipTurns > 0 && <span className="text-[10px] text-amber-400">−{s.skipTurns}</span>}
+            </span>
+            {stacked && (
+              <>
+                <span className="mt-1 block h-1 overflow-hidden rounded-full bg-[var(--t-line,var(--line))]">
+                  <span
+                    className="block h-full rounded-full transition-[width] duration-300"
+                    style={{ width: `${pct}%`, background: 'var(--t-accent)' }}
+                  />
+                </span>
+                <span className="mt-1 flex justify-between text-[10.5px]">
+                  <span className="text-[var(--t-muted, var(--muted))]">до свободы {pct}%</span>
+                  <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>
+                </span>
+              </>
             )}
-            {s.skipTurns > 0 && <span className="text-[10px] text-amber-400">−{s.skipTurns}</span>}
           </button>
         )
       })}
@@ -225,6 +263,7 @@ export function Game({
   dispatch,
   roll,
   rolling,
+  rolled,
   undo,
   reset,
   rematch,
@@ -234,6 +273,7 @@ export function Game({
   dispatch: (e: TableEvent) => void
   roll: (count: number) => void
   rolling: boolean
+  rolled: number[] | null
   undo: () => void
   reset: () => void
   rematch: () => void
@@ -258,7 +298,7 @@ export function Game({
 
   const theme = useBoardTheme()
   const diceOptions = diceCountFor(seat)
-  const canRoll = table.phase === 'awaitingRoll' && !seat.isBot && !rolling
+  const canRoll = table.phase === 'awaitingRoll' && !seat.isBot && !rolling && !rolled
   const canEscape =
     table.phase === 'awaitingRoll' && seat.track === 'rat' && isOutOfRatRace(seat.ledger) && !seat.isBot
 
@@ -321,14 +361,11 @@ export function Game({
         </div>
       )}
 
-      <div className="mb-3">
-        <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1">
-            <Scoreboard table={table} viewId={viewId} onView={setViewId} />
-          </div>
-          <WorldEvents table={table} compact />
-        </div>
-      </div>
+      {/*
+        🔴 Игроки и рынок переехали в ПРАВУЮ колонку (правка Камиля): та стояла
+        полупустой, а верхняя строка съедала высоту у доски. Теперь всю партию
+        видно сразу и левую панель не надо крутить.
+      */}
 
       {/*
         Стол занимает ровно остаток окна: панель игрока прокручивается ВНУТРИ
@@ -352,7 +389,14 @@ export function Game({
             panel рисовал белый прямоугольник, и получалась «карта внутри
             коробочки» — Камиль это и поймал.
           */}
-          <div className="relative flex h-full min-h-0 w-full gap-3">
+          {/*
+            🔴 Сетка с ФИКСИРОВАННОЙ правой колонкой, а не flex. Раньше её
+            ширина зависела от содержимого — приходило событие или менялись
+            цифры игроков, колонка дёргалась, а вместе с ней прыгала доска:
+            её размер считается от свободного места. Теперь место под колонку
+            занято заранее и не двигается.
+          */}
+          <div className="relative grid h-full min-h-0 w-full grid-cols-[minmax(0,1fr)_196px] gap-3">
             <MoneyToast table={table} />
             <TradeToast table={table} />
 
@@ -387,7 +431,7 @@ export function Game({
               Кнопка и цифры — в правой колонке (правка Камиля). Раньше они
               лежали под доской и съедали высоту, из-за чего доска мельчала.
             */}
-            <div className="flex w-[150px] shrink-0 flex-col gap-2 self-center">
+            <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
               {seat.isBot ? (
                 <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-4 text-center text-[12px] leading-snug text-[var(--t-muted, var(--muted))]">
                   {seat.name} думает…
@@ -421,8 +465,20 @@ export function Game({
                   ))}
                 </>
               ) : rolling ? (
-                <div className="dice-rolling grid place-items-center rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] py-5 text-3xl">
-                  🎲
+                <div className="dice-rolling grid place-items-center rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] py-5">
+                  <Pips n={0} spinning />
+                </div>
+              ) : rolled ? (
+                /* Кубик замер — число видно, и только потом фишка пойдёт. */
+                <div className="dice-stop grid place-items-center gap-2 rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] py-4">
+                  <div className="flex gap-2">
+                    {rolled.map((d, i) => (
+                      <Pips key={i} n={d} />
+                    ))}
+                  </div>
+                  <div className="tabnum text-2xl font-black leading-none">
+                    {rolled.reduce((a, b) => a + b, 0)}
+                  </div>
                 </div>
               ) : table.phase === 'turnEnd' ? (
                 /*
@@ -487,6 +543,20 @@ export function Game({
                 />
               </div>
 
+              <div className="min-h-0 shrink overflow-auto">
+                <div className="mb-1 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
+                  Игроки
+                </div>
+                <Scoreboard table={table} viewId={viewId} onView={setViewId} stacked />
+              </div>
+
+              <div>
+                <div className="mb-1 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
+                  Что в мире
+                </div>
+                <WorldEvents table={table} compact />
+              </div>
+
               {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — загадка. */}
               {myDebt > 0 && !seat.isBot && (
                 <button
@@ -542,5 +612,44 @@ export function Game({
       )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Грань кубика точками — не эмодзи и не цифра.
+ * 🔴 Кубик должен читаться как кубик: сначала крутится, потом замирает на
+ * выпавшем. Раньше по нажатию мгновенно открывалась карточка, и человек не
+ * понимал, сколько выпало и почему он оказался на этой клетке.
+ */
+function Pips({ n, spinning }: { n: number; spinning?: boolean }) {
+  const layout: Record<number, [number, number][]> = {
+    1: [[1, 1]],
+    2: [[0, 0], [2, 2]],
+    3: [[0, 0], [1, 1], [2, 2]],
+    4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+    5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+    6: [[0, 0], [0, 2], [1, 0], [1, 2], [2, 0], [2, 2]],
+  }
+  const dots = layout[n] ?? []
+  return (
+    <span
+      className={`grid size-11 grid-cols-3 grid-rows-3 place-items-center rounded-xl border p-1.5 ${
+        spinning ? 'dice-spin' : ''
+      }`}
+      style={{ borderColor: 'var(--t-line, var(--line))', background: 'var(--t-panel-2, var(--panel))' }}
+    >
+      {Array.from({ length: 9 }, (_, i) => {
+        const r = Math.floor(i / 3)
+        const c = i % 3
+        const on = dots.some(([dr, dc]) => dr === r && dc === c)
+        return (
+          <span
+            key={i}
+            className={`block size-[6px] rounded-full ${on ? '' : 'opacity-0'}`}
+            style={{ background: 'var(--t-ink, currentColor)' }}
+          />
+        )
+      })}
+    </span>
   )
 }
