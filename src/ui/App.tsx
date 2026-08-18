@@ -60,6 +60,7 @@ export function App() {
   const resumeRef = useRef<((moves: TableEvent[]) => void) | null>(null)
   const startRef = useRef<((setup: ReturnType<typeof toTableSetup>) => void) | null>(null)
   const journalRef = useRef<(() => void) | null>(null)
+  const closeRef = useRef<(() => void) | null>(null)
 
   // В разработке транспорт видно из консоли — иначе связь не продиагностировать.
   ;(window as unknown as { __net?: unknown }).__net = transport
@@ -83,6 +84,11 @@ export function App() {
       const ctrl = ev as { type?: string; setup?: unknown }
       if (ctrl?.type === '__START' && ctrl.setup) {
         startRef.current?.(ctrl.setup as ReturnType<typeof toTableSetup>)
+        return
+      }
+      // Хозяин закрыл комнату — расходимся, партии больше нет.
+      if (ctrl?.type === '__CLOSE_ROOM') {
+        closeRef.current?.()
         return
       }
       // Команда отмены не является ходом: она снимает последний ход у всех.
@@ -120,6 +126,12 @@ export function App() {
     game.resume(setup, [])
     setScreen('game')
   }
+  closeRef.current = () => {
+    room.leave('quit')
+    game.reset()
+    setScreen('landing')
+  }
+
   journalRef.current = () => {
     const r = room.room
     if (!r) return
@@ -318,6 +330,18 @@ export function App() {
           room.leave(mode)
           setScreen('landing')
         }}
+        myKey={room.me.id}
+        onDeleteRoom={
+          isHost
+            ? () => {
+                // Комната закрывается для всех: остальным приходит роспуск.
+                room.sendGame({ type: '__CLOSE_ROOM' })
+                room.leave('quit')
+                game.reset()
+                setScreen('landing')
+              }
+            : undefined
+        }
         onStart={() => {
           const setup = room.start()
           if (!setup) return
@@ -343,6 +367,12 @@ export function App() {
         onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
         onBack={() => setScreen('landing')}
         mode={creating ? 'create' : 'join'}
+        myKey={room.me.id}
+        onUseKey={(key) => {
+          // Ключ — это и есть место за столом: становимся тем же человеком.
+          room.setIdentity({ id: key })
+          setDraft((d) => ({ ...d, id: key }))
+        }}
         error={room.error}
         busy={room.connecting}
         onSubmit={async (role) => {

@@ -323,6 +323,10 @@ export interface JoinRoomProps {
   draft: PlayerDraft
   onChange: (patch: Partial<PlayerDraft>) => void
   onSubmit: (role: 'player' | 'spectator') => void
+  /** Мой ключ — показываем его в лобби, чтобы можно было перенести сессию. */
+  myKey?: string
+  /** Войти под чужим ключом: продолжить свою игру с другого устройства. */
+  onUseKey?: (key: string) => void
   onBack: () => void
   deckTheme?: DeckTheme
   takenColors?: string[]
@@ -406,9 +410,13 @@ export function JoinRoom({
   error,
   busy,
   allowSpectator = true,
+  myKey,
+  onUseKey,
 }: JoinRoomProps) {
   const creating = mode === 'create'
   const ready = draft.name.trim().length > 0
+  const [keyInput, setKeyInput] = useState('')
+  const [keyOpen, setKeyOpen] = useState(false)
 
   return (
     <Page width="form">
@@ -458,6 +466,41 @@ export function JoinRoom({
           </div>
         )}
 
+        {/*
+          🔴 Вход ПО КЛЮЧУ. Личность игрока живёт в браузере, поэтому с другого
+          устройства человек приходил как новый и садился на новое место — а
+          партия продолжалась без него. Ключ — это и есть его место: ввёл на
+          телефоне и продолжаешь ту же игру там, где остановился.
+        */}
+        {!creating && onUseKey && (
+          <div className="mt-4">
+            {!keyOpen ? (
+              <button
+                onClick={() => setKeyOpen(true)}
+                className="text-xs font-semibold text-muted underline decoration-dotted underline-offset-2 hover:text-ink"
+              >
+                Уже играли с другого устройства? Войти по ключу
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value.trim())}
+                  placeholder="Ключ игрока"
+                  className="flex-1 rounded-lg border border-line bg-panel2 px-3 py-2 text-sm outline-none focus:border-accent"
+                />
+                <button
+                  disabled={keyInput.length < 4}
+                  onClick={() => onUseKey(keyInput)}
+                  className="btn-ghost text-sm disabled:opacity-40"
+                >
+                  Войти
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <Rule className="my-5" />
 
         <button
@@ -502,6 +545,10 @@ export interface LobbyProps {
   onSettings: (patch: Partial<RoomSettings>) => void
   onResolveDisconnect: (id: string, mode: 'bot' | 'drop') => void
   onLeave: (mode: 'quit' | 'bot') => void
+  /** Мой ключ игрока — для переноса сессии на другое устройство. */
+  myKey?: string
+  /** Закрыть комнату совсем. Только у хозяина стола. */
+  onDeleteRoom?: () => void
   onStart: () => void
   topRight?: ReactNode
 }
@@ -521,9 +568,13 @@ export function Lobby({
   onSettings,
   onResolveDisconnect,
   onLeave,
+  myKey,
+  onDeleteRoom,
   onStart,
   topRight,
 }: LobbyProps) {
+  const [keyCopied, setKeyCopied] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const host = roomIsHost(room, meId)
   const me = room.players.find((p) => p.id === meId)
   const theme = room.settings.deckTheme
@@ -602,6 +653,36 @@ export function Lobby({
           {copied ? '✓' : 'Копировать'}
         </span>
       </button>
+
+      {/*
+        Ключ игрока: с ним можно продолжить эту же партию с телефона или
+        другого браузера — сядешь на своё место, а не новым человеком.
+      */}
+      {myKey && (
+        <button
+          onClick={() => {
+            void navigator.clipboard?.writeText(myKey)
+            setKeyCopied(true)
+            window.setTimeout(() => setKeyCopied(false), 1600)
+          }}
+          className="panel mb-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition duration-150 hover:border-accent/60"
+        >
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-lg">
+            🔑
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold">
+              {keyCopied ? 'Ключ скопирован' : 'Ваш ключ игрока'}
+            </span>
+            <span className="block truncate text-xs text-muted">
+              Войти с другого устройства и продолжить эту партию
+            </span>
+          </span>
+          <span className="shrink-0 rounded-lg bg-panel2 px-2.5 py-1.5 text-xs font-bold text-muted">
+            {keyCopied ? '✓' : 'Копировать'}
+          </span>
+        </button>
+      )}
 
       {/* ─── Созвон ─── */}
       <section className="panel mb-4 rounded-2xl p-4">
@@ -992,6 +1073,25 @@ export function Lobby({
             <button onClick={() => onLeave('quit')} className="btn-ghost w-full py-3">
               Выйти совсем
             </button>
+            {/* Комнату закрывает только хозяин: она перестаёт существовать для всех. */}
+            {onDeleteRoom && (
+              <button
+                onClick={() => {
+                  if (!confirmDelete) {
+                    setConfirmDelete(true)
+                    return
+                  }
+                  onDeleteRoom()
+                }}
+                className={`w-full rounded-lg py-3 text-sm font-semibold transition ${
+                  confirmDelete
+                    ? 'bg-rose-500 text-white'
+                    : 'border border-line text-muted hover:text-rose-500'
+                }`}
+              >
+                {confirmDelete ? 'Точно удалить комнату?' : 'Удалить комнату'}
+              </button>
+            )}
             <button
               onClick={() => setLeaving(false)}
               className="w-full py-2 text-sm text-muted hover:text-ink"

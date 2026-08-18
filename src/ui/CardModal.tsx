@@ -739,12 +739,52 @@ function CardBody({
           </div>
           )}
 
-          {investorAvailable && (
+          {/*
+            🔴 В ДОЛЮ ЗОВЁМ ЖИВЫХ ЛЮДЕЙ, а не безымянного «партнёра». Раньше
+            здесь была одна кнопка «войти в долю с партнёром»: Камиль нажимал
+            её, думая, что заходит вместе с Анваром, а деньги делились с
+            выдуманным инвестором. За столом сидят люди — им и предлагаем,
+            каждому поимённо (игроков может быть и пятеро).
+          */}
+          {investorAvailable && others.length > 0 && (
+            <div className="panel-2 rounded-lg p-2">
+              <div className="caps mb-1 text-[10px] font-bold text-[var(--muted)]">
+                Позвать в долю — пополам взнос, пополам доход
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {others.map((o) => (
+                  <button
+                    key={o.id}
+                    onClick={() =>
+                      dispatch({
+                        type: 'OFFER_COINVEST',
+                        amount: Math.round(card.downPayment / 2),
+                        share: 0.5,
+                        toId: o.id,
+                      })
+                    }
+                    className="rounded-full border border-[var(--line)] px-2.5 py-1 text-[12px] transition hover:border-emerald-500/60"
+                  >
+                    <span style={{ color: o.color }}>●</span> {o.name} — {money(
+                      Math.round(card.downPayment / 2),
+                    )}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-[10.5px] leading-snug text-[var(--muted)]">
+                Он получит предложение и ответит сам. Согласится — платите взнос пополам, доход и
+                убыток тоже пополам.
+              </p>
+            </div>
+          )}
+
+          {/* Живых соседей нет — остаётся сторонний соинвестор. */}
+          {investorAvailable && others.length === 0 && (
             <button
               onClick={() => dispatch({ type: 'BUY_DEAL', withInvestor: true })}
               className="btn-ghost w-full border-emerald-500/50"
             >
-              🤝 Войти в долю с партнёром — пополам взнос, пополам доход и убыток
+              🤝 Взять стороннего соинвестора — пополам взнос, пополам доход
             </button>
           )}
 
