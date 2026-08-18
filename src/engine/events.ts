@@ -95,7 +95,8 @@ export type TableEvent =
   | { type: 'SKIP_WANT' }
   | { type: 'GET_CITIZENSHIP'; id: string }
   /** Владелец находки решает, кого и на каких условиях пускать в сделку. */
-  | { type: 'SET_ACCESS'; access: import('./types').DealAccess }
+  /** access: null — снять условия и вернуться к выбору («передумать»). */
+  | { type: 'SET_ACCESS'; access: import('./types').DealAccess | null }
   /** Нанять управляющего в бизнес: доход начинает работать без тебя. */
   | { type: 'HIRE_MANAGER'; assetId: string; pct: number }
   /** Промоушен: забрать деньгами или поехать. Поездка даёт скрытую прибавку. */

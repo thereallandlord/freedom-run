@@ -390,6 +390,22 @@ function CardBody({
             )}
 
             {/*
+              🔴 Доход считается ПОД ВЫБРАННОЕ КОЛИЧЕСТВО и меняется вместе с
+              ползунком. Выше стоит дивиденд за одну бумагу — по нему нельзя
+              решать: человек двигает ползунок и должен видеть, сколько будет
+              приходить ему, а не умножать в уме.
+            */}
+            {max > 0 && !!s.dividendPerShare && (
+              <div className="flex items-baseline justify-between rounded-lg bg-emerald-500/10 px-3 py-2">
+                <span className="text-[13px] text-[var(--muted)]">Будет приходить</span>
+                <span className="tabnum text-[19px] font-bold leading-tight text-emerald-600 dark:text-emerald-400">
+                  {signed(Math.min(shares, max) * s.dividendPerShare)}
+                  <span className="text-[12px] font-semibold"> /мес</span>
+                </span>
+              </div>
+            )}
+
+            {/*
               Доли от того, что по карману. Ползунком целиться в «половину
               денег» неудобно, а решение чаще всего именно в долях: взять
               четверть или зайти на всё.

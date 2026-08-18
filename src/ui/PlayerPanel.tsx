@@ -513,7 +513,16 @@ export function PlayerPanel({
             {l.expenses.ribaPayment > 0 && (
               <Row label="Платёж по кредиту" value={money(l.expenses.ribaPayment)} dim />
             )}
-            <Row label="Прочее" value={money(l.expenses.otherExpenses)} dim />
+            {/*
+              🔴 Было просто «Прочее» — самая крупная строка расходов и при
+              этом непонятно за что. Называем вещи своими именами: это
+              повседневная жизнь, и она у всех есть.
+            */}
+            <Row
+              label="Жизнь: еда, ЖКХ, транспорт, связь"
+              value={money(l.expenses.otherExpenses)}
+              dim
+            />
             {l.pets > 0 && (
               <Row label={`Питомцы (${l.pets})`} value={money(petExpenses(l))} dim />
             )}

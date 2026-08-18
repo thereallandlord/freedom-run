@@ -1799,6 +1799,17 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     /** Владелец находки задаёт, кого и на каких условиях пускать. */
     case 'SET_ACCESS': {
       if (t.pending?.kind !== 'deal' && t.pending?.kind !== 'market') return prev
+      /*
+       * 🔴 `null` — это «передумать»: условия снимаются и человек возвращается
+       * к выбору. Раньше кнопка «передумать» слала «никого не пускаю» — то
+       * есть меняла одно решение на другое, а не отменяла его, и выйти к
+       * выбору было нельзя вовсе.
+       */
+      if (!event.access) {
+        t.pending = { ...t.pending, access: undefined }
+        log(t, seat.id, `${seat.name} передумал насчёт условий входа`)
+        return t
+      }
       t.pending = { ...t.pending, access: event.access }
       const a = event.access
       const who =

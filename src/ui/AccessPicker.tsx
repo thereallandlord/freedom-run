@@ -60,7 +60,11 @@ export function AccessPicker({
       <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-[12px]">
         <span>{who}</span>
         <button
-          onClick={() => dispatch({ type: 'SET_ACCESS', access: CLOSED })}
+          onClick={() => {
+            // Снимаем решение целиком, а не подменяем его на «никого не пускаю».
+            setOpenTerms(false)
+            dispatch({ type: 'SET_ACCESS', access: null })
+          }}
           className="ml-2 underline decoration-dotted underline-offset-2 opacity-70 hover:opacity-100"
         >
           передумать
