@@ -8,7 +8,7 @@
    "cost": 13300000,
    "downPayment": 2700000,
    "mortgage": 10600000,
-   "cashFlow": 62000,
+   "cashFlow": 83100,
    "kind": "realEstate"
   },
   {
@@ -19,7 +19,7 @@
    "cost": 11200000,
    "downPayment": 2300000,
    "mortgage": 8900000,
-   "cashFlow": 54000,
+   "cashFlow": 70000,
    "kind": "realEstate"
   },
   {
@@ -30,7 +30,7 @@
    "cost": 18300000,
    "downPayment": 3700000,
    "mortgage": 14600000,
-   "cashFlow": 85000,
+   "cashFlow": 114400,
    "kind": "realEstate"
   },
   {
@@ -41,7 +41,7 @@
    "cost": 20400000,
    "downPayment": 4100000,
    "mortgage": 16300000,
-   "cashFlow": 78000,
+   "cashFlow": 127500,
    "kind": "realEstate"
   },
   {
@@ -52,7 +52,7 @@
    "cost": 19400000,
    "downPayment": 3900000,
    "mortgage": 15500000,
-   "cashFlow": 88000,
+   "cashFlow": 121200,
    "kind": "realEstate"
   },
   {
@@ -204,7 +204,7 @@
    "cost": 450000,
    "downPayment": 450000,
    "mortgage": 0,
-   "cashFlow": 2500,
+   "cashFlow": 3200,
    "kind": "realEstate"
   },
   {
@@ -490,7 +490,7 @@
    "cost": 9000000,
    "downPayment": 700000,
    "mortgage": 8300000,
-   "cashFlow": 23500
+   "cashFlow": 39400
   },
   {
    "id": "big-re-kzn-itpark",
@@ -512,7 +512,7 @@
    "cost": 12000000,
    "downPayment": 1000000,
    "mortgage": 11000000,
-   "cashFlow": 38000
+   "cashFlow": 47500
   },
   {
    "id": "big-re-msk-ttk",
@@ -523,7 +523,7 @@
    "cost": 22000000,
    "downPayment": 1800000,
    "mortgage": 20200000,
-   "cashFlow": 62500
+   "cashFlow": 87100
   },
   {
    "id": "big-re-msk-city",
@@ -545,7 +545,7 @@
    "cost": 8000000,
    "downPayment": 600000,
    "mortgage": 7400000,
-   "cashFlow": 25500
+   "cashFlow": 35000
   },
   {
    "id": "big-re-spb-vasilevsky",
@@ -567,7 +567,7 @@
    "cost": 18000000,
    "downPayment": 1500000,
    "mortgage": 16500000,
-   "cashFlow": 52500
+   "cashFlow": 112500
   },
   {
    "id": "big-re-dxb-marina",
@@ -578,7 +578,7 @@
    "cost": 28000000,
    "downPayment": 2000000,
    "mortgage": 26000000,
-   "cashFlow": 107500
+   "cashFlow": 175000
   },
   {
    "id": "big-re-tur-alanya",
@@ -611,7 +611,7 @@
    "cost": 12000000,
    "downPayment": 1000000,
    "mortgage": 11000000,
-   "cashFlow": 45000
+   "cashFlow": 60000
   },
   {
    "id": "big-re-house-kama",
@@ -622,7 +622,7 @@
    "cost": 15000000,
    "downPayment": 1300000,
    "mortgage": 13700000,
-   "cashFlow": 39500
+   "cashFlow": 75000
   },
   {
    "id": "big-re-chelny-studio",
@@ -633,7 +633,7 @@
    "cost": 4000000,
    "downPayment": 300000,
    "mortgage": 3700000,
-   "cashFlow": 10500
+   "cashFlow": 25000
   },
   {
    "id": "big-re-ufa-arena-studio",
@@ -644,7 +644,7 @@
    "cost": 4500000,
    "downPayment": 400000,
    "mortgage": 4100000,
-   "cashFlow": 13500
+   "cashFlow": 28100
   },
   {
    "id": "big-biz-bakery-ufa",
