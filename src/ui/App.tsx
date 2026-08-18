@@ -58,6 +58,8 @@ export function App() {
   const applyRef = useRef<((ev: TableEvent) => void) | null>(null)
   const undoRef = useRef<(() => void) | null>(null)
   const resumeRef = useRef<((moves: TableEvent[]) => void) | null>(null)
+  const startRef = useRef<((setup: ReturnType<typeof toTableSetup>) => void) | null>(null)
+  const journalRef = useRef<(() => void) | null>(null)
 
   // В разработке транспорт видно из консоли — иначе связь не продиагностировать.
   ;(window as unknown as { __net?: unknown }).__net = transport
@@ -71,12 +73,31 @@ export function App() {
      */
     onGameJournal: (moves) => resumeRef.current?.(moves as TableEvent[]),
     onGameEvent: (ev) => {
+      /*
+       * 🔴 СТАРТ ПАРТИИ — ТОЖЕ СОБЫТИЕ КАНАЛА, а не местное решение каждого.
+       * Раньше хозяин собирал стол у себя, а гость — у себя, по своей копии
+       * состава: у одного карта появлялась, у второго нет, и начинали они
+       * в разное время. Теперь состав приезжает готовым, и стол рождается у
+       * всех одновременно и одинаковым.
+       */
+      const ctrl = ev as { type?: string; setup?: unknown }
+      if (ctrl?.type === '__START' && ctrl.setup) {
+        startRef.current?.(ctrl.setup as ReturnType<typeof toTableSetup>)
+        return
+      }
       // Команда отмены не является ходом: она снимает последний ход у всех.
-      if ((ev as { type?: string })?.type === '__UNDO') {
+      if (ctrl?.type === '__UNDO') {
         undoRef.current?.()
         return
       }
-      applyRef.current?.(ev as TableEvent)
+      /*
+       * 🔴 Стол пересобирается ПО ВСЕМУ ЖУРНАЛУ, а не докладывается по
+       * одному событию. Раньше каждый клиент клеил своё состояние из того,
+       * что до него доехало и в каком порядке: у одного клик срабатывал, у
+       * другого пропадал молча, а порядок ходов зависел от удачи сети.
+       * Журнал канала — общая правда; проигрываем его целиком, это дёшево.
+       */
+      journalRef.current?.()
     },
   })
 
@@ -95,6 +116,21 @@ export function App() {
   sendGameRef.current = (ev) => room.sendGame(ev)
   applyRef.current = (ev) => game.applyLocal(ev)
   undoRef.current = () => game.undoLocal()
+  startRef.current = (setup) => {
+    game.resume(setup, [])
+    setScreen('game')
+  }
+  journalRef.current = () => {
+    const r = room.room
+    if (!r) return
+    const moves = room.gameJournal().filter((m) => {
+      const t = (m as { type?: string })?.type
+      return t !== '__START' && t !== '__UNDO'
+    }) as TableEvent[]
+    game.resume(toTableSetup(r), moves)
+    setScreen('game')
+  }
+
   resumeRef.current = (moves) => {
     const r = room.room
     if (!r) return
@@ -185,6 +221,9 @@ export function App() {
     // Стол собираем из лобби (нажали «Начать») или при возвращении в свою
     // комнату по адресу — но не из-за случайной записи в хранилище.
     const returning = screen === 'game' && room.urlCode === room.room?.code
+    // В сетевой партии старт приходит событием канала — здесь только
+    // одиночная игра на одном устройстве.
+    if (online) return
     if (screen !== 'lobby' && !returning) return
     if (!started || !room.room || game.table) return
     /*
@@ -281,7 +320,11 @@ export function App() {
         }}
         onStart={() => {
           const setup = room.start()
-          if (setup) {
+          if (!setup) return
+          if (online) {
+            // Состав рассылаем готовым — стол рождается у всех одинаковым.
+            room.sendGame({ type: '__START', setup })
+          } else {
             game.start(setup)
             setScreen('game')
           }

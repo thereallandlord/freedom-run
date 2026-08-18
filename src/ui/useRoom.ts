@@ -36,6 +36,8 @@ export interface RoomNetHandlers {
   onPresence: (peers: { id: string }[]) => void
   onSnapshotRequest: (from: string) => void
   onSnapshot: (data: { snapshot: unknown; events?: unknown[] }) => void
+  /** Журнал переигран (порядок поправился) — состояние надо пересобрать. */
+  onRewind?: (events: unknown[]) => void
 }
 
 export interface RoomTransport {
@@ -45,6 +47,8 @@ export interface RoomTransport {
     handlers: RoomNetHandlers,
   ): Promise<void>
   send(payload: unknown): void
+  /** Текущий журнал канала — общая правда комнаты. */
+  journal?(): { payload: unknown }[]
   sendSnapshot(to: string, snapshot: unknown): void
   leave(): void
 }
@@ -121,6 +125,8 @@ export interface UseRoomApi {
   create: (draft: Partial<PlayerDraft>, settings?: Partial<RoomSettings>) => RoomState | null
   /** Отправить ход за столом всем в комнате. */
   sendGame: (ev: unknown) => void
+  /** Все ходы за столом из общего журнала — единственная правда партии. */
+  gameJournal: () => unknown[]
   /** true — вход начат; состав придёт снимком от хоста чуть позже. */
   join: (code: string, draft: Partial<PlayerDraft>, as?: 'player' | 'spectator') => boolean
   updateMe: (patch: Partial<PlayerDraft>) => void
@@ -200,6 +206,26 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
    * синхронизировалась, а партия у каждого шла своя: соперник не видел ни
    * карточек, ни бросков. Различаем по обёртке `{ __g: … }`.
    */
+  /**
+   * Все ходы за столом из общего журнала канала.
+   *
+   * 🔴 Это и есть «одна правда комнаты». Приложение больше не собирает стол
+   * по одному приходящему событию: оно берёт ВЕСЬ журнал и проигрывает его
+   * заново. Тогда порядок у всех одинаковый по построению, а не по удаче.
+   */
+  const gameJournal = useCallback((): unknown[] => {
+    const all = transport?.journal?.() ?? []
+    const out: unknown[] = []
+    for (const e of all) {
+      const w = (e as { payload?: { __g?: unknown } }).payload
+      if (w && typeof w === 'object' && '__g' in w) out.push(w.__g)
+    }
+    return out
+  }, [transport])
+
+  const gameJournalRef = useRef<() => unknown[]>(() => [])
+  gameJournalRef.current = gameJournal
+
   const sendGame = useCallback(
     (ev: unknown) => {
       if (transport) transport.send({ __g: ev } as unknown as RoomAction)
@@ -250,6 +276,11 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
       onSnapshotRequest: (from) => {
         const current = roomRef.current
         if (current) transport?.sendSnapshot(from, current)
+      },
+
+      onRewind: () => {
+        // Порядок в журнале поправился — пересобираем партию по нему.
+        onGameJournal?.(gameJournalRef.current())
       },
 
       onSnapshot: ({ snapshot, events }) => {
@@ -539,6 +570,7 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
     transferHost,
     setCallLink,
     sendGame,
+    gameJournal,
     setSettings,
     resolveDisconnect,
     leave,

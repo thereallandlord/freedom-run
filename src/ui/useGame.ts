@@ -124,8 +124,17 @@ export function useGame(net?: {
        * а не «того, чей ход». Без этого чужое нажатие тратило чужие деньги.
        */
       const signed = meId ? ({ ...e, by: meId } as TableEvent) : e
-      if (netSend) netSend(signed)
-      else applyLocal(signed)
+      if (netSend) {
+        /*
+         * 🔴 Свой клик применяем СРАЗУ, не дожидаясь эха. Ожидание круга по
+         * сети давало заметную задержку — «синхронизация стала медленнее», —
+         * а при потере эха клик пропадал совсем. Правду всё равно определяет
+         * общий журнал: как только он приедет, стол пересоберётся по нему, и
+         * если наш ход не прошёл, его просто не будет.
+         */
+        applyLocal(signed)
+        netSend(signed)
+      } else applyLocal(signed)
     },
     [applyLocal, meId, netSend],
   )
