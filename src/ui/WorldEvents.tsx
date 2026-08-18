@@ -5,7 +5,7 @@ import { MARKET_EFFECT_LIFE } from '../engine/table'
 import { artByWorld } from './cardArt'
 import { money } from './PlayerPanel'
 import { WORLD_EVENT_MIN } from './useGame'
-import { subscribeWorldClock, worldEventDeadline } from './worldClock'
+import { scheduleWorldEvent, subscribeWorldClock, worldEventDeadline } from './worldClock'
 
 /** Сколько карточка события висит на экране. Ход она не блокирует — только показывается. */
 // Карточка события больше не уходит по таймеру — закрывается кнопкой «Понятно».
@@ -565,6 +565,13 @@ export function WorldEvents({ table, compact }: { table: Table; compact?: boolea
     }
     if (!stamp || stamp === seen.current) return
     seen.current = stamp
+    /*
+     * 🔴 Отсчёт до следующего события заводится У КАЖДОГО, кто событие
+     * получил. Часы мира ведёт хозяин стола, и раньше песочные часы шли
+     * только у него — второй игрок видел прочерк и не понимал, живёт ли
+     * рынок вообще.
+     */
+    scheduleWorldEvent(WORLD_EVENT_MIN * 60_000)
     const idx = table.worldDeck.next - 1
     if (idx >= 0) SEEN_AT.set(`${table.seed}#${idx}`, Date.now())
     const ev = WORLD_EVENTS.find((e) => e.id === table.lastWorldEvent?.id)

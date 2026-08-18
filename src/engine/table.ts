@@ -1047,9 +1047,44 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
   if (prev.phase === 'finished' && event.type !== 'END_TURN') return prev
 
   const t = cloneTable(prev)
-  const seatIdx = t.turnIndex
+
+  /*
+   * 🔴 ДЕЙСТВУЮЩИЙ — АВТОР СОБЫТИЯ, а не тот, чей ход.
+   *
+   * Раньше здесь всегда стоял ходящий. На одном устройстве это одно и то же,
+   * а в сети приводило к тому, что чужое нажатие тратило чужие деньги: Анвар
+   * гасил свой долг, а гасился долг Камиля, потому что ход был его. Автор
+   * приезжает в самом событии; если его нет (игра на одном устройстве) —
+   * работаем как раньше, по ходящему.
+   *
+   * Действия, привязанные к ходу (бросок, выбор сделки, покупка, конец хода),
+   * дополнительно проверяются ниже: их принимаем только от того, чей ход.
+   */
+  const byIdx = event.by ? t.seats.findIndex((s2) => s2.id === event.by) : -1
+  const seatIdx = byIdx >= 0 ? byIdx : t.turnIndex
   const seat = t.seats[seatIdx]
   const l = seat.ledger
+
+  /** Действия хода: их шлёт только тот, чей сейчас ход. */
+  const TURN_BOUND = new Set([
+    'ROLL',
+    'CHOOSE_DEAL',
+    'PASS_CARD',
+    'END_TURN',
+    'PAY_DOODAD',
+    'ACCEPT_CHARITY',
+    'DECLINE_CHARITY',
+    'PAY_DOWNSIZED',
+    'ENTER_FAST_TRACK',
+    'BUY_FT_BUSINESS',
+    'TRY_VENTURE',
+    'BUY_DREAM',
+    'ACCEPT_FT_CHARITY',
+    'SET_ACCESS',
+    'SKIP_WANT',
+    'GL_PROMO_TAKE',
+  ])
+  if (byIdx >= 0 && byIdx !== t.turnIndex && TURN_BOUND.has(event.type)) return prev
 
   switch (event.type) {
     case 'ROLL': {

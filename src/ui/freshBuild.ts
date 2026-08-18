@@ -31,7 +31,15 @@ export async function ensureFreshBuild(): Promise<void> {
     // кэше на прокси страница уйдёт в вечный цикл обновления.
     if (sessionStorage.getItem(RELOADED) === build) return
     sessionStorage.setItem(RELOADED, build)
-    location.reload()
+    /*
+     * 🔴 Не `location.reload()`, а переход на ДРУГОЙ адрес. Safari на обычной
+     * перезагрузке спокойно отдаёт тот же самый index.html из кэша — и
+     * страница снова оказывается старой (спасал только режим инкогнито).
+     * Ссылка с новым параметром — другой адрес, кэшу нечего подставить.
+     */
+    const next = new URL(window.location.href)
+    next.searchParams.set('v', build)
+    location.replace(next.toString())
   } catch {
     /* сети нет — играем тем, что есть */
   }

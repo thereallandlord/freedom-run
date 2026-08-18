@@ -56,13 +56,21 @@ export function App() {
    */
   const sendGameRef = useRef<((ev: TableEvent) => void) | null>(null)
   const applyRef = useRef<((ev: TableEvent) => void) | null>(null)
+  const undoRef = useRef<(() => void) | null>(null)
 
   // В разработке транспорт видно из консоли — иначе связь не продиагностировать.
   ;(window as unknown as { __net?: unknown }).__net = transport
 
   const room = useRoom({
     transport,
-    onGameEvent: (ev) => applyRef.current?.(ev as TableEvent),
+    onGameEvent: (ev) => {
+      // Команда отмены не является ходом: она снимает последний ход у всех.
+      if ((ev as { type?: string })?.type === '__UNDO') {
+        undoRef.current?.()
+        return
+      }
+      applyRef.current?.(ev as TableEvent)
+    },
   })
 
   /** Онлайн-партия — та, где комната реально существует. */
@@ -73,11 +81,13 @@ export function App() {
       ? {
           send: (ev) => sendGameRef.current?.(ev),
           isHost,
+          meId: room.me.id,
         }
       : undefined,
   )
   sendGameRef.current = (ev) => room.sendGame(ev)
   applyRef.current = (ev) => game.applyLocal(ev)
+  undoRef.current = () => game.undoLocal()
 
   /*
    * 🔴 Пока идёт сетевая партия, адрес страницы — АДРЕС КОМНАТЫ. Раньше
@@ -89,6 +99,8 @@ export function App() {
   useEffect(() => {
     const code = room.room?.code
     const url = new URL(window.location.href)
+    // ?v= ставит сторож свежести сборки; в адресе комнаты он лишний.
+    url.searchParams.delete('v')
     const now = url.searchParams.get('room')
     if (code && now !== code) {
       url.searchParams.set('room', code)

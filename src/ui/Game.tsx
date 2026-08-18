@@ -309,18 +309,25 @@ export function Game({
   const seat = (meId ? table.seats.find((x) => x.id === meId) : null) ?? actor
   /** Мой ли сейчас ход. */
   const myTurn = actor.id === seat.id
-  const [viewId, setViewId] = useState(seat.id)
+  /**
+   * 🔴 Левая панель показывает ТОЛЬКО МОИ деньги и никогда чужие.
+   * Раньше клик по игроку справа подменял в ней человека — и через пару
+   * кликов было не понять, чьи цифры перед тобой и чей долг ты гасишь.
+   * Чужое теперь открывается отдельным окном и только на просмотр.
+   */
+  const [peekId, setPeekId] = useState<string | null>(null)
   const [bankOpen, setBankOpen] = useState(false)
   const [tradesOpen, setTradesOpen] = useState(false)
   /** Предложения, которые отложили кнопкой «Позже» — не лезут снова сами. */
   const [hiddenOffers, setHiddenOffers] = useState<string[]>([])
-  const viewed = table.seats.find((s) => s.id === viewId) ?? seat
+  const peeked = peekId ? (table.seats.find((s) => s.id === peekId) ?? null) : null
 
   /*
    * Слева — ВСЕГДА мои деньги. На одном устройстве «мои» меняются вместе с
    * ходом, онлайн — нет. Чужое видно по клику на карточку игрока справа.
    */
-  useEffect(() => setViewId(seat.id), [seat.id])
+  // Сменился ход — закрываем чужое окно: оно про прошлый момент.
+  useEffect(() => setPeekId(null), [table.turnIndex])
 
   const myDebt = playerDebt(table, seat.id)
 
@@ -475,8 +482,8 @@ export function Game({
         */}
         <div className="player-scroll order-2 overflow-x-hidden pb-0 lg:order-1 lg:min-h-0 lg:overflow-y-auto">
           <PlayerPanel
-            seat={viewed}
-            dispatch={viewed.id === seat.id && !seat.isBot && myTurn ? dispatch : undefined}
+            seat={seat}
+            dispatch={!seat.isBot ? dispatch : undefined}
             flowMul={table.market.flow}
           />
         </div>
@@ -736,7 +743,7 @@ export function Game({
                 <div className="caps mb-1 px-0.5 text-[9.5px] font-bold text-[var(--t-muted, var(--muted))]">
                   Игроки
                 </div>
-                <Scoreboard table={table} viewId={viewId} onView={setViewId} stacked />
+                <Scoreboard table={table} viewId={peekId ?? seat.id} onView={setPeekId} stacked />
               </div>
 
               <div>
@@ -787,6 +794,35 @@ export function Game({
           onOpenTrades={seat.isBot || !myTurn ? undefined : () => setTradesOpen(true)}
         />
       )}
+      {/*
+        Чужой портфель — отдельным окном и БЕЗ кнопок: посмотреть, как идут
+        дела у соседа, можно всегда; трогать его деньги — никогда.
+      */}
+      {peeked && peeked.id !== seat.id && (
+        <div
+          className="modal-layer fixed inset-0 z-[65] grid place-items-center bg-black/70 p-4"
+          onClick={() => setPeekId(null)}
+        >
+          <div
+            className="pop-in panel max-h-[85vh] w-full max-w-md overflow-auto rounded-2xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-lg font-bold">
+                <span style={{ color: peeked.color }}>●</span> {peeked.name}
+              </h2>
+              <button
+                onClick={() => setPeekId(null)}
+                className="text-[var(--muted)] hover:text-[var(--ink)]"
+              >
+                ✕
+              </button>
+            </div>
+            <PlayerPanel seat={peeked} flowMul={table.market.flow} />
+          </div>
+        </div>
+      )}
+
       {bankOpen && <BankModal seat={seat} dispatch={dispatch} onClose={() => setBankOpen(false)} />}
       {tradesOpen && !seat.isBot && (
         <TradesModal

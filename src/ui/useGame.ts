@@ -34,6 +34,8 @@ export function useGame(net?: {
   send: (ev: TableEvent) => void
   /** Я — хозяин стола: только он ведёт ботов, часы мира и передачу хода. */
   isHost: boolean
+  /** Моё место за столом: им подписывается каждое моё действие. */
+  meId?: string
 }) {
   const [setup, setSetup] = useState<TableSetup | null>(null)
   const [events, setEvents] = useState<TableEvent[]>([])
@@ -97,12 +99,18 @@ export function useGame(net?: {
    * карточек, ни бросков.
    */
   const netSend = net?.send
+  const meId = net?.meId
   const dispatch = useCallback(
     (e: TableEvent) => {
-      if (netSend) netSend(e)
-      else applyLocal(e)
+      /*
+       * Подписываем действие своим местом: движок берёт исполнителя из подписи,
+       * а не «того, чей ход». Без этого чужое нажатие тратило чужие деньги.
+       */
+      const signed = meId ? ({ ...e, by: meId } as TableEvent) : e
+      if (netSend) netSend(signed)
+      else applyLocal(signed)
     },
-    [applyLocal, netSend],
+    [applyLocal, meId, netSend],
   )
 
   /**
@@ -114,7 +122,12 @@ export function useGame(net?: {
    */
   const [undone, setUndone] = useState<TableEvent[]>([])
 
-  const undo = useCallback(() => {
+  /**
+   * Снять последний ход у СЕБЯ. В сетевой партии зовётся не напрямую, а по
+   * команде из канала — иначе журнал разъедется: у одного ход снят, у другого
+   * нет. Команду шлёт хозяин стола (кнопка есть только у него).
+   */
+  const undoLocal = useCallback(() => {
     if (!setup) return
     setEvents((evs) => {
       if (!evs.length) return evs
@@ -125,6 +138,13 @@ export function useGame(net?: {
       return next
     })
   }, [setup])
+
+  const undo = useCallback(() => {
+    // 🔴 В сети отмена — общая команда, а не личное дело: раньше хозяин
+    // откатывал ход только у себя, и столы немедленно расходились.
+    if (netSend) netSend({ type: '__UNDO' } as unknown as TableEvent)
+    else undoLocal()
+  }, [netSend, undoLocal])
 
   const redo = useCallback(() => {
     if (!setup) return
@@ -374,6 +394,7 @@ export function useGame(net?: {
     start,
     dispatch,
     applyLocal,
+    undoLocal,
     undo,
     redo,
     canRedo: undone.length > 0,

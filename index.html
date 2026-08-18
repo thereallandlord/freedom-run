@@ -2,6 +2,13 @@
 <html lang="ru" class="h-full" data-theme="light">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      🔴 Просим браузер не держать саму страницу: файлы сборки лежат под
+      хэшами и кэшируются как угодно долго, а вот index.html обязан быть
+      свежим — иначе Safari неделями подсовывает старую игру.
+    -->
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Cashflow, версия GreenLeaf — настольная игра про личные финансы: вырваться из денежной рутины и жить на пассивный доход." />
     <meta name="theme-color" content="#f7f6f2" />

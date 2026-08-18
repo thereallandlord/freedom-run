@@ -138,7 +138,19 @@ export interface UseRoomApi {
 export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
   const { transport = null, onGameEvent } = options
 
-  const [me, setMe] = useState<Identity>(() => readJson<Identity>(ME_KEY) ?? defaultIdentity())
+  const [me, setMe] = useState<Identity>(() => {
+    const saved = readJson<Identity>(ME_KEY)
+    if (saved?.id) return saved
+    /*
+     * 🔴 Записываем личность ТУТ ЖЕ, а не в эффекте. Иначе при закрытии
+     * вкладки до первой отрисовки (или при чистке хранилища в Safari) человек
+     * возвращался с новым идентификатором — и переставал быть хозяином
+     * собственной комнаты.
+     */
+    const fresh = defaultIdentity()
+    writeJson(ME_KEY, fresh)
+    return fresh
+  })
   const [room, setRoom] = useState<RoomState | null>(() => readJson<RoomState>(ROOM_KEY))
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
