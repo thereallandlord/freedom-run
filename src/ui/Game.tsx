@@ -318,6 +318,22 @@ export function Game({
   }, [theme])
 
   /*
+   * 🔴 «Белая полоска сверху» — это НЕ элемент страницы, а панель браузера:
+   * Safari красит её в meta theme-color, а там стоял почти белый цвет главной.
+   * За столом фон другой, и полоса читалась как чужая деталь интерфейса.
+   * Пока идёт партия, держим theme-color равным краю сцены.
+   */
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (!meta) return
+    const before = meta.getAttribute('content')
+    meta.setAttribute('content', isDark ? '#20242A' : theme.edge)
+    return () => {
+      if (before) meta.setAttribute('content', before)
+    }
+  }, [theme, isDark])
+
+  /*
    * 🔴 Название стоит по центру КАРТЫ, а не колонки. Поле квадратное и в
    * невысоком окне уже своей колонки — центр колонки тогда не совпадает с
    * центром карты, и надпись съезжает вбок. Считать это в CSS нечем: ширину
@@ -450,14 +466,14 @@ export function Game({
               названия совпадает с центром карты, а не с центром всей строки.
               На узком экране колонка одна, и всё честно переносится.
             */}
-            <header className="relative mb-2.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-3">
+            <header className="relative mb-1.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-1.5">
               {/* Позиция инлайном: в классе Tailwind запятая внутри var(...)
                   не разбирается, и правило молча не создавалось. */}
               <Wordmark
                 size="sm"
                 edition={false}
-                style={{ left: 'var(--board-cx, 50%)' }}
-                className="pointer-events-none absolute top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex"
+                style={{ left: 'var(--board-cx, 50%)', top: 'calc(50% + 3px)' }}
+                className="pointer-events-none absolute hidden -translate-x-1/2 -translate-y-1/2 lg:flex"
               />
               <Wordmark size="sm" edition={false} className="lg:hidden" />
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
