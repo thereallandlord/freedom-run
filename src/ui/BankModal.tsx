@@ -5,13 +5,26 @@ import type { TableEvent } from '../engine/events'
 import { RULES } from '../engine/ledger'
 import { money } from './PlayerPanel'
 
-const DEBT_LABEL: Record<PayableDebt, string> = {
+/**
+ * 🔴 В халяль-режиме процентных кредитов нет вовсе, поэтому и слов «автокредит»
+ * с «учебным кредитом» быть не должно: это рассрочки. Названия зависят от
+ * режима, а не зашиты намертво.
+ */
+const DEBT_LABEL_RIBA: Record<PayableDebt, string> = {
   homeMortgage: 'Ипотека',
   schoolLoans: 'Учебный кредит',
   carLoans: 'Автокредит',
   creditCards: 'Кредитные карты',
   retailDebt: 'Рассрочка',
 }
+const DEBT_LABEL_HALAL: Record<PayableDebt, string> = {
+  homeMortgage: 'Рассрочка за жильё',
+  schoolLoans: 'Оплата обучения',
+  carLoans: 'Рассрочка за машину',
+  creditCards: 'Рассрочка за технику',
+  retailDebt: 'Рассрочка за покупки',
+}
+const debtLabel = (d: PayableDebt) => (RULES.loansEnabled ? DEBT_LABEL_RIBA : DEBT_LABEL_HALAL)[d]
 
 export function BankModal({
   seat,
@@ -115,7 +128,7 @@ export function BankModal({
             Закрыть долг целиком — платёж исчезает
           </div>
           <div className="space-y-1.5">
-            {(Object.keys(DEBT_LABEL) as PayableDebt[]).map((debt) => {
+            {(Object.keys(debtLabel) as PayableDebt[]).map((debt) => {
               const balance = l.liabilities[debt]
               if (balance <= 0) return null
               const payment = l.expenses[DEBT_TO_PAYMENT[debt]]
@@ -137,7 +150,7 @@ export function BankModal({
                   }`}
                 >
                   <span>
-                    {armed ? `Точно погасить? Спишется ${money(balance)}` : DEBT_LABEL[debt]}
+                    {armed ? `Точно погасить? Спишется ${money(balance)}` : debtLabel(debt)}
                     {!armed && <span className="ml-2 text-[var(--muted)]">−{money(payment)}/мес</span>}
                   </span>
                   <span className="tabnum font-semibold">

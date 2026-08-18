@@ -626,3 +626,33 @@
 .board-slot {
   container-type: size;
 }
+
+/* Прибавка к наличным: цифра всплывает и тает. Без окна, которое надо
+   закрывать, — зарплата приходит каждый круг, и модалка бы задолбала. */
+@keyframes cash-bump-fly {
+  0% { opacity: 0; transform: translateY(6px) scale(0.94); }
+  18% { opacity: 1; transform: translateY(-2px) scale(1); }
+  70% { opacity: 1; transform: translateY(-14px); }
+  100% { opacity: 0; transform: translateY(-24px); }
+}
+.cash-bump {
+  animation: cash-bump-fly 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cash-bump { animation: none; opacity: 0; }
+}
+
+/* Панель игрока: прокрутка без рывков и без обрезанного края.
+   overscroll-contain — чтобы колесо не уводило страницу целиком;
+   content-visibility — чтобы длинный список не пересчитывался каждый кадр
+   (на этом и были подтормаживания). */
+.player-scroll {
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
+}
+.player-scroll > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}

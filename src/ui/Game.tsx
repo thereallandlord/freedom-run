@@ -21,6 +21,7 @@ import { liveOffers, offerResponders, playerDebt } from './tradeHelpers'
 import type { Offer } from '../engine/trades'
 import { WorldEvents } from './WorldEvents'
 import { BOARD_THEMES, setBoardTheme, themeVars, useBoardTheme } from './theme-board'
+import { Dropdown } from './Dropdown'
 
 function Scoreboard({
   table,
@@ -274,7 +275,7 @@ export function Game({
       />
       <div className="relative flex min-h-0 flex-1 flex-col px-3 py-3">
       <header className="mb-2.5 flex shrink-0 items-center gap-2">
-        <Wordmark size="sm" edition={false} />
+        <Wordmark size="sm" />
         <div className="ml-auto flex items-center gap-1.5">
           {topRight}
           <button
@@ -334,7 +335,12 @@ export function Game({
         во время партии неудобно — доска должна быть видна целиком.
       */}
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="order-2 min-h-0 overflow-auto lg:order-1">
+        {/*
+          🔴 Панель прокручивается ДО САМОГО НИЗА окна, а не обрезается по краю
+          сетки: обрубленный список выглядит поломкой. Отступ снизу нулевой,
+          последняя строка уходит под нижний край, как в обычной странице.
+        */}
+        <div className="player-scroll order-2 min-h-0 overflow-y-auto overflow-x-hidden pb-6 lg:order-1">
           <PlayerPanel seat={viewed} dispatch={viewed.id === seat.id && !seat.isBot ? dispatch : undefined} />
         </div>
 
@@ -464,28 +470,20 @@ export function Game({
                 </div>
               </div>
 
-              {/* Поле — оформление, а не правила: меняется прямо в партии. */}
-              <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-2.5 py-2 text-[var(--t-ink)] backdrop-blur-md">
-                <div className="mb-1.5 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
+              {/*
+                Поле — оформление, а не правила: меняется прямо в партии.
+                🔴 Одной кнопкой со списком: семь строк подряд съедали половину
+                колонки, а место справа нужно под игроков и события.
+              */}
+              <div className="text-[var(--t-ink)]">
+                <div className="mb-1 px-0.5 text-[9.5px] font-bold uppercase tracking-[0.09em] text-[var(--t-muted, var(--muted))]">
                   Поле
                 </div>
-                <div className="grid gap-1">
-                  {BOARD_THEMES.map((t2) => (
-                    <button
-                      key={t2.id}
-                      onClick={() => setBoardTheme(t2.id)}
-                      aria-pressed={theme.id === t2.id}
-                      className="rounded-lg px-2 py-1.5 text-left text-[11.5px] font-semibold transition"
-                      style={
-                        theme.id === t2.id
-                          ? { background: 'var(--t-accent)', color: 'var(--t-on-accent)' }
-                          : { color: 'var(--t-muted)' }
-                      }
-                    >
-                      {t2.name}
-                    </button>
-                  ))}
-                </div>
+                <Dropdown
+                  value={theme.id}
+                  onChange={(id) => setBoardTheme(id)}
+                  options={BOARD_THEMES.map((t2) => ({ value: t2.id, label: t2.name }))}
+                />
               </div>
 
               {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — загадка. */}

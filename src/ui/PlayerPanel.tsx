@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { RealEstateAsset, BusinessAsset, Seat } from '../engine/types'
 import {
   dividendLines,
@@ -69,6 +69,39 @@ const IconShop = () => (
     <path d="M3.5 9.5a2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0" />
   </svg>
 )
+
+/**
+ * Прибавка к наличным всплывающей цифрой.
+ *
+ * 🔴 Окно для зарплаты не годится: она приходит каждый круг, и закрывать его
+ * по три раза за круг — мучение (правка Камиля). Деньги должны просто
+ * «прилететь» рядом со счётом и растаять.
+ */
+function CashBump({ cash }: { cash: number }) {
+  const prev = useRef(cash)
+  const [bump, setBump] = useState<{ id: number; delta: number } | null>(null)
+  useEffect(() => {
+    const d = cash - prev.current
+    prev.current = cash
+    if (Math.abs(d) < 100) return
+    const id = Date.now()
+    setBump({ id, delta: d })
+    const t = window.setTimeout(() => setBump((b) => (b?.id === id ? null : b)), 1600)
+    return () => window.clearTimeout(t)
+  }, [cash])
+  if (!bump) return null
+  return (
+    <span
+      key={bump.id}
+      className={`cash-bump tabnum pointer-events-none absolute -top-1 left-0 text-[15px] font-black ${
+        bump.delta > 0 ? 'text-emerald-400' : 'text-rose-400'
+      }`}
+    >
+      {bump.delta > 0 ? '+' : '−'}
+      {money(Math.abs(bump.delta))}
+    </span>
+  )
+}
 
 function AssetRow({
   a,
@@ -277,11 +310,15 @@ export function PlayerPanel({ seat, dispatch }: { seat: Seat; dispatch?: (e: Tab
         <div className="mt-2 flex items-end justify-between">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-[var(--t-muted, var(--muted))]">Наличные</div>
-            <div className="tabnum text-2xl font-black">{money(l.cash)}</div>
+            <div className="relative">
+              <div className="tabnum text-2xl font-black">{money(l.cash)}</div>
+              <CashBump cash={l.cash} />
+            </div>
           </div>
           <div className="text-right">
             <div className="text-[10px] uppercase tracking-wider text-[var(--t-muted, var(--muted))]">
-              {onFast ? 'Доход свободы' : 'Поток в месяц'}
+              {/* «Поток» — слово из учебника. Человеку понятнее «чистый доход». */}
+              {onFast ? 'Доход свободы' : 'Чистый доход в месяц'}
             </div>
             <div className={`tabnum text-xl font-bold ${tone(onFast ? 1 : flow)}`}>
               {onFast ? money(fastTrackIncome(l)) : signed(flow)}
@@ -444,9 +481,11 @@ export function PlayerPanel({ seat, dispatch }: { seat: Seat; dispatch?: (e: Tab
 
       <Section title="Обязательства" tone="debt">
         {[
-          ['Жильё', l.liabilities.homeMortgage],
-          ['Обучение', l.liabilities.schoolLoans],
-          ['Машина', l.liabilities.carLoans],
+          // 🔴 В халяль-режиме это РАССРОЧКИ, а не кредиты: слово «автокредит»
+          // в игре без процентов противоречит самой её сути.
+          [RULES.loansEnabled ? 'Ипотека' : 'Рассрочка за жильё', l.liabilities.homeMortgage],
+          [RULES.loansEnabled ? 'Учебный кредит' : 'Оплата обучения', l.liabilities.schoolLoans],
+          [RULES.loansEnabled ? 'Автокредит' : 'Рассрочка за машину', l.liabilities.carLoans],
           [RULES.loansEnabled ? 'Кредитные карты' : 'Техника', l.liabilities.creditCards],
           ['Рассрочка', l.liabilities.retailDebt],
           [RULES.loansEnabled ? 'Банковский кредит' : 'Заём', l.liabilities.bankLoan],

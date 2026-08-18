@@ -9,9 +9,9 @@
  */
 
 const SIZES = {
-  sm: { box: 'size-8 rounded-[10px]', icon: 'size-[17px]', name: 'text-[15px]', edition: 'text-[8.5px]' },
-  md: { box: 'size-9 rounded-xl', icon: 'size-[19px]', name: 'text-[17px]', edition: 'text-[9px]' },
-  lg: { box: 'size-14 rounded-2xl', icon: 'size-7', name: 'text-[30px] sm:text-[34px]', edition: 'text-[11px]' },
+  sm: { box: 'size-8 rounded-[10px]', icon: 'size-[17px]', name: 'text-[15px]', edition: 'text-[8.5px]', editionInline: 'text-[10.5px]' },
+  md: { box: 'size-9 rounded-xl', icon: 'size-[19px]', name: 'text-[17px]', edition: 'text-[9px]', editionInline: 'text-[12px]' },
+  lg: { box: 'size-14 rounded-2xl', icon: 'size-7', name: 'text-[30px] sm:text-[34px]', edition: 'text-[11px]', editionInline: 'text-[17px] sm:text-[19px]' },
 } as const
 
 function Leaf({ className }: { className: string }) {
@@ -50,12 +50,16 @@ export function Wordmark({
       >
         <Leaf className={s.icon} />
       </span>
-      <span className="grid leading-none">
+      {/*
+        🔴 «GreenLeaf version» стоит В СТРОКУ с названием тем же шрифтом, только
+        мельче (правка Камиля 18.08). Прописными вразрядку под названием оно
+        читалось как подпись к чужому продукту, а это одно имя: Cashflow
+        GreenLeaf version.
+      */}
+      <span className="flex items-baseline gap-1.5 leading-none">
         <span className={`font-display font-bold tracking-[-0.03em] ${s.name}`}>Cashflow</span>
         {edition && (
-          <span
-            className={`mt-[3px] font-bold uppercase tracking-[0.16em] text-accent/85 ${s.edition}`}
-          >
+          <span className={`font-display font-bold tracking-[-0.02em] text-accent/85 ${s.editionInline}`}>
             GreenLeaf version
           </span>
         )}
