@@ -56,16 +56,6 @@
    "kind": "realEstate"
   },
   {
-   "id": "sd-dxb-dso-trap",
-   "title": "Студия в дальнем пригороде Дубая, котлован",
-   "text": "Застройщик без имени, сдача через три года, до метро сорок минут на машине. Пока строят — платишь обслуживание и налог, арендатора нет. Красивый рендер, пустая земля.",
-   "cost": 9800000,
-   "downPayment": 2000000,
-   "mortgage": 7800000,
-   "cashFlow": -14000,
-   "kind": "realEstate"
-  },
-  {
    "id": "sd-tur-mersin",
    "category": "aptTUR",
    "title": "1+1, Мерсин, Томюк",
@@ -140,27 +130,6 @@
    "downPayment": 2800000,
    "mortgage": 6500000,
    "cashFlow": 58100,
-   "kind": "realEstate"
-  },
-  {
-   "id": "sd-tur-trap",
-   "title": "Котлован в Алании от неизвестного застройщика",
-   "text": "Цена вдвое ниже рынка, но деньги просят вперёд и целиком. У фирмы один сданный объект и сайт на бесплатном шаблоне. Стройка уже месяц стоит.",
-   "cost": 5115000,
-   "downPayment": 5115000,
-   "mortgage": 0,
-   "cashFlow": 0,
-   "kind": "realEstate"
-  },
-  {
-   "id": "sd-room-ufa",
-   "category": "roomUFA",
-   "title": "Комната 13 м², Уфа, Черниковка",
-   "text": "Старый фонд, соседи по коммуналке. Зато вход в недвижимость за цену подержанной машины.",
-   "cost": 1100000,
-   "downPayment": 330000,
-   "mortgage": 0,
-   "cashFlow": 7800,
    "kind": "realEstate"
   },
   {
@@ -356,39 +325,6 @@
    "kind": "realEstate"
   },
   {
-   "id": "sd-park-kzn",
-   "category": "parking",
-   "title": "Машиноместо в новом ЖК, Казань",
-   "text": "Дом только заселился, мест на этаж втрое меньше квартир. Кто успел — тот и сдаёт соседям.",
-   "cost": 1100000,
-   "downPayment": 330000,
-   "mortgage": 0,
-   "cashFlow": 7800,
-   "kind": "realEstate"
-  },
-  {
-   "id": "sd-park-ufa",
-   "category": "parking",
-   "title": "Машиноместо, тёплый паркинг, Уфа",
-   "text": "Зимой во дворе не встать, а тут тепло и камера. Сосед снимает второй год и просит не продавать.",
-   "cost": 600000,
-   "downPayment": 180000,
-   "mortgage": 0,
-   "cashFlow": 4500,
-   "kind": "realEstate"
-  },
-  {
-   "id": "sd-store-kzn",
-   "category": "parking",
-   "title": "Кладовка в цоколе ЖК, Казань",
-   "text": "Четыре квадрата, куда весь подъезд прячет колёса, коляски и ёлку. Скучно и надёжно.",
-   "cost": 500000,
-   "downPayment": 150000,
-   "mortgage": 0,
-   "cashFlow": 3500,
-   "kind": "realEstate"
-  },
-  {
    "id": "sd-loft-kzn",
    "category": "aptKZN",
    "title": "Лофт в старом здании на Баумана",
@@ -419,17 +355,6 @@
    "downPayment": 1620000,
    "mortgage": 0,
    "cashFlow": 38200,
-   "kind": "realEstate"
-  },
-  {
-   "id": "sd-ufa-center",
-   "category": "roomUFA",
-   "title": "Студия в новой башне на Проспекте, Уфа",
-   "text": "Двадцать пятый этаж, вид на Белую, дом сдан в прошлом году. Снимают вахтовики нефтянки — платят помесячно и без торга.",
-   "cost": 4600000,
-   "downPayment": 1380000,
-   "mortgage": 0,
-   "cashFlow": 32600,
    "kind": "realEstate"
   },
   {
@@ -557,17 +482,6 @@
    "cashFlow": 137500
   },
   {
-   "id": "big-re-msk-city",
-   "kind": "realEstate",
-   "category": "aptMSK",
-   "title": "Апартаменты в башне у «Сити»",
-   "text": "Вид — миллион, статус — два. Но взносы башни и коммуналка съедают всё: после платежа рассрочки уходишь в минус. Зато красиво в сторис.",
-   "cost": 30000000,
-   "downPayment": 2000000,
-   "mortgage": 28000000,
-   "cashFlow": -27500
-  },
-  {
    "id": "big-re-spb-kupchino",
    "kind": "realEstate",
    "category": "aptSPB",
@@ -621,17 +535,6 @@
    "downPayment": 600000,
    "mortgage": 6900000,
    "cashFlow": 46900
-  },
-  {
-   "id": "big-re-tur-istanbul",
-   "kind": "realEstate",
-   "category": "aptTUR",
-   "title": "Квартира в новом районе Стамбула",
-   "text": "Район растёт, но пока полупустой: жильцы меняются, управляющий берёт своё. После платежа рассрочки — небольшой минус. Ставка на рост.",
-   "cost": 11000000,
-   "downPayment": 900000,
-   "mortgage": 10100000,
-   "cashFlow": -13000
   },
   {
    "id": "big-biz-halal-cafe-kzn",
@@ -722,17 +625,6 @@
    "cashFlow": 165000
   },
   {
-   "id": "big-re-ufa-house",
-   "kind": "realEstate",
-   "category": "houseRF",
-   "title": "Дом в Затоне с выходом к воде (Уфа)",
-   "text": "Новый район на берегу, до центра пятнадцать минут по мосту. Снимают семьями на годы.",
-   "cost": 16000000,
-   "downPayment": 1400000,
-   "mortgage": 14600000,
-   "cashFlow": 100000
-  },
-  {
    "id": "big-biz-carwash-kzn",
    "kind": "business",
    "category": "bizService",
@@ -753,17 +645,6 @@
    "downPayment": 2200000,
    "mortgage": 23800000,
    "cashFlow": 162500
-  },
-  {
-   "id": "big-re-ufa-loft",
-   "kind": "realEstate",
-   "category": "roomUFA",
-   "title": "Две студии в новом доме на Проспекте (Уфа)",
-   "text": "Купил сразу две рядом: одну сдаёшь помесячно, вторую посуточно. Дом новый, район растёт вместе с нефтянкой.",
-   "cost": 9200000,
-   "downPayment": 800000,
-   "mortgage": 8400000,
-   "cashFlow": 65200
   }
  ],
  "MARKET_CARDS_RU": [
