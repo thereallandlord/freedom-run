@@ -104,6 +104,12 @@ export interface RoomSettings {
   onDisconnect: DisconnectPolicy
   /** Сложность по умолчанию для новых ботов. */
   botDifficulty: BotDifficulty
+  /**
+   * Ссылка на созвон — Zoom, Meet, что угодно. Хост вставляет её при создании
+   * комнаты, остальные попадают туда одной кнопкой из-за стола.
+   * Пусто — кнопки просто нет.
+   */
+  callUrl?: string
 }
 
 export interface RoomState {

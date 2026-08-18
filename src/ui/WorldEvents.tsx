@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { Table, WorldEffect, WorldEvent } from '../engine/types'
 import { WORLD_EVENTS } from '../engine/data'
+import { artByWorld } from './cardArt'
 import { money } from './PlayerPanel'
 import { WORLD_EVENT_MIN } from './useGame'
 import { subscribeWorldClock, worldEventDeadline } from './worldClock'
@@ -278,6 +279,15 @@ function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
       <div className="card-fly-in panel w-full max-w-md overflow-hidden rounded-2xl shadow-[var(--shadow-pop)]">
+        {/* Событие двигает рынок у всех — пусть и выглядит как новость. */}
+        {artByWorld(event.id) && (
+          <img
+            src={artByWorld(event.id)!}
+            alt=""
+            className="h-36 w-full object-cover sm:h-44"
+            loading="lazy"
+          />
+        )}
         <div className="p-4">
           <div className="flex items-center gap-2">
             <span className="chip chip-accent">🌍 Мировое событие</span>

@@ -25,6 +25,8 @@ type Manifest = {
   byDeck?: Record<string, string>
   byDeckCard?: Record<string, string>
   byBoard?: Record<string, string>
+  /** Иллюстрации мировых событий: id события → файл. */
+  byWorld?: Record<string, string>
 }
 
 const M = manifest as Manifest
@@ -86,4 +88,13 @@ export function artBySpace(kind: string | undefined): string | null {
 export function artForCard(card: { id?: string; symbol?: string } | null | undefined): string | null {
   if (!card) return null
   return artById(card.id) ?? artByTicker(card.symbol)
+}
+
+/**
+ * Иллюстрация мирового события. Событие двигает рынок сразу у всех — оно
+ * должно выглядеть как новость, а не как строка текста.
+ */
+export function artByWorld(eventId: string | undefined): string | null {
+  if (!eventId) return null
+  return url(M.byWorld?.[eventId])
 }

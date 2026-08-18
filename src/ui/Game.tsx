@@ -267,6 +267,7 @@ export function Game({
   undo,
   reset,
   rematch,
+  callUrl,
   topRight,
 }: {
   table: Table
@@ -277,6 +278,8 @@ export function Game({
   undo: () => void
   reset: () => void
   rematch: () => void
+  /** Ссылка на созвон из настроек комнаты. Пусто — кнопки нет. */
+  callUrl?: string
   topRight?: React.ReactNode
 }) {
   const seat = currentSeat(table)
@@ -343,6 +346,23 @@ export function Game({
           <button onClick={reset} className="topbtn" title="Начать заново">
             🔄<span className="ml-1 hidden sm:inline">Заново</span>
           </button>
+          {/*
+            Созвон. Неприметная кнопка (просьба Камиля: «выделять не надо»):
+            играют голосом, и опоздавший не должен искать ссылку в переписке.
+          */}
+          {callUrl && (
+            <a
+              href={callUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="topbtn"
+              title="Открыть созвон в новой вкладке"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><rect x="2" y="6" width="13" height="12" rx="2.5" /><path d="m15 11 6-3.5v9L15 13" /></svg>
+              <span className="ml-0.5 hidden sm:inline">Созвон</span>
+            </a>
+          )}
+
           {/* Оформление поля — наверх к кнопкам: в правой колонке оно лишнее. */}
           <div className="w-[132px] text-[var(--t-ink)]">
             <Dropdown
@@ -439,7 +459,7 @@ export function Game({
               Кнопка и цифры — в правой колонке (правка Камиля). Раньше они
               лежали под доской и съедали высоту, из-за чего доска мельчала.
             */}
-            <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+            <div className="player-scroll flex min-h-0 flex-col gap-2 overflow-y-auto overflow-x-hidden">
               {seat.isBot ? (
                 <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-4 text-center text-[12px] leading-snug text-[var(--t-muted, var(--muted))]">
                   {seat.name} думает…

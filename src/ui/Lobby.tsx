@@ -820,6 +820,25 @@ export function Lobby({
                 label="Хост может отменять ходы"
                 hint="Откат последнего хода — на случай ошибки"
               />
+              {/*
+                Ссылка на созвон. Играют голосом, а созвон обычно уже идёт —
+                пусть кнопка будет прямо за столом, чтобы опоздавший не искал
+                ссылку в переписке.
+              */}
+              <label className="block">
+                <span className="text-[13px] font-semibold">Ссылка на созвон</span>
+                <span className="mt-0.5 block text-[12px] text-muted">
+                  Zoom, Meet, что угодно. За столом появится неприметная кнопка «Созвон»
+                </span>
+                <input
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://zoom.us/j/…"
+                  value={room.settings.callUrl ?? ''}
+                  onChange={(e) => onSettings({ callUrl: e.target.value.trim() })}
+                  className="input mt-1.5 w-full"
+                />
+              </label>
             </div>
           )}
         </section>

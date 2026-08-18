@@ -131,6 +131,7 @@ export function App() {
           setScreen('landing')
         }}
         rematch={game.rematch}
+        callUrl={room.room?.settings.callUrl}
         topRight={<ThemeToggle />}
       />
     )

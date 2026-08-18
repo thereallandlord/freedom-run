@@ -664,9 +664,16 @@
  *     ускорить, которая ровно всё и тормозила.
  */
 .player-scroll {
-  scrollbar-width: thin;
+  /* Полоса прокрутки скрыта — она мозолит глаз и обрезает край панели.
+     Прокрутка колесом и жестом работает как обычно. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+.player-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 /* Кубик крутится, пока считается бросок, и мягко замирает на результате. */

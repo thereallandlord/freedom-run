@@ -679,6 +679,73 @@ const WORLD_RULE =
   'No game spaces, no squares, no tiles, no grid, no board frame, no cards, no pieces, no panels. ' +
   'No text, no letters, no numbers, no logos.'
 
+const EVENT_RULE =
+  'Editorial news photograph, horizontal 3:2 frame, natural light, documentary feel. ' +
+  'No text, no letters, no numbers, no logos, no watermarks, no charts with readable labels. ' +
+  'Muted realistic colour, shallow depth of field. Scene:'
+
+/**
+ * Иллюстрации мировых событий. Событие двигает рынок для всех сразу — оно
+ * должно и выглядеть как новость, а не как строка текста.
+ * Кадр репортажный: не метафора, а сцена, в которой это происходит.
+ */
+const SCENES_EVENTS = {
+  "key-rate-cut-14":
+    EVENT_RULE + ' ' + "A central bank press briefing screen showing a falling interest rate line, journalists photographing it, cool institutional light",
+  "moscow-meter-750k":
+    EVENT_RULE + ' ' + "A dense skyline of new Moscow residential towers at golden hour, cranes still working on the furthest ones",
+  "country-house-revival":
+    EVENT_RULE + ' ' + "A wooden country house outside a Russian city with a car being unpacked in the yard, laptop bag on the porch, birch trees, spring light",
+  "rent-catches-up":
+    EVENT_RULE + ' ' + "A young couple signing a rental agreement at a kitchen table in an empty flat, boxes stacked behind them, daylight through bare windows",
+  "antalya-full-season":
+    EVENT_RULE + ' ' + "A packed Antalya beachfront in high summer: full sunbeds, hotel towers behind, hazy hot light",
+  "ai-demand-boom":
+    EVENT_RULE + ' ' + "A server room aisle with racks lit blue, an engineer walking between them carrying a laptop",
+  "partner-finance-expands":
+    EVENT_RULE + ' ' + "A busy community hall meeting: rows of chairs full, people talking in groups after a presentation, warm daylight",
+  "gold-record-5589":
+    EVENT_RULE + ' ' + "Stacked gold bars on a dark vault shelf under a single hard light, price ticker glow reflecting off them",
+  "sukuk-oversubscribed":
+    EVENT_RULE + ' ' + "A calm modern finance office in the Gulf: glass wall, city beyond, printed certificates in a neat stack on the desk",
+  "memecoin-january-run":
+    EVENT_RULE + ' ' + "A phone screen showing a vertical green spike, held above a cluttered desk at night, monitor glow on the wall",
+  "ipo-window-open":
+    EVENT_RULE + ' ' + "A trading floor screen wall glowing green, analysts standing and pointing, bright newsroom light",
+  "wage-war-for-staff":
+    EVENT_RULE + ' ' + "A job fair hall with company booths and queues of candidates, banners overhead, bright convention lighting",
+  "kazan-cools-off":
+    EVENT_RULE + ' ' + "A quiet showroom of a new Kazan residential complex: model of the building, empty chairs, sales manager alone at the desk, grey afternoon",
+  "dubai-handover-wave":
+    EVENT_RULE + ' ' + "A row of newly finished Dubai towers with handover banners and moving trucks at the base, hot clear daylight",
+  "dubai-holiday-home-permit":
+    EVENT_RULE + ' ' + "An official Dubai municipality notice pinned by a building entrance, an empty short-let apartment lobby behind, strong midday sun",
+  "lira-slides":
+    EVENT_RULE + ' ' + "A currency exchange board in Istanbul showing a sliding rate, passers-by glancing at it, evening street light",
+  "domestic-tourism-flat":
+    EVENT_RULE + ' ' + "An empty Russian seaside promenade out of season: shuttered kiosks, one couple walking, grey overcast sea",
+  "vat-threshold-20m":
+    EVENT_RULE + ' ' + "A small business owner at a cluttered counter reading a tax notification on a laptop, coffee going cold, morning light",
+  "container-price-double":
+    EVENT_RULE + ' ' + "A container terminal crane lifting a box against a grey sky, stacks of containers receding into haze",
+  "gold-pullback":
+    EVENT_RULE + ' ' + "A jeweller weighing gold on a scale in a quiet shop, price display showing a lower number, warm lamp light",
+  "bitcoin-under-90k":
+    EVENT_RULE + ' ' + "A dark room with a monitor showing a collapsed crypto chart, an untouched cup of coffee beside the keyboard",
+  "exchange-selloff":
+    EVENT_RULE + ' ' + "A brokerage screen wall almost entirely red, a trader with hands behind head, harsh office light",
+  "fuel-near-100":
+    EVENT_RULE + ' ' + "A fuel station price sign at dusk with high numbers, a car filling up in the background, cold blue evening",
+  "cadastre-tax-letters":
+    EVENT_RULE + ' ' + "Official tax envelopes fanned out on a kitchen table beside reading glasses and a calculator, harsh overhead light",
+  "friction-payment-blocked":
+    EVENT_RULE + ' ' + "A phone screen showing a declined international payment, a bank card lying beside it on a kitchen table, cold morning light",
+  "friction-account-closed":
+    EVENT_RULE + ' ' + "An official bank letter open on a desk beside a cut bank card and a closed laptop, grey daylight through a window",
+  "friction-visa-run":
+    EVENT_RULE + ' ' + "A rejected visa application form and an unused passport on a table with airline tickets, dim indoor light",
+}
+
 const SCENES_WORLD = {
   'world-diorama': WORLD_RULE + ' Style: photoreal miniature model under warm evening light, tiny glowing windows, soft deep shadows.',
   'world-isometric': WORLD_RULE + ' Style: bright crisp 3D render, vivid saturated colours, soft clouds at the corners, cheerful daylight.',
@@ -1126,6 +1193,13 @@ function buildJobs() {
 
   // Мир доски без клеток
   manifest.byWorld = manifest.byWorld || {}
+  for (const [k, scene] of Object.entries(SCENES_EVENTS)) {
+    push(k, `event-${k}`, scene, 'event', () => {
+      manifest.byWorld = manifest.byWorld || {}
+      manifest.byWorld[k] = `/cards/event-${k}.webp`
+    })
+  }
+
   for (const [k, scene] of Object.entries(SCENES_WORLD)) {
     push(k, k, scene, 'plate', () => {
       manifest.byWorld[k] = `/cards/${k}.webp`
