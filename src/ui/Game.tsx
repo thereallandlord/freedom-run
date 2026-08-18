@@ -267,10 +267,14 @@ export function Game({
   rolling,
   rolled,
   undo,
+  redo,
+  canRedo,
+  canUndo,
   reset,
   rematch,
   onExit,
   callUrl,
+  meId,
   topRight,
 }: {
   table: Table
@@ -279,15 +283,32 @@ export function Game({
   rolling: boolean
   rolled: number[] | null
   undo: () => void
+  redo: () => void
+  canRedo: boolean
+  /** Отменять ход может только хозяин стола: иначе каждый крутил бы общий журнал. */
+  canUndo: boolean
   reset: () => void
   rematch: () => void
   /** Уйти на главную, НЕ стирая партию. */
   onExit: () => void
   /** Ссылка на созвон из настроек комнаты. Пусто — кнопки нет. */
   callUrl?: string
+  /**
+   * Моё место за столом в сетевой партии.
+   *
+   * 🔴 Без него экран считал «своим» ТОГО, ЧЕЙ СЕЙЧАС ХОД. В игре на одном
+   * устройстве это верно — кубик переходит из рук в руки. Но онлайн это
+   * означало, что каждый видел чужие финансы в левой панели и мог бросить
+   * кубик за соседа. Пусто — значит хот-сит, поведение прежнее.
+   */
+  meId?: string
   topRight?: React.ReactNode
 }) {
-  const seat = currentSeat(table)
+  const actor = currentSeat(table)
+  /** Кем я играю: онлайн — своим местом, на одном устройстве — тем, чей ход. */
+  const seat = (meId ? table.seats.find((x) => x.id === meId) : null) ?? actor
+  /** Мой ли сейчас ход. */
+  const myTurn = actor.id === seat.id
   const [viewId, setViewId] = useState(seat.id)
   const [bankOpen, setBankOpen] = useState(false)
   const [tradesOpen, setTradesOpen] = useState(false)
@@ -295,7 +316,10 @@ export function Game({
   const [hiddenOffers, setHiddenOffers] = useState<string[]>([])
   const viewed = table.seats.find((s) => s.id === viewId) ?? seat
 
-  // Панель следует за активным игроком, пока её не переключили вручную.
+  /*
+   * Слева — ВСЕГДА мои деньги. На одном устройстве «мои» меняются вместе с
+   * ходом, онлайн — нет. Чужое видно по клику на карточку игрока справа.
+   */
   useEffect(() => setViewId(seat.id), [seat.id])
 
   const myDebt = playerDebt(table, seat.id)
@@ -316,6 +340,12 @@ export function Game({
     warmNow([theme.bg, theme.board])
     warmRestWhenIdle()
   }, [theme])
+
+  // Пока стол открыт, страница целиком не прокручивается — только её колонки.
+  useEffect(() => {
+    document.documentElement.classList.add('table-open')
+    return () => document.documentElement.classList.remove('table-open')
+  }, [])
 
   /*
    * 🔴 «Белая полоска сверху» — это НЕ элемент страницы, а панель браузера:
@@ -360,15 +390,15 @@ export function Game({
     ro.observe(root)
     return () => ro.disconnect()
   }, [table.phase, theme])
-  const diceOptions = diceCountFor(seat)
-  const canRoll = table.phase === 'awaitingRoll' && !seat.isBot && !rolling && !rolled
+  const diceOptions = diceCountFor(actor)
+  const canRoll = table.phase === 'awaitingRoll' && myTurn && !seat.isBot && !rolling && !rolled
   const canEscape =
-    table.phase === 'awaitingRoll' && seat.track === 'rat' && isOutOfRatRace(seat.ledger) && !seat.isBot
+    table.phase === 'awaitingRoll' && myTurn && seat.track === 'rat' && isOutOfRatRace(seat.ledger) && !seat.isBot
 
   return (
     <div
       ref={rootRef}
-      className="relative flex h-[100dvh] flex-col bg-[var(--t-edge)]"
+      className="relative flex h-[100dvh] flex-col overflow-hidden bg-[var(--t-edge)] lg:overflow-hidden"
       style={{ ...themeVars(theme, isDark), color: 'var(--t-ink)' }}
     >
       {/* Фон темы — отдельный слой: доска и панели ложатся поверх. */}
@@ -436,7 +466,7 @@ export function Game({
         <div className="player-scroll order-2 overflow-x-hidden pb-0 lg:order-1 lg:min-h-0 lg:overflow-y-auto">
           <PlayerPanel
             seat={viewed}
-            dispatch={viewed.id === seat.id && !seat.isBot ? dispatch : undefined}
+            dispatch={viewed.id === seat.id && !seat.isBot && myTurn ? dispatch : undefined}
             flowMul={table.market.flow}
           />
         </div>
@@ -503,9 +533,22 @@ export function Game({
             {RULES.loansEnabled ? '🏦' : '💼'}
             <span className="ml-1 hidden sm:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
           </button>
-          <button onClick={undo} className="topbtn" title="Откатить последнее событие">
-            ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
-          </button>
+          {/*
+            🔴 Отмена — ТОЛЬКО у хозяина стола. Журнал общий: если крутить его
+            может каждый, партия разъедется. «Вернуть» стоит рядом и появляется
+            лишь когда есть что возвращать — промах по «Отменить» иначе стоил
+            бы хода безвозвратно.
+          */}
+          {canUndo && (
+            <button onClick={undo} className="topbtn" title="Откатить последнее событие">
+              ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
+            </button>
+          )}
+          {canUndo && canRedo && (
+            <button onClick={redo} className="topbtn" title="Вернуть отменённое">
+              ↪️<span className="ml-1 hidden sm:inline">Вернуть</span>
+            </button>
+          )}
       {/*
       🔴 «Заново» стирало партию без вопроса. Теперь выход на главную —
             стол остаётся, на главной он ждёт карточкой «Продолжить». Начать
@@ -566,9 +609,9 @@ export function Game({
                 </span>
                 <span
                   className="font-display text-lg font-bold leading-tight sm:text-xl"
-                  style={{ color: seat.color }}
+                  style={{ color: actor.color }}
                 >
-                  {seat.name}
+                  {actor.name}
                 </span>
                 {!seat.isBot && canRoll && (
                   /*
@@ -607,9 +650,9 @@ export function Game({
               лежали под доской и съедали высоту, из-за чего доска мельчала.
             */}
             <div className="player-scroll flex flex-col gap-2 overflow-x-hidden pb-4 lg:min-h-0 lg:overflow-y-auto">
-              {seat.isBot ? (
+              {actor.isBot ? (
                 <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-4 text-center text-[12px] leading-snug text-[var(--t-muted, var(--muted))]">
-                  {seat.name} думает…
+                  {actor.name} думает…
                 </div>
               ) : canEscape ? (
                 <button
@@ -722,8 +765,8 @@ export function Game({
           table={table}
           seat={seat}
           dispatch={dispatch}
-          spectate={seat.isBot && !pendingInvolvesOthers(table)}
-          onOpenTrades={seat.isBot ? undefined : () => setTradesOpen(true)}
+          spectate={(actor.isBot || !myTurn) && !pendingInvolvesOthers(table)}
+          onOpenTrades={seat.isBot || !myTurn ? undefined : () => setTradesOpen(true)}
         />
       )}
       {bankOpen && <BankModal seat={seat} dispatch={dispatch} onClose={() => setBankOpen(false)} />}

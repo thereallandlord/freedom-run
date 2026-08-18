@@ -21,15 +21,20 @@ const STORAGE_KEY = 'freedom-run:save:v2'
  * 🔴 Первое событие приходит раньше остальных: иначе начало партии проходит
  * в мёртвом рынке и игрок успевает решить, что мировых событий вообще нет.
  */
-export const WORLD_EVENT_MIN = 8
-export const WORLD_EVENT_FIRST_MIN = 3
+export const WORLD_EVENT_MIN = 10
+export const WORLD_EVENT_FIRST_MIN = 10
 
 interface Save {
   setup: TableSetup
   events: TableEvent[]
 }
 
-export function useGame() {
+export function useGame(net?: {
+  /** Отправить ход в сеть. Задан — значит партия сетевая. */
+  send: (ev: TableEvent) => void
+  /** Я — хозяин стола: только он ведёт ботов, часы мира и передачу хода. */
+  isHost: boolean
+}) {
   const [setup, setSetup] = useState<TableSetup | null>(null)
   const [events, setEvents] = useState<TableEvent[]>([])
   const [table, setTable] = useState<Table | null>(null)
@@ -70,7 +75,13 @@ export function useGame() {
     setTable(createTable(s))
   }, [])
 
-  const dispatch = useCallback((e: TableEvent) => {
+  /**
+   * Применить ход локально. Единственная точка изменения стола.
+   * В сетевой партии сюда попадают ходы ТОЛЬКО из сети (включая эхо своего),
+   * поэтому у всех получается один и тот же порядок.
+   */
+  const applyLocal = useCallback((e: TableEvent) => {
+    setUndone([])
     setTable((prev) => {
       if (!prev) return prev
       const next = applyTableEvent(prev, e)
@@ -79,13 +90,53 @@ export function useGame() {
     })
   }, [])
 
-  /** Откат = проигрывание журнала без последнего хода. Даром достаётся от event sourcing. */
+  /*
+   * 🔴 В сетевой партии клик НЕ применяется на месте: он уходит в канал и
+   * возвращается эхом. Раньше ходы вообще не отправлялись — комната
+   * синхронизировалась, а партия у каждого шла своя, и соперник не видел ни
+   * карточек, ни бросков.
+   */
+  const netSend = net?.send
+  const dispatch = useCallback(
+    (e: TableEvent) => {
+      if (netSend) netSend(e)
+      else applyLocal(e)
+    },
+    [applyLocal, netSend],
+  )
+
+  /**
+   * Откат = проигрывание журнала без последнего хода. Даром достаётся от
+   * event sourcing.
+   *
+   * Отменённое складываем в стопку, чтобы можно было ВЕРНУТЬ: промах по
+   * кнопке «Отменить» иначе стоил бы хода без всякого способа его вернуть.
+   */
+  const [undone, setUndone] = useState<TableEvent[]>([])
+
   const undo = useCallback(() => {
     if (!setup) return
     setEvents((evs) => {
+      if (!evs.length) return evs
+      const last = evs[evs.length - 1]
       const next = evs.slice(0, -1)
+      setUndone((u) => [...u, last])
       setTable(replayTable(setup, next))
       return next
+    })
+  }, [setup])
+
+  const redo = useCallback(() => {
+    if (!setup) return
+    setUndone((u) => {
+      if (!u.length) return u
+      const ev = u[u.length - 1]
+      setEvents((evs) => {
+        const next = [...evs, ev]
+        setTable(replayTable(setup, next))
+        return next
+      })
+      return u.slice(0, -1)
     })
   }, [setup])
 
@@ -141,16 +192,36 @@ export function useGame() {
    * доходило. Срок следующего события уезжает в worldClock: его показывает
    * индикатор рынка.
    */
-  const worldClockOn = !!table && table.phase !== 'finished'
+  const drivesTable = !net || net.isHost
+  const worldClockOn = !!table && table.phase !== 'finished' && drivesTable
   useEffect(() => {
     if (!worldClockOn) return
     const period = WORLD_EVENT_MIN * 60_000
     const first = WORLD_EVENT_FIRST_MIN * 60_000
 
+    /*
+     * 🔴 Мир двигается ТОЛЬКО В ПАУЗЕ между ходами. Раньше событие приходило
+     * по таймеру когда угодно — в том числе поверх открытой карточки, посреди
+     * чужого решения. Оно сбивало игру. Теперь, если ход идёт, событие ждёт
+     * своей минуты: как только стол вернулся к ожиданию броска, оно выходит.
+     */
+    let waiting = false
+    const quiet = (t: Table | null) =>
+      !!t && t.phase === 'awaitingRoll' && !t.pending && !t.lastRoll
+
     const fire = () => {
       setTable((prev) => {
         if (!prev || prev.phase === 'finished') return prev
+        if (!quiet(prev)) {
+          waiting = true
+          return prev
+        }
+        waiting = false
         const ev = { type: 'WORLD_EVENT' as const, index: nextWorldEventIndex(prev) }
+        if (netSend) {
+          netSend(ev)
+          return prev
+        }
         const next = applyTableEvent(prev, ev)
         if (next !== prev) setEvents((evs) => [...evs, ev])
         return next
@@ -168,8 +239,14 @@ export function useGame() {
       }, period)
     }, first)
 
+    /* Событие, дождавшееся своей очереди, выходит на ближайшей тихой минуте. */
+    const watch = window.setInterval(() => {
+      if (waiting) fire()
+    }, 1200)
+
     return () => {
       window.clearTimeout(kick)
+      window.clearInterval(watch)
       if (interval !== null) window.clearInterval(interval)
     }
   }, [worldClockOn])
@@ -180,7 +257,7 @@ export function useGame() {
    * человек успел прочитать, что с ним только что произошло.
    */
   useEffect(() => {
-    if (!table || table.phase !== 'turnEnd') return
+    if (!table || table.phase !== 'turnEnd' || !drivesTable) return
     const seat = currentSeat(table)
     if (seat.isBot) return
     const id = window.setTimeout(() => {
@@ -196,7 +273,7 @@ export function useGame() {
 
   // ─── Водитель ботов ───
   useEffect(() => {
-    if (!table || table.phase === 'finished') return
+    if (!table || table.phase === 'finished' || !drivesTable) return
     const seat = currentSeat(table)
     if (!seat.isBot || seat.outOfGame) return
 
@@ -246,7 +323,7 @@ export function useGame() {
    * стол не выглядел роботизированным, и защита от зависшего предложения.
    */
   useEffect(() => {
-    if (!table || table.phase === 'finished') return
+    if (!table || table.phase === 'finished' || !drivesTable) return
     const reply = botOfferReply(table)
     if (!reply) return
 
@@ -271,5 +348,20 @@ export function useGame() {
     }
   }, [table, events.length])
 
-  return { setup, table, events, start, dispatch, undo, reset, rematch, roll, rolling, rolled }
+  return {
+    setup,
+    table,
+    events,
+    start,
+    dispatch,
+    applyLocal,
+    undo,
+    redo,
+    canRedo: undone.length > 0,
+    reset,
+    rematch,
+    roll,
+    rolling,
+    rolled,
+  }
 }

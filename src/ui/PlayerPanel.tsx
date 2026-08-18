@@ -474,27 +474,20 @@ export function PlayerPanel({
           </Section>
 
           {/*
-            Долговая нагрузка. Показываем ЧЕСТНО и заранее: игра не прячет
-            последствий процентного кредита, она их показывает — а решение
-            остаётся за игроком.
+            🔴 Показываем ТОЛЬКО деньги: сумму кредита и платёж. Влияние
+            кредита на то, какие карты выпадают, — механика СКРЫТАЯ (решение
+            Камиля 18.08): «просто как функция она есть, но мы не пишем, что
+            это влияет на игру». Раньше здесь стояла шкала «долговая
+            нагрузка» и прямая подпись — это выдавало правило целиком.
           */}
           {l.liabilities.ribaLoan > 0 && (
-            <div className="rounded-lg border border-rose-500/40 bg-rose-500/5 p-2 text-[11px] leading-snug">
-              <div className="font-bold text-rose-300">Долговая нагрузка</div>
-              <div className="mt-0.5">
-                Кредит {money(l.liabilities.ribaLoan)}
+            <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-2 text-[11px] leading-snug">
+              <div className="font-bold">Кредит</div>
+              <div className="tabnum mt-0.5">
+                {money(l.liabilities.ribaLoan)}
                 {(l.ribaGraceLeft ?? 0) > 0
                   ? ` · без платежей ещё ${l.ribaGraceLeft} зарплат`
                   : ` · платёж ${money(l.expenses.ribaPayment)}/мес`}
-              </div>
-              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[var(--panel-2)]">
-                <div
-                  className="h-full rounded-full bg-rose-400"
-                  style={{ width: `${Math.round((ribaRisk(l) / 0.6) * 100)}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[var(--muted)]">
-                Пока кредит открыт, неприятности приходят чаще.
               </div>
             </div>
           )}

@@ -389,6 +389,34 @@ function CardBody({
               </div>
             )}
 
+            {/*
+              Доли от того, что по карману. Ползунком целиться в «половину
+              денег» неудобно, а решение чаще всего именно в долях: взять
+              четверть или зайти на всё.
+            */}
+            {max > 1 && (
+              <div className="grid grid-cols-5 gap-1.5">
+                {[10, 25, 50, 75, 100].map((pct) => {
+                  const n = Math.max(1, Math.floor((max * pct) / 100))
+                  const on = Math.min(shares, max) === n
+                  return (
+                    <button
+                      key={pct}
+                      onClick={() => setShares(n)}
+                      className={`rounded-lg border px-1 py-1.5 text-[11.5px] font-semibold transition ${
+                        on
+                          ? 'border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                          : 'border-[var(--line)] text-[var(--muted)] hover:border-emerald-500/50'
+                      }`}
+                      title={`${n} шт · ${money(n * s.price)}`}
+                    >
+                      {pct}%
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <button
                 disabled={max < 1}
@@ -737,8 +765,7 @@ function CardBody({
               {ribaFree > 0 && (
                 <p className="text-center text-[11px] leading-snug text-[var(--muted)]">
                   Кредит дают сразу: первые {RIBA.gracePaydays} зарплат без платежей, потом{' '}
-                  {RIBA.ratePctMonthly}% в месяц от суммы. Пока он открыт, неприятности приходят
-                  чаще, а хорошие карты — реже.
+                  {RIBA.ratePctMonthly}% в месяц от суммы.
                 </p>
               )}
             </div>
@@ -1273,9 +1300,7 @@ function CardBody({
               >
                 Взять кредит в банке — дают сразу, первые {RIBA.gracePaydays} зарплат без платежей
               </button>
-              <p className="text-[11px] leading-snug text-[var(--muted)]">
-                Долговая нагрузка растёт вместе с кредитом, и она видна в панели.
-              </p>
+
             </div>
           )}
 

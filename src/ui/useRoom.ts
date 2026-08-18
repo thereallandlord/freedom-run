@@ -98,6 +98,8 @@ export interface UseRoomOptions {
   search?: string
   /** База для ссылки-приглашения. По умолчанию текущий адрес без параметров. */
   origin?: string
+  /** Ход за столом, пришедший от любого игрока (включая эхо своего). */
+  onGameEvent?: (ev: unknown) => void
 }
 
 export interface UseRoomApi {
@@ -115,7 +117,10 @@ export interface UseRoomApi {
   setIdentity: (patch: Partial<Identity>) => void
   clearError: () => void
   create: (draft: Partial<PlayerDraft>, settings?: Partial<RoomSettings>) => RoomState | null
-  join: (code: string, draft: Partial<PlayerDraft>, as?: 'player' | 'spectator') => void
+  /** Отправить ход за столом всем в комнате. */
+  sendGame: (ev: unknown) => void
+  /** true — вход начат; состав придёт снимком от хоста чуть позже. */
+  join: (code: string, draft: Partial<PlayerDraft>, as?: 'player' | 'spectator') => boolean
   updateMe: (patch: Partial<PlayerDraft>) => void
   addBot: (opts: { professionId: string; dreamSpace: number }) => void
   kick: (id: string) => void
@@ -131,7 +136,7 @@ export interface UseRoomApi {
 }
 
 export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
-  const { transport = null } = options
+  const { transport = null, onGameEvent } = options
 
   const [me, setMe] = useState<Identity>(() => readJson<Identity>(ME_KEY) ?? defaultIdentity())
   const [room, setRoom] = useState<RoomState | null>(() => readJson<RoomState>(ROOM_KEY))
@@ -175,6 +180,19 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
     setRoom((prev) => (prev ? applyRoomAction(prev, action) : prev))
   }, [])
 
+  /*
+   * 🔴 По одному каналу идут ДВА потока: действия комнаты (кто вошёл, что в
+   * настройках) и ходы за столом. Раньше ходы не отправлялись вовсе — комната
+   * синхронизировалась, а партия у каждого шла своя: соперник не видел ни
+   * карточек, ни бросков. Различаем по обёртке `{ __g: … }`.
+   */
+  const sendGame = useCallback(
+    (ev: unknown) => {
+      if (transport) transport.send({ __g: ev } as unknown as RoomAction)
+    },
+    [transport],
+  )
+
   /**
    * Единственная точка изменения комнаты.
    * С сетью — только отправляем: событие вернётся эхом и применится в onEvent,
@@ -191,7 +209,14 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
   /** Обработчики сети. Собираются один раз на подключение. */
   const handlers = useCallback(
     (): RoomNetHandlers => ({
-      onEvent: (payload) => apply(payload as RoomAction),
+      onEvent: (payload) => {
+        const wrapped = payload as { __g?: unknown }
+        if (wrapped && typeof wrapped === 'object' && '__g' in wrapped) {
+          onGameEvent?.(wrapped.__g)
+          return
+        }
+        apply(payload as RoomAction)
+      },
 
       // Присутствие — готовый ответ на «игрок отвалился»: политику применит движок.
       onPresence: (peers) => {
@@ -271,12 +296,22 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
     [draftFrom, handlers, rememberDraft, transport],
   )
 
+  /**
+   * Войти в чужую комнату.
+   *
+   * 🔴 Возвращает `true`, если вход НАЧАТ. Раньше функция не возвращала
+   * ничего, а экран переключался по её результату — то есть не переключался
+   * НИКОГДА: человек жал «Занять место», у хоста он появлялся, а сам он
+   * продолжал смотреть на ту же форму и думал, что кнопка не работает.
+   * Состав комнаты приходит снимком от хоста чуть позже; пока его нет,
+   * показываем ожидание, а не форму.
+   */
   const join = useCallback(
-    (code: string, patch: Partial<PlayerDraft>, as: 'player' | 'spectator' = 'player') => {
+    (code: string, patch: Partial<PlayerDraft>, as: 'player' | 'spectator' = 'player'): boolean => {
       const draft = draftFrom(patch)
       if (!draft.name) {
         setError(ROOM_ERROR_TEXT.BAD_NAME)
-        return
+        return false
       }
       rememberDraft(draft)
       setError(null)
@@ -297,7 +332,7 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
             setConnecting(false)
             setError('Не получилось подключиться к комнате')
           })
-        return
+        return true
       }
 
       /*
@@ -307,6 +342,7 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
        */
       const local = createRoom({ host: draft, code })
       setRoom(as === 'spectator' ? applyRoomAction(local, action) : local)
+      return true
     },
     [draftFrom, handlers, rememberDraft, transport],
   )
@@ -451,6 +487,7 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
     kick,
     transferHost,
     setCallLink,
+    sendGame,
     setSettings,
     resolveDisconnect,
     leave,

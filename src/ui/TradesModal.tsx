@@ -240,8 +240,7 @@ export function TradesModal({
               }
             />
             <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
-              Платёж — это плата за деньги, тело долга им не гасится. Пока кредит открыт,
-              неприятности приходят чаще.
+              Платёж — это плата за деньги, тело долга им не гасится.
             </p>
             <button
               disabled={seat.ledger.cash <= 0}
@@ -365,8 +364,7 @@ export function TradesModal({
       {others.length > 0 && (
         <TradeBlock title="Дать в долг" accent="warn">
           <p className="mb-2 text-[12px] leading-snug text-[var(--muted)]">
-            По-хорошему — сколько дали, столько и вернут. С надбавкой вернут больше, но пока такой
-            долг открыт, неприятности будут приходить чаще — и к должнику, и к вам.
+            По-хорошему — сколько дали, столько и вернут. Можно и с надбавкой: вернут больше.
           </p>
           {others.map((o) => (
             <div key={o.id} className="mt-1 flex items-center gap-2">

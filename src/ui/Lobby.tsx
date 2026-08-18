@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Dropdown } from './Dropdown'
 import { Card, CardHead, Page, Rule } from './kit'
+import { Wordmark } from './Wordmark'
 import {
   dreamSpaces,
   professionName,
@@ -330,6 +331,67 @@ export interface JoinRoomProps {
   error?: string | null
   busy?: boolean
   allowSpectator?: boolean
+}
+
+/**
+ * Ожидание состава комнаты после «Занять место».
+ *
+ * 🔴 Экран появился потому, что вход выглядел сломанным: хост уже видел
+ * вошедшего, а сам вошедший продолжал смотреть на форму. Состав приходит
+ * снимком от хоста, и между нажатием и снимком есть заметная пауза — её и
+ * показываем честно, вместе с выходом назад, если хост не отвечает.
+ */
+export function JoinWaiting({
+  code,
+  error,
+  onBack,
+  topRight,
+}: {
+  code: string
+  error?: string | null
+  onBack: () => void
+  topRight?: React.ReactNode
+}) {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const id = window.setTimeout(() => setSlow(true), 8000)
+    return () => window.clearTimeout(id)
+  }, [])
+
+  return (
+    <Page width="room">
+      <header className="mb-7 flex items-center gap-3">
+        <Wordmark />
+        <div className="ml-auto flex items-center gap-2">{topRight}</div>
+      </header>
+
+      <div className="panel mx-auto max-w-md rounded-2xl p-6 text-center">
+        <div className="caps text-[10px] font-bold text-accent">Вход в комнату</div>
+        <div className="tabnum mt-1 text-3xl font-black tracking-[0.2em]">{code}</div>
+        <p className="mt-3 text-sm text-muted">
+          Место занято — ждём состав от хозяина стола.
+        </p>
+        <div className="mt-4 flex justify-center gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="size-2 animate-pulse rounded-full bg-accent"
+              style={{ animationDelay: `${i * 160}ms` }}
+            />
+          ))}
+        </div>
+        {(slow || error) && (
+          <p className="mt-4 text-[13px] leading-snug text-amber-600 dark:text-amber-400">
+            {error ??
+              'Хозяин стола пока не отвечает. Проверьте код и попросите его открыть страницу комнаты.'}
+          </p>
+        )}
+        <button onClick={onBack} className="btn-quiet mt-4 w-full">
+          Назад
+        </button>
+      </div>
+    </Page>
+  )
 }
 
 export function JoinRoom({

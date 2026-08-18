@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Setup } from './Setup'
 import { Game } from './Game'
 import { Landing } from './Landing'
-import { JoinRoom, Lobby } from './Lobby'
+import { JoinRoom, JoinWaiting, Lobby } from './Lobby'
 import { useGame } from './useGame'
+import type { TableEvent } from '../engine/events'
 import { useRoom } from './useRoom'
 import { useTheme } from './theme'
 import { createTransport } from '../net/realtime'
@@ -38,10 +39,52 @@ function ThemeToggle() {
 }
 
 export function App() {
-  const game = useGame()
   // Транспорт создаётся один раз: Supabase, если заданы ключи, иначе вкладки одного браузера.
-  const transport = useMemo(() => createTransport('auto'), [])
-  const room = useRoom({ transport })
+  const transport = useMemo(
+    // ?netlog=1 в адресе включает журнал сети в консоли — для разбора проблем со связью.
+    () => createTransport('auto', { debug: new URLSearchParams(location.search).has('netlog') }),
+    [],
+  )
+
+  /*
+   * 🔴 Ходы за столом идут ПО СЕТИ, как и действия комнаты. Раньше игровой
+   * журнал никуда не отправлялся: комната синхронизировалась, а партия у
+   * каждого шла своя — соперник не видел ни бросков, ни карточек.
+   *
+   * Ссылку на отправку кладём в ref: useRoom и useGame нужны друг другу, а
+   * объявить их можно только по очереди.
+   */
+  const sendGameRef = useRef<((ev: TableEvent) => void) | null>(null)
+  const applyRef = useRef<((ev: TableEvent) => void) | null>(null)
+
+  // В разработке транспорт видно из консоли — иначе связь не продиагностировать.
+  ;(window as unknown as { __net?: unknown }).__net = transport
+
+  const room = useRoom({
+    transport,
+    onGameEvent: (ev) => applyRef.current?.(ev as TableEvent),
+  })
+
+  /** Онлайн-партия — та, где комната реально существует. */
+  const online = !!room.room && room.room.players.length > 0
+  const isHost = room.room?.hostId === room.me.id
+  const game = useGame(
+    online
+      ? {
+          send: (ev) => sendGameRef.current?.(ev),
+          isHost,
+        }
+      : undefined,
+  )
+  sendGameRef.current = (ev) => room.sendGame(ev)
+  applyRef.current = (ev) => game.applyLocal(ev)
+
+  /** Моё место за столом: порядок мест совпадает с порядком игроков комнаты. */
+  const meSeatId = (() => {
+    if (!room.room) return undefined
+    const i = room.room.players.findIndex((p) => p.id === room.me.id)
+    return i >= 0 ? `seat-${i}` : undefined
+  })()
 
   // Пришли по ссылке-приглашению — сразу показываем вход в эту комнату.
   const [screen, setScreen] = useState<Screen>(() => (room.urlCode ? 'join' : 'landing'))
@@ -89,6 +132,9 @@ export function App() {
         rolling={game.rolling}
           rolled={game.rolled}
         undo={game.undo}
+        redo={game.redo}
+        canRedo={game.canRedo}
+        canUndo={!online || isHost}
         reset={() => {
           game.reset()
           setScreen('landing')
@@ -96,6 +142,7 @@ export function App() {
         rematch={game.rematch}
         onExit={() => setScreen('landing')}
         callUrl={room.room?.settings.callUrl}
+        meId={online ? meSeatId : undefined}
         topRight={<ThemeToggle />}
       />
     )
@@ -108,6 +155,25 @@ export function App() {
           game.start(setup)
           setScreen('game')
         }}
+      />
+    )
+  }
+
+  /*
+   * 🔴 Ждём состав комнаты ОТДЕЛЬНЫМ экраном. Раньше при `screen==='lobby'` и
+   * пустой комнате не подходило ни одно условие, и человека выбрасывало на
+   * главную — выглядело как «кнопка не работает».
+   */
+  if (screen === 'lobby' && !room.room) {
+    return (
+      <JoinWaiting
+        code={room.urlCode ?? ''}
+        error={room.error}
+        onBack={() => {
+          room.leave('quit')
+          setScreen('landing')
+        }}
+        topRight={<ThemeToggle />}
       />
     )
   }

@@ -390,8 +390,15 @@ export function joinAsPlayer(room: RoomState, draft: PlayerDraft, now = Date.now
   // Себя не считаем: зритель, садящийся за стол, иначе спорил бы со своим же именем.
   if (nameTaken(room, name, draft.id)) return fail('NAME_TAKEN')
 
-  const color = ROOM_COLOR_VALUES.includes(draft.color) ? draft.color : nextFreeColor(room)
-  if (takenColors(room).includes(color)) return fail('COLOR_TAKEN')
+  /*
+   * 🔴 Совпал цвет фишки — БЕРЁМ СВОБОДНЫЙ, а не отказываем во входе. Раньше
+   * здесь стоял отказ COLOR_TAKEN, и вот что получалось: у обоих по умолчанию
+   * первый цвет из списка, второй игрок жмёт «Занять место», хозяин молча
+   * отклоняет вход, гость сидит на форме и думает, что кнопка сломана. Цвет —
+   * украшение; не пускать из-за него за стол нельзя.
+   */
+  const wanted = ROOM_COLOR_VALUES.includes(draft.color) ? draft.color : nextFreeColor(room)
+  const color = takenColors(room).includes(wanted) ? nextFreeColor(room) : wanted
 
   const player = makePlayer({ ...draft, name, color }, room.settings.botDifficulty, now)
   return {
