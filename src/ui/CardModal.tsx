@@ -6,6 +6,7 @@ import {
   dreamPriceAt,
   ftCharityCost,
   marketMatches,
+  pendingUndecided,
   sellOfferPrice,
   stockHolders,
   canRecover,
@@ -299,6 +300,9 @@ function CardBody({
 }) {
   /** Соседи по столу — у кого вообще можно занять. */
   const others = table.seats.filter((x) => x.id !== seat.id && !x.outOfGame)
+  /** Кто ещё не решил по этой карте — их и ждём, прежде чем закрыть окно. */
+  const waitingFor = pendingUndecided(table).filter((x: Seat) => x.id !== seat.id)
+
   /** Сколько банк ещё готов дать сверх уже взятого. */
   const ribaFree = Math.max(0, ribaLimit(seat.ledger) - seat.ledger.liabilities.ribaLoan)
   const p = table.pending
@@ -457,52 +461,31 @@ function CardBody({
               </div>
             )}
 
-            {p.access &&
-              p.access.mode !== 'closed' &&
-              table.seats.filter(
-                (x) =>
-                  !x.outOfGame &&
-                  x.track === 'rat' &&
-                  x.id !== seat.id &&
-                  x.ledger.cash >= s.price &&
-                  (p.access!.mode === 'open' || p.access!.allow.includes(x.id)),
-              ).length > 0 && (
-              <div className="panel-2 rounded-lg p-2">
-                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+            {/*
+              🔴 Владелец находки НЕ ПОКУПАЕТ ЗА ДРУГИХ. Здесь стоял список
+              допущенных с кнопкой «взять N шт» — нажатие тратило ЧУЖИЕ деньги
+              на всю сумму, и человек видел, как у него молча списался
+              кошелёк, хотя он только открыл вход. Открытый вход — это
+              возможность, решение принимает сам вошедший на своём экране.
+            */}
+            {p.access && p.access.mode !== 'closed' && (
+              <div className="panel-2 rounded-lg px-3 py-2 text-[12px]">
+                <div className="caps text-[10px] font-bold text-[var(--muted)]">Вход открыт</div>
+                <div className="mt-0.5">
                   {p.access.terms.kind === 'free'
-                    ? 'Вход открыт — можно войти по этой цене'
+                    ? 'Войти можно по этой же цене'
                     : p.access.terms.kind === 'fee'
-                      ? `Вход открыт · плата ${money(p.access.terms.amount)}`
-                      : `Вход открыт · ${p.access.terms.pct}% с прибыли при продаже`}
+                      ? `Плата за вход ${money(p.access.terms.amount)}`
+                      : `${p.access.terms.pct}% с прибыли при продаже`}
                 </div>
-                {table.seats
-                  .filter(
-                    (x) =>
-                      !x.outOfGame &&
-                      x.track === 'rat' &&
-                      x.id !== seat.id &&
-                      x.ledger.cash >= s.price &&
-                      (p.access!.mode === 'open' || p.access!.allow.includes(x.id)),
-                  )
-                  .map((x) => {
-                    const canBuy = Math.floor(x.ledger.cash / s.price)
-                    return (
-                      <button
-                        key={x.id}
-                        onClick={() =>
-                          dispatch({ type: 'BUY_STOCK_SHARES', shares: canBuy, seatId: x.id })
-                        }
-                        className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[var(--panel)]"
-                      >
-                        <span>
-                          <span style={{ color: x.color }}>●</span> {x.name} — взять {canBuy} шт
-                        </span>
-                        <span className="tabnum text-[var(--muted)]">{money(canBuy * s.price)}</span>
-                      </button>
-                    )
-                  })}
+                {waitingFor.length > 0 && (
+                  <div className="mt-1 text-[var(--muted)]">
+                    Ждём решения: {waitingFor.map((x: Seat) => x.name).join(', ')}
+                  </div>
+                )}
               </div>
             )}
+
 
             {holders.length > 0 && (
               <div className="panel-2 space-y-1 rounded-lg p-2">

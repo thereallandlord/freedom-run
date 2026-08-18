@@ -554,6 +554,41 @@ export function marketMatches(
  * Может ли кто-то, кроме ходящего, действовать по открытой карте.
  * Нужно, чтобы карту рынка показывали всем, а не только активному игроку.
  */
+/**
+ * Кто ещё не решил по открытой карте.
+ *
+ * Считаем владельца находки и тех, кого он пустил. Ботов не считаем: они в
+ * чужие сделки не заходят, а ждать их решения означало бы вечное окно.
+ */
+export function pendingUndecided(t: Table): Seat[] {
+  const p = t.pending
+  if (!p || (p.kind !== 'deal' && p.kind !== 'market')) return []
+  const owner = t.seats[t.turnIndex]
+  const decided = new Set(p.decided ?? [])
+  const out: Seat[] = []
+  if (!decided.has(owner.id) && !owner.isBot) out.push(owner)
+  if (p.access && p.access.mode !== 'closed') {
+    for (const s2 of t.seats) {
+      if (s2.id === owner.id || s2.isBot || s2.outOfGame) continue
+      if (!accessAllows(p.access, s2.id)) continue
+      if (!decided.has(s2.id)) out.push(s2)
+    }
+  }
+  return out
+}
+
+/** Отметить решение игрока и закрыть карту, когда решили все. */
+function markDecided(t: Table, seatId: string): void {
+  const p = t.pending
+  if (!p || (p.kind !== 'deal' && p.kind !== 'market')) return
+  const decided = [...new Set([...(p.decided ?? []), seatId])]
+  t.pending = { ...p, decided }
+  if (pendingUndecided(t).length === 0) {
+    t.pending = null
+    t.phase = 'turnEnd'
+  }
+}
+
 export function pendingInvolvesOthers(t: Table): boolean {
   const p = t.pending
   if (!p) return false
@@ -1148,10 +1183,14 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * выпала, и на его условиях — ровно как у бумаг. Раньше окно выбора
        * условий у недвижимости было пустым ритуалом: движок его не читал.
        */
+      // Владелец находки — ходящий; автор события может быть вошедшим.
+      const dealOwner = t.seats[t.turnIndex]
       const dealBuyer = event.seatId ? t.seats.find((x) => x.id === event.seatId) : seat
       if (!dealBuyer || dealBuyer.outOfGame || dealBuyer.track === 'fast') return prev
-      if (dealBuyer.id !== seat.id && !accessAllows(t.pending.access, dealBuyer.id)) return prev
-      const dealTermsAccess = dealBuyer.id !== seat.id ? t.pending.access?.terms : undefined
+      if (event.seatId && event.seatId !== seat.id && seat.id !== dealOwner.id) return prev
+      if (dealBuyer.id !== dealOwner.id && !accessAllows(t.pending.access, dealBuyer.id)) return prev
+      const dealTermsAccess =
+        dealBuyer.id !== dealOwner.id ? t.pending.access?.terms : undefined
 
       /*
        * GreenLeaf: цена берётся не из карты, а из ВЫБРАННОГО пакета.
@@ -1211,8 +1250,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (dealBuyer.ledger.cash < owed + entryFee) return prev
       if (entryFee > 0) {
         seatLedgerEvent(t, dealBuyer.id, { type: 'ADJUST_CASH', amount: -entryFee })
-        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: entryFee })
-        log(t, dealBuyer.id, `${dealBuyer.name} заплатил ${money(entryFee)} за вход в находку ${seat.name}`)
+        seatLedgerEvent(t, dealOwner.id, { type: 'ADJUST_CASH', amount: entryFee })
+        log(
+          t,
+          dealBuyer.id,
+          `${dealBuyer.name} заплатил ${money(entryFee)} за вход в находку ${dealOwner.name}`,
+        )
       }
 
       /*
@@ -1277,13 +1320,11 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             : `Купил в рассрочку: ${localizedCardTitle(card)} — взнос ${money(card.downPayment)}, остаток ${money(debt)} фиксирован (${money(flow)}/мес)`,
       )
       /*
-       * Карту снимает только тот, чей ход. Вошедший сбоку по разрешению
-       * покупает свою долю и оставляет окно открытым — как у бумаг.
+       * 🔴 Карта закрывается, когда решили ВСЕ участники, а не когда нажал
+       * владелец. Раньше его «Купить» снимало окно у всех разом, и допущенные
+       * в сделку не успевали купить свою долю.
        */
-      if (dealBuyer.id === seat.id) {
-        t.pending = null
-        t.phase = 'turnEnd'
-      }
+      markDecided(t, dealBuyer.id)
       return t
     }
 
@@ -1299,9 +1340,18 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * того, кому выпала карта, и на его условиях. Раньше любой покупал ту же
        * бумагу по той же цене без спроса, и удачный ход ничего не стоил.
        */
+      /*
+       * 🔴 ВЛАДЕЛЕЦ НАХОДКИ — ЭТО ХОДЯЩИЙ, а не автор события. Когда действие
+       * подписано вошедшим, `seat` — это он сам, и сравнение «покупатель ==
+       * seat» давало ложное «я владелец»: плата за вход не бралась, доля с
+       * прибыли не записывалась, а чужая покупка закрывала карту всем.
+       */
+      const owner = t.seats[t.turnIndex]
       const buyer = event.seatId ? t.seats.find((x) => x.id === event.seatId) : seat
       if (!buyer || buyer.outOfGame || buyer.track === 'fast') return prev
-      if (buyer.id !== seat.id && !accessAllows(t.pending.access, buyer.id)) return prev
+      // Покупать за другого нельзя: либо за себя, либо это подделка события.
+      if (event.seatId && event.seatId !== seat.id && seat.id !== owner.id) return prev
+      if (buyer.id !== owner.id && !accessAllows(t.pending.access, buyer.id)) return prev
 
       const price = marketStockPrice(card.price, t.market.stock[card.symbol])
       const total = shares * price
@@ -1309,30 +1359,26 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
       // Условия входа: разовая плата уходит владельцу находки сразу,
       // доля с прибыли вешается на лот и отщипнётся при продаже.
-      const terms = buyer.id !== seat.id ? t.pending.access?.terms : undefined
+      const terms = buyer.id !== owner.id ? t.pending.access?.terms : undefined
       if (terms?.kind === 'fee') {
         if (buyer.ledger.cash < total + terms.amount) return prev
         seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -terms.amount })
-        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: terms.amount })
-        log(t, buyer.id, `${buyer.name} заплатил ${money(terms.amount)} за вход в находку ${seat.name}`)
+        seatLedgerEvent(t, owner.id, { type: 'ADJUST_CASH', amount: terms.amount })
+        log(t, buyer.id, `${buyer.name} заплатил ${money(terms.amount)} за вход в находку ${owner.name}`)
       }
 
       seatLedgerEvent(t, buyer.id, {
         type: 'BUY_STOCK',
         id: `${card.symbol}-${nextId(t)}`,
         symbol: card.symbol,
-        profitShareTo: terms?.kind === 'profitShare' ? seat.id : undefined,
+        profitShareTo: terms?.kind === 'profitShare' ? owner.id : undefined,
         profitSharePct: terms?.kind === 'profitShare' ? terms.pct : undefined,
         shares,
         costPerShare: price,
         dividendPerShareMonthly: card.dividendPerShare ?? 0,
       })
       log(t, buyer.id, `${buyer.name} купил ${shares} × ${card.symbol} по ${money(price)}`)
-      // Ход закрывает только активный игрок; чужая покупка карту не снимает.
-      if (buyer.id === seat.id) {
-        t.pending = null
-        t.phase = 'turnEnd'
-      }
+      markDecided(t, buyer.id)
       return t
     }
 
@@ -1897,6 +1943,14 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'PASS_CARD': {
       if (!t.pending) return prev
       if (t.pending.kind === 'doodad' || t.pending.kind === 'bankruptcy') return prev
+      /*
+       * «Пропустить» — это тоже РЕШЕНИЕ, а не закрытие окна для всех. Пока
+       * кто-то из допущенных не ответил, карта остаётся на столе.
+       */
+      if (t.pending.kind === 'deal' || t.pending.kind === 'market') {
+        markDecided(t, seat.id)
+        return t
+      }
       t.pending = null
       t.phase = 'turnEnd'
       return t

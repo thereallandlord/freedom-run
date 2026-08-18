@@ -436,8 +436,20 @@ export interface Seat {
 /** Что сейчас требует решения игрока. */
 export type Pending =
   | { kind: 'chooseDeal' }
-  | { kind: 'deal'; deck: 'small' | 'big'; card: DealCard; access?: DealAccess }
-  | { kind: 'market'; card: MarketCard; access?: DealAccess }
+  /**
+   * `decided` — кто уже решил по этой карте (купил или пропустил).
+   * 🔴 Раньше карта закрывалась в тот момент, когда владелец нажимал
+   * «Купить», — и допущенные в сделку не успевали ничего сделать: окно
+   * исчезало у них из-под рук. Теперь карта живёт, пока не решат все.
+   */
+  | {
+      kind: 'deal'
+      deck: 'small' | 'big'
+      card: DealCard
+      access?: DealAccess
+      decided?: string[]
+    }
+  | { kind: 'market'; card: MarketCard; access?: DealAccess; decided?: string[] }
   | { kind: 'doodad'; card: DoodadCard }
   | { kind: 'charity' }
   | { kind: 'downsized' }
