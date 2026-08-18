@@ -19,7 +19,17 @@ export type LedgerEvent =
   | { type: 'ADJUST_RIBA_EXPOSURE'; amount: number }
   | { type: 'SALARY_RAISE'; amount: number }
   | { type: 'ZAKAT' }
-  | { type: 'BUY_STOCK'; id: string; symbol: string; shares: number; costPerShare: number; dividendPerShareMonthly: number }
+  | {
+      type: 'BUY_STOCK'
+      id: string
+      symbol: string
+      shares: number
+      costPerShare: number
+      dividendPerShareMonthly: number
+      /** Вошёл в чужую находку: кому и сколько процентов с прибыли отдать. */
+      profitShareTo?: string
+      profitSharePct?: number
+    }
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse'; ratio?: number }
   | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string }
@@ -81,6 +91,8 @@ export type TableEvent =
   /** Пройти мимо хотелки. Копить полезно — но не всё время. */
   | { type: 'SKIP_WANT' }
   | { type: 'GET_CITIZENSHIP'; id: string }
+  /** Владелец находки решает, кого и на каких условиях пускать в сделку. */
+  | { type: 'SET_ACCESS'; access: import('./types').DealAccess }
   /** Промоушен: забрать деньгами или поехать. Поездка даёт скрытую прибавку. */
   | { type: 'GL_PROMO_TAKE'; promo: 'travel' | 'auto'; go?: boolean }
   | { type: 'BUY_STOCK_SHARES'; shares: number; seatId?: string }

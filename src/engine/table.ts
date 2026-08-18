@@ -490,6 +490,16 @@ function dealDrawOk(t: Table, card: import('./types').DealCard, size: 'small' | 
   return true
 }
 
+/**
+ * Пускает ли владелец находки этого игрока внутрь.
+ * Молчание — отказ: пока условия не заданы, чужая карта закрыта.
+ */
+function accessAllows(a: import('./types').DealAccess | undefined, seatId: string): boolean {
+  if (!a || a.mode === 'closed') return false
+  if (a.mode === 'open') return true
+  return a.allow.includes(seatId)
+}
+
 /** Хватает ли игроку на сделку — наличными или через инвестора. */
 export function dealAffordable(t: Table, card: import('./types').DealCard, deckSize: 'small' | 'big'): boolean {
   const l = currentSeat(t).ledger
@@ -1062,17 +1072,35 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const shares = Math.floor(event.shares)
       if (shares <= 0) return prev
 
-      // Рынок для всех: пока карта на столе, купить может любой игрок Круга.
+      /*
+       * 🔴 Чужая находка — не общий рынок. Войти можно ТОЛЬКО с разрешения
+       * того, кому выпала карта, и на его условиях. Раньше любой покупал ту же
+       * бумагу по той же цене без спроса, и удачный ход ничего не стоил.
+       */
       const buyer = event.seatId ? t.seats.find((x) => x.id === event.seatId) : seat
       if (!buyer || buyer.outOfGame || buyer.track === 'fast') return prev
+      if (buyer.id !== seat.id && !accessAllows(t.pending.access, buyer.id)) return prev
+
       const price = marketStockPrice(card.price, t.market.stock[card.symbol])
       const total = shares * price
       if (buyer.ledger.cash < total) return prev
+
+      // Условия входа: разовая плата уходит владельцу находки сразу,
+      // доля с прибыли вешается на лот и отщипнётся при продаже.
+      const terms = buyer.id !== seat.id ? t.pending.access?.terms : undefined
+      if (terms?.kind === 'fee') {
+        if (buyer.ledger.cash < total + terms.amount) return prev
+        seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -terms.amount })
+        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: terms.amount })
+        log(t, buyer.id, `${buyer.name} заплатил ${money(terms.amount)} за вход в находку ${seat.name}`)
+      }
 
       seatLedgerEvent(t, buyer.id, {
         type: 'BUY_STOCK',
         id: `${card.symbol}-${nextId(t)}`,
         symbol: card.symbol,
+        profitShareTo: terms?.kind === 'profitShare' ? seat.id : undefined,
+        profitSharePct: terms?.kind === 'profitShare' ? terms.pct : undefined,
         shares,
         costPerShare: price,
         dividendPerShareMonthly: card.dividendPerShare ?? 0,
@@ -1092,6 +1120,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (!holder || holder.outOfGame) return prev
       const lot = holder.ledger.stocks.find((x) => x.id === event.lotId)
       if (!lot) return prev
+      const soldN = Math.min(event.shares, lot.shares)
       seatLedgerEvent(t, event.seatId, {
         type: 'SELL_STOCK',
         lotId: event.lotId,
@@ -1101,8 +1130,31 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       log(
         t,
         event.seatId,
-        `${holder.name} продал ${event.shares} × ${lot.symbol} по ${money(event.pricePerShare)}`,
+        `${holder.name} продал ${soldN} × ${lot.symbol} по ${money(event.pricePerShare)}`,
       )
+
+      /*
+       * 🔴 Вошёл в чужую находку на долю с прибыли — доля отщипывается ЗДЕСЬ,
+       * автоматически. Иначе договорённость остаётся честным словом, а не
+       * правилом, и её просто забывают.
+       * Считается только с ПРИБЫЛИ: продал в минус — не должен ничего.
+       */
+      if (lot.profitShareTo && lot.profitSharePct) {
+        const profit = (event.pricePerShare - lot.costPerShare) * soldN
+        if (profit > 0) {
+          const cut = Math.round((profit * lot.profitSharePct) / 100)
+          const owner = t.seats.find((x) => x.id === lot.profitShareTo)
+          if (owner && cut > 0) {
+            seatLedgerEvent(t, event.seatId, { type: 'ADJUST_CASH', amount: -cut })
+            seatLedgerEvent(t, owner.id, { type: 'ADJUST_CASH', amount: cut })
+            log(
+              t,
+              owner.id,
+              `${owner.name} получил ${money(cut)} — ${lot.profitSharePct}% с прибыли ${holder.name} по договорённости о входе`,
+            )
+          }
+        }
+      }
       return t
     }
 
@@ -1559,6 +1611,27 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         seat.id,
         `Предлагает ${to.name} ${money(amount)} под ${Math.round(event.interestPct)}% — вернуть ${money(Math.round((amount * (100 + event.interestPct)) / 100))}`,
       )
+      return t
+    }
+
+    /** Владелец находки задаёт, кого и на каких условиях пускать. */
+    case 'SET_ACCESS': {
+      if (t.pending?.kind !== 'deal' && t.pending?.kind !== 'market') return prev
+      t.pending = { ...t.pending, access: event.access }
+      const a = event.access
+      const who =
+        a.mode === 'closed'
+          ? 'никого не пускает'
+          : a.mode === 'open'
+            ? 'открыл вход всем'
+            : `пускает: ${a.allow.map((id) => t.seats.find((s2) => s2.id === id)?.name).filter(Boolean).join(', ')}`
+      const how =
+        a.terms.kind === 'free'
+          ? 'без условий'
+          : a.terms.kind === 'fee'
+            ? `плата за вход ${money(a.terms.amount)}`
+            : `${a.terms.pct}% с прибыли при продаже`
+      log(t, seat.id, `${seat.name} ${who}${a.mode === 'closed' ? '' : ` — ${how}`}`)
       return t
     }
 

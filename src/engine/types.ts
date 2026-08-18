@@ -59,6 +59,13 @@ export interface StockLot {
   shares: number
   costPerShare: number
   dividendPerShareMonthly: number
+  /**
+   * Вошёл в чужую находку на условиях доли с прибыли: кому и сколько процентов
+   * отдать при продаже. Отщипывается автоматически и только с ПРИБЫЛИ — делить
+   * убыток нечестно.
+   */
+  profitShareTo?: string
+  profitSharePct?: number
 }
 
 export interface RealEstateAsset {
@@ -316,6 +323,26 @@ export interface DoodadCard {
   upkeep?: number
 }
 
+/**
+ * На каких условиях владелец находки пускает в неё остальных.
+ *
+ * 🔴 По умолчанию НИКОГО: карта выпала одному человеку, это его находка.
+ * Раньше любой мог купить ту же бумагу по той же цене без спроса — и вся
+ * ценность удачного хода испарялась. За офлайновым столом так не играют:
+ * там спрашивают разрешения и договариваются об условиях.
+ */
+export interface DealAccess {
+  mode: 'closed' | 'open' | 'chosen'
+  /** Кого пускаем поимённо при mode='chosen'. За столом можно объединяться. */
+  allow: string[]
+  terms:
+    | { kind: 'free' }
+    /** Вошедший при продаже отдаёт долю СВОЕЙ прибыли владельцу карты. */
+    | { kind: 'profitShare'; pct: number }
+    /** Разовая плата за вход, дальше никаких хвостов. */
+    | { kind: 'fee'; amount: number }
+}
+
 export type DeckName = 'small' | 'big' | 'market' | 'doodad'
 
 /** Мировое событие: приходит по таймеру, а не по ходу, и задевает всех. */
@@ -391,8 +418,8 @@ export interface Seat {
 /** Что сейчас требует решения игрока. */
 export type Pending =
   | { kind: 'chooseDeal' }
-  | { kind: 'deal'; deck: 'small' | 'big'; card: DealCard }
-  | { kind: 'market'; card: MarketCard }
+  | { kind: 'deal'; deck: 'small' | 'big'; card: DealCard; access?: DealAccess }
+  | { kind: 'market'; card: MarketCard; access?: DealAccess }
   | { kind: 'doodad'; card: DoodadCard }
   | { kind: 'charity' }
   | { kind: 'downsized' }

@@ -6,59 +6,60 @@
 <title>Оформление стола — варианты</title>
 <style>
 /* ─── Шрифты. Локальные файлы, кириллица и латиница отдельными подмножествами ─── */
-@font-face{font-family:'Golos';src:url('/fonts/demo/golos-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Golos';src:url('/fonts/demo/golos-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:'Golos';src:url('/fonts/demo/golos-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Golos';src:url('/fonts/demo/golos-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
-@font-face{font-family:'Golos';src:url('/fonts/demo/golos-800-cyrillic.woff2')format('woff2');font-weight:800;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Golos';src:url('/fonts/demo/golos-800-latin.woff2')format('woff2');font-weight:800;font-display:swap}
+@font-face{font-family:'Golos';src:url('./fonts/demo/golos-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Golos';src:url('./fonts/demo/golos-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Golos';src:url('./fonts/demo/golos-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Golos';src:url('./fonts/demo/golos-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Golos';src:url('./fonts/demo/golos-800-cyrillic.woff2')format('woff2');font-weight:800;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Golos';src:url('./fonts/demo/golos-800-latin.woff2')format('woff2');font-weight:800;font-display:swap}
 
-@font-face{font-family:'Onest';src:url('/fonts/demo/onest-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Onest';src:url('/fonts/demo/onest-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:'Onest';src:url('/fonts/demo/onest-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Onest';src:url('/fonts/demo/onest-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
-@font-face{font-family:'Onest';src:url('/fonts/demo/onest-800-cyrillic.woff2')format('woff2');font-weight:800;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Onest';src:url('/fonts/demo/onest-800-latin.woff2')format('woff2');font-weight:800;font-display:swap}
+@font-face{font-family:'Onest';src:url('./fonts/demo/onest-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Onest';src:url('./fonts/demo/onest-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Onest';src:url('./fonts/demo/onest-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Onest';src:url('./fonts/demo/onest-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Onest';src:url('./fonts/demo/onest-800-cyrillic.woff2')format('woff2');font-weight:800;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Onest';src:url('./fonts/demo/onest-800-latin.woff2')format('woff2');font-weight:800;font-display:swap}
 
-@font-face{font-family:'Plex';src:url('/fonts/demo/plex-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Plex';src:url('/fonts/demo/plex-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:'Plex';src:url('/fonts/demo/plex-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Plex';src:url('/fonts/demo/plex-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
-@font-face{font-family:'Plex';src:url('/fonts/demo/plex-700-cyrillic.woff2')format('woff2');font-weight:700;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Plex';src:url('/fonts/demo/plex-700-latin.woff2')format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Plex';src:url('./fonts/demo/plex-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Plex';src:url('./fonts/demo/plex-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Plex';src:url('./fonts/demo/plex-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Plex';src:url('./fonts/demo/plex-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Plex';src:url('./fonts/demo/plex-700-cyrillic.woff2')format('woff2');font-weight:700;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Plex';src:url('./fonts/demo/plex-700-latin.woff2')format('woff2');font-weight:700;font-display:swap}
 
-@font-face{font-family:'Inter';src:url('/fonts/demo/inter-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Inter';src:url('/fonts/demo/inter-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:'Inter';src:url('/fonts/demo/inter-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Inter';src:url('/fonts/demo/inter-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
-@font-face{font-family:'Inter';src:url('/fonts/demo/inter-800-cyrillic.woff2')format('woff2');font-weight:800;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'Inter';src:url('/fonts/demo/inter-800-latin.woff2')format('woff2');font-weight:800;font-display:swap}
+@font-face{font-family:'Inter';src:url('./fonts/demo/inter-400-cyrillic.woff2')format('woff2');font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Inter';src:url('./fonts/demo/inter-400-latin.woff2')format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Inter';src:url('./fonts/demo/inter-600-cyrillic.woff2')format('woff2');font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Inter';src:url('./fonts/demo/inter-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Inter';src:url('./fonts/demo/inter-800-cyrillic.woff2')format('woff2');font-weight:800;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Inter';src:url('./fonts/demo/inter-800-latin.woff2')format('woff2');font-weight:800;font-display:swap}
 
-@font-face{font-family:'Grotesk';src:url('/fonts/demo/grotesk-500-latin.woff2')format('woff2');font-weight:500;font-display:swap}
-@font-face{font-family:'Grotesk';src:url('/fonts/demo/grotesk-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
-@font-face{font-family:'Grotesk';src:url('/fonts/demo/grotesk-700-latin.woff2')format('woff2');font-weight:700;font-display:swap}
-@font-face{font-family:'JB';src:url('/fonts/demo/jbmono-500-cyrillic.woff2')format('woff2');font-weight:500;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'JB';src:url('/fonts/demo/jbmono-500-latin.woff2')format('woff2');font-weight:500;font-display:swap}
-@font-face{font-family:'JB';src:url('/fonts/demo/jbmono-700-cyrillic.woff2')format('woff2');font-weight:700;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:'JB';src:url('/fonts/demo/jbmono-700-latin.woff2')format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Grotesk';src:url('./fonts/demo/grotesk-500-latin.woff2')format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Grotesk';src:url('./fonts/demo/grotesk-600-latin.woff2')format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Grotesk';src:url('./fonts/demo/grotesk-700-latin.woff2')format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'JB';src:url('./fonts/demo/jbmono-500-cyrillic.woff2')format('woff2');font-weight:500;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'JB';src:url('./fonts/demo/jbmono-500-latin.woff2')format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'JB';src:url('./fonts/demo/jbmono-700-cyrillic.woff2')format('woff2');font-weight:700;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'JB';src:url('./fonts/demo/jbmono-700-latin.woff2')format('woff2');font-weight:700;font-display:swap}
 
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0f0d;color:#e8efe9;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:#f4f6f4;color:#18231d;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1500px;margin:0 auto;padding:28px 20px 80px}
 .lead h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
-.lead p{color:#93a49a;font-size:14px;line-height:1.55;max-width:70ch}
-.note{margin-top:14px;padding:12px 14px;border:1px solid #2a3a32;border-radius:12px;background:#111a16;color:#a7bcb0;font-size:13px;line-height:1.5}
+.lead p{color:#5d6e64;font-size:14px;line-height:1.55;max-width:70ch}
+.note{margin-top:14px;padding:12px 14px;border:1px solid #dbe3dd;border-radius:12px;background:#fff;color:#4a5b51;font-size:13px;line-height:1.5}
 
 /* ─── Каркас одного варианта: настоящий стол в миниатюре ─── */
 .variant{margin-top:44px}
 .vhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
 .vname{font-size:19px;font-weight:800;letter-spacing:-.01em}
-.vtag{font-size:12px;color:#7f9389}
-.vwhy{font-size:13px;color:#93a49a;line-height:1.5;max-width:78ch;margin-bottom:14px}
+.vtag{font-size:12px;color:#7a8b81}
+.vwhy{font-size:13px;color:#5d6e64;line-height:1.5;max-width:78ch;margin-bottom:14px}
 
-.stage{position:relative;border-radius:22px;overflow:hidden;border:1px solid #22302a;aspect-ratio:16/9;min-height:520px}
+.stage{position:relative;border-radius:22px;overflow:hidden;border:1px solid #dbe3dd;box-shadow:0 10px 30px rgba(30,45,38,.1);aspect-ratio:16/9;min-height:520px}
 .stage>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.hud{position:absolute;inset:0;display:grid;grid-template-columns:290px minmax(0,1fr) 210px;gap:12px;padding:12px}
+.hud{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:290px minmax(0,1fr) 214px;gap:11px;padding:12px}
+.hud>.topbar{grid-column:1 / -1}
 .col{min-height:0;display:flex;flex-direction:column;gap:10px}
 .col.mid{align-items:center;justify-content:center}
 .board{width:min(100%,100%);aspect-ratio:1;max-height:100%;border-radius:16px;object-fit:cover}
@@ -102,26 +103,25 @@ body{background:#0a0f0d;color:#e8efe9;font-family:'Inter',system-ui,sans-serif;-
 .arow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .arow .v{font-variant-numeric:tabular-nums;font-weight:600}
 
-/* ─── Вариант 1. Матовое стекло, IBM Plex — банковская строгость ─── */
-.v-glass{--r:16px;--rb:11px;--blur:18px;--sat:150%;--glass:rgba(14,22,19,.55);--line:rgba(255,255,255,.14);
-  --ink:#eef4ef;--muted:#9fb3a7;--accent:#3ddc84;--onacc:#08150e;--pos:#5be39b;--neg:#ff8798;--track:rgba(255,255,255,.12);
-  --shadow:0 8px 32px rgba(0,0,0,.34);color:var(--ink);font-family:'Plex',system-ui,sans-serif}
-.v-glass .big,.v-glass .mid{font-family:'Plex',system-ui,sans-serif}
+/* ─── Вариант 3. Бумага: плотный лист, без размытия ─── */
+.v-paper{--r:14px;--rb:10px;--blur:0px;--sat:100%;--glass:rgba(253,251,246,.96);--line:rgba(22,31,26,.12);
+  --ink:#161f1a;--muted:#66786c;--accent:#1c6b45;--onacc:#ffffff;--pos:#12794a;--neg:#b3283f;--track:rgba(22,31,26,.1);
+  --shadow:0 6px 20px rgba(30,40,34,.14);color:var(--ink);font-family:'Plex',system-ui,sans-serif}
 
 /* ─── Вариант 2. Liquid glass, Onest — мягкий премиум ─── */
-.v-liquid{--r:26px;--rb:999px;--blur:40px;--sat:190%;--glass:rgba(255,255,255,.16);--line:rgba(255,255,255,.28);
-  --ink:#ffffff;--muted:rgba(255,255,255,.72);--accent:#7ef0b4;--onacc:#07231a;--pos:#a8ffd4;--neg:#ffb3c0;--track:rgba(255,255,255,.22);
-  --shadow:0 10px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.35);color:var(--ink);font-family:'Onest',system-ui,sans-serif}
+.v-liquid{--r:26px;--rb:999px;--blur:40px;--sat:190%;--glass:rgba(255,255,255,.62);--line:rgba(255,255,255,.75);
+  --ink:#10201a;--muted:rgba(16,32,26,.62);--accent:#0d7a52;--onacc:#ffffff;--pos:#0b7d4f;--neg:#b32a44;--track:rgba(16,32,26,.14);
+  --shadow:0 10px 40px rgba(20,40,30,.18), inset 0 1px 0 rgba(255,255,255,.9);color:var(--ink);font-family:'Onest',system-ui,sans-serif}
 .v-liquid .card{position:relative;overflow:hidden}
 .v-liquid .card::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(140deg,rgba(255,255,255,.28),transparent 42%)}
 
-/* ─── Вариант 3. Плотный тёмный, Space Grotesk + JetBrains — трейдерский ─── */
-.v-dark{--r:12px;--rb:8px;--blur:12px;--sat:130%;--glass:rgba(9,12,11,.78);--line:rgba(120,255,190,.16);
-  --ink:#dff5e8;--muted:#6f8a7c;--accent:#25e07a;--onacc:#04140b;--pos:#3bf08a;--neg:#ff6b81;--track:rgba(120,255,190,.14);
-  --shadow:0 4px 18px rgba(0,0,0,.5);color:var(--ink);font-family:'Inter',system-ui,sans-serif}
-.v-dark .lbl,.v-dark .brand .n1{font-family:'Grotesk','Inter',sans-serif;letter-spacing:.06em}
-.v-dark .big,.v-dark .mid,.v-dark .row .v,.v-dark .arow .v{font-family:'JB',ui-monospace,monospace;font-weight:700}
+/* ─── Вариант 4. Мятный минимал: светлое стекло с зелёным подтоном ─── */
+.v-mint{--r:22px;--rb:999px;--blur:20px;--sat:160%;--glass:rgba(244,252,247,.8);--line:rgba(14,110,74,.14);
+  --ink:#12201a;--muted:#5a7568;--accent:#0e6e4a;--onacc:#ffffff;--pos:#0e7a4e;--neg:#b3283f;--track:rgba(14,110,74,.14);
+  --shadow:0 8px 28px rgba(12,50,34,.12);color:var(--ink);font-family:'Onest',system-ui,sans-serif}
+.v-mint .card{padding:14px 15px}
+.v-mint .row{padding:4px 0}
 
 /* ─── Вариант 4. Светлое стекло, Golos — как банковское приложение ─── */
 .v-light{--r:20px;--rb:14px;--blur:26px;--sat:170%;--glass:rgba(255,255,255,.82);--line:rgba(16,32,24,.1);
@@ -151,9 +151,9 @@ const D = {
   goal:{have:69600, need:191500},
   income_rows:[['Зарплата',260000],['Машиноместо, Уфа',4500],['Лофт на Баумана',62000],['GreenLeaf · Платина',3100]],
   expense_rows:[['Рассрочка за жильё',50000],['Рассрочка за машину',22000],['Оплата обучения',3000],['Питомцы (1)',23500],['Прочее',93000]],
-  assets:[['Машиноместо, тёплый паркинг, Уфа','/cards/sd-park-ufa.webp',4500],
-          ['Лофт в старом здании на Баумана','/cards/big-re-kzn-azino.webp',62000],
-          ['Партнёрский бизнес · Платина','/cards/big-greenleaf.webp',3100]],
+  assets:[['Машиноместо, тёплый паркинг, Уфа','./cards/sd-park-ufa.webp',4500],
+          ['Лофт в старом здании на Баумана','./cards/big-re-kzn-azino.webp',62000],
+          ['Партнёрский бизнес · Платина','./cards/big-greenleaf.webp',3100]],
   debts:[['Рассрочка за машину',450000],['Рассрочка за технику',100000]],
   players:[['Камиль','#e05a4f',264000,138100,36],['Бот Алмаз','#4f7fe0',88900,23200,12],['Бот Наиля','#c9a227',412000,61400,32]],
   events:[['Москва дороже на 25%','Новостройки столицы за год прибавили 26,5%','up'],
@@ -173,22 +173,22 @@ const ICON = {
 const svg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`
 
 const VARIANTS = [
-  {cls:'v-glass', name:'1 · Матовое стекло',
-   tag:'IBM Plex Sans · blur 18 · углы 16',
-   why:'Строгая банковская подача: плотное тёмное стекло, спокойные углы, шрифт IBM Plex — тот, на котором делают интерфейсы банков и бирж. Цифры весомые, ничего не отвлекает от них.',
-   bg:'/cards/bg2-emerald.webp', board:'/cards/world-diorama.webp'},
-  {cls:'v-liquid', name:'2 · Жидкое стекло',
-   tag:'Onest · blur 40 · углы 26 · блик',
-   why:'То, что Apple называет liquid glass: сильное размытие, светлая полупрозрачность, мягкий блик по краю и скруглённые пилюли вместо кнопок. Панель кажется физическим стеклом, положенным на поле.',
-   bg:'/cards/bg2-sand.webp', board:'/cards/world-soft.webp'},
-  {cls:'v-dark', name:'3 · Терминал',
-   tag:'Space Grotesk + JetBrains Mono · blur 12',
-   why:'Плотная тёмная панель, как в торговом терминале: моноширинные цифры выстраиваются идеальным столбиком, заголовки набраны техническим гротеском. Максимум данных на минимуме места.',
-   bg:'/cards/bg2-dusk.webp', board:'/cards/world-night.webp'},
-  {cls:'v-light', name:'4 · Светлое стекло',
+  {cls:'v-light', name:'1 · Светлое стекло',
    tag:'Golos Text · blur 26 · углы 20',
-   why:'Ближе всего к российским банковским приложениям: светлое матовое стекло поверх картинки, шрифт Golos сделан специально под кириллицу. Днём и на проекторе читается лучше всех.',
-   bg:'/cards/bg2-sand.webp', board:'/cards/world-soft.webp'},
+   why:'Ближе всего к российским банковским приложениям: белое матовое стекло поверх картинки, шрифт Golos сделан специально под кириллицу. Днём и на проекторе читается лучше всех.',
+   bg:'./cards/bg3-mint.webp', board:'./cards/world-soft.webp'},
+  {cls:'v-liquid', name:'2 · Жидкое стекло',
+   tag:'Onest · blur 40 · углы 26 · блик по краю',
+   why:'То, что Apple называет liquid glass: сильное размытие, мягкий блик по верхней кромке, скруглённые пилюли вместо кнопок. Панель кажется настоящим стеклом, положенным на поле.',
+   bg:'./cards/bg2-sand.webp', board:'./cards/world-soft.webp'},
+  {cls:'v-paper', name:'3 · Бумага',
+   tag:'IBM Plex Sans · плотный лист без размытия',
+   why:'Не стекло, а плотный светлый лист с тонкой линией и мягкой тенью — как настольная игра с бумажными планшетами. Цифры на нём читаются лучше всего, ничего не просвечивает.',
+   bg:'./cards/bg2-marble.webp', board:'./cards/world-isometric.webp'},
+  {cls:'v-mint', name:'4 · Мятный минимал',
+   tag:'Onest · blur 20 · много воздуха',
+   why:'Светлое стекло с зелёным подтоном под фирменный цвет, крупные отступы, тонкие разделители. Спокойнее остальных: ничего не кричит, глаз идёт по цифрам.',
+   bg:'./cards/bg3-mint.webp', board:'./cards/world-diorama.webp'},
 ]
 
 const pct = Math.round(D.goal.have / D.goal.need * 100)
@@ -215,6 +215,13 @@ function hud(v){
   <div class="stage ${v.cls}">
     <img class="bg" src="${v.bg}" alt="" onerror="this.style.background='#12201a'">
     <div class="hud">
+
+      <div class="topbar">
+        <div class="brand"><span class="mark"><svg viewBox="0 0 24 24">${ICON.leaf}</svg></span>
+          <span class="n1">Cashflow</span><span class="n2">GreenLeaf version</span></div>
+        <button class="btn">${svg('undo')} Отменить</button>
+        <button class="btn">${svg('redo')} Заново</button>
+      </div>
 
       <div class="col left scrollcol">
         <div class="card">
@@ -246,13 +253,7 @@ function hud(v){
       </div>
 
       <div class="col mid">
-        <div class="topbar" style="width:100%;position:absolute;top:12px;left:12px;right:12px;width:calc(100% - 24px)">
-          <div class="brand"><span class="mark"><svg viewBox="0 0 24 24">${ICON.leaf}</svg></span>
-            <span class="n1">Cashflow</span><span class="n2">GreenLeaf version</span></div>
-          <button class="btn">${svg('undo')} Отменить</button>
-          <button class="btn">${svg('redo')} Заново</button>
-        </div>
-        <img class="board" src="${v.board}" alt="" onerror="this.style.background='#1b2b22'">
+        <img class="board" src="${v.board}" alt="" onerror="this.style.background='#dfe8e1'">
       </div>
 
       <div class="col right scrollcol">

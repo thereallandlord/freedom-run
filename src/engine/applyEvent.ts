@@ -134,6 +134,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         shares: e.shares,
         costPerShare: e.costPerShare,
         dividendPerShareMonthly: e.dividendPerShareMonthly,
+        profitShareTo: e.profitShareTo,
+        profitSharePct: e.profitSharePct,
       })
       return l
 
