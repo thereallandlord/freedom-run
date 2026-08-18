@@ -284,7 +284,7 @@ function EventToast({ event, onClose }: { event: WorldEvent; onClose: () => void
   const good = goodness(event.effect)
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
+    <div className="modal-layer fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
       <div className="card-fly-in panel w-full max-w-md overflow-hidden rounded-2xl shadow-[var(--shadow-pop)]">
         {/* Событие двигает рынок у всех — пусть и выглядит как новость. */}
         {artByWorld(event.id) && (
@@ -346,7 +346,7 @@ function HistoryModal({ table, onClose }: { table: Table; onClose: () => void })
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-3" onClick={onClose}>
+    <div className="modal-layer fixed inset-0 z-[60] grid place-items-center bg-black/60 p-3" onClick={onClose}>
       <div
         className="pop-in panel max-h-[88vh] w-full max-w-lg overflow-auto rounded-2xl p-4 shadow-[var(--shadow-pop)] sm:p-5"
         onClick={(e) => e.stopPropagation()}

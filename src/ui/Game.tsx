@@ -200,7 +200,7 @@ function WinScreen({
   const winner = table.seats.find((s) => s.id === table.winnerId)
   const standings = [...table.seats].sort((a, b) => netWorth(b.ledger) - netWorth(a.ledger))
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4">
+    <div className="modal-layer fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4">
       <div className="pop-in panel w-full max-w-md rounded-2xl p-6 text-center">
         <div className="text-5xl">🏆</div>
         <h2 className="mt-3 text-2xl font-black">
@@ -325,10 +325,14 @@ export function Game({
         окна и уходить под него при прокрутке. С py-3 они обрывались на
         двенадцать пикселей выше, и скруглённый край читался как обрезка.
       */}
-      <div className="relative flex min-h-0 flex-1 flex-col px-3 pb-0 pt-3">
-      <header className="mb-2.5 flex shrink-0 items-center gap-2">
+      <div className="relative flex flex-col px-3 pb-4 pt-3 lg:min-h-0 lg:flex-1 lg:pb-0">
+      {/*
+        🔴 Ряд кнопок ПЕРЕНОСИТСЯ. На телефоне он требовал 533 px при экране
+        375: выбор доски и «Выйти» уезжали за край и были недоступны вовсе.
+      */}
+      <header className="mb-2.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5">
         <Wordmark size="sm" edition={false} />
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           {topRight}
           <button
             onClick={() => setTradesOpen(true)}
@@ -416,13 +420,13 @@ export function Game({
         себя, доска подгоняется под свободную высоту. Прокручивать всю страницу
         во время партии неудобно — доска должна быть видна целиком.
       */}
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-[320px_minmax(0,1fr)]">
         {/*
           🔴 Панель прокручивается ДО САМОГО НИЗА окна, а не обрезается по краю
           сетки: обрубленный список выглядит поломкой. Отступ снизу нулевой,
           последняя строка уходит под нижний край, как в обычной странице.
         */}
-        <div className="player-scroll order-2 min-h-0 overflow-y-auto overflow-x-hidden pb-0 lg:order-1">
+        <div className="player-scroll order-2 overflow-x-hidden pb-0 lg:order-1 lg:min-h-0 lg:overflow-y-auto">
           <PlayerPanel
             seat={viewed}
             dispatch={viewed.id === seat.id && !seat.isBot ? dispatch : undefined}
@@ -430,7 +434,7 @@ export function Game({
           />
         </div>
 
-        <div className="order-1 flex min-h-0 lg:order-2">
+        <div className="order-1 flex lg:order-2 lg:min-h-0">
           {/*
             🔴 Никакой подложки под доской. Задумка была такая: фон темы во весь
             экран, доска лежит НА нём, панели плавают сверху стеклом. Класс
@@ -444,11 +448,23 @@ export function Game({
             её размер считается от свободного места. Теперь место под колонку
             занято заранее и не двигается.
           */}
-          <div className="relative grid h-full min-h-0 w-full grid-cols-[minmax(0,1fr)_320px] gap-3">
+          {/*
+            🔴 Две колонки — ТОЛЬКО на большом экране. Правило было без
+            условия, и на телефоне 320 px честно отдавались панели игроков, а
+            полю оставалось 19 px: доски на экране не было вовсе. Узкий экран
+            складывает их друг под друга.
+          */}
+          <div className="relative grid min-h-0 w-full grid-cols-1 gap-3 lg:h-full lg:grid-cols-[minmax(0,1fr)_320px]">
             <MoneyToast table={table} />
             <TradeToast table={table} />
 
-            <div className="board-slot grid h-full min-h-0 flex-1 place-items-center">
+            {/*
+              На узком экране высота свободного места ничего не подсказывает —
+              там страница прокручивается. Поэтому на телефоне поле квадратное
+              по ШИРИНЕ, а «во весь остаток высоты» включается с большого
+              экрана, где стол помещается целиком.
+            */}
+            <div className="board-slot grid aspect-square min-h-0 w-full flex-1 place-items-center lg:aspect-auto lg:h-full">
               <Board table={table}>
                 <span
                   className="text-[10px] font-semibold uppercase tracking-[0.16em]"
@@ -479,7 +495,7 @@ export function Game({
               Кнопка и цифры — в правой колонке (правка Камиля). Раньше они
               лежали под доской и съедали высоту, из-за чего доска мельчала.
             */}
-            <div className="player-scroll flex min-h-0 flex-col gap-2 overflow-y-auto overflow-x-hidden">
+            <div className="player-scroll flex flex-col gap-2 overflow-x-hidden lg:min-h-0 lg:overflow-y-auto">
               {seat.isBot ? (
                 <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-4 text-center text-[12px] leading-snug text-[var(--t-muted, var(--muted))]">
                   {seat.name} думает…

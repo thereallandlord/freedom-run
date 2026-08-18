@@ -24,7 +24,7 @@ export function TradeShell({
 }) {
   return (
     <div
-      className={`fixed inset-0 ${layer} grid place-items-center bg-black/70 p-3 sm:p-4`}
+      className={`modal-layer fixed inset-0 ${layer} grid place-items-center bg-black/70 p-3 sm:p-4`}
       onClick={onClose}
     >
       <div

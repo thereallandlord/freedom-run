@@ -45,7 +45,7 @@ export function BankModal({
   const noLoans = !RULES.loansEnabled
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/85 p-4" onClick={onClose}>
+    <div className="modal-layer fixed inset-0 z-[60] grid place-items-center bg-black/85 p-4" onClick={onClose}>
       <div
         className="pop-in panel max-h-[85vh] w-full max-w-md overflow-auto rounded-2xl p-5"
         onClick={(e) => e.stopPropagation()}
