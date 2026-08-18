@@ -2138,6 +2138,15 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'ACCEPT_OFFER_TRADE': {
       const o = t.offers.find((x) => x.id === event.offerId)
       if (!o || !offerAlive(o, t)) return prev
+      /*
+       * 🔴 ОТВЕЧАЕТ ТОТ, КОМУ ПРЕДЛОЖИЛИ. Раньше согласие принималось от кого
+       * угодно: сосед мог согласиться за тебя — войти в долю твоими деньгами
+       * или принять сделку, которую предлагали не ему. Подпись события
+       * говорит, кто нажал; сверяем её с адресатом.
+       */
+      if (event.by && event.seatId !== event.by) return prev
+      if (event.by && o.toId && o.toId !== event.by) return prev
+      if (event.by && o.fromId === event.by) return prev
       const from = t.seats.find((x) => x.id === o.fromId)
       const winner = auctionWinner(o)
       const buyerId = winner?.seatId ?? event.seatId
