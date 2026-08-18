@@ -217,7 +217,8 @@ export function SeatForm({
       professions.map((p) => ({
         value: p.id,
         label: professionName(p, 'ru'),
-        hint: money(professionMonthlyCashFlow(p), isRub) + '/мес',
+        // В списке — ЗАРПЛАТА (правка Камиля). Остаток — строкой ниже.
+        hint: money(p.salary, isRub) + '/мес',
       })),
     [professions, isRub],
   )
@@ -294,6 +295,18 @@ export function SeatForm({
             options={professionOptions}
             onChange={(v) => onChange({ professionId: v })}
           />
+          {(() => {
+            const prof = professions.find((p) => p.id === draft.professionId)
+            if (!prof) return null
+            return (
+              <div className="mt-1 text-[11px] text-muted">
+                после всех расходов остаётся{' '}
+                <span className="tabnum font-semibold">
+                  {money(professionMonthlyCashFlow(prof), isRub)}/мес
+                </span>
+              </div>
+            )
+          })()}
         </div>
 
         <div>

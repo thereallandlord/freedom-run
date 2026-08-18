@@ -73,7 +73,12 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
       professions.map((p) => ({
         value: p.id,
         label: professionName(p, 'ru'),
-        hint: money(professionMonthlyCashFlow(p), isRub) + '/мес',
+        /*
+         * 🔴 В списке — ЗАРПЛАТА, а не остаток (правка Камиля). Раньше тут
+         * стояла разница «зарплата минус все расходы», и «Врач · 76 800 ₽»
+         * читалось как заработок врача, хотя получает он 260 000.
+         */
+        hint: money(p.salary, isRub) + '/мес',
       })),
     [professions, isRub],
   )
@@ -197,6 +202,19 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
                   options={professionOptions}
                   onChange={(v) => update(i, { professionId: v })}
                 />
+                {/* Остаток после всех платежей — вторым планом, чтобы зарплата
+                    не обманывала: у большой зарплаты бывают большие расходы. */}
+                {(() => {
+                  const prof = professions.find((p) => p.id === seat.professionId)
+                  if (!prof) return null
+                  const left = professionMonthlyCashFlow(prof)
+                  return (
+                    <div className="mt-1 text-[11px] text-[var(--muted)]">
+                      после всех расходов остаётся{' '}
+                      <span className="tabnum font-semibold">{money(left, isRub)}/мес</span>
+                    </div>
+                  )
+                })()}
               </div>
               <div>
                 <div className="mb-1 text-xs text-[var(--muted)]">Мечта — победа при покупке</div>
