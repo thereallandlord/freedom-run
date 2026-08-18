@@ -77,6 +77,7 @@ import {
   fairAssetPrice,
   fairCardPrice,
   loanOutstanding,
+  loanOwed,
   offerAlive,
   splitProceeds,
   type Offer,
@@ -294,6 +295,16 @@ function settleCoInvestor(
   }
 }
 
+/** Списать или начислить по мировому событию, не уводя наличные в минус. */
+function payWorldAmount(t: Table, s: Seat, amount: number) {
+  const take = amount < 0 ? -Math.min(Math.max(0, s.ledger.cash), -amount) : amount
+  if (take === 0) return
+  seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: take })
+  if (amount < 0 && take > amount) {
+    log(t, s.id, `${s.name}: списано ${money(-take)} — больше на счету не было`)
+  }
+}
+
 export function applyWorldEvent(prev: Table, index: number): Table {
   const t = cloneTable(prev)
   const ev = WORLD_EVENTS[index]
@@ -330,11 +341,15 @@ export function applyWorldEvent(prev: Table, index: number): Table {
      * посреди чужого хода. Через эту дыру в игре появлялись отрицательные
      * деньги, которых взяться неоткуда.
      */
+    /*
+     * Событие не может забрать больше, чем есть на руках, — но обязано
+     * НАПИСАТЬ, сколько забрало на самом деле. Раньше молча списывало меньше
+     * обещанного, и игрок не понимал, почему цифры не сходятся с плашкой.
+     */
     case 'cashAll':
       for (const s of t.seats) {
         if (s.outOfGame) continue
-        const take = e.amount < 0 ? -Math.min(s.ledger.cash, -e.amount) : e.amount
-        if (take !== 0) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: take })
+        payWorldAmount(t, s, e.amount)
       }
       break
     case 'frictionAll':
@@ -344,8 +359,7 @@ export function applyWorldEvent(prev: Table, index: number): Table {
           log(t, s.id, `${s.name}: обошло стороной — выручил второй паспорт`)
           continue
         }
-        const take = e.amount < 0 ? -Math.min(s.ledger.cash, -e.amount) : e.amount
-        if (take !== 0) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: take })
+        payWorldAmount(t, s, e.amount)
       }
       break
     case 'expenseAll':
@@ -369,10 +383,17 @@ export function applyWorldEvent(prev: Table, index: number): Table {
   return t
 }
 
-/** Взять следующее мировое событие из перетасованной колоды. */
+/**
+ * Взять следующее мировое событие.
+ * 🔴 Колода кончилась — перетасовываем заново. Раньше возвращался order[0], и
+ * после 27-го события мир до конца партии крутил ОДНО И ТО ЖЕ.
+ */
 export function nextWorldEventIndex(t: Table): number {
   const d = t.worldDeck
-  if (d.next >= d.order.length) return d.order[0] ?? 0
+  if (d.next >= d.order.length) {
+    d.order = shuffleIndices(WORLD_EVENTS.length, t.seed + t.worldTick + 977)
+    d.next = 0
+  }
   return d.order[d.next]
 }
 
@@ -1991,6 +2012,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             downPayment: price,
             cashFlow: asset.cashFlow,
             category: asset.category,
+            /*
+             * 🔴 Платёж по рассрочке переезжает вместе с долгом. Без него у
+             * покупателя объект с долгом гасился «из воздуха», а расшить его
+             * досрочно было нечем: поток не возвращался.
+             */
+            installmentMonthly: (asset as { installmentMonthly?: number }).installmentMonthly ?? 0,
           }
           if (re) seatLedgerEvent(t, buyer.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: debt })
           else seatLedgerEvent(t, buyer.id, { type: 'BUY_BUSINESS', ...common, liability: debt })
@@ -2069,6 +2096,9 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
               amount: o.amount,
               repaid: 0,
               atTurn: t.turnCounter,
+              /* 🔴 Надбавку храним в самом займе: без неё движок закрывал долг
+                 по телу, а окно обещало вернуть с процентом. */
+              interestPct: o.interestPct,
             },
           ]
           if (o.interestPct) {
@@ -2098,15 +2128,32 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'REPAY_PLAYER_LOAN': {
       const ln = t.loans.find((x) => x.id === event.loanId)
       if (!ln || ln.borrowerId !== seat.id) return prev
-      const left = ln.amount - ln.repaid
+      /*
+       * 🔴 Возвращать нужно С НАДБАВКОЙ, если давали под процент. Раньше долг
+       * закрывался по телу: обещали вернуть 250 000, движок отпускал за 200 000.
+       */
+      const owed = loanOwed(ln)
+      const left = owed - ln.repaid
       const pay = Math.min(Math.max(0, Math.round(event.amount)), left, l.cash)
       if (pay <= 0) return prev
       seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -pay })
       seatLedgerEvent(t, ln.lenderId, { type: 'ADJUST_CASH', amount: pay })
       ln.repaid += pay
       const lender = t.seats.find((x) => x.id === ln.lenderId)
-      log(t, seat.id, `Вернул ${lender?.name ?? 'игроку'} ${money(pay)}${ln.repaid >= ln.amount ? ' — долг закрыт' : ''}`)
-      if (ln.repaid >= ln.amount) t.loans = t.loans.filter((x) => x.id !== ln.id)
+      const closed = ln.repaid >= owed
+      log(t, seat.id, `Вернул ${lender?.name ?? 'игроку'} ${money(pay)}${closed ? ' — долг закрыт' : ''}`)
+      if (closed) {
+        /*
+         * 🔴 Долговая нагрузка снимается с ОБОИХ. Раньше она оставалась
+         * навсегда: человек рассчитался, а неприятности продолжали ходить
+         * к нему чаще до конца партии.
+         */
+        if (ln.interestPct) {
+          seatLedgerEvent(t, seat.id, { type: 'ADJUST_RIBA_EXPOSURE', amount: -owed })
+          seatLedgerEvent(t, ln.lenderId, { type: 'ADJUST_RIBA_EXPOSURE', amount: -ln.amount })
+        }
+        t.loans = t.loans.filter((x) => x.id !== ln.id)
+      }
       return t
     }
 

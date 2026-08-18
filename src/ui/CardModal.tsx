@@ -190,63 +190,6 @@ function SellLotRow({
   )
 }
 
-/**
- * Перебить чужую находку своей ценой. Владелец увидит предложение и решит.
- * Цена держится в честном коридоре — иначе «продам другу за рубль».
- */
-function BidOnFinding({
-  table,
-  seat,
-  card,
-  dispatch,
-}: {
-  table: Table
-  seat: Seat
-  card: { downPayment: number; id: string }
-  dispatch: (e: TableEvent) => void
-}) {
-  const fair = fairCardPrice(card.downPayment)
-  const [price, setPrice] = useState(fair)
-  const actor = table.seats[table.turnIndex]
-  if (seat.isBot || !actor || actor.id === seat.id) return null
-  const mine = table.offers.find((o) => o.kind === 'resellCard' && o.bids.some((b) => b.seatId === seat.id))
-  if (mine) {
-    return (
-      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-[12px]">
-        Ваша цена предложена — ждём решения {actor.name}
-      </div>
-    )
-  }
-  return (
-    <div className="space-y-2 rounded-xl border border-[var(--line)] p-3">
-      <p className="text-[12px] font-bold">Хотите перекупить находку?</p>
-      <p className="text-[11px] leading-snug text-[var(--muted)]">
-        Предложите {actor.name} свою цену за право на эту сделку. Взнос по карточке вы платите
-        отдельно.
-      </p>
-      <div className="flex items-center gap-2">
-        <input
-          type="range"
-          min={Math.round(fair * PRICE_FLOOR)}
-          max={Math.round(fair * PRICE_CEIL)}
-          step={10_000}
-          value={price}
-          onChange={(e) => setPrice(Number(e.target.value))}
-          className="flex-1 accent-emerald-500"
-        />
-        <span className="tabnum w-28 text-right text-[12px] font-semibold">{money(price)}</span>
-      </div>
-      <button
-        disabled={seat.ledger.cash < price + card.downPayment}
-        onClick={() => dispatch({ type: 'OFFER_CARD', amount: price, toId: actor.id })}
-        className="btn-ghost w-full border-emerald-500/50 text-[12px] disabled:opacity-40"
-      >
-        Предложить {money(price)}
-      </button>
-    </div>
-  )
-}
-
 function Stat({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="flex items-baseline justify-between text-sm">
@@ -481,8 +424,15 @@ export function CardModal({
       const canCash = l.cash >= card.cost
       // Рассрочки нет там, где взнос равен цене — не показываем пустой выбор.
       const canInstallment = terms.financeable && l.cash >= card.downPayment
+      // 🔴 И на ПОЛОВИНУ взноса деньги тоже нужны: кнопка была активна при пустом кошельке.
+      const investorHalf = Math.round(card.downPayment / 2)
       const investorAvailable =
-        halal && !canInstallment && p.deck === 'big' && card.kind === 'realEstate' && card.cashFlow > 0
+        halal &&
+        !canInstallment &&
+        p.deck === 'big' &&
+        card.kind === 'realEstate' &&
+        card.cashFlow > 0 &&
+        l.cash >= investorHalf
       return (
         <S
           badge={card.category === 'partnership' ? 'Партнёрский бизнес' : badge}
@@ -508,7 +458,10 @@ export function CardModal({
               </>
             )}
             <div className="my-1 border-t border-[var(--line)]" />
-            <Stat label="Приносит аренды" value={`${money(terms.cashFlow)}/мес`} />
+            <Stat
+              label={kind === 'realEstate' ? 'Приносит аренды' : 'Приносит дохода'}
+              value={`${money(terms.cashFlow)}/мес`}
+            />
             {terms.financeable && (
               <Stat
                 label="Останется в рассрочку"
@@ -561,10 +514,13 @@ export function CardModal({
             >
               <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">Налом</div>
               <div className="tabnum mt-0.5 text-lg font-black">{money(card.cost)}</div>
-              <div className="tabnum mt-1 text-[13px] text-emerald-400">{signed(flowCash)}/мес</div>
+              <div className={`tabnum mt-1 text-[13px] ${tone(flowCash)}`}>{signed(flowCash)}/мес</div>
               <div className="mt-0.5 text-[11px] text-[var(--muted)]">долгов нет, доход весь ваш</div>
             </button>
 
+            {/* 🔴 Кнопки рассрочки нет там, где рассрочки нет: раньше она
+                висела с нулями и предлагала «купить за 0». */}
+            {terms.financeable && (
             <button
               disabled={!canInstallment}
               onClick={() => dispatch({ type: 'BUY_DEAL' })}
@@ -581,6 +537,7 @@ export function CardModal({
                 остаток {money(instDebt)} · платёж {money(monthly)}/мес
               </div>
             </button>
+            )}
           </div>
           )}
 
@@ -602,10 +559,6 @@ export function CardModal({
             перебить друг друга, а он выбирает. Механика ставок в движке лежала
             готовая (BID_OFFER), ей просто никто не пользовался.
           */}
-          {spectate && (
-            <BidOnFinding table={table} seat={seat} card={card} dispatch={dispatch} />
-          )}
-
           {/* Сделку можно не только купить: право на неё продаётся, а вход делится с партнёром. */}
           <DealTradeActions table={table} seat={seat} card={card} dispatch={dispatch} />
 
@@ -911,19 +864,22 @@ export function CardModal({
           art="📉"
           photo={artBySpace('downsized')}
         >
+          {/*
+            🔴 Кнопка обещала списать сумму, а движок не списывал ни рубля —
+            и правильно делал: расходы и так уходят каждую зарплату, отдельное
+            списание было бы двойным счётом. Наказание здесь — простой без
+            зарплаты при живых счетах. Текст приведён в соответствие.
+          */}
           <p className="text-sm text-[var(--muted)]">
-            Оплатите полный месяц расходов и пропустите 2 хода. Бонус благотворительности сгорает.
+            Два месяца без зарплаты, а счета идут своим чередом. Бонус
+            благотворительности сгорает.
           </p>
           <div className="panel-2 rounded-lg p-3">
-            <Stat label="К оплате" value={money(cost)} strong />
-            <Stat label="Ваши наличные" value={money(l.cash)} />
+            <Stat label="Расходы за месяц" value={money(cost)} />
+            <Stat label="Ваши наличные" value={money(l.cash)} strong />
           </div>
-          <button
-            disabled={l.cash < cost && RULES.loansEnabled}
-            onClick={() => dispatch({ type: 'PAY_DOWNSIZED' })}
-            className="btn-danger w-full"
-          >
-            Заплатить {money(cost)} и пропустить 2 хода
+          <button onClick={() => dispatch({ type: 'PAY_DOWNSIZED' })} className="btn-danger w-full">
+            Пропустить 2 хода
           </button>
 
         </S>

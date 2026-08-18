@@ -74,8 +74,15 @@ const FAMILIES: { keys: string[]; short: string; full: string }[] = [
   { keys: ['roomUFA', 'aptKZN', 'aptMSK', 'aptSPB', 'parking'], short: 'аренда', full: 'аренда в городах' },
   { keys: ['bizFood', 'bizService', 'bizDigital', 'partnership'], short: 'бизнес', full: 'весь бизнес' },
   { keys: ['bizFood', 'bizService'], short: 'бизнес', full: 'общепит и услуги' },
-  { keys: ['DOGE', 'SHIB', 'PEPE', 'BONK', 'WIF'], short: 'мемкоины', full: 'мемкоины' },
-  { keys: ['GRIT', 'SNAIL', 'MYCO', 'ZAP', 'NEST'], short: 'акции', full: 'акции' },
+  /*
+   * 🔴 Наборы должны совпадать с ТИКЕРАМИ ИЗ КОЛОДЫ, иначе группировка не
+   * срабатывает и в строке рынка печатаются сырые AAPL/TSLA/TON. Здесь стояли
+   * тикеры старых колод, которых в русской нет вовсе.
+   */
+  { keys: ['SHIB', 'PEPE', 'MOONX'], short: 'мемкоины', full: 'мемкоины' },
+  { keys: ['BTC', 'ETH', 'SOL', 'TON'], short: 'крипта', full: 'криптовалюты' },
+  { keys: ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'GOOGL'], short: 'технологии', full: 'технологические акции' },
+  { keys: ['AAPL', 'NVDA', 'MSFT', 'PLZL', 'GOOGL'], short: 'акции', full: 'акции' },
 ]
 
 const cap1 = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)

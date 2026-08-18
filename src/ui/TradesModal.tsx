@@ -316,7 +316,7 @@ export function TradesModal({
               {asset.debt > 0 && (
                 <TradeLine label="Остаток рассрочки уйдёт с активом" value={money(asset.debt)} />
               )}
-              <TradeLine label="Вам придёт" value={money(Math.max(0, price - asset.debt))} strong />
+              <TradeLine label="Вам придёт" value={/* Долг уже вычтен в справедливой цене и уходит к покупателю. */ money(price)} strong />
               <TradeLine label="Покупателю окупится за" value={payback(price, asset.cashFlow)} />
             </div>
 

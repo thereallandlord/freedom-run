@@ -511,6 +511,10 @@ export function PlayerPanel({
             {l.expenses.retailPayment > 0 && (
               <Row label="Рассрочка" value={money(l.expenses.retailPayment)} dim />
             )}
+            {/* 🔴 Без этой строки сумма раздела не сходилась с итогом. */}
+            {l.expenses.ribaPayment > 0 && (
+              <Row label="Платёж по кредиту" value={money(l.expenses.ribaPayment)} dim />
+            )}
             <Row label="Прочее" value={money(l.expenses.otherExpenses)} dim />
             {l.pets > 0 && (
               <Row label={`Питомцы (${l.pets})`} value={money(petExpenses(l))} dim />

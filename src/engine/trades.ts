@@ -115,6 +115,15 @@ export function splitProceeds(
 
 // ─── Заём ─────────────────────────────────────────────────────────────
 
+/**
+ * Сколько заёмщик обязан вернуть ВСЕГО, с надбавкой.
+ * 🔴 Одна функция на движок и на интерфейс: раньше окно обещало вернуть
+ * 250 000, а движок закрывал долг за 200 000 — надбавку просто не сохраняли.
+ */
+export function loanOwed(l: PlayerLoan): number {
+  return Math.round((l.amount * (100 + (l.interestPct ?? 0))) / 100)
+}
+
 export function loanOutstanding(loans: PlayerLoan[], seatId: string): number {
   return loans
     .filter((l) => l.borrowerId === seatId)
