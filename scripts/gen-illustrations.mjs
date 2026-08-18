@@ -38,6 +38,8 @@ const SIZE = '1536x1024'
 // Доска — квадрат: в альбомном кадре её пришлось бы обрезать, а обрезка
 // съедает рамку и ломает калибровку клеток.
 const SIZE_SQUARE = '1024x1024'
+/** Портрет под плитку колоды: пейзажный кадр там читается как фотография. */
+const SIZE_PORTRAIT = '1024x1536'
 
 // Стиль полотна. Общий STYLE просит живописную сцену в горизонтальном кадре —
 // для доски это вредно: нужна плоская печатная поверхность без сюжета.
@@ -1267,11 +1269,18 @@ function buildJobs() {
     })
   }
 
-  // Обложки колод
+  // Обложки колод: широкий кадр и портретный под карту.
+  // 🔴 byDeckCard в манифест не записывался вовсе: файлы deck-*-card.webp
+  // лежали в public, а плитки колод на экране настройки выходили пустыми
+  // серыми прямоугольниками. Ключ пишем рядом с широким кадром.
   manifest.byDeck = manifest.byDeck || {}
+  manifest.byDeckCard = manifest.byDeckCard || {}
   for (const theme of Object.keys(SCENES_DECKS)) {
     push(theme, `deck-${theme}`, SCENES_DECKS[theme], 'deck', () => {
       manifest.byDeck[theme] = `/cards/deck-${theme}.webp`
+    })
+    push(`${theme}-card`, `deck-${theme}-card`, SCENES_DECKS[theme], 'deckCard', () => {
+      manifest.byDeckCard[theme] = `/cards/deck-${theme}-card.webp`
     })
   }
 
@@ -1509,7 +1518,14 @@ async function main() {
       const dest = path.join(OUT_DIR, job.file + '.webp')
       try {
         // Доске нужен квадратный кадр, остальному — альбомный.
-        const size = job.group === 'plateWide' ? SIZE : job.group === 'plate' || job.group === 'board' ? SIZE_SQUARE : SIZE
+        const size =
+          job.group === 'plateWide'
+            ? SIZE
+            : job.group === 'deckCard'
+              ? SIZE_PORTRAIT
+              : job.group === 'plate' || job.group === 'board'
+                ? SIZE_SQUARE
+                : SIZE
         const style = job.group === 'plate' || job.group === 'plateWide' || job.group === 'board' ? BOARD_STYLE : STYLE
         const png = await generateOne(apiKey, `${job.scene}. ${style}`, 1, size)
         await compress(png, dest, job.group.startsWith('plate') || job.group === 'board' ? TARGET_WIDTH_BOARD : TARGET_WIDTH)

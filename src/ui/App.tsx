@@ -132,6 +132,7 @@ export function App() {
           setScreen('landing')
         }}
         rematch={game.rematch}
+        onExit={() => setScreen('landing')}
         callUrl={room.room?.settings.callUrl}
         topRight={<ThemeToggle />}
       />

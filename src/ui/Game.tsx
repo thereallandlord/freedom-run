@@ -267,6 +267,7 @@ export function Game({
   undo,
   reset,
   rematch,
+  onExit,
   callUrl,
   topRight,
 }: {
@@ -278,6 +279,8 @@ export function Game({
   undo: () => void
   reset: () => void
   rematch: () => void
+  /** Уйти на главную, НЕ стирая партию. */
+  onExit: () => void
   /** Ссылка на созвон из настроек комнаты. Пусто — кнопки нет. */
   callUrl?: string
   topRight?: React.ReactNode
@@ -348,8 +351,14 @@ export function Game({
           <button onClick={undo} className="topbtn" title="Откатить последнее событие">
             ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
           </button>
-          <button onClick={reset} className="topbtn" title="Начать заново">
-            🔄<span className="ml-1 hidden sm:inline">Заново</span>
+          {/*
+            🔴 «Заново» стирало партию без вопроса. Теперь выход на главную —
+            стол остаётся, на главной он ждёт карточкой «Продолжить». Начать
+            всё сначала можно оттуда же, кнопкой «Забыть».
+          */}
+          <button onClick={onExit} className="topbtn" title="На главную. Партия сохранится">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
+            <span className="ml-0.5 hidden sm:inline">Выйти</span>
           </button>
           {/*
             Созвон. Неприметная кнопка (просьба Камиля: «выделять не надо»):
