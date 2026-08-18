@@ -152,7 +152,13 @@ function Cell({
         boxShadow: ring ? `0 0 0 2px ${ring}` : undefined,
         color: 'var(--t-ink)',
         opacity: dim ? 0.4 : 1,
-        backdropFilter: 'blur(2px)',
+        /*
+         * 🔴 Размытия под клеткой БОЛЬШЕ НЕТ. Двухпиксельный blur за
+         * полупрозрачной плиткой не видно вовсе, а стоил он двадцати четырёх
+         * отдельных слоёв — по одному на клетку, и все пересчитывались при
+         * наведении и на каждом кадре анимации. Safari на этом заметно
+         * проседал.
+         */
       }}
     >
       <span className="block size-[54%] opacity-90 [&>svg]:size-full">{icon}</span>
