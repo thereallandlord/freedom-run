@@ -373,6 +373,12 @@ export type WorldEffect =
   | { kind: 'frictionAll'; amount: number }
   | { kind: 'expenseAll'; pct: number }
   | { kind: 'salaryAll'; pct: number }
+  /**
+   * Событие про партнёрский бизнес: структуры у ВСЕХ владельцев растут быстрее
+   * (или медленнее) несколько ближайших зарплат. Просьба Камиля: партнёрский
+   * путь должен жить не только своими карточками, но и общими новостями.
+   */
+  | { kind: 'glGrowthAll'; points: number; paydays: number }
 
 export interface WorldEvent {
   id: string

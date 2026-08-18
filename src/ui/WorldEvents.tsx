@@ -158,6 +158,8 @@ export function movePhrase(m: MarketMove, short = false): string {
 
 export function effectKindLabel(e: WorldEffect): string {
   switch (e.kind) {
+    case 'glGrowthAll':
+      return 'Партнёрский бизнес'
     case 'assetPrice':
       return 'Цены'
     case 'assetFlow':
@@ -185,6 +187,10 @@ export function effectText(e: WorldEffect, short = false): string {
       return movePhrase({ kind: 'flow', keys: e.categories, pct: e.pct }, short)
     case 'stockPrice':
       return movePhrase({ kind: 'stock', keys: e.symbols, pct: e.pct }, short)
+    case 'glGrowthAll':
+      return e.points > 0
+        ? `структуры растут быстрее на ${e.points} пункта`
+        : `структуры растут медленнее на ${Math.abs(e.points)} пункта`
     case 'cashAll':
       return e.amount < 0 ? `у каждого спишется ${money(-e.amount)}` : `каждому придёт ${money(e.amount)}`
     // Названия видов не повторяем: перед текстом уже стоит «Расходы»/«Зарплата».
@@ -200,6 +206,8 @@ export function effectText(e: WorldEffect, short = false): string {
 /** Приятно это игрокам или нет — только для цвета плашки. */
 function goodness(e: WorldEffect): 1 | -1 {
   switch (e.kind) {
+    case 'glGrowthAll':
+      return e.points >= 0 ? 1 : -1
     case 'assetPrice':
     case 'assetFlow':
     case 'stockPrice':

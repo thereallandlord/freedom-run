@@ -34,7 +34,9 @@ export function DealTradeActions({
 
   const [mode, setMode] = useState<null | 'resell' | 'share'>(null)
   const [buyerId, setBuyerId] = useState('all')
-  const [price, setPrice] = useState(fair)
+  // Начинаем с четверти взноса: «справедливо = взнос» — это верхняя часть
+  // разумного, а торг обычно идёт вокруг доли от него.
+  const [price, setPrice] = useState(Math.round(fair * 0.25))
   const [partnerId, setPartnerId] = useState('all')
   const [partnerMoney, setPartnerMoney] = useState(Math.round(card.downPayment / 2))
 

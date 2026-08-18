@@ -342,6 +342,33 @@ export function applyWorldEvent(prev: Table, index: number): Table {
     case 'stockPrice':
       push('stock', e.symbols, e.pct)
       break
+    case 'glGrowthAll': {
+      // Общая новость про партнёрский бизнес — ускоряет (или тормозит) всех, у кого он есть.
+      for (const s2 of t.seats) {
+        if (s2.outOfGame) continue
+        const idx = t.seats.findIndex((x) => x.id === s2.id)
+        const biz = s2.ledger.businesses.find((b) => b.gl)
+        if (!biz?.gl) continue
+        const businesses = s2.ledger.businesses.map((b) =>
+          b.id === biz.id && b.gl
+            ? {
+                ...b,
+                gl: {
+                  ...b.gl,
+                  // Ускорение общее и постоянное: событие поднимает сам темп,
+                  // отдельного срока ему не нужно — так же работают карточки.
+                  growthPct: Math.max(
+                    1,
+                    Math.min(GL_MAX_GROWTH_PCT, b.gl.growthPct + e.points),
+                  ),
+                },
+              }
+            : b,
+        )
+        t.seats[idx] = { ...s2, ledger: { ...s2.ledger, businesses } }
+      }
+      break
+    }
     /*
      * 🔴 Мировое событие не может забрать больше, чем у человека есть на руках.
      * Раньше списывало вслепую и уводило наличные в минус, причём БЕЗ экрана
@@ -501,6 +528,24 @@ function seatLedgerEvent(t: Table, seatId: string, e: LedgerEvent) {
       t.pending = { kind: 'gameOver' }
     }
   }
+}
+
+/**
+ * Цена бумаги на СЕГОДНЯ — гуляет внутри своего диапазона.
+ *
+ * 🔴 Раньше у каждой бумаги была одна зашитая цена, и почти у всех она стояла
+ * на 60–80% диапазона, то есть у верхней границы: покупать приходилось «на
+ * хаях», а вилки цен не было вовсе. Дублировать карточки ради разных цен —
+ * плодить колоду; вместо этого цену разыгрываем при выдаче, со смещением к
+ * низу (низкие цены встречаются чаще высоких, как и в жизни).
+ */
+function stockDrawPrice(t: Table, card: DealCard): DealCard {
+  if (card.kind !== 'stock') return card
+  const [lo, hi] = card.range
+  if (!(hi > lo)) return card
+  const u = rng(t, 8171)
+  const price = Math.round((lo + (hi - lo) * Math.pow(u, 1.7)) / 100) * 100
+  return { ...card, price: Math.max(lo, Math.min(hi, price)) }
 }
 
 /** Карта сделки в масштабе режима: партнёрский бизнес не трогаем — у него своя экономика. */
@@ -1226,9 +1271,24 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         }
       }
 
-      let card = scaled(list[draw(t, event.size, list.length)])
+      /*
+       * 🔴 Лёгкий перекос в сторону бумаг, которые УЖЕ есть у кого-то за
+       * столом (просьба Камиля). Так рынок вокруг них оживает: событие про
+       * такую бумагу касается сразу нескольких, а докупить её можно осознанно.
+       * Перекос слабый — одна дополнительная попытка из трёх.
+       */
+      const owned = new Set(
+        t.seats.flatMap((s2) => s2.ledger.stocks.map((x) => x.symbol)),
+      )
+      let card = stockDrawPrice(t, scaled(list[draw(t, event.size, list.length)]))
+      if (owned.size && card.kind !== 'stock' && rng(t, 5501) < 0.33) {
+        const pool = list.filter((c) => c.kind === 'stock' && owned.has(c.symbol))
+        if (pool.length) {
+          card = stockDrawPrice(t, scaled(pool[draw(t, event.size, pool.length) % pool.length]))
+        }
+      }
       for (let tries = 0; tries < 6 && !dealDrawOk(t, card, event.size); tries++) {
-        card = scaled(list[draw(t, event.size, list.length)])
+        card = stockDrawPrice(t, scaled(list[draw(t, event.size, list.length)]))
       }
       t.pending = { kind: 'deal', deck: event.size, card }
       return t
