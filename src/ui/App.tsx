@@ -79,6 +79,26 @@ export function App() {
   sendGameRef.current = (ev) => room.sendGame(ev)
   applyRef.current = (ev) => game.applyLocal(ev)
 
+  /*
+   * 🔴 Пока идёт сетевая партия, адрес страницы — АДРЕС КОМНАТЫ. Раньше
+   * ссылка-приглашение отрабатывала один раз и адрес оставался «голым»:
+   * обновил страницу — и ты уже не в комнате, а на главной, хотя партия
+   * идёт. Теперь код комнаты живёт в адресе, его можно переслать в любой
+   * момент, а перезагрузка возвращает в ту же комнату.
+   */
+  useEffect(() => {
+    const code = room.room?.code
+    const url = new URL(window.location.href)
+    const now = url.searchParams.get('room')
+    if (code && now !== code) {
+      url.searchParams.set('room', code)
+      window.history.replaceState(null, '', url)
+    } else if (!code && now) {
+      url.searchParams.delete('room')
+      window.history.replaceState(null, '', url)
+    }
+  }, [room.room?.code])
+
   /** Моё место за столом: порядок мест совпадает с порядком игроков комнаты. */
   const meSeatId = (() => {
     if (!room.room) return undefined
