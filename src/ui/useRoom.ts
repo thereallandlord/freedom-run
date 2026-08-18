@@ -287,6 +287,28 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
     [setIdentity],
   )
 
+  /*
+   * 🔴 ВОЗВРАЩЕНИЕ В СВОЮ КОМНАТУ ПОСЛЕ ПЕРЕЗАГРУЗКИ.
+   *
+   * Подключение к каналу происходило ровно в двух местах — при создании
+   * комнаты и при входе по ссылке. После обновления страницы не звалось
+   * ничто: комната в хранилище есть, экран нарисован, а провода нет — и
+   * человек оказывался «в комнате», о которой никто не знает. Здесь мы
+   * подключаемся заново, если адрес и хранилище согласны, что мы её
+   * участник.
+   */
+  const rejoined = useRef(false)
+  useEffect(() => {
+    if (rejoined.current || !transport) return
+    const saved = roomRef.current
+    if (!saved || !urlCode || saved.code !== urlCode) return
+    const mine =
+      saved.players.some((p) => p.id === me.id) || saved.spectators.some((p) => p.id === me.id)
+    if (!mine) return
+    rejoined.current = true
+    void transport.join(saved.code, { id: me.id, name: me.name }, handlers())
+  }, [handlers, me.id, me.name, transport, urlCode])
+
   const create = useCallback(
     (patch: Partial<PlayerDraft>, settings?: Partial<RoomSettings>) => {
       const draft = draftFrom(patch)

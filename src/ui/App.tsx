@@ -97,8 +97,22 @@ export function App() {
    */
   const meSeatId = room.me.id
 
-  // Пришли по ссылке-приглашению — сразу показываем вход в эту комнату.
-  const [screen, setScreen] = useState<Screen>(() => (room.urlCode ? 'join' : 'landing'))
+  /*
+   * 🔴 ОБНОВЛЕНИЕ СТРАНИЦЫ ВНУТРИ КОМНАТЫ НЕ ВЫБРАСЫВАЕТ ИЗ НЕЁ.
+   *
+   * Пока идёт партия, код комнаты стоит в адресе. Значит при перезагрузке мы
+   * точно знаем: человек был в этой комнате, а не «когда-то в какой-то».
+   * Если он в ней состоял — возвращаем на место: в лобби, а если партия уже
+   * шла — сразу за стол. Ссылка от друга (мы в ней не состоим) по-прежнему
+   * открывает форму входа, а голый адрес — главную.
+   */
+  const [screen, setScreen] = useState<Screen>(() => {
+    if (!room.urlCode) return 'landing'
+    const saved = room.room
+    const mine = saved?.code === room.urlCode && saved.players.some((p) => p.id === room.me.id)
+    if (!mine) return 'join'
+    return saved?.status === 'playing' ? 'game' : 'lobby'
+  })
 
   /*
    * 🔴 Пока идёт сетевая партия, адрес страницы — АДРЕС КОМНАТЫ. Раньше
@@ -155,7 +169,10 @@ export function App() {
      * бросало туда человека. Он открывал ссылку, а его выкидывало в старую
      * партию, и назад дороги не было.
      */
-    if (screen !== 'lobby') return
+    // Стол собираем из лобби (нажали «Начать») или при возвращении в свою
+    // комнату по адресу — но не из-за случайной записи в хранилище.
+    const returning = screen === 'game' && room.urlCode === room.room?.code
+    if (screen !== 'lobby' && !returning) return
     if (!started || !room.room || game.table) return
     game.start(toTableSetup(room.room))
     setScreen('game')
