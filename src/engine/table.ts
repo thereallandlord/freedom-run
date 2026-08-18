@@ -808,7 +808,24 @@ function resolveLanding(t: Table, seatIdx: number) {
         // Пустой рынок — сгоревший ход. Ищем карту, которая хоть кого-то касается;
         // не нашли за 4 попытки — превращаем клетку в «возможность».
         let card = null as import('./types').MarketCard | null
-        for (let tries = 0; tries < 4; tries++) {
+        /*
+         * 🔴 У ВЛАДЕЛЬЦА ПАРТНЁРСКОГО БИЗНЕСА события по нему выпадают чаще.
+         * Он вложился в этот путь, а карточки роста структуры терялись среди
+         * полусотни остальных: за сотню ходов человек видел одну-две. Сначала
+         * пробуем найти карту про его бизнес, и только потом обычную.
+         */
+        const hasGl = seat.ledger.businesses.some((b) => b.gl)
+        if (hasGl) {
+          const glDeck = deck.filter((c) => c.kind === 'glEvent')
+          for (let tries = 0; tries < 3 && glDeck.length; tries++) {
+            const candidate = glDeck[draw(t, 'market', glDeck.length) % glDeck.length]
+            if (marketCardIsLive(t, candidate)) {
+              card = candidate
+              break
+            }
+          }
+        }
+        for (let tries = 0; !card && tries < 4; tries++) {
           const candidate = deck[draw(t, 'market', deck.length)]
           if (marketCardIsLive(t, candidate)) {
             card = candidate

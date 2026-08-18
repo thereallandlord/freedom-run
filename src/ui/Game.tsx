@@ -551,7 +551,7 @@ export function Game({
             disabled={seat.isBot}
             title="Мой портфель: продать бумаги по цене сегодня"
           >
-            🎒<span className="ml-1 hidden sm:inline">Портфель</span>
+            🎒<span className="ml-1">Портфель</span>
           </button>
           <button
             onClick={() => setBankOpen(true)}

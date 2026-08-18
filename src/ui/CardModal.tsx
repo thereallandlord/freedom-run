@@ -1084,7 +1084,32 @@ function CardBody({
                   {card.freezePaydays ? (
                     <Stat label="Приток новых людей встал" value={`на ${card.freezePaydays} зарплат`} />
                   ) : null}
-                  {biz?.gl ? <Stat label="Теперь приносит" value={`${signed(glTotalIncome(biz.gl))}/мес`} big good /> : null}
+                  {/*
+                    🔴 «Теперь приносит» зелёным на ПЛОХОЙ карте читалось как
+                    прибавка: «заблокировали страницу — и это дало плюс».
+                    Хорошая новость подсвечивается, плохая — нет, а рядом
+                    сказано, что именно произошло с доходом.
+                  */}
+                  {biz?.gl
+                    ? (() => {
+                        const bad = !!card.dipPct || !!card.freezePaydays
+                        return (
+                          <Stat
+                            label={bad ? 'Доход сейчас' : 'Теперь приносит'}
+                            value={`${signed(glTotalIncome(biz.gl))}/мес`}
+                            big
+                            good={bad ? undefined : true}
+                          />
+                        )
+                      })()
+                    : null}
+                  {(card.dipPct || card.freezePaydays) && (
+                    <p className="pt-1 text-[11.5px] leading-snug text-amber-600 dark:text-amber-400">
+                      {card.freezePaydays
+                        ? 'Доход не падает, но и не растёт: пока приток новых людей стоит, структура остаётся на месте.'
+                        : 'Доход временно просел — через несколько зарплат вернётся к своему.'}
+                    </p>
+                  )}
                 </div>
                 <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
                   Понятно
