@@ -319,6 +319,7 @@ export function Game({
   const [peekId, setPeekId] = useState<string | null>(null)
   const [bankOpen, setBankOpen] = useState(false)
   const [portfolioOpen, setPortfolioOpen] = useState(false)
+  const [logOpen, setLogOpen] = useState(false)
   const [tradesOpen, setTradesOpen] = useState(false)
   /** Предложения, которые отложили кнопкой «Позже» — не лезут снова сами. */
   const [hiddenOffers, setHiddenOffers] = useState<string[]>([])
@@ -543,6 +544,19 @@ export function Game({
           >
             🤝<span className="ml-1 hidden sm:inline">Сделки</span>
             {myDebt > 0 && <span className="ml-1 text-[10px] text-amber-400">●</span>}
+          </button>
+          {/*
+            🔴 Журнал партии. Движок писал его с самого начала — кто что купил,
+            кто кому заплатил, что сделал рынок, — а посмотреть было негде:
+            строки мелькали всплывающими подсказками и пропадали. За настоящим
+            столом спорные моменты разбирают, глядя на записи.
+          */}
+          <button
+            onClick={() => setLogOpen(true)}
+            className="topbtn"
+            title="Журнал партии: что происходило по ходам"
+          >
+            📜<span className="ml-1 hidden sm:inline">Журнал</span>
           </button>
           {/* Портфель доступен ВСЕГДА: продать своё можно, не дожидаясь карточки. */}
           <button
@@ -835,6 +849,55 @@ export function Game({
               flowMul={table.market.flow}
               priceNow={(sym) => stockPriceNow(table, sym)}
             />
+          </div>
+        </div>
+      )}
+
+      {logOpen && (
+        <div
+          className="modal-layer fixed inset-0 z-[66] grid place-items-center bg-black/70 p-4"
+          onClick={() => setLogOpen(false)}
+        >
+          <div
+            className="pop-in panel flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-bold">Журнал партии</h2>
+              <button
+                onClick={() => setLogOpen(false)}
+                className="text-[var(--muted)] hover:text-[var(--ink)]"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-1 overflow-auto pr-1">
+              {table.log.length === 0 ? (
+                <p className="py-6 text-center text-[13px] text-[var(--muted)]">
+                  Пока ничего не произошло.
+                </p>
+              ) : (
+                [...table.log].reverse().map((row, i) => {
+                  const who = table.seats.find((x) => x.id === row.seatId)
+                  return (
+                    <div
+                      key={`${row.at}-${i}`}
+                      className="flex gap-2 rounded-lg px-2 py-1.5 text-[12.5px] leading-snug odd:bg-[var(--panel-2)]"
+                    >
+                      {who && (
+                        <span className="shrink-0" style={{ color: who.color }}>
+                          ●
+                        </span>
+                      )}
+                      <span className="min-w-0 flex-1">{row.text}</span>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+            <p className="mt-2 text-[11px] leading-snug text-[var(--muted)]">
+              Последние записи сверху. Журнал общий: у всех за столом он одинаковый.
+            </p>
           </div>
         </div>
       )}
