@@ -625,6 +625,23 @@ export function pendingInvolvesOthers(t: Table): boolean {
   return false
 }
 
+/**
+ * Базовая цена бумаги — та, что напечатана на карточке сделки.
+ * Нужна, чтобы считать ТЕКУЩУЮ стоимость портфеля: рынок двигает множитель,
+ * а не цену покупки.
+ */
+export function stockBasePrice(theme: Table['deckTheme'], symbol: string): number {
+  for (const c of smallDeals(theme)) {
+    if (c.kind === 'stock' && c.symbol === symbol) return c.price
+  }
+  return 0
+}
+
+/** Цена бумаги СЕЙЧАС, с учётом мировых событий. */
+export function stockPriceNow(t: Table, symbol: string): number {
+  return marketStockPrice(stockBasePrice(t.deckTheme, symbol), t.market.stock[symbol])
+}
+
 export function stockHolders(t: Table, symbol: string): Seat[] {
   return t.seats.filter(
     (s) => !s.outOfGame && s.track === 'rat' && s.ledger.stocks.some((l) => l.symbol === symbol),
@@ -1349,6 +1366,34 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     }
 
     case 'BUY_STOCK_SHARES': {
+      /*
+       * 🔴 ДОКУПКА НА ПРОСАДКЕ. Карточка рынка «акции −45%» сообщала о
+       * падении и предлагала только продать. Но именно в такой момент их и
+       * докупают — и это решение игрока, а не колоды. Докупить можно ТУ ЖЕ
+       * бумагу, которая у тебя уже есть: событие про неё и рассказывает.
+       */
+      if (t.pending?.kind === 'market' && t.pending.card.kind === 'stockPrice') {
+        const mc = t.pending.card
+        const shares2 = Math.floor(event.shares)
+        if (shares2 <= 0) return prev
+        const buyer2 = t.seats.find((x) => x.id === (event.seatId ?? seat.id))
+        if (!buyer2 || buyer2.outOfGame || buyer2.track === 'fast') return prev
+        if (event.by && (event.seatId ?? seat.id) !== event.by) return prev
+        if (!buyer2.ledger.stocks.some((x) => x.symbol === mc.symbol)) return prev
+        const total2 = shares2 * mc.price
+        if (buyer2.ledger.cash < total2) return prev
+        seatLedgerEvent(t, buyer2.id, {
+          type: 'BUY_STOCK',
+          id: `${mc.symbol}-${nextId(t)}`,
+          symbol: mc.symbol,
+          shares: shares2,
+          costPerShare: mc.price,
+          dividendPerShareMonthly: 0,
+        })
+        log(t, buyer2.id, `${buyer2.name} докупил ${shares2} × ${mc.symbol} по ${money(mc.price)}`)
+        markDecided(t, buyer2.id)
+        return t
+      }
       if (t.pending?.kind !== 'deal') return prev
       const card = t.pending.card as StockCard
       if (card.kind !== 'stock') return prev
@@ -1416,16 +1461,36 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const lot = holder.ledger.stocks.find((x) => x.id === event.lotId)
       if (!lot) return prev
       const soldN = Math.min(event.shares, lot.shares)
+      /*
+       * 🔴 Цену берём СВОЮ, рыночную на сейчас, а не ту, что прислал клиент.
+       * Иначе продать можно было бы по любому числу, а с появлением продажи
+       * из портфеля (в любой момент, а не только по карточке рынка) это
+       * перестало быть теорией.
+       */
+      /*
+       * Цена продажи: если открыта карточка рынка по этой бумаге — её цена
+       * (она и есть событие), иначе текущая рыночная. Присланную клиентом
+       * цену не берём: продать можно было бы по любому числу.
+       */
+      const openCard =
+        t.pending?.kind === 'market' && t.pending.card.kind === 'stockPrice'
+          ? t.pending.card
+          : null
+      const fair =
+        openCard && openCard.symbol === lot.symbol
+          ? openCard.price
+          : stockPriceNow(t, lot.symbol)
+      const price = fair > 0 ? fair : event.pricePerShare
       seatLedgerEvent(t, event.seatId, {
         type: 'SELL_STOCK',
         lotId: event.lotId,
         shares: event.shares,
-        pricePerShare: event.pricePerShare,
+        pricePerShare: price,
       })
       log(
         t,
         event.seatId,
-        `${holder.name} продал ${soldN} × ${lot.symbol} по ${money(event.pricePerShare)}`,
+        `${holder.name} продал ${soldN} × ${lot.symbol} по ${money(price)}`,
       )
 
       /*

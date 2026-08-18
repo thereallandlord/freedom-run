@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
-import { currentSeat, diceCountFor, pendingInvolvesOthers } from '../engine/table'
+import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow } from '../engine/table'
 import {
   RULES,
   fastTrackIncome,
@@ -16,6 +16,7 @@ import { Board } from './Board'
 import { PlayerPanel, money, signed, tone } from './PlayerPanel'
 import { CardModal } from './CardModal'
 import { BankModal } from './BankModal'
+import { PortfolioModal } from './PortfolioModal'
 import { TradesModal } from './TradesModal'
 import { OfferInbox } from './OfferInbox'
 import { Wordmark } from './Wordmark'
@@ -317,6 +318,7 @@ export function Game({
    */
   const [peekId, setPeekId] = useState<string | null>(null)
   const [bankOpen, setBankOpen] = useState(false)
+  const [portfolioOpen, setPortfolioOpen] = useState(false)
   const [tradesOpen, setTradesOpen] = useState(false)
   /** Предложения, которые отложили кнопкой «Позже» — не лезут снова сами. */
   const [hiddenOffers, setHiddenOffers] = useState<string[]>([])
@@ -484,6 +486,7 @@ export function Game({
           <PlayerPanel
             seat={seat}
             dispatch={!seat.isBot ? dispatch : undefined}
+            priceNow={(sym) => stockPriceNow(table, sym)}
             flowMul={table.market.flow}
           />
         </div>
@@ -540,6 +543,15 @@ export function Game({
           >
             🤝<span className="ml-1 hidden sm:inline">Сделки</span>
             {myDebt > 0 && <span className="ml-1 text-[10px] text-amber-400">●</span>}
+          </button>
+          {/* Портфель доступен ВСЕГДА: продать своё можно, не дожидаясь карточки. */}
+          <button
+            onClick={() => setPortfolioOpen(true)}
+            className="topbtn"
+            disabled={seat.isBot}
+            title="Мой портфель: продать бумаги по цене сегодня"
+          >
+            🎒<span className="ml-1 hidden sm:inline">Портфель</span>
           </button>
           <button
             onClick={() => setBankOpen(true)}
@@ -818,11 +830,31 @@ export function Game({
                 ✕
               </button>
             </div>
-            <PlayerPanel seat={peeked} flowMul={table.market.flow} />
+            <PlayerPanel
+              seat={peeked}
+              flowMul={table.market.flow}
+              priceNow={(sym) => stockPriceNow(table, sym)}
+            />
           </div>
         </div>
       )}
 
+      {portfolioOpen && !seat.isBot && (
+        <PortfolioModal
+          table={table}
+          seat={seat}
+          dispatch={dispatch}
+          onClose={() => setPortfolioOpen(false)}
+          onOpenTrades={() => {
+            setPortfolioOpen(false)
+            setTradesOpen(true)
+          }}
+          onOpenBank={() => {
+            setPortfolioOpen(false)
+            setBankOpen(true)
+          }}
+        />
+      )}
       {bankOpen && <BankModal seat={seat} dispatch={dispatch} onClose={() => setBankOpen(false)} />}
       {tradesOpen && !seat.isBot && (
         <TradesModal

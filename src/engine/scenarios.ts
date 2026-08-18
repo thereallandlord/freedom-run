@@ -285,9 +285,14 @@ console.log('\n\nСОХРАНЕНИЕ ДЕНЕГ В СДЕЛКАХ')
     const lot = t.seats[1].ledger.stocks[0]
     ok('условие записалось на лот', lot?.profitSharePct === 20 && lot?.profitShareTo === t.seats[0].id)
 
-    // продаём вдвое дороже — доля должна уйти
+    /*
+     * Продаём вдвое дороже. Цену теперь назначает ДВИЖОК (клиентскую он не
+     * берёт — иначе можно было бы продать по любому числу), поэтому двигаем
+     * рынок, а не подставляем цифру в событие.
+     */
     const before = purse(t), c0 = t.seats[0].ledger.cash
     const sellAt = lot.costPerShare * 2
+    t = { ...t, market: { ...t.market, stock: { ...t.market.stock, [lot.symbol]: 2 } } }
     t = applyTableEvent(t, { type: 'SELL_STOCK_LOT', seatId: t.seats[1].id, lotId: lot.id, shares: 10, pricePerShare: sellAt })
     const profit = (sellAt - lot.costPerShare) * 10
     ok('доля с прибыли ушла владельцу находки',

@@ -112,7 +112,13 @@ function Shell({
   note?: string | null
 }) {
   return (
-    <div className="modal-layer fixed inset-0 z-40 grid place-items-center bg-black/70 p-4">
+    /*
+      🔴 На большом экране окно накрывает ТОЛЬКО середину — колонки по бокам
+      остаются живыми. Раньше подложка ложилась на весь экран, и пока карта
+      открыта, нельзя было даже прокрутить свою панель, чтобы посмотреть, что
+      у тебя есть. Решение принимают, глядя на свои активы, а не по памяти.
+    */
+    <div className="modal-layer fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 lg:left-[332px] lg:right-[332px]">
       <div className="card-fly-in panel max-h-[92vh] w-full max-w-md overflow-auto rounded-2xl p-5 shadow-[var(--shadow-pop)]">
         {art && <CardArt icon={art} accent={accent} photo={photo} />}
         <div
@@ -345,6 +351,9 @@ function CardBody({
   const ribaFree = Math.max(0, ribaLimit(seat.ledger) - seat.ledger.liabilities.ribaLoan)
   const p = table.pending
   const [shares, setShares] = useState(1)
+  /** Кого зовём в долю и какую долю отдаём. */
+  const [coTo, setCoTo] = useState<string | null>(null)
+  const [coShare, setCoShare] = useState(50)
   if (!p) return null
   const l = seat.ledger
   const actor = table.seats[table.turnIndex]
@@ -747,33 +756,78 @@ function CardBody({
             каждому поимённо (игроков может быть и пятеро).
           */}
           {investorAvailable && others.length > 0 && (
-            <div className="panel-2 rounded-lg p-2">
-              <div className="caps mb-1 text-[10px] font-bold text-[var(--muted)]">
-                Позвать в долю — пополам взнос, пополам доход
+            <div className="panel-2 rounded-lg p-2.5">
+              <div className="caps mb-1.5 text-[10px] font-bold text-[var(--muted)]">
+                Позвать в долю
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {others.map((o) => (
                   <button
                     key={o.id}
-                    onClick={() =>
-                      dispatch({
-                        type: 'OFFER_COINVEST',
-                        amount: Math.round(card.downPayment / 2),
-                        share: 0.5,
-                        toId: o.id,
-                      })
-                    }
-                    className="rounded-full border border-[var(--line)] px-2.5 py-1 text-[12px] transition hover:border-emerald-500/60"
+                    onClick={() => setCoTo(o.id === coTo ? null : o.id)}
+                    className={`rounded-full border px-2.5 py-1 text-[12px] transition ${
+                      coTo === o.id
+                        ? 'border-emerald-500 bg-emerald-500/15'
+                        : 'border-[var(--line)] hover:border-emerald-500/50'
+                    }`}
                   >
-                    <span style={{ color: o.color }}>●</span> {o.name} — {money(
-                      Math.round(card.downPayment / 2),
-                    )}
+                    <span style={{ color: o.color }}>●</span> {o.name}
                   </button>
                 ))}
               </div>
+
+              {/*
+                🔴 ДОЛЮ ВЫБИРАЕТ ЧЕЛОВЕК. Здесь стояло жёсткое «пополам»: сколько
+                бы ни договаривались за столом, в сделку уходили 50%, и у
+                инициатора доход считался так, будто он отдал половину.
+              */}
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="range"
+                  min={10}
+                  max={90}
+                  step={5}
+                  value={coShare}
+                  onChange={(e) => setCoShare(Number(e.target.value))}
+                  className="flex-1 accent-emerald-500"
+                />
+                <span className="tabnum w-16 text-right text-[15px] font-bold">{coShare}%</span>
+              </div>
+
+              <div className="mt-1.5 space-y-0.5 text-[11.5px]">
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted)]">Партнёр вносит</span>
+                  <span className="tabnum">
+                    {money(Math.round((card.downPayment * coShare) / 100))} · {coShare}% дохода
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted)]">Вы вносите</span>
+                  <span className="tabnum">
+                    {money(card.downPayment - Math.round((card.downPayment * coShare) / 100))} ·{' '}
+                    {100 - coShare}% дохода
+                  </span>
+                </div>
+              </div>
+
+              <button
+                disabled={!coTo}
+                onClick={() =>
+                  dispatch({
+                    type: 'OFFER_COINVEST',
+                    amount: Math.round((card.downPayment * coShare) / 100),
+                    share: coShare / 100,
+                    toId: coTo ?? undefined,
+                  })
+                }
+                className="btn-ghost mt-2 w-full border-emerald-500/50 disabled:opacity-40"
+              >
+                {coTo
+                  ? `Предложить ${others.find((o) => o.id === coTo)?.name} долю ${coShare}%`
+                  : 'Выберите, кого зовёте'}
+              </button>
               <p className="mt-1 text-[10.5px] leading-snug text-[var(--muted)]">
-                Он получит предложение и ответит сам. Согласится — платите взнос пополам, доход и
-                убыток тоже пополам.
+                Он ответит сам. Доход и убыток делятся ровно по долям.
               </p>
             </div>
           )}

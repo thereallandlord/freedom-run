@@ -336,10 +336,13 @@ export function PlayerPanel({
   seat,
   dispatch,
   flowMul,
+  priceNow,
 }: {
   seat: Seat
   dispatch?: (e: TableEvent) => void
   flowMul?: Record<string, number>
+  /** Цена бумаги сегодня — чтобы портфель показывал рынок, а не цену покупки. */
+  priceNow?: (symbol: string) => number
 }) {
   const l = seat.ledger
   const income = totalIncome(l, flowMul)
@@ -370,7 +373,23 @@ export function PlayerPanel({
           <div>
             <div className="caps text-[10px] text-[var(--t-muted, var(--muted))]">Наличные</div>
             <div className="relative">
-              <div className="tabnum text-2xl font-black">{money(l.cash)}</div>
+              {/*
+                🔴 Крупные суммы УЖИМАЮТСЯ. При миллионах строка «2 290 648 ₽»
+                не помещалась в колонку и переносила знак рубля на другую
+                строку. Порог по длине, а не по значению: у долларовой колоды
+                цифры другие.
+              */}
+              <div
+                className={`tabnum font-black leading-none ${
+                  money(l.cash).length > 13
+                    ? 'text-lg'
+                    : money(l.cash).length > 10
+                      ? 'text-xl'
+                      : 'text-2xl'
+                }`}
+              >
+                {money(l.cash)}
+              </div>
               <CashBump cash={l.cash} />
             </div>
           </div>
@@ -430,7 +449,6 @@ export function PlayerPanel({
               .map((b) => {
                 const g = b.gl!
                 const rank = glRankFor(g.volume)
-                const next = GL_RANKS.find((r) => r.level === rank.level + 1)
                 return (
                   <div
                     key={`gl-${b.id}`}
@@ -442,12 +460,23 @@ export function PlayerPanel({
                       {rank.pension > 0 ? `, сверху пенсия за ранг ${money(rank.pension)}` : ''}.
                     </div>
                     {rank.level > 0 && <div className="mt-0.5">Ранг: {rank.name}</div>}
-                    {next && (
-                      <div className="mt-0.5 text-[var(--muted)]">
-                        До ранга «{next.name}» структуре осталось заработать{' '}
-                        {money(Math.max(0, next.volume - g.volume))}.
+                    {/*
+                      🔴 Купленная возможность должна быть ВИДНА отдельной
+                      строкой и со своей цифрой. Анвар взял ещё два кабинета —
+                      доход вырос, но в панели об этом не было ни слова, и
+                      выглядело так, будто покупка пропала впустую.
+                    */}
+                    {g.triangle && (
+                      <div className="mt-0.5 text-emerald-600 dark:text-emerald-400">
+                        Три кабинета: +
+                        {money(
+                          glStructureIncome(g) - glStructureIncome({ ...g, triangle: false }),
+                        )}
+                        /мес к структуре
                       </div>
                     )}
+                    {/* Строку «до ранга осталось заработать N» убрал Камиль:
+                        цифра ни на что не влияет и только шумит в панели. */}
                     {g.dipLeft > 0 && (
                       <div className="mt-0.5 text-amber-400">
                         Наставник выгорел — приток новых людей просел, это ещё {g.dipLeft} зарплат.
@@ -539,14 +568,28 @@ export function PlayerPanel({
 
       {l.stocks.length > 0 && (
         <Section title="Портфель" tone="asset">
-          {l.stocks.map((s) => (
-            <Row
-              key={s.id}
-              label={`${s.symbol} × ${s.shares}`}
-              value={`по ${money(s.costPerShare)}`}
-              dim
-            />
-          ))}
+          {/*
+            🔴 Показываем ЦЕНУ СЕГОДНЯ и то, сколько бумага уже принесла или
+            отняла. Раньше стояла цена покупки — и обвал крипты на 60% никак не
+            отражался в портфеле: человек читал новость и видел, что у него
+            «ничего не изменилось».
+          */}
+          {l.stocks.map((s) => {
+            const now = priceNow?.(s.symbol) ?? s.costPerShare
+            const diff = Math.round((now - s.costPerShare) * s.shares)
+            return (
+              <Row
+                key={s.id}
+                label={`${s.symbol} × ${s.shares}`}
+                value={
+                  now === s.costPerShare
+                    ? `по ${money(s.costPerShare)}`
+                    : `${money(now)} · ${signed(diff)}`
+                }
+                dim
+              />
+            )
+          })}
         </Section>
       )}
 
