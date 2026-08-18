@@ -211,6 +211,43 @@ function SellLotRow({
   )
 }
 
+/**
+ * Строка «продать свой объект» с подтверждением.
+ *
+ * 🔴 Раньше это была обычная кнопка: одно случайное нажатие — и студия
+ * продана навсегда. Отменить продажу нечем, поэтому спрашиваем.
+ */
+function SellAssetRow({
+  name,
+  color,
+  net,
+  onSell,
+}: {
+  name: string
+  color: string
+  net: number
+  onSell: () => void
+}) {
+  const [armed, setArmed] = useState(false)
+  return (
+    <button
+      onClick={() => (armed ? onSell() : setArmed(true))}
+      className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-[13px] transition ${
+        armed
+          ? 'border border-emerald-500 bg-emerald-500/15'
+          : 'panel-2 hover:border-emerald-500/60'
+      }`}
+    >
+      <span className="min-w-0 flex-1 truncate">
+        <span style={{ color }}>●</span> {name}
+      </span>
+      <span className="tabnum shrink-0 font-semibold text-emerald-600 dark:text-emerald-400">
+        {armed ? `Точно продать за ${money(net)}?` : `${money(net)} чистыми`}
+      </span>
+    </button>
+  )
+}
+
 /** Диапазон взносов колоды — коротко, из настоящих карт. */
 function deckHint(cards: { downPayment?: number; price?: number }[]): string {
   const downs = cards
@@ -948,33 +985,28 @@ function CardBody({
             <div className="panel-2 rounded-lg p-3">
               <Stat label="Покупатель даёт" value={`${card.multiplierPct}% от стоимости`} strong />
             </div>
-            {matches.length === 0 ? (
+            {/* Только СВОИ объекты: чужими распоряжается их владелец. */}
+            {matches.filter((m) => m.seat.id === seat.id).length === 0 ? (
               <p className="text-center text-sm text-[var(--muted)]">
                 Ни у кого нет подходящих активов.
               </p>
             ) : (
               <div className="space-y-1">
-                {matches.map((m) =>
+                {matches
+                  .filter((m) => m.seat.id === seat.id)
+                  .map((m) =>
                   m.assets.map((a) => {
                     const price = sellOfferPrice(a.cost, card.multiplierPct, table.market.price[card.category] ?? 1)
                     return (
-                      <button
+                      <SellAssetRow
                         key={a.id}
-                        onClick={() => dispatch({ type: 'ACCEPT_OFFER', seatId: m.seat.id, assetId: a.id })}
-                        className="panel-2 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] hover:border-emerald-500/60"
-                      >
-                        <span>
-                          <span style={{ color: m.seat.color }}>●</span> {m.seat.name} · {a.name}
-                        </span>
-                        <span className="tabnum font-semibold text-emerald-400">
-                          {/* 🔴 Доля партнёра вычитается: без неё окно обещало
-                              владельцу вдвое больше, чем придёт на руки. */}
-                          {money(
-                            Math.round((price - a.debt) * (1 - (a.investorShare ?? 0))),
-                          )}{' '}
-                          чистыми
-                        </span>
-                      </button>
+                        name={a.name}
+                        color={m.seat.color}
+                        net={Math.round((price - a.debt) * (1 - (a.investorShare ?? 0)))}
+                        onSell={() =>
+                          dispatch({ type: 'ACCEPT_OFFER', seatId: m.seat.id, assetId: a.id })
+                        }
+                      />
                     )
                   }),
                 )}

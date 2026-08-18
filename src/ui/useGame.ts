@@ -82,10 +82,12 @@ export function useGame(net?: {
    * 🔴 Без этого перезагрузка начинала игру заново — журнал приезжал от
    * соседа, но применять его было некуда.
    */
-  const resume = useCallback((s: TableSetup, journal: TableEvent[]) => {
+  const resume = useCallback((s: TableSetup, journal: TableEvent[], undoneCount = 0) => {
     setSetup(s)
     setEvents(journal)
     setTable(replayTable(s, journal))
+    // Сколько ходов сейчас «в отмене» — по этому числу оживает кнопка «Вернуть».
+    setUndoneNet(undoneCount)
   }, [])
 
   const start = useCallback((s: TableSetup) => {
@@ -147,6 +149,8 @@ export function useGame(net?: {
    * кнопке «Отменить» иначе стоил бы хода без всякого способа его вернуть.
    */
   const [undone, setUndone] = useState<TableEvent[]>([])
+  /** Сколько ходов отменено в СЕТЕВОЙ партии (там стопка живёт в журнале). */
+  const [undoneNet, setUndoneNet] = useState(0)
 
   /**
    * Снять последний ход у СЕБЯ. В сетевой партии зовётся не напрямую, а по
@@ -166,13 +170,17 @@ export function useGame(net?: {
   }, [setup])
 
   const undo = useCallback(() => {
-    // 🔴 В сети отмена — общая команда, а не личное дело: раньше хозяин
-    // откатывал ход только у себя, и столы немедленно расходились.
+    // 🔴 В сети отмена — запись в общем журнале, а не личное дело: стол у всех
+    // пересобирается по журналу, и «откат у себя» тут же затёрся бы обратно.
     if (netSend) netSend({ type: '__UNDO' } as unknown as TableEvent)
     else undoLocal()
   }, [netSend, undoLocal])
 
   const redo = useCallback(() => {
+    if (netSend) {
+      netSend({ type: '__REDO' } as unknown as TableEvent)
+      return
+    }
     if (!setup) return
     setUndone((u) => {
       if (!u.length) return u
@@ -403,7 +411,7 @@ export function useGame(net?: {
     resume,
     undo,
     redo,
-    canRedo: undone.length > 0,
+    canRedo: netSend ? undoneNet > 0 : undone.length > 0,
     reset,
     rematch,
     roll,

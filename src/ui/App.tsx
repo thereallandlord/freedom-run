@@ -91,11 +91,7 @@ export function App() {
         closeRef.current?.()
         return
       }
-      // Команда отмены не является ходом: она снимает последний ход у всех.
-      if (ctrl?.type === '__UNDO') {
-        undoRef.current?.()
-        return
-      }
+      // Отмена и возврат — тоже записи журнала: разбираются при пересборке.
       /*
        * 🔴 Стол пересобирается ПО ВСЕМУ ЖУРНАЛУ, а не докладывается по
        * одному событию. Раньше каждый клиент клеил своё состояние из того,
@@ -135,11 +131,33 @@ export function App() {
   journalRef.current = () => {
     const r = room.room
     if (!r) return
-    const moves = room.gameJournal().filter((m) => {
-      const t = (m as { type?: string })?.type
-      return t !== '__START' && t !== '__UNDO'
-    }) as TableEvent[]
-    game.resume(toTableSetup(r), moves)
+    /*
+     * 🔴 ОТМЕНА — ЧАСТЬ ЖУРНАЛА, а не местное действие. Стол пересобирается
+     * по общему журналу, поэтому «просто откатить у себя» бессмысленно:
+     * следующий же приход событий воскресил бы отменённый ход. Читаем журнал
+     * по порядку: обычный ход кладём в стопку, `__UNDO` снимает последний и
+     * запоминает его, `__REDO` возвращает обратно. Так отмена и возврат
+     * работают у всех одинаково и переживают перезаход.
+     */
+    const moves: TableEvent[] = []
+    const undone: TableEvent[] = []
+    for (const raw of room.gameJournal()) {
+      const type = (raw as { type?: string })?.type
+      if (type === '__START') continue
+      if (type === '__UNDO') {
+        const last = moves.pop()
+        if (last) undone.push(last)
+        continue
+      }
+      if (type === '__REDO') {
+        const back = undone.pop()
+        if (back) moves.push(back)
+        continue
+      }
+      moves.push(raw as TableEvent)
+      undone.length = 0
+    }
+    game.resume(toTableSetup(r), moves, undone.length)
     setScreen('game')
   }
 

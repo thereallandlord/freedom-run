@@ -1527,6 +1527,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     case 'ACCEPT_OFFER': {
       if (t.pending?.kind !== 'market' || t.pending.card.kind !== 'sellOffer') return prev
+      /*
+       * 🔴 СВОЙ ОБЪЕКТ ПРОДАЁТ ТОЛЬКО ВЛАДЕЛЕЦ. Карточка рынка перечисляла
+       * подходящие объекты ВСЕХ игроков и любой мог нажать на чужую строку —
+       * продать студию соседа за него. Та же дыра, что была с бумагами.
+       */
+      if (event.by && event.seatId !== event.by) return prev
       const card = t.pending.card
       const holder = t.seats.find((s) => s.id === event.seatId)
       if (!holder || holder.outOfGame || holder.track === 'fast') return prev
