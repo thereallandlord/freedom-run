@@ -1268,7 +1268,20 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     'SKIP_WANT',
     'GL_PROMO_TAKE',
   ])
-  if (byIdx >= 0 && byIdx !== t.turnIndex && TURN_BOUND.has(event.type)) return prev
+  /*
+   * 🔴 «Пропустить» у сделки и у рынка — решение КАЖДОГО допущенного, а не
+   * только ходящего. Когда владелец находки открывает вход, карта висит на
+   * столе, пока не ответят все приглашённые; их ответ приходит от НЕ-ходящего
+   * игрока и в общий запрет попадать не должен.
+   *
+   * Живой случай 19.08: Камиль открыл вход в GOOGL, Анвар нажал «Пропустить»,
+   * событие отвергалось здесь молча — карта не уходила, и стол встал у всех.
+   */
+  const sharedDecision =
+    event.type === 'PASS_CARD' && (t.pending?.kind === 'deal' || t.pending?.kind === 'market')
+  if (byIdx >= 0 && byIdx !== t.turnIndex && !sharedDecision && TURN_BOUND.has(event.type)) {
+    return prev
+  }
 
   switch (event.type) {
     case 'ROLL': {
@@ -2190,6 +2203,18 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * кто-то из допущенных не ответил, карта остаётся на столе.
        */
       if (t.pending.kind === 'deal' || t.pending.kind === 'market') {
+        /*
+         * 🔴 Владелец хода может СНЯТЬ карту со стола. Нажал «Пропустить»
+         * второй раз — карта уходит, даже если кто-то из приглашённых так и
+         * не ответил (отвлёкся, закрыл вкладку, потерял сеть). Без этого
+         * выхода стол зависал навсегда и партию приходилось бросать.
+         */
+        const alreadyDecided = (t.pending.decided ?? []).includes(seat.id)
+        if (alreadyDecided && seatIdx === t.turnIndex) {
+          t.pending = null
+          t.phase = 'turnEnd'
+          return t
+        }
         markDecided(t, seat.id)
         return t
       }
