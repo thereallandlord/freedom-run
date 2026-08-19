@@ -17,6 +17,7 @@ import { PlayerPanel, money, signed, tone } from './PlayerPanel'
 import { CardModal } from './CardModal'
 import { BankModal } from './BankModal'
 import { PortfolioModal } from './PortfolioModal'
+import { DebriefModal } from './DebriefModal'
 import { TradesModal } from './TradesModal'
 import { OfferInbox } from './OfferInbox'
 import { Wordmark } from './Wordmark'
@@ -276,6 +277,7 @@ export function Game({
   onExit,
   callUrl,
   meId,
+  events,
   topRight,
 }: {
   table: Table
@@ -294,6 +296,8 @@ export function Game({
   onExit: () => void
   /** Ссылка на созвон из настроек комнаты. Пусто — кнопки нет. */
   callUrl?: string
+  /** Журнал ходов — из него собирается разбор партии. */
+  events: TableEvent[]
   /**
    * Моё место за столом в сетевой партии.
    *
@@ -320,6 +324,7 @@ export function Game({
   const [bankOpen, setBankOpen] = useState(false)
   const [portfolioOpen, setPortfolioOpen] = useState(false)
   const [logOpen, setLogOpen] = useState(false)
+  const [debriefOpen, setDebriefOpen] = useState(false)
   const [tradesOpen, setTradesOpen] = useState(false)
   /** Предложения, которые отложили кнопкой «Позже» — не лезут снова сами. */
   const [hiddenOffers, setHiddenOffers] = useState<string[]>([])
@@ -362,6 +367,14 @@ export function Game({
   }, [theme])
 
   // Пока стол открыт, страница целиком не прокручивается — только её колонки.
+  /*
+   * Партия закончилась — разбор открывается сам. Ради него игра и затевалась:
+   * человек должен уйти с выводом, а не со счётом.
+   */
+  useEffect(() => {
+    if (table.phase === 'finished') setDebriefOpen(true)
+  }, [table.phase])
+
   useEffect(() => {
     document.documentElement.classList.add('table-open')
     return () => document.documentElement.classList.remove('table-open')
@@ -551,6 +564,18 @@ export function Game({
             строки мелькали всплывающими подсказками и пропадали. За настоящим
             столом спорные моменты разбирают, глядя на записи.
           */}
+          {/*
+            Разбор партии: смысл игры не в счёте, а в выводе. Доступен и по
+            ходу — посмотреть, как идёшь, — и открывается сам, когда партия
+            закончилась.
+          */}
+          <button
+            onClick={() => setDebriefOpen(true)}
+            className="topbtn"
+            title="Разбор: как вы играете и куда усиливаться"
+          >
+            🧭<span className="ml-1 hidden sm:inline">Разбор</span>
+          </button>
           <button
             onClick={() => setLogOpen(true)}
             className="topbtn"
@@ -851,6 +876,15 @@ export function Game({
             />
           </div>
         </div>
+      )}
+
+      {debriefOpen && (
+        <DebriefModal
+          table={table}
+          events={events}
+          meId={meId ?? seat.id}
+          onClose={() => setDebriefOpen(false)}
+        />
       )}
 
       {logOpen && (

@@ -307,6 +307,7 @@ export function App() {
         onExit={() => setScreen('landing')}
         callUrl={room.room?.settings.callUrl}
         meId={online ? meSeatId : undefined}
+        events={game.events}
         topRight={<ThemeToggle />}
       />
     )
