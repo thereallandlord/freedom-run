@@ -428,10 +428,22 @@ export function Game({
   const canEscape =
     table.phase === 'awaitingRoll' && myTurn && seat.track === 'rat' && isOutOfRatRace(seat.ledger) && !seat.isBot
 
+  /*
+   * 🔴 Прокрутка запрещена ТОЛЬКО на большом экране.
+   *
+   * Было `overflow-hidden` без условия — и на всём, что уже 1024 точек
+   * (любой телефон, айпэд в портретной ориентации), содержимое просто
+   * ОБРЕЗАЛОСЬ: своя панель с деньгами начиналась ниже края окна, а
+   * прокрутить туда было нечем. Человек физически не видел, сколько у него
+   * денег, и починить это со своей стороны не мог.
+   *
+   * На большом экране всё по-прежнему помещается целиком и страница стоит
+   * на месте — там прокручиваются только сами панели внутри себя.
+   */
   return (
     <div
       ref={rootRef}
-      className="relative flex h-[100dvh] flex-col overflow-hidden bg-[var(--t-edge)] lg:overflow-hidden"
+      className="relative flex h-[100dvh] flex-col overflow-y-auto overscroll-contain bg-[var(--t-edge)] lg:overflow-hidden"
       style={{ ...themeVars(theme, isDark), color: 'var(--t-ink)' }}
     >
       {/* Фон темы — отдельный слой: доска и панели ложатся поверх. */}
