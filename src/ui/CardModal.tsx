@@ -120,8 +120,32 @@ function Shell({
       открыта, нельзя было даже прокрутить свою панель, чтобы посмотреть, что
       у тебя есть. Решение принимают, глядя на свои активы, а не по памяти.
     */
-    <div className="modal-layer fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 lg:left-[calc(var(--rail)_+_12px)] lg:right-[calc(var(--rail)_+_12px)]">
-      <div className="card-fly-in panel max-h-[92vh] w-full max-w-md overflow-auto rounded-2xl p-5 shadow-[var(--shadow-pop)]">
+    /*
+      🔴 ЗАТЕМНЕНИЕ НА ВЕСЬ ЭКРАН, НО КЛИКОВ ОНО НЕ ЛОВИТ (решение Камиля 19.08).
+      Раньше выбор был между «затемнить всё и всё заблокировать» и «затемнить
+      только середину» — вторая половина выглядела заплаткой: тёмная полоса
+      посреди светлого стола. На самом деле третий вариант существует: слой
+      затемнения делается сквозным (pointer-events: none), и нажатия проходят
+      сквозь него к панелям и кнопкам, а перехватывает их только сама карточка.
+      Стол при этом целиком уходит в тень — как и должно быть, когда на нём
+      лежит карта, — но своими деньгами и портфелем пользоваться можно.
+    */
+    <div className="modal-layer pointer-events-none fixed inset-0 z-40">
+      <div className="absolute inset-0 bg-black/55" />
+      <div
+        /*
+          Карточка стоит по центру ПОЛЯ, а не всего экрана: на большом экране
+          боковые колонки — это то, на что человек смотрит, принимая решение.
+          Сверху отступ на высоту шапки (замер приезжает из стола): иначе
+          карточка накрывала бы ряд кнопок.
+        */
+        className="absolute inset-0 grid place-items-center px-4 pb-4 lg:left-[calc(var(--rail)_+_12px)] lg:right-[calc(var(--rail)_+_12px)]"
+        style={{ paddingTop: 'calc(var(--topbar-h, 56px) + 8px)' }}
+      >
+      <div
+        className="card-fly-in panel pointer-events-auto w-full max-w-md overflow-auto rounded-2xl p-5 shadow-[var(--shadow-pop)]"
+        style={{ maxHeight: 'calc(100dvh - var(--topbar-h, 56px) - 24px)' }}
+      >
         {art && <CardArt icon={art} accent={accent} photo={photo} />}
         <div
           className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -145,6 +169,7 @@ function Shell({
             {watching || note}
           </div>
         )}
+      </div>
       </div>
     </div>
   )

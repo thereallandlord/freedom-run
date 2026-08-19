@@ -33,6 +33,16 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
 }
 
+
+/** Куда разрешено возвращать человека после входа через Google. */
+const AUTH_BACK = new Set(
+  [
+    'https://cashflow.craftopen.space',
+    'https://thereallandlord.github.io/freedom-run',
+    ...(process.env.AUTH_BACK_EXTRA || '').split(',').map((x) => x.trim()),
+  ].filter(Boolean),
+)
+
 /** Разбор партии словами модели. Ключ живёт только здесь. */
 async function aiDebrief(body, attempt = 0) {
   const key = process.env.OPENROUTER_API_KEY
@@ -163,6 +173,34 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, '')
 
   if (url.pathname === '/api/health') return send(res, 200, { ok: true })
+
+  /*
+   * Возврат от Google для копий игры на других адресах.
+   *
+   * 🔴 Supabase пускает обратно ТОЛЬКО на адреса из своего списка. Незнакомый
+   * он молча подменяет на общий адрес проекта — и человек, войдя из игры,
+   * оказывался в Craft. Наш домен в списке есть, поэтому вход просит вернуть
+   * себя сюда, а мы перебрасываем дальше вместе с хэшем: токен живёт только в
+   * браузере и такой переброс переживает.
+   *
+   * 🔴 Список разрешённых адресов — закрытый. Открытый переброс означал бы,
+   * что чужой сайт может подставить себя и увести токен человека.
+   */
+  if (url.pathname === '/auth-back') {
+    const to = url.searchParams.get('to') || ''
+    const ok = AUTH_BACK.has(to.replace(/\/$/, ''))
+    const target = ok ? to : '/'
+    return send(
+      res,
+      200,
+      '<!doctype html><meta charset=utf-8><title>Вхожу…</title>' +
+        `<script>location.replace(${JSON.stringify(target)} + location.hash)</script>` +
+        '<p style="font-family:ui-sans-serif,system-ui;padding:24px">Вхожу…</p>',
+      'text/html; charset=utf-8',
+    )
+  }
+
+
 
   if (url.pathname === '/api/debrief' && req.method === 'POST') {
     let raw = ''

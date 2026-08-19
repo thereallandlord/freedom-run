@@ -42,7 +42,7 @@ function read(): Session | null {
     const raw = localStorage.getItem(KEY)
     if (!raw) return null
     const s = JSON.parse(raw) as Session
-    return s?.access && s?.user?.id ? s : null
+    return s?.access ? s : null
   } catch {
     // Приватный режим или битая запись — просто считаем, что не вошли.
     return null
@@ -147,17 +147,33 @@ export async function signUpPassword(
 }
 
 /**
- * Вход через Google.
- *
- * 🔴 Возвращаемся РОВНО на тот адрес, откуда ушли, вместе с кодом комнаты:
- * человек мог нажать «войти», уже сидя за столом. Домен обязан быть в списке
- * Redirect URLs у Supabase — незнакомый он молча подменяет на свой Site URL,
- * и человек оказывается в другом сервисе.
+ * Адреса, которые ЗАВЕДОМО прописаны у Supabase в списке разрешённых.
+ * 🔴 Ведётся руками: Supabase свои настройки наружу не отдаёт, угадать
+ * нельзя — можно только знать. С этих адресов возврат идёт напрямую.
  */
+const ЗНАКОМЫЕ = ['cashflow.craftopen.space']
+/** Через кого перебрасываем возврат, если адрес Supabase незнаком. */
+const ПЕРЕБРОС = 'https://cashflow.craftopen.space/auth-back'
+
 export function signInGoogle(): void {
-  const back = location.origin + location.pathname + location.search
+  const сюда = (location.origin + location.pathname).replace(/\/$/, '')
+  /*
+   * 🔴 Возврат от Google должен приводить ОБРАТНО В ИГРУ.
+   *
+   * Supabase пускает только на адреса из своего списка; незнакомый он молча
+   * заменяет на общий адрес проекта. Живой случай 19.08: копия игры на
+   * GitHub Pages в списке не значится, и человек, войдя через Google, попадал
+   * в Craft вместо стола.
+   *
+   * Поэтому: со знакомого адреса возвращаемся напрямую, с любого другого —
+   * просим вернуть на знакомый, а тот перебрасывает сюда ВМЕСТЕ с хэшем.
+   * Токен лежит в хэше, на сервер не уходит и переброс переживает.
+   */
+  const назад = ЗНАКОМЫЕ.includes(location.host)
+    ? сюда
+    : `${ПЕРЕБРОС}?to=${encodeURIComponent(сюда)}`
   location.href =
-    `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=` + encodeURIComponent(back)
+    `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=` + encodeURIComponent(назад)
 }
 
 export function signOut(): void {
@@ -205,7 +221,13 @@ async function refreshUser(): Promise<void> {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${s.access}` },
     })
-    if (!res.ok) return void write(null)
+    /*
+     * 🔴 Выходим ТОЛЬКО когда Supabase прямо сказал «токен не годится».
+     * Раньше любой неудачный ответ — упавшая сеть, пятисотка на их стороне —
+     * молча разлогинивал человека, и вход «испарялся» сам собой.
+     */
+    if (res.status === 401 || res.status === 403) return void write(null)
+    if (!res.ok) return
     const u = (await res.json()) as Record<string, unknown>
     const meta = (u.user_metadata ?? {}) as Record<string, unknown>
     const email = String(u.email ?? '')
@@ -248,8 +270,15 @@ export async function accessToken(): Promise<string | null> {
     // Имя из ответа обновления бывает пустым — оставляем то, что знали.
     write({ ...next, user: next.user.id ? next.user : s.user })
     return next.access
-  } catch {
-    // Отказ обмена = сессия кончилась. Тихо выходим, ничего не ломая.
+  } catch (e) {
+    /*
+     * 🔴 Сеть моргнула — это НЕ повод выкидывать человека. Отдаём старый
+     * токен: он может быть ещё жив (мы идём за новым за минуту до конца
+     * срока), а если нет — запрос вернёт 401, и это разберётся там.
+     * Выходим только когда Supabase явно отказал в обмене.
+     */
+    const прямойОтказ = /invalid|expired|not found|revoked/i.test(String((e as Error)?.message))
+    if (!прямойОтказ) return s.access
     write(null)
     return null
   }

@@ -404,24 +404,34 @@ export function Game({
    * само поле и кладём центр в переменную корня.
    */
   const rootRef = useRef<HTMLDivElement>(null)
+  /*
+   * 🔴 Меряем ВЫСОТУ ШАПКИ и кладём её в переменную. Карточка после этого
+   * начинается ПОД кнопками и ровно на столько же становится ниже — раньше
+   * она наезжала на них сверху, и до «Портфеля» было не дотянуться.
+   *
+   * Именно замер, а не постоянная величина: число кнопок меняется по ходу
+   * партии («Отменить», «Вернуть», «Созвон» появляются и исчезают), и на
+   * узком экране ряд переносится на две-три строки. Любое вшитое число
+   * оказалось бы неверным ровно тогда, когда оно важнее всего.
+   */
   useEffect(() => {
     const root = rootRef.current
     if (!root) return
-    const board = root.querySelector('.board-fit')
     const head = root.querySelector('header')
-    if (!board || !head) return
+    if (!head) return
     const put = () => {
-      const r = board.getBoundingClientRect()
-      // 🔴 Отсчёт от ШАПКИ: название лежит внутри неё, и её левый край — не ноль экрана.
       const h = head.getBoundingClientRect()
-      head.style.setProperty('--board-cx', `${Math.round(r.left - h.left + r.width / 2)}px`)
+      root.style.setProperty('--topbar-h', `${Math.ceil(h.bottom)}px`)
     }
     put()
     const ro = new ResizeObserver(put)
-    ro.observe(board)
     ro.observe(head)
     ro.observe(root)
-    return () => ro.disconnect()
+    window.addEventListener('orientationchange', put)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('orientationchange', put)
+    }
   }, [table.phase, theme])
   const diceOptions = diceCountFor(actor)
   const canRoll = table.phase === 'awaitingRoll' && myTurn && !seat.isBot && !rolling && !rolled
@@ -464,6 +474,29 @@ export function Game({
       <div
         className="pointer-events-none absolute inset-0 bg-[#12151A]"
         style={{ opacity: 'var(--t-scene-dim, 0)' }}
+      />
+
+      {/*
+        Логотип — в правом нижнем углу окна (решение Камиля 19.08). Место там
+        свободно на любом экране и в любой ориентации, поэтому спорить ему не
+        с чем. Кликов не ловит и живёт под всеми окнами: это подпись сцены, а
+        не элемент управления.
+        Отступ считается с учётом «безопасной зоны» — на планшетах и телефонах
+        со скруглёнными углами иначе срезался бы край.
+
+        🔴 На телефоне его НЕТ намеренно. Там стол прокручивается, и «всегда
+        свободный угол» превращается в надпись поверх чужих строк: логотип
+        висел бы прямо на панели с деньгами. Пустой угол — это свойство
+        неподвижного стола, то есть планшета и компьютера.
+      */}
+      <Wordmark
+        size="sm"
+        edition={false}
+        className="pointer-events-none fixed z-10 hidden opacity-45 lg:inline-flex"
+        style={{
+          right: 'calc(env(safe-area-inset-right, 0px) + 14px)',
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+        }}
       />
       {/*
         🔴 Снизу отступа НЕТ. Боковые колонки должны доходить до самого края
@@ -557,16 +590,16 @@ export function Game({
               меняется при переносе кнопок, фиксированный отступ это не
               переживёт.
             */}
-            <header className="relative z-50 mb-1.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-1.5">
-              {/* Позиция инлайном: в классе Tailwind запятая внутри var(...)
-                  не разбирается, и правило молча не создавалось. */}
-              <Wordmark
-                size="sm"
-                edition={false}
-                style={{ left: 'var(--board-cx, 50%)', top: 'calc(50% + 3px)' }}
-                className="pointer-events-none absolute hidden -translate-x-1/2 -translate-y-1/2 xl:flex"
-              />
-              <Wordmark size="sm" edition={false} className="lg:hidden" />
+            {/*
+              🔴 Логотипа в шапке БОЛЬШЕ НЕТ (решение Камиля 19.08). Он стоял
+              по центру карты и налезал на ряд кнопок: чем шире экран, тем
+              сильнее — на 1366 перекрытие доходило до 245 точек. Любая
+              попытка ужиться в одной строке упирается в то, что кнопок много
+              и их число меняется по ходу партии.
+              Теперь он живёт в правом нижнем углу — там место есть всегда,
+              и ни с чем спорить не может.
+            */}
+            <header className="relative mb-1.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-1.5">
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           {topRight}
           <button
