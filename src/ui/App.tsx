@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Setup } from './Setup'
 import { Game } from './Game'
 import { Landing } from './Landing'
+import { AccountButton } from './AccountButton'
 import { JoinRoom, JoinWaiting, Lobby } from './Lobby'
 import { useGame } from './useGame'
 import type { TableEvent } from '../engine/events'
@@ -313,7 +314,7 @@ export function App() {
         callUrl={room.room?.settings.callUrl}
         meId={online ? meSeatId : undefined}
         events={game.events}
-        topRight={<ThemeToggle />}
+        topRight={<><AccountButton /><ThemeToggle /></>}
       />
     )
   }
@@ -343,7 +344,7 @@ export function App() {
           room.leave('quit')
           setScreen('landing')
         }}
-        topRight={<ThemeToggle />}
+        topRight={<><AccountButton /><ThemeToggle /></>}
       />
     )
   }
@@ -391,7 +392,7 @@ export function App() {
             setScreen('game')
           }
         }}
-        topRight={<ThemeToggle />}
+        topRight={<><AccountButton /><ThemeToggle /></>}
       />
     )
   }
@@ -440,7 +441,7 @@ export function App() {
       onLocal={() => setScreen('local')}
       onCreate={() => setScreen('create')}
       onJoin={() => setScreen('join')}
-      topRight={<ThemeToggle />}
+      topRight={<><AccountButton /><ThemeToggle /></>}
     />
   )
 }

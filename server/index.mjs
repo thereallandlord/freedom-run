@@ -15,6 +15,7 @@
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
+import { cabinetReady, listGames, saveDebrief, saveGame, whoIs } from './cabinet.mjs'
 
 const PORT = Number(process.env.PORT || 8080)
 const ROOT = join(process.cwd(), 'dist')
@@ -100,6 +101,26 @@ const SYSTEM = `Ты разбираешь партию в настольную �
 · Не используй внутренний жаргон («бинар», «золотой треугольник», «PV»). Говори простыми словами.
 · 200–350 слов. Без заголовков-эмодзи.`
 
+
+/**
+ * Прочитать тело запроса. Потолок задаётся вызывающим: разбор партии — это
+ * пара килобайт, а журнал целой партии на десять человек заметно толще.
+ */
+function readBody(req, limit) {
+  return new Promise((resolve, reject) => {
+    let raw = ''
+    req.on('data', (c) => {
+      raw += c
+      if (raw.length > limit) {
+        req.destroy()
+        reject(new Error('слишком большое тело'))
+      }
+    })
+    req.on('end', () => resolve(raw))
+    req.on('error', reject)
+  })
+}
+
 function send(res, code, body, type = 'application/json; charset=utf-8') {
   // Заголовки собираем без пустых значений: Node падает на undefined.
   res.writeHead(code, {
@@ -159,6 +180,39 @@ const server = createServer(async (req, res) => {
       }
     })
     return
+  }
+
+
+  // ─────────────────────── кабинет ───────────────────────
+  // 🔴 Кабинет НЕОБЯЗАТЕЛЕН. Не настроен — честно говорим об этом кодом 501,
+  // и игра просто живёт без него: ни один экран от этого не ломается.
+  if (url.pathname.startsWith('/api/games') || url.pathname === '/api/me') {
+    if (!cabinetReady()) return send(res, 501, { error: 'кабинет не настроен' })
+    const user = await whoIs(req)
+    if (!user) return send(res, 401, { error: 'нужен вход' })
+
+    try {
+      if (url.pathname === '/api/me') return send(res, 200, { user })
+
+      if (url.pathname === '/api/games' && req.method === 'GET') {
+        return send(res, 200, await listGames(user))
+      }
+
+      if (url.pathname === '/api/games' && req.method === 'POST') {
+        const raw = await readBody(req, 6_000_000)
+        return send(res, 200, await saveGame(user, JSON.parse(raw || '{}')))
+      }
+
+      const m = url.pathname.match(/^\/api\/games\/([0-9a-f-]{36})\/debrief$/)
+      if (m && req.method === 'POST') {
+        const body = JSON.parse((await readBody(req, 200_000)) || '{}')
+        return send(res, 200, await saveDebrief(user, m[1], body.seatId, body.text))
+      }
+    } catch (e) {
+      console.error('[кабинет]', e?.message || e)
+      return send(res, e?.status || 500, { error: String(e?.message || e).slice(0, 300) })
+    }
+    return send(res, 404, { error: 'нет такой ручки' })
   }
 
   return serveStatic(req, res, url)

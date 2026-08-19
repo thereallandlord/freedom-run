@@ -12,6 +12,8 @@ import type { TableEvent } from '../engine/events'
 import { buildAllDebriefs, standings } from '../engine/debrief'
 import { money } from './PlayerPanel'
 import { fetchAiDebrief } from '../net/debriefApi'
+import { saveDebriefText, saveGame } from '../net/gamesApi'
+import { currentUser } from '../net/auth'
 
 export function DebriefModal({
   table,
@@ -35,6 +37,28 @@ export function DebriefModal({
   const [loading, setLoading] = useState<string | null>(null)
   const shown = all.find((d) => d.seatId === openId) ?? all[0]
 
+  /*
+   * Сохранение партии в кабинет.
+   *
+   * 🔴 Молча и не мешая: не вошёл — просто не сохраняем, экран работает как
+   * работал. Присылают партию все игроки сразу, но ключ у неё общий, поэтому
+   * в базе она одна, а к себе каждый привязывает только своё место.
+   */
+  const [gameId, setGameId] = useState<string | null>(null)
+  useEffect(() => {
+    if (!meId || !currentUser()) return
+    let alive = true
+    const room = new URLSearchParams(location.search).get('room')
+    void saveGame(table, events, meId, room).then((id) => {
+      if (alive && id) setGameId(id)
+    })
+    return () => {
+      alive = false
+    }
+    // Один раз за партию: список ходов дальше не меняется.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meId])
+
   useEffect(() => {
     const id = shown?.seatId
     if (!id || ai[id] || loading === id) return
@@ -43,12 +67,22 @@ export function DebriefModal({
     void fetchAiDebrief(table, events, id).then((text) => {
       if (!alive) return
       setLoading(null)
-      if (text) setAi((m) => ({ ...m, [id]: text }))
+      if (!text) return
+      setAi((m) => ({ ...m, [id]: text }))
+      if (gameId && id === meId) void saveDebriefText(gameId, id, text)
     })
     return () => {
       alive = false
     }
   }, [shown?.seatId])
+
+  // Разбор мог приехать раньше, чем партия успела записаться, — дошлём.
+  useEffect(() => {
+    if (!gameId || !meId) return
+    const text = ai[meId]
+    if (text) void saveDebriefText(gameId, meId, text)
+  }, [gameId, meId, ai])
+
   const rows = standings(table)
 
   if (!shown) return null

@@ -356,6 +356,26 @@
   }
 
   /* Главное действие карточки: крупнее остальных, одно на экран. */
+  /* Поле ввода на входе и в кабинете. Отдельный класс, потому что полей
+     в игре почти нет и заводить ради них систему незачем. */
+  .login-input {
+    width: 100%;
+    font: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 11px 13px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .login-input::placeholder { color: var(--muted); opacity: .8 }
+  .login-input:focus {
+    border-color: rgb(var(--c-accent) / .55);
+    box-shadow: 0 0 0 3px rgb(var(--c-accent) / .14);
+  }
+
   .btn-primary {
     @apply btn;
     padding-top: 0.62rem;
