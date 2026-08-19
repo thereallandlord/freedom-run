@@ -151,7 +151,7 @@ export async function signUpPassword(
  * 🔴 Ведётся руками: Supabase свои настройки наружу не отдаёт, угадать
  * нельзя — можно только знать. С этих адресов возврат идёт напрямую.
  */
-const ЗНАКОМЫЕ = ['cashflow.craftopen.space']
+const ЗНАКОМЫЕ = ['cashflow.craftopen.space', 'thereallandlord.github.io']
 /** Через кого перебрасываем возврат, если адрес Supabase незнаком. */
 const ПЕРЕБРОС = 'https://cashflow.craftopen.space/auth-back'
 
