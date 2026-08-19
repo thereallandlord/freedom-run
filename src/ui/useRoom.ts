@@ -38,6 +38,8 @@ export interface RoomNetHandlers {
   onSnapshot: (data: { snapshot: unknown; events?: unknown[] }) => void
   /** Журнал переигран (порядок поправился) — состояние надо пересобрать. */
   onRewind?: (events: unknown[]) => void
+  /** Действие не попало в журнал: проиграло гонку за слот или устарело. */
+  onRejected?: (payload: unknown, reason: string) => void
 }
 
 export interface RoomTransport {
@@ -273,6 +275,31 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
       },
 
       // У нас просят состав — отдаём как есть, новичок соберётся с нуля.
+      /*
+       * 🔴 ПРОИГРАВШЕЕ В ГОНКЕ ДЕЙСТВИЕ ОТПРАВЛЯЕМ ЗАНОВО. Когда двое жмут в
+       * один и тот же миг, слот журнала достаётся одному, а второе действие
+       * транспорт молча выбрасывает — человек видит, как его ход появился и
+       * исчез. На четверых это редкость, на десятерых — обычное дело: проверка
+       * залпом показала, что из десяти одновременных доезжает одно.
+       * Повторяем один раз с небольшой задержкой: слот к этому моменту уже
+       * занят, и событие встанет следующим.
+       */
+      onRejected: (payload, reason) => {
+        if (reason !== 'lost-race') return
+        const again = payload as { __g?: unknown; __try?: number }
+        if (!again || typeof again !== 'object') return
+        const n = (again.__try ?? 0) + 1
+        if (n > 6) return // столько раз подряд не проигрывают даже вдесятером
+        /*
+         * Пауза со СЛУЧАЙНЫМ разбросом. Если повторять одновременно и через
+         * одинаковое время, те же участники снова столкнутся на следующем
+         * слоте — и так по кругу: замер на десятерых показал, что из десяти
+         * одновременных доезжает одно. Разброс разводит их по времени.
+         */
+        const wait = 90 * n + Math.floor(Math.random() * 140)
+        window.setTimeout(() => transport?.send({ ...again, __try: n }), wait)
+      },
+
       onSnapshotRequest: (from) => {
         const current = roomRef.current
         if (current) transport?.sendSnapshot(from, current)
