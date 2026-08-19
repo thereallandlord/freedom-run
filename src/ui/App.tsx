@@ -218,7 +218,12 @@ export function App() {
     // Код комнаты держим в адресе, только пока человек в ней: на главной он
     // читался бы как приглашение в партию, из которой мы только что вышли.
     const inRoom = screen === 'lobby' || screen === 'game'
-    const code = inRoom ? room.room?.code : undefined
+    /*
+     * Пока состав едет от хозяина, комнаты в состоянии ещё нет — но человек
+     * УЖЕ в ней. Без кода из адреса перезагрузка на этом экране выкидывала на
+     * главную, и войти обратно можно было только по новой ссылке.
+     */
+    const code = inRoom ? (room.room?.code ?? room.urlCode ?? undefined) : undefined
     const url = new URL(window.location.href)
     // ?v= ставит сторож свежести сборки; в адресе комнаты он лишний.
     url.searchParams.delete('v')

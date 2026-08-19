@@ -304,7 +304,8 @@ export abstract class BaseTransport implements Transport {
   protected wireUp = false
   protected left = true
   private everConnected = false
-  private everSynced = false
+  /** Уже брали состояние у кого-то из комнаты. Читают и наследники. */
+  protected everSynced = false
   private lastStatus: NetStatus = 'offline'
 
   private gapSince = 0
@@ -415,12 +416,28 @@ export abstract class BaseTransport implements Transport {
    * Повторяем, пока снимок не приедет: единственный ответчик мог как раз выйти.
    */
   private armJoinSync(): void {
+    /*
+     * 🔴 «Я тут один» НЕЛЬЗЯ решать с первой попытки. Presence приезжает не
+     * мгновенно, и на столе из трёх-четырёх человек четвёртый вошедший вполне
+     * успевал увидеть в комнате только себя: он объявлял свой пустой журнал
+     * правдой, ставил everSynced и БОЛЬШЕ НИКОГДА не просил снимок — экран
+     * навсегда застывал на «ждём состав от хозяина стола». Хозяин при этом
+     * его уже видел в составе, то есть выглядело как выборочная поломка.
+     * Теперь одиночество должно подтвердиться несколько раз подряд.
+     */
+    let alone = 0
     const tick = () => {
       if (this.left || this.everSynced) return
       if (this.peerMap.size > 1 && !this.isHost()) {
+        alone = 0
         this.requestSnapshot()
         const again = Math.max(this.opt.gapMs * 2, this.opt.snapshotThrottleMs + 200)
         this.setTimer('join-sync', again, tick)
+        return
+      }
+      if (this.peerMap.size <= 1 && ++alone < 4) {
+        // Ещё не факт, что один: presence мог не доехать. Проверим снова.
+        this.setTimer('join-sync', this.opt.joinProbeMs, tick)
         return
       }
       // Раньше нас в комнате никого — состояние брать не у кого, журнал наш.
@@ -1177,6 +1194,15 @@ export class SupabaseTransport extends BaseTransport {
       }
     }
     if (changed || seen.size) this.emitPresence()
+
+    /*
+     * 🔴 В комнате появились люди, а мы ещё ни у кого не синхронизировались —
+     * значит первый опрос застал нас в одиночестве. Просим снимок сразу, не
+     * дожидаясь следующего круга: именно здесь застревал четвёртый вошедший.
+     */
+    if (!this.everSynced && this.peerMap.size > 1 && !this.isHost()) {
+      this.requestSnapshot()
+    }
   }
 
   protected postRaw(m: Msg): void {
