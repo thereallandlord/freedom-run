@@ -337,6 +337,19 @@ export function glOnPayday(g: GlState): { next: GlState; note: string | null } {
   const rankAfter = glRankFor(next.volume)
   const after = glTotalIncome(next)
 
+  /*
+   * Первый ранг — момент, когда структура начинает работать без тебя: до него
+   * партнёрский бизнес в зачёт свободы не идёт вовсе. Это стоит объявить
+   * отдельно, а не прятать в общую строку про ранг.
+   */
+  if (rankBefore.level === 0 && rankAfter.level > 0) {
+    return {
+      next,
+      note: `Партнёрский бизнес заработал без вас: закрыт ранг «${rankAfter.name}», ${fmt(
+        rankAfter.pension,
+      )} в месяц идут сверх дохода структуры, а часть дохода теперь считается в свободу.`,
+    }
+  }
   if (rankAfter.level > rankBefore.level) {
     return {
       next,
@@ -349,9 +362,14 @@ export function glOnPayday(g: GlState): { next: GlState; note: string | null } {
     return { next, note: `Партнёрский бизнес: приток новых людей пока стоит, доход не растёт.` }
   }
   if (after > before) {
+    /*
+     * 🔴 Показываем ПРИБАВКУ, а не только новую сумму. Камиль просил, чтобы по
+     * ходу партии было видно, как растёт доход: «Ваш доход вырос ещё на
+     * столько-то» — это и есть ощущение работающей структуры.
+     */
     return {
       next,
-      note: `Партнёрский бизнес: в структуре прибавилось людей, доход вырос до ${fmt(after)} в месяц.`,
+      note: `Партнёрский бизнес: +${fmt(after - before)} к доходу — теперь ${fmt(after)} в месяц.`,
     }
   }
   return { next, note: null }

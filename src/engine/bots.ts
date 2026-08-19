@@ -171,8 +171,12 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
           card.cashFlow > 0 &&
           l.cash - Math.round(need / 2) >= cashBuffer(seat, p)
         ) {
-          // Партнёр на половину взноса — когда на целый не хватает, а на половину да.
-          return { type: 'BUY_DEAL', withInvestor: true }
+          /*
+           * Раньше бот брал «стороннего инвестора» на половину взноса. Такой
+           * фигуры в игре больше нет — берём в рассрочку, как сделал бы
+           * человек: взнос меньше, платёж вычтен из дохода.
+           */
+          return { type: 'BUY_DEAL' }
         }
         return { type: 'PASS_CARD' }
       }

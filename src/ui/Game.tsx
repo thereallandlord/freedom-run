@@ -120,7 +120,7 @@ function MoneyToast({ table }: { table: Table }) {
     lastLen.current = table.log.length
     const hit = [...fresh]
       .reverse()
-      .find((e) => /Зарплата|выплата|Повышение|вычет|Автопромоушен/i.test(e.text))
+      .find((e) => /Зарплата|выплата|Повышение|вычет|Автопромоушен|Партнёрский бизнес|Образ жизни/i.test(e.text))
     if (hit) setNote({ text: hit.text, key: Date.now() })
   }, [table.log.length])
 
