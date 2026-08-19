@@ -32,6 +32,8 @@ import {
   glInitialState,
   glStructureIncome,
   glTotalIncome,
+  glUpgradeCost,
+  glUpgradeOptions,
 } from '../engine/greenleaf'
 import { RIBA, ribaLimit } from '../engine/ledger'
 import { HalalNote } from './HalalNote'
@@ -669,6 +671,17 @@ function CardBody({
                 <Stat label="Первый взнос" value={money(terms.instDown)} />
                 <Stat label="Платёж по рассрочке" value={`−${money(terms.instMonthly)}/мес`} />
                 <Stat label="Всего с наценкой" value={money(terms.instTotal)} />
+                {/*
+                  🔴 Срок рассрочки был нигде не написан, хотя это половина
+                  решения: платёж считается от него. Анвар на созвоне как раз
+                  спорил про длину — теперь она видна, а не подразумевается.
+                */}
+                <Stat
+                  label="Срок"
+                  value={`${Math.round(RULES.installmentTerm[kind] / 12)} лет · ${
+                    RULES.installmentTerm[kind]
+                  } платежей`}
+                />
               </>
             )}
             {!isGl && <div className="my-1 border-t border-[var(--line)]" />}
@@ -1093,6 +1106,51 @@ function CardBody({
                 */}
                 <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
                   {biz?.gl ? 'Пропустить' : 'Это не про вас — дальше'}
+                </button>
+              </>
+            ) : card.upgrade ? (
+              <>
+                {/*
+                  Окно на повышение пакета. Доплата в игре была всегда, но
+                  предложить её было некому: карточки не существовало, и Анвар
+                  за партию так и не увидел перехода на Корону.
+                */}
+                {biz?.gl ? (
+                  <div className="space-y-2">
+                    {glUpgradeOptions(biz.gl.packageId).map((pk) => {
+                      const cost = glUpgradeCost(biz.gl!.packageId, pk.id)
+                      const now = glStructureIncome(biz.gl!)
+                      const after = glStructureIncome({ ...biz.gl!, packageId: pk.id })
+                      return (
+                        <button
+                          key={pk.id}
+                          disabled={seat.ledger.cash < cost}
+                          onClick={() =>
+                            dispatch({ type: 'GL_UPGRADE', assetId: biz.id, to: pk.id })
+                          }
+                          className="w-full rounded-xl border border-[var(--line)] p-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                        >
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="font-black">До «{pk.name}»</span>
+                            <span className="tabnum text-lg font-black">{money(cost)}</span>
+                          </div>
+                          <div className="tabnum mt-1 text-[15px] font-bold text-emerald-600 dark:text-emerald-400">
+                            {signed(after - now)}/мес сразу
+                            <span className="ml-1 text-[12px] font-normal text-[var(--muted)]">
+                              и дальше растёт быстрее
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-sm text-[var(--muted)]">
+                    Повышать нечего — партнёрского бизнеса у вас нет.
+                  </p>
+                )}
+                <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
+                  {biz?.gl ? 'Не сейчас' : 'Дальше'}
                 </button>
               </>
             ) : card.triangle ? (

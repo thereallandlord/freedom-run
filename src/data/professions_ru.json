@@ -12,7 +12,7 @@
    "carPayment": 8000,
    "creditCardPayment": 4000,
    "retailPayment": 2500,
-   "otherExpenses": 28500
+   "otherExpenses": 21500
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -35,7 +35,7 @@
    "carPayment": 8000,
    "creditCardPayment": 4000,
    "retailPayment": 2500,
-   "otherExpenses": 31000
+   "otherExpenses": 23000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -58,7 +58,7 @@
    "carPayment": 14000,
    "creditCardPayment": 4000,
    "retailPayment": 3000,
-   "otherExpenses": 32000
+   "otherExpenses": 24000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -81,7 +81,7 @@
    "carPayment": 12000,
    "creditCardPayment": 4000,
    "retailPayment": 3000,
-   "otherExpenses": 32500
+   "otherExpenses": 24500
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -104,7 +104,7 @@
    "carPayment": 22000,
    "creditCardPayment": 4000,
    "retailPayment": 3000,
-   "otherExpenses": 32000
+   "otherExpenses": 24000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -127,7 +127,7 @@
    "carPayment": 11000,
    "creditCardPayment": 4500,
    "retailPayment": 3000,
-   "otherExpenses": 34000
+   "otherExpenses": 25500
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -150,7 +150,7 @@
    "carPayment": 12000,
    "creditCardPayment": 5000,
    "retailPayment": 4000,
-   "otherExpenses": 36500
+   "otherExpenses": 27500
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -173,7 +173,7 @@
    "carPayment": 18000,
    "creditCardPayment": 5500,
    "retailPayment": 4000,
-   "otherExpenses": 44000
+   "otherExpenses": 33000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -196,7 +196,7 @@
    "carPayment": 13000,
    "creditCardPayment": 6000,
    "retailPayment": 4000,
-   "otherExpenses": 43000
+   "otherExpenses": 32000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -219,7 +219,7 @@
    "carPayment": 19000,
    "creditCardPayment": 6000,
    "retailPayment": 4000,
-   "otherExpenses": 47000
+   "otherExpenses": 35000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -242,7 +242,7 @@
    "carPayment": 30000,
    "creditCardPayment": 6000,
    "retailPayment": 4000,
-   "otherExpenses": 47000
+   "otherExpenses": 35000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -265,7 +265,7 @@
    "carPayment": 16000,
    "creditCardPayment": 6500,
    "retailPayment": 4000,
-   "otherExpenses": 49000
+   "otherExpenses": 37000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -288,7 +288,7 @@
    "carPayment": 20000,
    "creditCardPayment": 7000,
    "retailPayment": 5000,
-   "otherExpenses": 52500
+   "otherExpenses": 39500
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -311,7 +311,7 @@
    "carPayment": 22000,
    "creditCardPayment": 8000,
    "retailPayment": 5000,
-   "otherExpenses": 62500
+   "otherExpenses": 47000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -334,7 +334,7 @@
    "carPayment": 20000,
    "creditCardPayment": 9000,
    "retailPayment": 6000,
-   "otherExpenses": 72000
+   "otherExpenses": 54000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -357,7 +357,7 @@
    "carPayment": 28000,
    "creditCardPayment": 11000,
    "retailPayment": 7000,
-   "otherExpenses": 84000
+   "otherExpenses": 63000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -380,7 +380,7 @@
    "carPayment": 32000,
    "creditCardPayment": 13000,
    "retailPayment": 8000,
-   "otherExpenses": 97000
+   "otherExpenses": 73000
   },
   "liabilities": {
    "homeMortgage": 0,
@@ -403,7 +403,7 @@
    "carPayment": 38000,
    "creditCardPayment": 16000,
    "retailPayment": 9000,
-   "otherExpenses": 118500
+   "otherExpenses": 89000
   },
   "liabilities": {
    "homeMortgage": 0,

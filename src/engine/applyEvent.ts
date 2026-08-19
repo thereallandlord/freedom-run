@@ -373,7 +373,13 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
 
     case 'CHARITY':
       l.cash -= Math.ceil(0.1 * totalIncome(l))
-      l.charityTurnsLeft = 3
+      /*
+       * 🔴 Два хода вместо трёх (правка Камиля: «очень жёсткий чит-код»).
+       * Право выбирать, сколько кубиков бросать, стоит десятую часть дохода —
+       * при трёх ходах это окупалось всегда и превращалось в обязательную
+       * покупку. Два ещё выгодны, но уже не бесплатный разгон.
+       */
+      l.charityTurnsLeft = 2
       return l
 
     case 'CHARITY_TURN_USED':

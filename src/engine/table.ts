@@ -65,6 +65,7 @@ import {
   GL_PROMOS,
   GL_ACCEL_POINTS,
   GL_MAX_GROWTH_PCT,
+  glUpgradeOptions,
   GL_TRIANGLE_BONUS,
   glPackage,
   glPromoReady,
@@ -709,7 +710,9 @@ export function dreamPriceAt(t: Table, spaceIndex: number): number {
 }
 
 export function charityCost(l: Ledger): number {
-  return Math.ceil(0.1 * totalIncome(l))
+  // 15% дохода вместо 10%: прежняя цена делала благотворительность
+  // безусловно выгодной, а решение должно быть неочевидным.
+  return Math.ceil(0.15 * totalIncome(l))
 }
 
 export function ftCharityCost(l: Ledger): number {
@@ -814,6 +817,22 @@ function advance(t: Table, seatIdx: number, steps: number) {
     const l = t.seats[seatIdx].ledger
     const amount = seat.track === 'rat' ? monthlyCashFlow(l, t.market.flow) : fastTrackIncome(l)
     log(t, seat.id, `Зарплата ×${payouts}: ${money(amount)}`)
+
+    /*
+     * 🔴 ОБРАЗ ЖИЗНИ РАСТЁТ ВСЛЕД ЗА ДОХОДОМ (правка Камиля: «расходы должны
+     * расти с ростом доходов»). Классическая ловушка среднего класса: доход
+     * с активов вырос — вырос и уровень жизни, и человек снова бежит по кругу.
+     * Берём три процента от того, что активы приносят СВЕРХ зарплаты, и
+     * только с ощутимых сумм: мелочь не должна плодить копеечные строки.
+     */
+    if (seat.track === 'rat') {
+      const fromAssets = totalIncome(l, t.market.flow) - l.salary
+      const creep = Math.round((fromAssets * 0.03) / 500) * 500
+      if (creep >= 500) {
+        seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: creep })
+        log(t, seat.id, `Образ жизни подрос: расходы +${money(creep)}/мес`)
+      }
+    }
 
     // Год прошёл — время закята. Берётся с того, что лежало без дела.
     if (RULES.zakat.enabled) {
@@ -1012,6 +1031,15 @@ function resolveLanding(t: Table, seatIdx: number) {
 
 /** Есть ли в карте рынка хоть какое-то живое действие для стола. */
 function marketCardIsLive(t: Table, card: MarketCard): boolean {
+  // Окно на повышение пакета показываем только тем, кому есть куда расти.
+  if (card.kind === 'glEvent' && card.upgrade) {
+    return t.seats.some(
+      (s) =>
+        !s.outOfGame &&
+        s.track === 'rat' &&
+        s.ledger.businesses.some((b) => b.gl && glUpgradeOptions(b.gl.packageId).length > 0),
+    )
+  }
   switch (card.kind) {
     case 'sellOffer':
       return marketMatches(t, card.category).length > 0
