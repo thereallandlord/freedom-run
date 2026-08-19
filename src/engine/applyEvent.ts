@@ -228,6 +228,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         investorShare: e.investorShare,
         installmentMonthly: e.installmentMonthly,
         partnerId: e.partnerId,
+        value: e.value,
       })
       return l
 
@@ -240,7 +241,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
        * долг уже принял на себя. Раньше вычитали всегда — и продавец квартиры
        * с рассрочкой не получал выручку, а ПЛАТИЛ 6,6 млн, чтобы её отдать.
        */
-      const net = e.debtTransfers ? e.salePrice : e.salePrice - a.mortgage
+      const net = e.debtTransfers ? e.salePrice : e.salePrice - (a.mortgage - (e.rebate ?? 0))
       l.cash += a.investorShare ? Math.round(net * (1 - a.investorShare)) : net
       l.realEstate = l.realEstate.filter((x) => x.id !== e.assetId)
       return l
@@ -322,13 +323,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         gl: e.glPackage ? glInitialState(e.glPackage, e.glLuck ?? 1) : undefined,
         installmentMonthly: e.installmentMonthly,
         partnerId: e.partnerId,
+        value: e.value,
       })
       return l
 
     case 'SELL_BUSINESS': {
       const a = l.businesses.find((x) => x.id === e.assetId)
       if (!a) return prev
-      const net = e.debtTransfers ? e.salePrice : e.salePrice - a.liability
+      const net = e.debtTransfers ? e.salePrice : e.salePrice - (a.liability - (e.rebate ?? 0))
       l.cash += a.investorShare ? Math.round(net * (1 - a.investorShare)) : net
       l.businesses = l.businesses.filter((x) => x.id !== e.assetId)
       return l
@@ -374,12 +376,11 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'CHARITY':
       l.cash -= Math.ceil(0.1 * totalIncome(l))
       /*
-       * 🔴 Два хода вместо трёх (правка Камиля: «очень жёсткий чит-код»).
-       * Право выбирать, сколько кубиков бросать, стоит десятую часть дохода —
-       * при трёх ходах это окупалось всегда и превращалось в обязательную
-       * покупку. Два ещё выгодны, но уже не бесплатный разгон.
+       * Три хода. Ослаблять НЕ НАДО: Камиль вернул как было — «чит-код это
+       * хорошо, она хоть немного спасала и создавала капиталец». Решение
+       * владельца, а не баланс ради баланса.
        */
-      l.charityTurnsLeft = 2
+      l.charityTurnsLeft = 3
       return l
 
     case 'CHARITY_TURN_USED':

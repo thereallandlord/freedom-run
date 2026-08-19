@@ -79,6 +79,14 @@ export interface RealEstateAsset {
   investorShare?: number
   /** Платёж по рассрочке, уже вычтенный из cashFlow. Ноль — куплено налом. */
   installmentMonthly?: number
+  /**
+   * 🔴 РЫНОЧНАЯ СТОИМОСТЬ объекта — то, за сколько он стоит НА РЫНКЕ, без
+   * наценки за рассрочку. У купленного в рассрочку `cost` — это цена с
+   * наценкой (6 млн превращаются в 7,5 млн), и выкуп «за 140% стоимости»
+   * считался от неё: игрок получал вдвое больше вложенного и рынок работал
+   * печатным станком. Продажа считается от этой величины.
+   */
+  value?: number
   /** Кто соинвестор, если актив куплен в долях. */
   partnerId?: string
 }
@@ -112,6 +120,8 @@ export interface BusinessAsset {
   gl?: import('./greenleaf').GlState
   installmentMonthly?: number
   partnerId?: string
+  /** Рыночная стоимость без наценки за рассрочку — от неё считается выкуп. */
+  value?: number
 }
 
 export interface FtBusiness {

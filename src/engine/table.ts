@@ -235,6 +235,8 @@ function dealAssetEvent(
     id,
     name: localizedCardTitle(card),
     cost: payCash ? terms.cashPrice : terms.instTotal,
+    // Рыночная цена одна и та же независимо от способа покупки.
+    value: terms.cashPrice,
     downPayment: payCash ? terms.cashPrice : terms.instDown,
     cashFlow: payCash ? terms.cashFlow : terms.instFlow,
     category: card.category ?? '',
@@ -699,6 +701,21 @@ export function stockHolders(t: Table, symbol: string): Seat[] {
  * 🔴 Множитель ОБЯЗАТЕЛЬНЫЙ, без значения по умолчанию: раньше бот забывал его
  * передать и решал продавать по цифре, которой в игре не существует.
  */
+/**
+ * Скидка с наценки при досрочном закрытии рассрочки.
+ *
+ * 🔴 Без неё продажа объекта, купленного в рассрочку, почти всегда уходила в
+ * минус: долг включает наценку за ВЕСЬ срок, а объект стоит рыночную цену.
+ * Квартира за 9 млн превращалась в долг 10,55 млн, и выкуп даже за 115% его
+ * не покрывал. В мурабахе так и делают: гасишь раньше — незаработанную часть
+ * наценки списывают. Считаем её пропорционально непогашенному долгу.
+ */
+export function markupRebate(a: { cost: number; value?: number }, debt: number): number {
+  const markup = Math.max(0, a.cost - (a.value ?? a.cost))
+  if (markup <= 0 || a.cost <= 0) return 0
+  return Math.round(markup * (debt / a.cost))
+}
+
 export function sellOfferPrice(cost: number, multiplierPct: number, marketMul: number): number {
   return Math.round((cost * multiplierPct * marketMul) / 100)
 }
@@ -710,9 +727,7 @@ export function dreamPriceAt(t: Table, spaceIndex: number): number {
 }
 
 export function charityCost(l: Ledger): number {
-  // 15% дохода вместо 10%: прежняя цена делала благотворительность
-  // безусловно выгодной, а решение должно быть неочевидным.
-  return Math.ceil(0.15 * totalIncome(l))
+  return Math.ceil(0.1 * totalIncome(l))
 }
 
 export function ftCharityCost(l: Ledger): number {
@@ -1647,14 +1662,25 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const asset = re ?? biz
       if (!asset || asset.category !== card.category) return prev
 
-      const price = sellOfferPrice(asset.cost, card.multiplierPct, t.market.price[asset.category] ?? 1)
+      // Считаем от рыночной стоимости, а не от суммы с наценкой за рассрочку.
+      const price = sellOfferPrice(
+        asset.value ?? asset.cost,
+        card.multiplierPct,
+        t.market.price[asset.category] ?? 1,
+      )
       const debtOnSale = re ? re.mortgage : (biz as { liability: number }).liability
+      /*
+       * При продаже рассрочка закрывается досрочно, значит незаработанную
+       * наценку списывают — иначе продать купленное в рассрочку было бы
+       * всегда убыточно, каким бы хорошим ни был рынок.
+       */
+      const rebate = markupRebate(asset, debtOnSale)
       // Расчёт с партнёром — до снятия актива, пока его доля ещё видна.
-      settleCoInvestor(t, holder, asset, price - debtOnSale)
+      settleCoInvestor(t, holder, asset, price - (debtOnSale - rebate))
       if (re) {
-        seatLedgerEvent(t, event.seatId, { type: 'SELL_REAL_ESTATE', assetId: event.assetId, salePrice: price })
+        seatLedgerEvent(t, event.seatId, { type: 'SELL_REAL_ESTATE', assetId: event.assetId, salePrice: price, rebate })
       } else {
-        seatLedgerEvent(t, event.seatId, { type: 'SELL_BUSINESS', assetId: event.assetId, salePrice: price })
+        seatLedgerEvent(t, event.seatId, { type: 'SELL_BUSINESS', assetId: event.assetId, salePrice: price, rebate })
       }
       log(t, event.seatId, `${holder.name} продал «${asset.name}» за ${money(price)} (${card.multiplierPct}%)`)
       return t
