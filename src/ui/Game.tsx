@@ -490,7 +490,7 @@ export function Game({
         себя, доска подгоняется под свободную высоту. Прокручивать всю страницу
         во время партии неудобно — доска должна быть видна целиком.
       */}
-      <div className="grid gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-[var(--rail)_minmax(0,1fr)]">
         {/*
           🔴 Панель прокручивается ДО САМОГО НИЗА окна, а не обрезается по краю
           сетки: обрубленный список выглядит поломкой. Отступ снизу нулевой,
@@ -544,7 +544,7 @@ export function Game({
                 size="sm"
                 edition={false}
                 style={{ left: 'var(--board-cx, 50%)', top: 'calc(50% + 3px)' }}
-                className="pointer-events-none absolute hidden -translate-x-1/2 -translate-y-1/2 lg:flex"
+                className="pointer-events-none absolute hidden -translate-x-1/2 -translate-y-1/2 xl:flex"
               />
               <Wordmark size="sm" edition={false} className="lg:hidden" />
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
@@ -555,7 +555,7 @@ export function Game({
             disabled={seat.isBot}
             title="Сделки между игроками"
           >
-            🤝<span className="ml-1 hidden sm:inline">Сделки</span>
+            🤝<span className="ml-1 hidden sm:max-lg:inline xl:inline">Сделки</span>
             {myDebt > 0 && <span className="ml-1 text-[10px] text-amber-400">●</span>}
           </button>
           {/*
@@ -574,14 +574,14 @@ export function Game({
             className="topbtn"
             title="Разбор: как вы играете и куда усиливаться"
           >
-            🧭<span className="ml-1 hidden sm:inline">Разбор</span>
+            🧭<span className="ml-1 hidden sm:max-lg:inline xl:inline">Разбор</span>
           </button>
           <button
             onClick={() => setLogOpen(true)}
             className="topbtn"
             title="Журнал партии: что происходило по ходам"
           >
-            📜<span className="ml-1 hidden sm:inline">Журнал</span>
+            📜<span className="ml-1 hidden sm:max-lg:inline xl:inline">Журнал</span>
           </button>
           {/* Портфель доступен ВСЕГДА: продать своё можно, не дожидаясь карточки. */}
           <button
@@ -590,7 +590,7 @@ export function Game({
             disabled={seat.isBot}
             title="Мой портфель: продать бумаги по цене сегодня"
           >
-            🎒<span className="ml-1">Портфель</span>
+            🎒<span className="ml-1 hidden sm:max-lg:inline xl:inline">Портфель</span>
           </button>
           <button
             onClick={() => setBankOpen(true)}
@@ -599,7 +599,7 @@ export function Game({
             title={RULES.loansEnabled ? 'Банк' : 'Финансы'}
           >
             {RULES.loansEnabled ? '🏦' : '💼'}
-            <span className="ml-1 hidden sm:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
+            <span className="ml-1 hidden sm:max-lg:inline xl:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
           </button>
           {/*
             🔴 Отмена — ТОЛЬКО у хозяина стола. Журнал общий: если крутить его
@@ -609,12 +609,12 @@ export function Game({
           */}
           {canUndo && (
             <button onClick={undo} className="topbtn" title="Откатить последнее событие">
-              ↩️<span className="ml-1 hidden sm:inline">Отменить</span>
+              ↩️<span className="ml-1 hidden sm:max-lg:inline xl:inline">Отменить</span>
             </button>
           )}
           {canUndo && canRedo && (
             <button onClick={redo} className="topbtn" title="Вернуть отменённое">
-              ↪️<span className="ml-1 hidden sm:inline">Вернуть</span>
+              ↪️<span className="ml-1 hidden sm:max-lg:inline xl:inline">Вернуть</span>
             </button>
           )}
       {/*
@@ -624,7 +624,7 @@ export function Game({
       */}
           <button onClick={onExit} className="topbtn" title="На главную. Партия сохранится">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
-            <span className="ml-0.5 hidden sm:inline">Выйти</span>
+            <span className="ml-0.5 hidden sm:max-lg:inline xl:inline">Выйти</span>
           </button>
       {/*
             Созвон. Неприметная кнопка (просьба Камиля: «выделять не надо»):
@@ -639,7 +639,7 @@ export function Game({
               title="Открыть созвон в новой вкладке"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><rect x="2" y="6" width="13" height="12" rx="2.5" /><path d="m15 11 6-3.5v9L15 13" /></svg>
-              <span className="ml-0.5 hidden sm:inline">Созвон</span>
+              <span className="ml-0.5 hidden sm:max-lg:inline xl:inline">Созвон</span>
             </a>
           )}
 
@@ -657,7 +657,7 @@ export function Game({
           )}
         </div>
             </header>
-          <div className="relative grid min-h-0 w-full grid-cols-1 gap-3 lg:h-full lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="relative grid min-h-0 w-full grid-cols-1 gap-3 lg:h-full lg:grid-cols-[minmax(0,1fr)_var(--rail)]">
             <MoneyToast table={table} />
             <TradeToast table={table} />
 

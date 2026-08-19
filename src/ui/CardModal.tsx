@@ -120,7 +120,7 @@ function Shell({
       открыта, нельзя было даже прокрутить свою панель, чтобы посмотреть, что
       у тебя есть. Решение принимают, глядя на свои активы, а не по памяти.
     */
-    <div className="modal-layer fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 lg:left-[332px] lg:right-[332px]">
+    <div className="modal-layer fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 lg:left-[calc(var(--rail)_+_12px)] lg:right-[calc(var(--rail)_+_12px)]">
       <div className="card-fly-in panel max-h-[92vh] w-full max-w-md overflow-auto rounded-2xl p-5 shadow-[var(--shadow-pop)]">
         {art && <CardArt icon={art} accent={accent} photo={photo} />}
         <div
