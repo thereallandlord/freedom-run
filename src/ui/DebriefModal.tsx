@@ -6,11 +6,12 @@
  * сделал не так и куда идти дальше. Здесь у каждого свой разбор: своё сверху,
  * чужие — вкладками, чтобы за столом можно было обсудить вслух.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { buildAllDebriefs, standings } from '../engine/debrief'
 import { money } from './PlayerPanel'
+import { fetchAiDebrief } from '../net/debriefApi'
 
 export function DebriefModal({
   table,
@@ -25,7 +26,29 @@ export function DebriefModal({
 }) {
   const all = buildAllDebriefs(table, events, meId)
   const [openId, setOpenId] = useState(all[0]?.seatId)
+  /*
+   * Живой разбор от модели. Пока едет — показываем посчитанный на месте, он
+   * готов сразу. Не доехал (сервера нет, сеть легла) — так и остаёмся на нём:
+   * человек не должен смотреть на пустой экран из-за нашей инфраструктуры.
+   */
+  const [ai, setAi] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState<string | null>(null)
   const shown = all.find((d) => d.seatId === openId) ?? all[0]
+
+  useEffect(() => {
+    const id = shown?.seatId
+    if (!id || ai[id] || loading === id) return
+    setLoading(id)
+    let alive = true
+    void fetchAiDebrief(table, events, id).then((text) => {
+      if (!alive) return
+      setLoading(null)
+      if (text) setAi((m) => ({ ...m, [id]: text }))
+    })
+    return () => {
+      alive = false
+    }
+  }, [shown?.seatId])
   const rows = standings(table)
 
   if (!shown) return null
@@ -74,6 +97,23 @@ export function DebriefModal({
         )}
 
         <div className="min-h-0 flex-1 space-y-2 overflow-auto pr-1">
+          {/* Разбор словами модели: она видела ходы и говорит о них человеческим языком. */}
+          {ai[shown.seatId] && (
+            <div className="rounded-xl border border-accent/40 bg-accent/8 px-3 py-3">
+              <div className="caps mb-1.5 text-[10px] font-bold text-accent">Личный разбор</div>
+              {ai[shown.seatId].split(/\n{2,}/).map((para, i) => (
+                <p key={i} className="mb-2 text-[13px] leading-relaxed last:mb-0">
+                  {para}
+                </p>
+              ))}
+            </div>
+          )}
+          {loading === shown.seatId && !ai[shown.seatId] && (
+            <div className="rounded-xl border border-[var(--line)] px-3 py-2 text-[12.5px] text-[var(--muted)]">
+              Смотрю вашу партию…
+            </div>
+          )}
+
           {shown.points.map((p, i) => (
             <div
               key={i}
