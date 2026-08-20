@@ -72,6 +72,8 @@ import {
   glPromoReady,
   glTotalIncome,
   glUpgradeCost,
+  glПришлиЛюди,
+  glПереливНаставника,
 } from './greenleaf'
 import {
   auctionWinner,
@@ -1311,9 +1313,39 @@ function applyMarketAuto(t: Table, card: MarketCard) {
         g.dipLeft = card.dipPaydays ?? 4
       }
       if (card.freezePaydays) g.slowdownLeft = Math.max(g.slowdownLeft, card.freezePaydays)
+
+      /*
+       * 🔴 БИНАР: карточка может привести живых людей в ноги. Тогда игрок
+       * получает РАЗОВЫЕ деньги — за лично приглашённого и за закрытый уровень,
+       * — и видит, что решает слабая нога. Ежемесячный доход это не трогает:
+       * он и есть бонус ширины, второй раз его платить нельзя.
+       */
+      let разово = 0
+      const объяснения: string[] = []
+      const c = card as unknown as {
+        pvLeft?: number
+        pvRight?: number
+        pvPersonal?: number
+        mentorPv?: number
+      }
+      if (c.mentorPv) {
+        const r = glПереливНаставника(g, c.mentorPv)
+        Object.assign(g, r.next)
+        разово += r.деньги
+        объяснения.push(...r.заметки)
+      }
+      if (c.pvLeft || c.pvRight) {
+        const r = glПришлиЛюди(g, c.pvLeft ?? 0, c.pvRight ?? 0, c.pvPersonal ?? 0)
+        Object.assign(g, r.next)
+        разово += r.деньги
+        объяснения.push(...r.заметки)
+      }
+
       biz.gl = g
       biz.cashFlow = glTotalIncome(g)
+      if (разово > 0) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: разово })
       log(t, s.id, `${s.name}: ${card.title} — доход по партнёрскому бизнесу теперь ${money(glTotalIncome(g))}/мес`)
+      for (const о of объяснения) log(t, s.id, о)
     }
     return
   }

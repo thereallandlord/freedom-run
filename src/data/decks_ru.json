@@ -1106,7 +1106,10 @@
       "boostPct": 50,
       "growthPct": 40,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "pvLeft": 275,
+      "pvRight": 275,
+      "pvPersonal": 2
     },
     {
       "id": "gl-leader-in",
@@ -1115,7 +1118,9 @@
       "boostPct": 80,
       "growthPct": 60,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "pvRight": 825,
+      "pvPersonal": 1
     },
     {
       "id": "gl-two-legs",
@@ -1124,7 +1129,10 @@
       "boostPct": 60,
       "growthPct": 80,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "pvLeft": 550,
+      "pvRight": 550,
+      "pvPersonal": 2
     },
     {
       "id": "gl-mentor-help",
@@ -1133,7 +1141,8 @@
       "boostPct": 35,
       "growthPct": 25,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "mentorPv": 275
     },
     {
       "id": "gl-school",
@@ -1142,7 +1151,9 @@
       "boostPct": 25,
       "growthPct": 45,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "pvLeft": 275,
+      "pvRight": 275
     },
     {
       "id": "gl-city",
@@ -1151,7 +1162,9 @@
       "boostPct": 40,
       "growthPct": 20,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "pvLeft": 275,
+      "pvPersonal": 1
     },
     {
       "id": "gl-blocked",
@@ -1219,7 +1232,10 @@
       "title": "Та поездка обернулась командой",
       "text": "Полгода назад вы съездили по промоушену. Человек, с которым там познакомились, помог поднять соцсети — и в структуру пошли новые люди.",
       "boostPct": 45,
-      "growthPct": 35
+      "growthPct": 35,
+      "pvLeft": 550,
+      "pvRight": 275,
+      "pvPersonal": 1
     },
     {
       "id": "mkt-price-moonx-rug",
@@ -1291,6 +1307,26 @@
       "upgrade": true,
       "title": "Открыли окно на повышение пакета",
       "text": "До конца месяца разницу до старшего пакета можно доплатить одной суммой, без пересчётов. Дальше — только полная цена."
+    },
+    {
+      "id": "gl-mentor-spill",
+      "deck": "market",
+      "kind": "glEvent",
+      "title": "Наставник перелил вам свою ветку",
+      "text": "Он поставил своих людей под вас — половина работы сделана за вас. Одну ногу растить больше не надо: теперь ваше дело только вторая сторона.",
+      "mentorPv": 1650,
+      "boostPct": 30,
+      "growthPct": 20
+    },
+    {
+      "id": "gl-sets-family",
+      "deck": "market",
+      "kind": "glEvent",
+      "title": "Наборы разошлись по родне",
+      "text": "Наборы, которые пришли вместе с пакетом, вы раздали родственникам. Двое зарегистрировались под вами — и это уже не разговоры, а люди в структуре.",
+      "pvLeft": 275,
+      "pvRight": 275,
+      "pvPersonal": 2
     }
   ],
   "DOODADS_RU": [
