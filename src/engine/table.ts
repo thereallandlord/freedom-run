@@ -1000,6 +1000,12 @@ function advance(t: Table, seatIdx: number, steps: number) {
     } else {
       seatLedgerEvent(t, seat.id, { type: 'CASHFLOW_DAY' })
     }
+    /*
+     * 🔴 Объяснения партнёрского бизнеса ПОКАЗЫВАЕМ. Движок писал их и
+     * выбрасывал — игра знала, почему изменился доход, и молчала об этом.
+     * Живая жалоба 19.08: три раза за партию никто не понял, откуда деньги.
+     */
+    for (const note of t.seats[seatIdx].ledger.glNotes ?? []) log(t, seat.id, note)
   }
   if (payouts > 0) {
     const l = t.seats[seatIdx].ledger

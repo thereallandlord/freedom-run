@@ -68,11 +68,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
 
   switch (e.type) {
     case 'PAYCHECK': {
+      // Объяснения этой зарплаты собираем заново.
+      l.glNotes = []
       // Партнёрский бизнес растёт: структура приводит людей между зарплатами.
       for (const b of l.businesses) {
         if (b.gl) {
           // GreenLeaf считает свой движок: объём, ранги, просадки, разгон.
-          const { next } = glOnPayday(b.gl)
+          const { next, note } = glOnPayday(b.gl)
+          if (note) l.glNotes.push(note)
           next.age += 1
           b.gl = next
           // cashFlow держим зеркалом — его показывают списки активов.
@@ -81,6 +84,15 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           if (rank.level > next.rankPaid) {
             l.cash += rank.bonus
             b.gl = { ...next, rankPaid: rank.level }
+            /*
+             * Разовая премия за ранг — отдельное событие, и о нём надо
+             * сказать отдельно: в жизни это не «доход подрос», а именно
+             * премия за закрытую квалификацию.
+             */
+            l.glNotes.push(
+              `Премия за ранг «${rank.name}»: ${rank.bonus.toLocaleString('ru-RU')} ₽ разово, ` +
+                `и ${rank.pension.toLocaleString('ru-RU')} ₽ в месяц сверх дохода структуры — навсегда.`,
+            )
           }
           continue
         }

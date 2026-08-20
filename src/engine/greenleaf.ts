@@ -314,6 +314,18 @@ export function glOnPayday(g: GlState): { next: GlState; note: string | null } {
   const next: GlState = { ...g }
   next.volume += glStructureIncome(g)
 
+  /*
+   * 🔴 ПРОСАДКА КОНЧАЕТСЯ. Раньше `dipLeft` не убывал вообще: карточка
+   * обещала «через несколько зарплат вернётся к своему», а человек до конца
+   * партии недополучал пятую часть дохода по структуре. Соседний счётчик
+   * заморозки уменьшался как надо — про этот просто забыли.
+   * Жалоба Камиля 19.08: «после карточки „выбыл лидер" доход неправильный».
+   */
+  if (next.dipLeft > 0) {
+    next.dipLeft -= 1
+    if (next.dipLeft === 0) next.dipMul = 1
+  }
+
   if (next.slowdownLeft > 0) {
     next.slowdownLeft -= 1
   } else {
@@ -358,6 +370,20 @@ export function glOnPayday(g: GlState): { next: GlState; note: string | null } {
       )} в месяц сверх дохода структуры — и эти деньги остаются с вами, даже если команда возьмёт паузу.`,
     }
   }
+  if (g.dipLeft > 0 && next.dipLeft === 0) {
+    return {
+      next,
+      note: `Партнёрский бизнес: просадка кончилась — структура вернулась к своему, ${fmt(after)} в месяц.`,
+    }
+  }
+  if (next.dipLeft > 0) {
+    return {
+      next,
+      note:
+        `Партнёрский бизнес: просадка держится ещё ${next.dipLeft} ${склонение(next.dipLeft)}. ` +
+        `Сейчас ${fmt(after)} в месяц вместо обычного.`,
+    }
+  }
   if (next.slowdownLeft > 0) {
     return { next, note: `Партнёрский бизнес: приток новых людей пока стоит, доход не растёт.` }
   }
@@ -376,3 +402,13 @@ export function glOnPayday(g: GlState): { next: GlState; note: string | null } {
 }
 
 const fmt = (n: number) => `${n.toLocaleString('ru-RU')} ₽`
+
+/** «1 зарплату», «2 зарплаты», «5 зарплат» — иначе строка читается как робот. */
+function склонение(n: number): string {
+  const д = n % 10
+  const дд = n % 100
+  if (дд >= 11 && дд <= 14) return 'зарплат'
+  if (д === 1) return 'зарплату'
+  if (д >= 2 && д <= 4) return 'зарплаты'
+  return 'зарплат'
+}
