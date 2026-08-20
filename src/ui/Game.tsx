@@ -1021,6 +1021,7 @@ export function Game({
           offer={inbox}
           dispatch={dispatch}
           onHide={() => setHiddenOffers((h) => [...h, inbox.id])}
+          meId={meId}
         />
       )}
       {table.phase === 'finished' && (

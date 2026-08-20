@@ -28,11 +28,21 @@ export function OfferInbox({
   offer,
   dispatch,
   onHide,
+  meId,
 }: {
   table: Table
   offer: Offer
   dispatch: (e: TableEvent) => void
   onHide: () => void
+  /**
+   * Кто смотрит на экран. Пусто — игра за одним столом, там все свои.
+   *
+   * 🔴 Раньше окно этого не знало вовсе и рисовало живые кнопки ВСЕМ. В
+   * онлайн-партии это значило, что чужое предложение можно принять за другого,
+   * а свои наличные подставлялись под чужое событие. Отсюда и «дал деньги сам
+   * себе», и «мне показывают, кому он предлагает долю».
+   */
+  meId?: string
 }) {
   const [bidFor, setBidFor] = useState<string | null>(null)
   const [bid, setBid] = useState(0)
@@ -53,6 +63,24 @@ export function OfferInbox({
   const borrower = seatOf(table, offer.toId)
 
   if (!from || !responders.length) return null
+
+  /*
+   * 🔴 Чужой разговор — не моё дело. Если я не та сторона, которую спрашивают,
+   * и не автор предложения, я не вижу ни кнопок, ни цифр: только строку о том,
+   * что за столом идёт разговор. Переговорная позиция — тайна.
+   */
+  const автор = offer.askedBy ?? offer.fromId
+  const мнеРешать = !meId || responders.some((s) => s.id === meId)
+  const яАвтор = !!meId && meId === автор
+  if (meId && !мнеРешать && !яАвтор) {
+    return (
+      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[62] flex justify-center px-4">
+        <div className="panel rounded-xl px-3.5 py-2 text-[12.5px] text-[var(--muted)] shadow-[var(--shadow-pop)]">
+          За столом идёт разговор о сделке
+        </div>
+      </div>
+    )
+  }
 
   // Отвечают одни боты — человеку остаётся подождать; ответ придёт от водителя ботов.
   if (!humans.length) {
@@ -158,9 +186,20 @@ export function OfferInbox({
 
       {offer.kind === 'loan' && (
         <TradeBlock title="Беспроцентный заём — кард хасан">
-          <TradeLine label="Просят" value={money(offer.amount)} strong />
+          <TradeLine
+            label={яАвтор && автор === offer.toId ? 'Вы просите' : 'Просят'}
+            value={money(offer.amount)}
+            strong
+          />
           <TradeLine label="Вернёт ровно" value={money(offer.amount)} strong valueClass="text-emerald-400" />
-          <TradeLine label="Ваши наличные" value={money(from.ledger.cash)} />
+          {/*
+            🔴 «Ваши наличные» показываем только тому, чьи они на самом деле.
+            Раньше здесь всем показывали кошелёк КРЕДИТОРА и подписывали его
+            словом «Ваши» — заёмщик видел чужие деньги как свои.
+          */}
+          {(!meId || meId === from.id) && (
+            <TradeLine label="Ваши наличные" value={money(from.ledger.cash)} />
+          )}
           <p className="mt-2 text-[11px] leading-snug text-[var(--muted)]">
             Ни рубля сверху: надбавку за срок стол не даст ввести. Вернуть больше по своей воле
             заёмщик может, требовать этого нельзя. Пока долг не закрыт, он не сможет купить мечту.

@@ -11,7 +11,7 @@ import type {
   Table,
   TablePhase,
 } from './types'
-import type { LedgerEvent, TableEvent } from './events'
+import type { LedgerEvent, TableEvent, TableEventBody } from './events'
 import { applyEvent } from './applyEvent'
 import {
   createLedger,
@@ -842,6 +842,110 @@ function dealDrawOk(t: Table, card: import('./types').DealCard, size: 'small' | 
  * Пускает ли владелец находки этого игрока внутрь.
  * Молчание — отказ: пока условия не заданы, чужая карта закрыта.
  */
+
+/**
+ * Класс действия — кому оно вообще доступно.
+ *
+ * 🔴 Вопрос, на который отвечает класс, один: ЧЕЙ КОШЕЛЁК И ЧЬЯ ВЕЩЬ от этого
+ * действия двигаются.
+ *
+ * · `ход` — двигает стол, а не кошелёк: бросок, выбор колоды, конец хода,
+ *   условия входа в СВОЮ находку, распоряжение выпавшей картой, личные
+ *   карточки хода. Только тот, чей ход.
+ * · `карта` — карта лежит на столе, но платит каждый из своего кармана.
+ *   Купить, пропустить, продать свою бумагу. Каждый, кого карта касается.
+ * · `своё` — трогает только мой кошелёк и к карте на столе не привязано.
+ *   Банк, портфель, управляющий, заём, ставка. В любой момент, но за себя.
+ * · `ответ` — с моего согласия двигается ЧУЖОЙ кошелёк. Проверяется в самом
+ *   обработчике: только он знает, кого спрашивают в этом предложении.
+ * · `служебное` — не от человека: мировое событие, конец партии.
+ */
+type КлассДействия = 'ход' | 'карта' | 'своё' | 'ответ' | 'служебное'
+
+const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДействия> = {
+  // ── ход ──
+  ROLL: 'ход',
+  CHOOSE_DEAL: 'ход',
+  END_TURN: 'ход',
+  SET_ACCESS: 'ход',
+  PAY_DOODAD: 'ход',
+  SKIP_WANT: 'ход',
+  ACCEPT_CHARITY: 'ход',
+  DECLINE_CHARITY: 'ход',
+  PAY_DOWNSIZED: 'ход',
+  ENTER_FAST_TRACK: 'ход',
+  BUY_FT_BUSINESS: 'ход',
+  TRY_VENTURE: 'ход',
+  BUY_DREAM: 'ход',
+  ACCEPT_FT_CHARITY: 'ход',
+  GL_PROMO_TAKE: 'ход',
+  GET_CITIZENSHIP: 'ход',
+  BANKRUPTCY_SELL: 'ход',
+  BANKRUPTCY_HALVE: 'ход',
+  BANKRUPTCY_RECOVER: 'ход',
+  BANKRUPTCY_QUIT: 'ход',
+  /*
+   * 🔴 Распорядиться выпавшей картой может ТОЛЬКО тот, кому она выпала.
+   * Здесь и была дыра с деньгами: впущенный в чужую сделку продавал чужую
+   * находку от своего имени и забирал деньги себе, а у владельца карта
+   * пропадала со стола.
+   */
+  OFFER_CARD: 'ход',
+  OFFER_COINVEST: 'ход',
+
+  // ── решение за себя по общей карте ──
+  BUY_DEAL: 'карта',
+  BUY_STOCK_SHARES: 'карта',
+  PASS_CARD: 'карта',
+  SELL_STOCK_LOT: 'карта',
+  ACCEPT_OFFER: 'карта',
+
+  // ── своё хозяйство ──
+  GL_UPGRADE: 'своё',
+  GL_BUY_TRIANGLE: 'своё',
+  TAKE_RIBA: 'своё',
+  REPAY_RIBA: 'своё',
+  HIRE_MANAGER: 'своё',
+  TAKE_LOAN: 'своё',
+  REPAY_LOAN: 'своё',
+  PAYOFF_ASSET: 'своё',
+  PAY_OFF_DEBT: 'своё',
+  OFFER_ASSET: 'своё',
+  OFFER_LOAN: 'своё',
+  ASK_LOAN: 'своё',
+  OFFER_LOAN_WITH_INTEREST: 'своё',
+  BID_OFFER: 'своё',
+  REPAY_PLAYER_LOAN: 'своё',
+  FORGIVE_LOAN: 'своё',
+
+  // ── ответ на адресованное мне ──
+  ACCEPT_OFFER_TRADE: 'ответ',
+  CANCEL_OFFER: 'ответ',
+
+  // ── служебное ──
+  WORLD_EVENT: 'служебное',
+  FINISH_GAME: 'служебное',
+}
+
+/**
+ * Касается ли лежащая на столе карта этого игрока настолько, чтобы он мог
+ * принять по ней решение за себя.
+ */
+function решаетПоКарте(t: Table, seatIdx: number): boolean {
+  if (seatIdx === t.turnIndex) return true
+  const p = t.pending
+  if (!p) return false
+  const id = t.seats[seatIdx].id
+  // Владелец находки открыл вход — впущенный решает сам за себя.
+  if (p.kind === 'deal' && accessAllows(p.access, id)) return true
+  /*
+   * Рыночная карта общая: обвал бумаг или предложение о покупке касаются
+   * каждого, у кого есть подходящий актив, а не только ходящего.
+   */
+  if (p.kind === 'market') return true
+  return false
+}
+
 function accessAllows(a: import('./types').DealAccess | undefined, seatId: string): boolean {
   if (!a || a.mode === 'closed') return false
   if (a.mode === 'open') return true
@@ -1326,38 +1430,35 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
   const seat = t.seats[seatIdx]
   const l = seat.ledger
 
-  /** Действия хода: их шлёт только тот, чей сейчас ход. */
-  const TURN_BOUND = new Set([
-    'ROLL',
-    'CHOOSE_DEAL',
-    'PASS_CARD',
-    'END_TURN',
-    'PAY_DOODAD',
-    'ACCEPT_CHARITY',
-    'DECLINE_CHARITY',
-    'PAY_DOWNSIZED',
-    'ENTER_FAST_TRACK',
-    'BUY_FT_BUSINESS',
-    'TRY_VENTURE',
-    'BUY_DREAM',
-    'ACCEPT_FT_CHARITY',
-    'SET_ACCESS',
-    'SKIP_WANT',
-    'GL_PROMO_TAKE',
-  ])
   /*
-   * 🔴 «Пропустить» у сделки и у рынка — решение КАЖДОГО допущенного, а не
-   * только ходящего. Когда владелец находки открывает вход, карта висит на
-   * столе, пока не ответят все приглашённые; их ответ приходит от НЕ-ходящего
-   * игрока и в общий запрет попадать не должен.
+   * 🔴 ЕДИНЫЙ СТРАЖ ПРАВ. Раньше здесь стоял список «действий хода», а всё,
+   * чего в нём не было, мог прислать кто угодно — то есть каждая новая кнопка
+   * была лотереей. Живая партия 19.08 показала цену: один игрок нажимал «Не
+   * беру» за другого, посторонний принимал чужое предложение доли, впущенный
+   * в чужую сделку мог ПРОДАТЬ ЧУЖУЮ НАХОДКУ и забрать деньги себе, а кнопка
+   * «дать в долг» стояла у заёмщика — человек дал деньги сам себе.
    *
-   * Живой случай 19.08: Камиль открыл вход в GOOGL, Анвар нажал «Пропустить»,
-   * событие отвергалось здесь молча — карта не уходила, и стол встал у всех.
+   * Теперь у каждого действия объявлен класс, и умолчания нет: `Record` по
+   * всем типам событий не даст собраться, пока новому событию не назначен
+   * класс. Правило закреплено в коде, а не в голове.
    */
-  const sharedDecision =
-    event.type === 'PASS_CARD' && (t.pending?.kind === 'deal' || t.pending?.kind === 'market')
-  if (byIdx >= 0 && byIdx !== t.turnIndex && !sharedDecision && TURN_BOUND.has(event.type)) {
-    return prev
+  const класс = КЛАСС_ДЕЙСТВИЯ[event.type]
+  if (byIdx >= 0 && класс !== 'служебное') {
+    // Действие хода — только тому, чей ход.
+    if (класс === 'ход' && byIdx !== t.turnIndex) return prev
+    /*
+     * Решение по общей карте принимает КАЖДЫЙ, кого карта касается: владелец
+     * находки, кого он впустил, и владельцы подходящих активов на рыночной
+     * карте. Ровно этот класс и зарубили 19.08, когда «Пропустить»
+     * приглашённого сочли ходом за другого и стол встал намертво.
+     */
+    if (класс === 'карта' && !решаетПоКарте(t, byIdx)) return prev
+    /*
+     * Своё хозяйство — в любой момент, но только за себя. Если событие несёт
+     * чужое место, это попытка распорядиться чужим кошельком.
+     */
+    const чужоеМесто = (event as { seatId?: string }).seatId
+    if (класс === 'своё' && чужоеМесто && чужоеМесто !== t.seats[byIdx].id) return prev
   }
 
   switch (event.type) {
@@ -2221,6 +2322,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           toId: to.id,
           amount,
           interestPct: Math.max(1, Math.round(event.interestPct)),
+          askedBy: seat.id,
           expiresAtTurn: t.turnCounter + 2,
           bids: [],
         },
@@ -2343,6 +2445,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           fromId: seat.id,
           toId: event.toId,
           amount,
+          askedBy: seat.id,
           expiresAtTurn: t.turnCounter + 1,
           bids: [],
         },
@@ -2366,6 +2469,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           toId: event.toId,
           amount: Math.max(0, Math.round(event.amount)),
           share,
+          askedBy: seat.id,
           expiresAtTurn: t.turnCounter + 1,
           bids: [],
         },
@@ -2394,6 +2498,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           toId: event.toId,
           assetId: event.assetId,
           amount,
+          askedBy: seat.id,
           expiresAtTurn: t.turnCounter + 2,
           bids: [],
         },
@@ -2416,6 +2521,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           fromId: seat.id,
           toId: to.id,
           amount,
+          askedBy: seat.id,
           expiresAtTurn: t.turnCounter + 2,
           bids: [],
         },
@@ -2443,6 +2549,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           fromId: lender.id,
           toId: seat.id,
           amount,
+          askedBy: seat.id,
           expiresAtTurn: t.turnCounter + 2,
           bids: [],
         },
@@ -2477,16 +2584,34 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * или принять сделку, которую предлагали не ему. Подпись события
        * говорит, кто нажал; сверяем её с адресатом.
        */
+      /*
+       * 🔴 Отвечает ТА СТОРОНА, КОТОРУЮ СПРАШИВАЮТ, — то есть не автор.
+       *
+       * Раньше здесь стояли три проверки, написанные под одну сторону сделки
+       * («я продаю — ты покупаешь»), и на займе они выворачивались наизнанку:
+       * требовали, чтобы нажал получатель денег, и ПРЯМО ЗАПРЕЩАЛИ нажать
+       * владельцу денег. Отсюда живой случай 19.08 — кнопка «Дать» стояла у
+       * заёмщика, и человек дал деньги сам себе.
+       */
+      const автор = o.askedBy ?? o.fromId
+      if (event.by && event.by === автор) return prev
+      const ктоОтвечает = o.toId ? (o.toId === автор ? o.fromId : o.toId) : null
+      if (event.by && ктоОтвечает && ктоОтвечает !== event.by) return prev
+      // Отвечать можно только за себя.
       if (event.by && event.seatId !== event.by) return prev
-      if (event.by && o.toId && o.toId !== event.by) return prev
-      if (event.by && o.fromId === event.by) return prev
+
       const from = t.seats.find((x) => x.id === o.fromId)
       const winner = auctionWinner(o)
-      const buyerId = winner?.seatId ?? event.seatId
+      /*
+       * 🔴 Деньги идут по СВОЕЙ дороге, а не туда, где нажали. У займа
+       * получатель — всегда должник (toId), кто бы ни нажал кнопку.
+       */
+      const buyerId =
+        o.kind === 'loan' ? (o.toId ?? event.seatId) : (winner?.seatId ?? event.seatId)
       const price = winner?.amount ?? o.amount
       const buyer = t.seats.find((x) => x.id === buyerId)
       if (!from || !buyer || buyer.outOfGame) return prev
-      if (o.toId && o.toId !== buyer.id) return prev
+      if (o.kind !== 'loan' && o.toId && o.toId !== buyer.id) return prev
 
       switch (o.kind) {
         case 'resellCard': {

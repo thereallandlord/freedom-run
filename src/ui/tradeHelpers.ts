@@ -12,6 +12,7 @@ import {
   fairAssetPrice,
   fairCardPrice,
   loanOutstanding,
+  loanOwed,
   offerAlive,
   type Offer,
   type PlayerLoan,
@@ -170,13 +171,23 @@ export function offerBiddable(o: Offer): boolean {
  * игрок Круга, кроме автора.
  */
 export function offerResponders(t: Table, o: Offer): Seat[] {
+  /*
+   * 🔴 Отвечает ТА СТОРОНА, КОТОРАЯ ПРЕДЛОЖЕНИЕ НЕ СОЗДАВАЛА.
+   *
+   * Раньше по займу всегда возвращался кредитор — и когда он сам предлагал
+   * деньги, тоже. Получалось, что он же и должен был согласиться на
+   * собственное предложение, а настоящему адресату кнопки не доставалось.
+   * У обратного случая — «я прошу» — та же беда с другой стороны: кнопку
+   * «Дать» видел заёмщик.
+   */
+  const автор = o.askedBy ?? o.fromId
   if (o.kind === 'loan') {
-    const lender = seatOf(t, o.fromId)
-    return lender && !lender.outOfGame ? [lender] : []
+    const другой = seatOf(t, автор === o.fromId ? o.toId : o.fromId)
+    return другой && !другой.outOfGame ? [другой] : []
   }
   const named = seatOf(t, o.toId)
   if (named) return named.outOfGame ? [] : [named]
-  return t.seats.filter((s) => s.id !== o.fromId && !s.outOfGame && !s.won && s.track === 'rat')
+  return t.seats.filter((s) => s.id !== автор && !s.outOfGame && !s.won && s.track === 'rat')
 }
 
 /** Кому достанется предмет сделки: по займу — заёмщику, иначе отвечающему. */
@@ -185,12 +196,19 @@ export function offerBuyerId(o: Offer, responder: Seat): string {
 }
 
 /** Долги игрока перед другими игроками — они же запирают победу. */
+/*
+ * 🔴 Долг считается закрытым, когда выплачено ВСЁ, что причитается, а не
+ * только тело. При займе с надбавкой сравнение с `amount` гасило строку
+ * раньше времени: в списке долг исчезал, а движок его ещё держал.
+ */
+const непогашен = (l: PlayerLoan) => loanOwed(l) > l.repaid
+
 export function debtsOf(loans: PlayerLoan[], seatId: string): PlayerLoan[] {
-  return loans.filter((l) => l.borrowerId === seatId && l.amount > l.repaid)
+  return loans.filter((l) => l.borrowerId === seatId && непогашен(l))
 }
 
 export function creditsOf(loans: PlayerLoan[], seatId: string): PlayerLoan[] {
-  return loans.filter((l) => l.lenderId === seatId && l.amount > l.repaid)
+  return loans.filter((l) => l.lenderId === seatId && непогашен(l))
 }
 
 export function playerDebt(t: Table, seatId: string): number {
