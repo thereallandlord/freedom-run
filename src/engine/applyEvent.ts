@@ -3,11 +3,12 @@ import { DEBT_TO_PAYMENT } from './types'
 import type { LedgerEvent } from './events'
 import { glInitialState, glOnPayday, glRankFor, glTotalIncome } from './greenleaf'
 import {
-  MAX_PETS,
+  MAX_CHILDREN,
   RULES,
   zakatDue,
   fastTrackProgress,
   monthlyCashFlow,
+  подтянутьРасходы,
   freedomIncome,
   passiveIncome,
   totalExpenses,
@@ -99,6 +100,12 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       }
       l.cash += monthlyCashFlow(l, e.flowMul)
       l.paydays += 1
+      /*
+       * Уровень жизни подтягивается за доходом — ПОСЛЕ начисления, чтобы этот
+       * чек человек получил целиком, а прибавка к расходам пришла со
+       * следующего месяца. Так это и ощущается в жизни.
+       */
+      подтянутьРасходы(l)
 
       /*
        * Рассрочка за активы гасится ПОСЛЕ начисления потока — иначе последний
@@ -363,8 +370,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       return l
 
     case 'PET':
-      if (l.pets >= MAX_PETS) return prev
-      l.pets += 1
+      if (l.children >= MAX_CHILDREN) return prev
+      l.children += 1
       return l
 
     case 'DOWNSIZED':

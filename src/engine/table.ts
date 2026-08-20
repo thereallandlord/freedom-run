@@ -156,6 +156,7 @@ export const THEME_RULES: Record<'ru' | 'classic' | 'offshore', Parameters<typeo
     loansEnabled: false,
     yieldScale: 1,
     zakat: { enabled: true, pct: 2.5, everyPaydays: 12 },
+    lifestyleCreepPct: 33,
   },
   classic: {
     currency: 'USD',
@@ -1132,9 +1133,14 @@ function resolveLanding(t: Table, seatIdx: number) {
         t.phase = 'resolving'
         return
       case 'baby': {
+        /*
+         * Клетки «baby» на русской доске нет — её заменили рынком. Ветка
+         * оставлена для других досок: там она добавляет ребёнка, то есть
+         * ПОСТОЯННЫЙ расход, а не разовую трату.
+         */
         seatLedgerEvent(t, seat.id, { type: 'PET' })
-        const pets = t.seats[seatIdx].ledger.pets
-        log(t, seat.id, `В доме появился питомец (всего ${pets})`)
+        const детей = t.seats[seatIdx].ledger.children
+        log(t, seat.id, `В семье пополнение (детей: ${детей})`)
         t.phase = 'turnEnd'
         return
       }
@@ -1917,9 +1923,24 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (card.want) {
         // Позволил себе — счётчик отказов обнуляется.
         seatLedgerEvent(t, seat.id, { type: 'INDULGE' })
-        if (card.upkeep) {
-          seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: card.upkeep })
-          log(t, seat.id, `С покупкой пришло содержание: +${money(card.upkeep)}/мес к расходам`)
+      }
+      /*
+       * 🔴 Постоянная добавка к расходам работает на ЛЮБОЙ карточке, а не
+       * только на купленной хотелке. Без этого целый класс событий — «теперь
+       * это с тобой каждый месяц» — существовать не мог, а именно такие
+       * расходы и делают партию длиннее.
+       */
+      if (card.upkeep) {
+        seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: card.upkeep })
+        log(t, seat.id, `Теперь это с вами каждый месяц: +${money(card.upkeep)} к расходам`)
+      }
+      if (card.child) {
+        const было = t.seats[seatIdx].ledger.children
+        seatLedgerEvent(t, seat.id, { type: 'PET' })
+        const стало = t.seats[seatIdx].ledger.children
+        if (стало > было) {
+          const добавка = t.seats[seatIdx].ledger.profession.perChildExpense
+          log(t, seat.id, `В семье пополнение: +${money(добавка)}/мес навсегда (детей: ${стало})`)
         }
       }
       t.pending = null

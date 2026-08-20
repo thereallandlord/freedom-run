@@ -39,6 +39,8 @@ export interface Rules {
   installmentTerm: { realEstate: number; business: number }
   /** Закят: доля в процентах и период в «зарплатах» (12 = раз в год). */
   zakat: { enabled: boolean; pct: number; everyPaydays: number }
+  /** Какая доля прироста дохода уходит в расходы. 0 — уровень жизни не растёт. */
+  lifestyleCreepPct?: number
 }
 
 export const RULES: Rules = {
@@ -50,6 +52,7 @@ export const RULES: Rules = {
   installmentMarkup: { realEstate: 1.25, business: 1.2 },
   installmentTerm: { realEstate: 300, business: 84 },
   zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
+  lifestyleCreepPct: 33,
 }
 
 export function setRules(patch: Partial<Rules>) {
@@ -57,10 +60,10 @@ export function setRules(patch: Partial<Rules>) {
 }
 
 /** Потолок питомцев в семье. */
-export const MAX_PETS = 3
+export const MAX_CHILDREN = 3
 
-export function petExpenses(l: Ledger): number {
-  return l.pets * l.profession.perChildExpense
+export function childExpenses(l: Ledger): number {
+  return l.children * l.profession.perChildExpense
 }
 
 export function dividendLines(l: Ledger): { symbol: string; amount: number }[] {
@@ -150,8 +153,46 @@ export function totalExpenses(l: Ledger): number {
     e.otherExpenses +
     e.bankLoanPayment +
     e.ribaPayment +
-    petExpenses(l)
+    childExpenses(l)
   )
+}
+
+/**
+ * Насколько расходы подтягиваются за выросшим доходом.
+ *
+ * 🔴 Главная причина, по которой партию проходили за час (решение Камиля
+ * 20.08 — вместо замедления партнёрского бизнеса). В жизни выросший доход
+ * почти сразу утягивает за собой уровень жизни: квартира побольше, машина
+ * поновее, школа получше. В игре доход рос, а расходы стояли — и свобода
+ * наступала неправдоподобно быстро.
+ *
+ * Берём ТРЕТЬ прироста: две трети остаются человеку, и разрыв всё равно
+ * растёт — просто медленнее. Половина уже душит, четверть почти незаметна.
+ */
+export const РОСТ_РАСХОДОВ_ЗА_ДОХОДОМ_PCT = 33
+/* Живое значение лежит в правилах режима (RULES.lifestyleCreepPct) — его надо
+   крутить при подборе баланса и показывать в панели хозяина. Константа выше —
+   значение по умолчанию. */
+
+/**
+ * Подтянуть расходы за выросшим доходом. Возвращает добавку.
+ *
+ * Считается от НАИВЫСШЕГО дохода, который человек видел, а не от текущего:
+ * иначе просадка рынка «возвращала» бы уровень жизни назад, а в жизни от
+ * привычек так просто не отказываются.
+ */
+export function подтянутьРасходы(l: Ledger): number {
+  const доход = totalIncome(l)
+  const пик = l.incomePeak ?? доход
+  if (доход <= пик) {
+    l.incomePeak = пик
+    return 0
+  }
+  const доля = RULES.lifestyleCreepPct ?? РОСТ_РАСХОДОВ_ЗА_ДОХОДОМ_PCT
+  const добавка = Math.round(((доход - пик) * доля) / 100 / 100) * 100
+  l.incomePeak = доход
+  if (добавка > 0) l.expenses.otherExpenses += добавка
+  return добавка
 }
 
 export function monthlyCashFlow(l: Ledger, m?: FlowMul): number {
@@ -427,7 +468,8 @@ export function createLedger(p: Profession, playerName: string): Ledger {
     salary: p.salary,
     expenses: { ...p.expenses, bankLoanPayment: 0, ribaPayment: 0 },
     liabilities: { ...p.liabilities, bankLoan: 0, ribaLoan: 0 },
-    pets: 0,
+    children: 0,
+    incomePeak: undefined,
     stocks: [],
     realEstate: [],
     businesses: [],

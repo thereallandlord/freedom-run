@@ -8,7 +8,7 @@ import {
   freedomIncome,
   monthlyCashFlow,
   passiveIncome,
-  petExpenses,
+  childExpenses,
   totalExpenses,
   totalIncome,
   fastTrackTarget,
@@ -566,8 +566,8 @@ export function PlayerPanel({
               value={money(l.expenses.otherExpenses)}
               dim
             />
-            {l.pets > 0 && (
-              <Row label={`Питомцы (${l.pets})`} value={money(petExpenses(l))} dim />
+            {l.children > 0 && (
+              <Row label={`Дети (${l.children})`} value={money(childExpenses(l))} dim />
             )}
             {l.expenses.bankLoanPayment > 0 && (
               <Row label="Банковский кредит" value={money(l.expenses.bankLoanPayment)} dim />
