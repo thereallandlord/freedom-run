@@ -1,6 +1,7 @@
 import type {
   BotDifficulty,
   DealCard,
+  DeckName,
   DoodadCard,
   Ledger,
   MarketCard,
@@ -212,6 +213,13 @@ export function createTable(setup: TableSetup): Table {
       big: { order: shuffleIndices(bigDeals(theme).length, setup.seed + 2), next: 0 },
       market: { order: shuffleIndices(marketCards(theme).length, setup.seed + 3), next: 0 },
       doodad: { order: shuffleIndices(doodads(theme).length, setup.seed + 4), next: 0 },
+      glEvent: {
+        order: shuffleIndices(
+          marketCards(theme).filter((c) => c.kind === 'glEvent').length,
+          setup.seed + 5,
+        ),
+        next: 0,
+      },
     },
     lastRoll: null,
     dreamBumps: {},
@@ -508,6 +516,7 @@ function cloneTable(t: Table): Table {
       big: { ...t.decks.big },
       market: { ...t.decks.market },
       doodad: { ...t.decks.doodad },
+      glEvent: { ...t.decks.glEvent },
     },
     dreamBumps: { ...t.dreamBumps },
     ftOwnership: { ...t.ftOwnership },
@@ -552,7 +561,7 @@ function rng(t: Table, salt: number): number {
 }
 
 /** Взять следующую карту колоды, перетасовав её при исчерпании. */
-function draw(t: Table, deck: 'small' | 'big' | 'market' | 'doodad', size: number): number {
+function draw(t: Table, deck: DeckName, size: number): number {
   const d = t.decks[deck]
   if (d.next >= d.order.length) {
     d.order = shuffleIndices(size, t.seed + (t.rngCursor = (t.rngCursor ?? 0) + 1) + deck.length * 7919)
@@ -589,12 +598,24 @@ function seatLedgerEvent(t: Table, seatId: string, e: LedgerEvent) {
  * плодить колоду; вместо этого цену разыгрываем при выдаче, со смещением к
  * низу (низкие цены встречаются чаще высоких, как и в жизни).
  */
+/**
+ * Насколько цена жмётся к нижнему краю вилки. Больше число — реже дорого.
+ *
+ * 🔴 У мемкоинов перекос сильнее (решение Камиля 20.08): «шанс выстрелить
+ * пусть будет пониже, но он всё равно будет». Запрещать их незачем — карточка
+ * сама говорит, что заработок на таком активе считается недозволенным, а
+ * решение остаётся за человеком. Это и есть та развилка, ради которой игра.
+ */
+const ПЕРЕКОС_ЦЕНЫ = 1.7
+const ПЕРЕКОС_МЕМКОИНА = 3
+
 function stockDrawPrice(t: Table, card: DealCard): DealCard {
   if (card.kind !== 'stock') return card
   const [lo, hi] = card.range
   if (!(hi > lo)) return card
   const u = rng(t, 8171)
-  const price = Math.round((lo + (hi - lo) * Math.pow(u, 1.7)) / 100) * 100
+  const перекос = (card as { meme?: boolean }).meme ? ПЕРЕКОС_МЕМКОИНА : ПЕРЕКОС_ЦЕНЫ
+  const price = Math.round((lo + (hi - lo) * Math.pow(u, перекос)) / 100) * 100
   return { ...card, price: Math.max(lo, Math.min(hi, price)) }
 }
 
@@ -943,8 +964,17 @@ function resolveLanding(t: Table, seatIdx: number) {
         const hasGl = seat.ledger.businesses.some((b) => b.gl)
         if (hasGl) {
           const glDeck = deck.filter((c) => c.kind === 'glEvent')
+          /*
+           * 🔴 Тянем из СВОЕЙ колоды. Раньше здесь стоял курсор рынка, которому
+           * подсовывали чужой размер, — и он перетасовывался на 15 позиций
+           * вместо 56. После этого из 56 карт рынка доставались только первые
+           * 15, и за столом это читалось как «опять те же карточки».
+           *
+           * Своя колода заодно даёт то, чего просил Камиль: пока не пройдут
+           * все пятнадцать событий, ни одно не повторится.
+           */
           for (let tries = 0; tries < 3 && glDeck.length; tries++) {
-            const candidate = glDeck[draw(t, 'market', glDeck.length) % glDeck.length]
+            const candidate = glDeck[draw(t, 'glEvent', glDeck.length)]
             if (marketCardIsLive(t, candidate)) {
               card = candidate
               break

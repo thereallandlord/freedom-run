@@ -189,6 +189,11 @@ export interface StockCard {
   price: number
   range: [number, number]
   dividendPerShare?: number
+  /**
+   * Мемкоин: за активом нет ни продукта, ни выручки. Игру не запрещает —
+   * только реже выстреливает, а карточка честно говорит, чем это считается.
+   */
+  meme?: boolean
 }
 
 export interface RealEstateCard {
@@ -373,7 +378,13 @@ export interface DealAccess {
     | { kind: 'fee'; amount: number }
 }
 
-export type DeckName = 'small' | 'big' | 'market' | 'doodad'
+/**
+ * 🔴 `glEvent` — ОТДЕЛЬНАЯ колода событий партнёрского бизнеса.
+ * Раньше их тянули курсором колоды рынка, подсунув ему чужой размер: курсор
+ * рынка перетасовывался на 15 позиций вместо 56, и дальше из 56 карт рынка
+ * доставались только первые 15. Отсюда и «опять Apple, опять MoonX».
+ */
+export type DeckName = 'small' | 'big' | 'market' | 'doodad' | 'glEvent'
 
 /** Мировое событие: приходит по таймеру, а не по ходу, и задевает всех. */
 export type WorldEffect =
