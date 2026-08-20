@@ -106,6 +106,35 @@ export interface TableSetup {
   seats: SeatSetup[]
 }
 
+
+/**
+ * Гарантия: партнёрский бизнес показывается не позже четвёртого хода.
+ *
+ * 🔴 Решение Камиля 20.08: «в один из первых четырёх, но на четвёртый уже
+ * обязана». Обычно карта приходит на клетке «возможность» — это красиво, но
+ * это не гарантия: клеток «возможность» половина, и по замеру до четвёртого
+ * хода их успевали застать 87% игроков. Остальным карта здесь и выдаётся —
+ * в свободную минуту хода, когда на столе больше ничего не лежит.
+ *
+ * Ничего не вытесняет: если на клетке уже что-то разыгралось, ждём следующего
+ * свободного момента. Поэтому обычный ход правило не ломает.
+ */
+const GL_ГАРАНТИЯ_ХОД = 4
+
+function отдатьGreenleafВСрок(t: Table, seatIdx: number) {
+  const seat = t.seats[seatIdx]
+  if (t.pending) return
+  if (seat.track !== 'rat') return
+  if (seat.glSeen === true) return
+  if ((seat.turnsTaken ?? 0) < GL_ГАРАНТИЯ_ХОД) return
+  if (seat.ledger.businesses.some((b) => b.gl)) return
+  const card = smallDeals(t.deckTheme).find((c) => (c as { greenleaf?: boolean }).greenleaf)
+  if (!card) return
+  t.seats[seatIdx] = { ...t.seats[seatIdx], glSeen: true }
+  t.pending = { kind: 'deal', deck: 'small', card: scaled(card) }
+  t.phase = 'resolving'
+}
+
 // ─── Создание стола ───────────────────────────────────────────────────
 
 /**
@@ -1311,10 +1340,17 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       t.lastRoll = event.dice
       if (l.charityTurnsLeft > 0) seatLedgerEvent(t, seat.id, { type: 'CHARITY_TURN_USED' })
 
+      // Свой ход считаем здесь: по нему открывается партнёрский бизнес.
+      t.seats[seatIdx] = {
+        ...t.seats[seatIdx],
+        turnsTaken: (t.seats[seatIdx].turnsTaken ?? 0) + 1,
+      }
+
       const steps = event.dice.reduce((a, b) => a + b, 0)
       log(t, seat.id, `Бросок: ${event.dice.join(' + ')} = ${steps}`)
       advance(t, seatIdx, steps)
       if ((t.phase as TablePhase) !== 'finished') resolveLanding(t, seatIdx)
+      if ((t.phase as TablePhase) !== 'finished') отдатьGreenleafВСрок(t, seatIdx)
       return t
     }
 
@@ -1323,22 +1359,31 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const list = event.size === 'small' ? smallDeals(t.deckTheme) : bigDeals(t.deckTheme)
 
       /*
-       * Партнёрский бизнес показываем СРЕДИ ПЕРВЫХ ЧЕТЫРЁХ малых сделок, на
-       * случайной из них (правка Камиля 18.08: «не обязательно самым первым»).
-       * Причина показывать рано прежняя: карта лежит в общей колоде и может не
-       * выпасть за всю партию, а смысл в том, чтобы человек её увидел. Но
-       * первая же карта каждой партии — это предсказуемо и выглядит подставой.
+       * Партнёрский бизнес открывается В ПЕРВЫЕ ЧЕТЫРЕ ХОДА игрока, на
+       * случайном из них (решение Камиля 20.08: «в один из четырёх, но на
+       * четвёртый обязана»).
        *
-       * Номер слота разыгрывается один раз на игрока и живёт в его месте,
+       * 🔴 Считаем СВОИ ХОДЫ, а не выбранные малые сделки. Раньше было по
+       * малым сделкам, и это совсем другая единица: клеток «возможность»
+       * половина, счётчик двигался только на «Малой», а боты вообще всегда
+       * берут крупную. Замер на живом движке: 58% игроков видели карту позже
+       * четвёртого хода, каждый десятый ждал 12+, худший случай 27.
+       *
+       * Поэтому и размер сделки больше не важен: подходит и «Малая», и
+       * «Крупная» — человек уже дошёл до своего срока, ждать нечего.
+       *
+       * Номер хода разыгрывается один раз на игрока и живёт в его месте,
        * поэтому переигровка журнала даёт тот же результат.
        */
-      const glCard =
-        event.size === 'small' ? list.find((c) => (c as { greenleaf?: boolean }).greenleaf) : null
+      // Карта лежит в малой колоде, но выдаётся независимо от выбранного размера.
+      const glCard = smallDeals(t.deckTheme).find(
+        (c) => (c as { greenleaf?: boolean }).greenleaf,
+      )
       if (glCard && !seat.ledger.businesses.some((b) => b.gl) && seat.glSeen !== true) {
-        const seen = (seat.smallSeen ?? 0) + 1
+        const ходов = seat.turnsTaken ?? 0
         const slot = seat.glSlot ?? 1 + Math.floor(mulberry32(t.seed + seatIdx * 7717 + 55)() * 4)
-        t.seats[seatIdx] = { ...t.seats[seatIdx], smallSeen: seen, glSlot: slot }
-        if (seen >= slot) {
+        t.seats[seatIdx] = { ...t.seats[seatIdx], glSlot: slot }
+        if (ходов >= slot) {
           t.seats[seatIdx] = { ...t.seats[seatIdx], glSeen: true }
           t.pending = { kind: 'deal', deck: event.size, card: scaled(glCard) }
           return t
@@ -2641,6 +2686,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (t.phase === 'finished') return prev
       if (t.pending && t.pending.kind !== 'market' && t.pending.kind !== 'deal') return prev
       t.pending = null
+      /*
+       * Последняя возможность отдать партнёрский бизнес в срок: карточка хода
+       * уже закрыта, ход ещё не ушёл. Так обещание «не позже четвёртого хода»
+       * выполняется даже у того, кому все четыре хода выпадали другие карты.
+       */
+      отдатьGreenleafВСрок(t, seatIdx)
+      if (t.pending) return t
       nextTurn(t)
       return t
     }
