@@ -16,7 +16,7 @@
  * только смотреть. Менять числа насовсем можно будет, когда появится, куда
  * их сохранять.
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MANAGER_PCT, MANAGER_RARE_PCT, RIBA, RULES } from '../engine/ledger'
 import {
   GL_MAX_GROWTH_PCT,
@@ -43,20 +43,37 @@ import { artForCard } from './cardArt'
  * тему у самой игры. Панель обязана быть безобидной.
  */
 import decksRu from '../data/decks_ru.json'
+import worklog from '../data/worklog.json'
 import type { DealCard, DoodadCard, MarketCard, Profession } from '../engine/types'
 
 const ДЕНЬГИ = (n: number) => `${Math.round(n).toLocaleString('ru-RU')} ₽`
 const ПРОЦЕНТ = (n: number) => `${Math.round(n * 10) / 10}%`
 
-type Раздел = 'сходится' | 'карточки' | 'профессии' | 'правила' | 'шансы'
+type Раздел = 'сходится' | 'правки' | 'карточки' | 'профессии' | 'правила' | 'шансы'
 
 const РАЗДЕЛЫ: { id: Раздел; имя: string }[] = [
   { id: 'сходится', имя: 'Что не сходится' },
+  { id: 'правки', имя: 'Баги и правки' },
   { id: 'карточки', имя: 'Карточки' },
   { id: 'профессии', имя: 'Профессии' },
   { id: 'правила', имя: 'Правила и числа' },
   { id: 'шансы', имя: 'Шансы' },
 ]
+
+const СТАТУСЫ = ['в работе', 'найдено', 'ждёт решения', 'исправлено'] as const
+const ЦВЕТ_СТАТУСА: Record<string, string> = {
+  исправлено: 'border-accent/40 bg-accent/10 text-accent',
+  'в работе': 'border-[rgb(var(--c-warn))]/40 bg-[rgb(var(--c-warn))]/10 text-[rgb(var(--c-warn))]',
+  найдено: 'border-[rgb(var(--c-bad))]/35 bg-[rgb(var(--c-bad))]/8 text-[rgb(var(--c-bad))]',
+  'ждёт решения': 'border-[var(--line)] bg-[var(--panel-2)] text-[var(--muted)]',
+}
+const ИМЯ_ГРУППЫ: Record<string, string> = {
+  ломает: 'Ломает игру',
+  механика: 'Механика и баланс',
+  удобство: 'Понятность и удобство',
+  вход: 'Вход и кабинет',
+  идея: 'Идеи на потом',
+}
 
 /** Русские имена видов карт — в данных они по-английски. */
 const ВИДЫ: Record<string, string> = {
@@ -320,6 +337,7 @@ export function Admin({ onClose }: { onClose: () => void }) {
   const [раздел, setРаздел] = useState<Раздел>('сходится')
   const проверки = useMemo(собратьПроверки, [])
   const тревог = проверки.filter((p) => p.тревога).length
+  const осталось = worklog.правки.filter((p) => p.статус !== 'исправлено').length
 
   return (
     <div className="min-h-[100dvh] bg-[var(--bg)] text-[var(--ink)]">
@@ -351,6 +369,11 @@ export function Admin({ onClose }: { onClose: () => void }) {
               }`}
             >
               {р.имя}
+              {р.id === 'правки' && осталось > 0 && (
+                <span className="ml-1.5 rounded-full bg-[var(--panel-2)] px-1.5 text-[10px] font-bold text-[var(--muted)]">
+                  {осталось}
+                </span>
+              )}
               {р.id === 'сходится' && тревог > 0 && (
                 <span className="ml-1.5 rounded-full bg-[rgb(var(--c-bad))] px-1.5 text-[10px] font-bold text-white">
                   {тревог}
@@ -361,6 +384,7 @@ export function Admin({ onClose }: { onClose: () => void }) {
         </nav>
 
         {раздел === 'сходится' && <ЧтоНеСходится проверки={проверки} />}
+        {раздел === 'правки' && <Правки />}
         {раздел === 'карточки' && <Карточки />}
         {раздел === 'профессии' && <Профессии />}
         {раздел === 'правила' && <Правила />}
@@ -407,6 +431,98 @@ function ЧтоНеСходится({ проверки }: { проверки: П
   )
 }
 
+
+/**
+ * Журнал правок: что нашли, что чинится, что ждёт решения владельца.
+ *
+ * 🔴 Ведётся руками вместе с работой — это не автоматика, а честный список.
+ * Просьба Камиля 20.08: панель должна быть главной по игре, чтобы статус
+ * каждого бага был виден здесь, а не в переписке.
+ */
+function Правки() {
+  const [группа, setГруппа] = useState<string>('всё')
+  const все = worklog.правки as {
+    id: string
+    название: string
+    группа: string
+    статус: string
+    сказал: string
+    что: string
+    когда: string
+    коммит?: string
+  }[]
+
+  const группы = ['всё', ...Object.keys(ИМЯ_ГРУППЫ)]
+  const видно = все.filter((p) => группа === 'всё' || p.группа === группа)
+  const поСтатусу = (ст: string) => видно.filter((p) => p.статус === ст)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-1.5">
+          {группы.map((g) => (
+            <button
+              key={g}
+              onClick={() => setГруппа(g)}
+              className={`rounded-lg border px-2.5 py-1.5 text-[12.5px] transition ${
+                группа === g
+                  ? 'border-accent bg-accent/10 font-semibold'
+                  : 'border-[var(--line)] text-[var(--muted)] hover:border-accent/50'
+              }`}
+            >
+              {g === 'всё' ? 'Всё' : ИМЯ_ГРУППЫ[g]}
+              <span className="ml-1.5 text-[var(--muted)]">
+                {g === 'всё' ? все.length : все.filter((p) => p.группа === g).length}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto text-[12.5px] text-[var(--muted)]">
+          обновлено {worklog.обновлено}
+        </div>
+      </div>
+
+      {СТАТУСЫ.map((ст) => {
+        const строки = поСтатусу(ст)
+        if (!строки.length) return null
+        return (
+          <div key={ст} className="flex flex-col gap-2">
+            <div className="flex items-baseline gap-2">
+              <span
+                className={`rounded-md border px-2 py-0.5 text-[11.5px] font-semibold ${ЦВЕТ_СТАТУСА[ст]}`}
+              >
+                {ст}
+              </span>
+              <span className="text-[12.5px] text-[var(--muted)]">{строки.length}</span>
+            </div>
+            {строки.map((p) => (
+              <div
+                key={p.id}
+                className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <div className="text-[14.5px] font-semibold">{p.название}</div>
+                  <div className="shrink-0 text-[11.5px] text-[var(--muted)]">
+                    {ИМЯ_ГРУППЫ[p.группа]} · {p.когда}
+                    {p.коммит ? ` · ${p.коммит}` : ''}
+                  </div>
+                </div>
+                {/* Кавычки ставим только если их нет: часть записей — уже цитаты. */}
+                <p className="mt-1 max-w-[76ch] text-[13px] italic text-[var(--muted)]">
+                  {p.сказал.startsWith('«') ? p.сказал : `«${p.сказал}»`}
+                </p>
+                {p.что && p.что !== '—' && (
+                  <p className="mt-1.5 max-w-[76ch] text-[13.5px] leading-relaxed">{p.что}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const КОЛОДЫ = [
   { id: 'малые', имя: 'Малые сделки' },
   { id: 'крупные', имя: 'Крупные сделки' },
@@ -418,6 +534,7 @@ const КОЛОДЫ = [
 function Карточки() {
   const [колода, setКолода] = useState<(typeof КОЛОДЫ)[number]['id']>('малые')
   const [искать, setИскать] = useState('')
+  const [открыта, setОткрыта] = useState<Record<string, unknown> | null>(null)
 
   const карты = useMemo(() => {
     if (колода === 'малые') return smallDeals('ru') as unknown as Record<string, unknown>[]
@@ -461,15 +578,33 @@ function Карточки() {
       </div>
 
       <div className="flex flex-col gap-2">
+        {/*
+          🔴 Ключ строки — КОЛОДА плюс ключ карты. По одному ключу карты было
+          мало: у двух разных квартир в Дубай-Марине он совпадал, и при
+          переключении колод одна из них оставалась висеть на экране. Ключ в
+          данных я развёл, но опираться на его единственность больше не буду.
+        */}
         {видно.map((c, i) => (
-          <КартаСтрока key={(c.id as string) ?? i} c={c} />
+          <КартаСтрока
+            key={`${колода}:${(c.id as string) ?? ''}:${i}`}
+            c={c}
+            onOpen={() => setОткрыта(c)}
+          />
         ))}
       </div>
+
+      {открыта && <ПоказКарты c={открыта} onClose={() => setОткрыта(null)} />}
     </div>
   )
 }
 
-function КартаСтрока({ c }: { c: Record<string, unknown> }) {
+function КартаСтрока({
+  c,
+  onOpen,
+}: {
+  c: Record<string, unknown>
+  onOpen: () => void
+}) {
   const [раскрыто, setРаскрыто] = useState(false)
   const фото = artForCard(c as { id?: string; symbol?: string })
   const название = (c.title ?? c.name ?? вид(c.type as string)) as string
@@ -518,12 +653,17 @@ function КартаСтрока({ c }: { c: Record<string, unknown> }) {
             )}
           </div>
         </div>
-        <button
-          onClick={() => setРаскрыто((v) => !v)}
-          className="shrink-0 text-[12px] text-accent hover:underline"
-        >
-          {раскрыто ? 'свернуть' : 'все поля'}
-        </button>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <button onClick={onOpen} className="text-[12px] font-semibold text-accent hover:underline">
+            как в игре
+          </button>
+          <button
+            onClick={() => setРаскрыто((v) => !v)}
+            className="text-[12px] text-[var(--muted)] hover:text-[var(--ink)]"
+          >
+            {раскрыто ? 'свернуть' : 'все поля'}
+          </button>
+        </div>
       </div>
       {раскрыто && (
         <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-[var(--panel-2)] p-2.5 text-[11.5px] leading-relaxed">
@@ -545,6 +685,124 @@ function имяПоля(k: string): string {
     liability: 'обязательство',
   }
   return имена[k] ?? k
+}
+
+
+/** Оформление карточки в игре: цвет, значок и подпись зависят от вида. */
+const ОФОРМЛЕНИЕ: Record<string, { цвет: string; знак: string; ярлык: string }> = {
+  realEstate: { цвет: '#047c54', знак: '🏢', ярлык: 'Недвижимость' },
+  business: { цвет: '#0369a1', знак: '🏪', ярлык: 'Бизнес' },
+  stock: { цвет: '#7c3aed', знак: '📈', ярлык: 'Бумаги' },
+  sellOffer: { цвет: '#b45309', знак: '🤝', ярлык: 'Предложение о покупке' },
+  stockPrice: { цвет: '#7c3aed', знак: '📊', ярлык: 'Рынок' },
+  stockSplit: { цвет: '#7c3aed', знак: '✂️', ярлык: 'Дробление' },
+  windfall: { цвет: '#047c54', знак: '🎁', ярлык: 'Нежданные деньги' },
+  payRaise: { цвет: '#047c54', знак: '📌', ярлык: 'Прибавка' },
+  glEvent: { цвет: '#15803d', знак: '🌿', ярлык: 'Партнёрский бизнес' },
+  venture: { цвет: '#f97316', знак: '🛢️', ярлык: 'Рисковый проект' },
+  dream: { цвет: '#be185d', знак: '🏆', ярлык: 'Мечта' },
+  doodad: { цвет: '#b45309', знак: '🧾', ярлык: 'Трата' },
+}
+
+/**
+ * Карточка так, как её видит игрок.
+ *
+ * 🔴 Не сам игровой компонент: тот живёт внутри партии и требует стола, места,
+ * денег и фазы хода. Здесь — та же вёрстка на голых данных карты. Поэтому
+ * рядом стоит честная пометка: это вид карточки, а не работающая карточка.
+ */
+function ПоказКарты({ c, onClose }: { c: Record<string, unknown>; onClose: () => void }) {
+  const видКарты = (c.kind ?? c.type ?? 'doodad') as string
+  const о = ОФОРМЛЕНИЕ[видКарты] ?? ОФОРМЛЕНИЕ.doodad
+  const фото = artForCard(c as { id?: string; symbol?: string })
+  const название = (c.title ?? c.name ?? о.ярлык) as string
+  const текст = (c.text ?? c.flavor ?? '') as string
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [onClose])
+
+  const строки: [string, string][] = []
+  const число = (k: string) => (typeof c[k] === 'number' ? (c[k] as number) : null)
+  if (число('cost')) строки.push(['Цена', ДЕНЬГИ(число('cost')!)])
+  if (число('downPayment')) строки.push(['Первый взнос', ДЕНЬГИ(число('downPayment')!)])
+  if (число('cashFlow')) строки.push(['Доход в месяц', `+${ДЕНЬГИ(число('cashFlow')!)}`])
+  if (число('price') && видКарты !== 'dream') строки.push(['Цена за бумагу', ДЕНЬГИ(число('price')!)])
+  if (число('price') && видКарты === 'dream') строки.push(['Цена мечты', ДЕНЬГИ(число('price')!)])
+  if (число('amount')) строки.push(['Сумма', ДЕНЬГИ(число('amount')!)])
+  if (число('upkeep')) строки.push(['Останется в расходах', `+${ДЕНЬГИ(число('upkeep')!)}/мес`])
+  if (число('threshold'))
+    строки.push([
+      'Нужно выбросить',
+      `${число('threshold')} или больше — шанс ${ПРОЦЕНТ(((7 - число('threshold')!) / 6) * 100)}`,
+    ])
+  if (Array.isArray(c.range)) {
+    const [a, b] = c.range as number[]
+    строки.push(['Вилка цены', `${ДЕНЬГИ(a)} — ${ДЕНЬГИ(b)}`])
+  }
+
+  return (
+    <div
+      className="modal-layer fixed inset-0 z-[90] grid place-items-center bg-black/70 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="pop-in panel w-full max-w-md overflow-auto rounded-2xl p-5"
+        style={{ maxHeight: '90dvh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {фото ? (
+          <div
+            className="mb-3 overflow-hidden rounded-xl border"
+            style={{ borderColor: `${о.цвет}33` }}
+          >
+            <img src={фото} alt="" className="block h-36 w-full object-cover" />
+          </div>
+        ) : (
+          <div
+            className="mb-3 grid h-24 place-items-center overflow-hidden rounded-xl border text-5xl"
+            style={{ borderColor: `${о.цвет}33`, background: `${о.цвет}0f` }}
+          >
+            {о.знак}
+          </div>
+        )}
+
+        <div
+          className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+          style={{ background: `${о.цвет}22`, color: о.цвет }}
+        >
+          {о.ярлык}
+        </div>
+        <h2 className="text-lg font-bold leading-tight">{название}</h2>
+        {текст && <p className="mt-1.5 text-sm italic text-[var(--muted)]">{текст}</p>}
+
+        {строки.length > 0 && (
+          <div className="panel-2 mt-4 rounded-lg p-3">
+            {строки.map(([k, v]) => (
+              <div
+                key={k}
+                className="flex items-baseline justify-between gap-3 border-b border-[var(--line)] py-1.5 last:border-0"
+              >
+                <span className="text-[13px] text-[var(--muted)]">{k}</span>
+                <span className="tabnum text-[13.5px] font-semibold">{v}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-3 text-[11.5px] leading-relaxed text-[var(--muted)]">
+          Так карточка выглядит на столе. Кнопки решения здесь не показаны: они зависят
+          от того, чей ход, сколько у человека денег и что уже куплено.
+        </p>
+
+        <button onClick={onClose} className="btn-primary mt-3 w-full">
+          Закрыть
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function Профессии() {
