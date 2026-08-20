@@ -1,0 +1,807 @@
+/**
+ * Панель хозяина игры.
+ *
+ * 🔴 Зачем она. Владелец видел игру только глазами игрока — из-за стола не
+ * видно ни состава колод, ни того, что какая-то статья расходов обнулилась,
+ * ни того, что все дешёвые объекты недвижимости однажды уехали под нож вместе
+ * с ловушками. Оба этих случая уже произошли и оба вскрылись только на живой
+ * партии, спустя сутки. Панель показывает игру изнутри, чтобы такое было
+ * видно за десять секунд, а не за два часа игры.
+ *
+ * 🔴 Читает данные ТЕМИ ЖЕ функциями, что и сам движок. Не своей копией и не
+ * пересказом: панель, которая расходится с игрой, хуже, чем её отсутствие.
+ *
+ * 🔴 Работает целиком в браузере, без сервера — иначе она не открылась бы на
+ * копии игры, которая лежит на GitHub Pages. Отсюда же ограничение: пока
+ * только смотреть. Менять числа насовсем можно будет, когда появится, куда
+ * их сохранять.
+ */
+import { useMemo, useState } from 'react'
+import { MANAGER_PCT, MANAGER_RARE_PCT, RIBA, RULES } from '../engine/ledger'
+import {
+  GL_MAX_GROWTH_PCT,
+  GL_PACKAGES,
+  GL_START_FLOW,
+  GL_START_GROWTH_PCT,
+  GL_TRIANGLE_BONUS,
+} from '../engine/greenleaf'
+import {
+  RAT_BOARD,
+  TICKERS,
+  WORLD_EVENTS,
+  bigDeals,
+  doodads,
+  marketCards,
+  professionsFor,
+  smallDeals,
+} from '../engine/data'
+import { MARKET_EFFECT_LIFE, THEME_RULES, WANTS_BEFORE_BURNOUT } from '../engine/table'
+import { artForCard } from './cardArt'
+/*
+ * Большой круг берём из файла напрямую, а не через `fastBoard()`: та функция
+ * читает глобально выбранную тему, и обращение к ней из панели переключило бы
+ * тему у самой игры. Панель обязана быть безобидной.
+ */
+import decksRu from '../data/decks_ru.json'
+import type { DealCard, DoodadCard, MarketCard, Profession } from '../engine/types'
+
+const ДЕНЬГИ = (n: number) => `${Math.round(n).toLocaleString('ru-RU')} ₽`
+const ПРОЦЕНТ = (n: number) => `${Math.round(n * 10) / 10}%`
+
+type Раздел = 'сходится' | 'карточки' | 'профессии' | 'правила' | 'шансы'
+
+const РАЗДЕЛЫ: { id: Раздел; имя: string }[] = [
+  { id: 'сходится', имя: 'Что не сходится' },
+  { id: 'карточки', имя: 'Карточки' },
+  { id: 'профессии', имя: 'Профессии' },
+  { id: 'правила', имя: 'Правила и числа' },
+  { id: 'шансы', имя: 'Шансы' },
+]
+
+/** Русские имена видов карт — в данных они по-английски. */
+const ВИДЫ: Record<string, string> = {
+  realEstate: 'недвижимость',
+  stock: 'бумаги',
+  business: 'бизнес',
+  sellOffer: 'предложение о покупке',
+  windfall: 'нежданные деньги',
+  payRaise: 'прибавка к зарплате',
+  stockPrice: 'цена бумаги',
+  stockSplit: 'дробление бумаг',
+  glEvent: 'событие партнёрского бизнеса',
+  cashflowDay: 'день дохода',
+  dream: 'мечта',
+  venture: 'рисковый проект',
+  taxAudit: 'налоговая проверка',
+  lawsuit: 'иск',
+  divorce: 'развод',
+  downsized: 'сокращение',
+  charity: 'благотворительность',
+}
+const вид = (k?: string) => (k ? (ВИДЫ[k] ?? k) : '—')
+
+// ─────────────────────────── проверки ───────────────────────────
+
+interface Проверка {
+  имя: string
+  тревога: boolean
+  цифра: string
+  что: string
+}
+
+/**
+ * Автоматические проверки — главное, ради чего панель существует.
+ *
+ * Каждая выросла из настоящего случая, а не из воображения: так уже ломалось.
+ */
+function собратьПроверки(): Проверка[] {
+  const малые = smallDeals('ru')
+  const крупные = bigDeals('ru')
+  const рынок = marketCards('ru')
+  const всячина = doodads('ru')
+  const профессии = professionsFor('ru')
+  const из: Проверка[] = []
+
+  // ── 1. Порог входа против стартовых денег ──
+  // Так сломалась недвижимость: дешёвые объекты удалили вместе с ловушками,
+  // минимальный вход стал больше миллиона, а фильтр «хватает ли денег»
+  // молча отбраковывал ВСЕ объекты, пока игрок не разбогатеет.
+  const деньгиНаСтарте = профессии.map((p) => p.savings)
+  const богатейший = Math.max(...деньгиНаСтарте)
+  for (const [видКарт, имяВида] of [
+    ['realEstate', 'недвижимости'],
+    ['business', 'бизнеса'],
+  ] as const) {
+    const свои = малые.filter((c) => videKind(c) === видКарт)
+    const входы = свои.map((c) => поле(c, 'downPayment')).filter((n) => n > 0)
+    if (!входы.length) continue
+    const минимум = Math.min(...входы)
+    из.push({
+      имя: `Самый дешёвый вход в ${имяВида}`,
+      тревога: минимум > богатейший,
+      цифра: `${ДЕНЬГИ(минимум)} против ${ДЕНЬГИ(богатейший)} на старте`,
+      что:
+        минимум > богатейший
+          ? `Ни один игрок не может купить это на старте: карта показывается только тому, кому хватает денег, поэтому все ${свои.length} шт. отбраковываются, пока человек не разбогатеет.`
+          : `Порог по силам самой богатой профессии — карта будет попадаться с первых ходов.`,
+    })
+  }
+
+  // ── 2. Статьи расходов, нулевые у ВСЕХ ──
+  // Так обнаружились налоги: ноль у всех восемнадцати профессий.
+  const статьи = Object.keys(профессии[0]?.expenses ?? {})
+  for (const статья of статьи) {
+    const всеНули = профессии.every(
+      (p) => !(p.expenses as unknown as Record<string, number>)[статья],
+    )
+    if (!всеНули) continue
+    из.push({
+      имя: `Статья «${имяСтатьи(статья)}» пустая у всех профессий`,
+      тревога: true,
+      цифра: `0 ₽ у всех ${профессии.length}`,
+      что: 'Строка есть, а денег не забирает. Либо это забытая правка, либо статью надо убрать с экрана — сейчас игрок видит её нулём.',
+    })
+  }
+
+  // ── 3. Доля бед в партнёрском бизнесе ──
+  const глСобытия = рынок.filter((c) => c.kind === 'glEvent')
+  const беды = глСобытия.filter((c) => естьБеда(c))
+  const доляБед = глСобытия.length ? (беды.length / глСобытия.length) * 100 : 0
+  из.push({
+    имя: 'Доля бед в партнёрском бизнесе',
+    тревога: доляБед > 30,
+    цифра: `${беды.length} из ${глСобытия.length} — ${ПРОЦЕНТ(доляБед)}`,
+    что: 'Считается по колоде. За столом ощущается сильнее: беды применимы всегда, а часть хороших карточек отсеивается как неподходящая и отдаёт свою вероятность бедам.',
+  })
+
+  // ── 4. Разрыв между малыми и крупными сделками ──
+  const верхМалых = Math.max(...малые.map((c) => поле(c, 'downPayment')))
+  const низКрупных = Math.min(...крупные.map((c) => поле(c, 'downPayment')))
+  из.push({
+    имя: 'Разрыв между малыми и крупными сделками',
+    тревога: низКрупных > верхМалых * 2,
+    цифра: `малые до ${ДЕНЬГИ(верхМалых)}, крупные от ${ДЕНЬГИ(низКрупных)}`,
+    что:
+      низКрупных > верхМалых * 2
+        ? 'Между колодами дыра: на крупные ещё не хватает, а в малых уже нечего брать.'
+        : 'Колоды стыкуются, провала по деньгам нет.',
+  })
+
+  // ── 5. Карточки без картинки ──
+  const всеСId = [...малые, ...крупные].filter((c) => c.id)
+  const безКартинки = всеСId.filter((c) => !artForCard(c))
+  из.push({
+    имя: 'Карточки без картинки',
+    тревога: безКартинки.length > 0,
+    цифра: `${безКартинки.length} из ${всеСId.length}`,
+    что: безКартинки.length
+      ? `По отсутствию картинки видно, какие карточки новые: ${безКартинки
+          .slice(0, 4)
+          .map((c) => c.title)
+          .join(', ')}${безКартинки.length > 4 ? ' и другие' : ''}.`
+      : 'У всех сделок есть картинка.',
+  })
+
+  // ── 6. Одинаковые названия ──
+  const счёт = new Map<string, number>()
+  for (const c of [...малые, ...крупные, ...всячина]) {
+    const t = (c as { title?: string }).title ?? ''
+    счёт.set(t, (счёт.get(t) ?? 0) + 1)
+  }
+  const повторы = [...счёт.entries()].filter(([, n]) => n > 1)
+  из.push({
+    имя: 'Карточки с одинаковым названием',
+    тревога: повторы.length > 0,
+    цифра: `${повторы.length}`,
+    что: повторы.length
+      ? `Игроку они читаются как повтор: ${повторы.map(([t]) => t).join(', ')}.`
+      : 'Названия не повторяются. Ощущение «одно и то же выпадает» даёт не колода, а то, что выпавшая карта не вычёркивается.',
+  })
+
+  // ── 7. Доходность классов активов ──
+  // Ровно то место, где партнёрский бизнес обгоняет всё остальное.
+  const доходность = (c: DealCard) => {
+    const цена = поле(c, 'cost')
+    return цена ? (поле(c, 'cashFlow') * 12 * 100) / цена : 0
+  }
+  const срПо = (вид: string, где: DealCard[]) => {
+    const свои = где.filter((c) => videKind(c) === вид && поле(c, 'cost'))
+    if (!свои.length) return 0
+    return свои.reduce((s, c) => s + доходность(c), 0) / свои.length
+  }
+  const недв = срПо('realEstate', [...малые, ...крупные])
+  const биз = срПо('business', [...малые, ...крупные])
+  const глГод = (GL_START_FLOW * 12 * 100) / GL_PACKAGES[0].price
+  из.push({
+    имя: 'Доходность классов активов в год',
+    тревога: глГод > Math.max(недв, биз) * 2,
+    цифра: `недвижимость ${ПРОЦЕНТ(недв)} · бизнес ${ПРОЦЕНТ(биз)} · партнёрский ${ПРОЦЕНТ(глГод)}`,
+    что:
+      глГод > Math.max(недв, биз) * 2
+        ? 'Партнёрский бизнес отрывается от остальных активов, и выбор игрока перестаёт быть выбором. Это ещё до роста структуры, который идёт сверху.'
+        : 'Классы активов сопоставимы, выбор осмысленный.',
+  })
+
+  // ── 8. Шансы рискованных проектов ──
+  const проекты = (decksRu.FAST_BOARD_RU as { type: string; threshold?: number; downPayment?: number }[])
+    .filter((s) => s.type === 'venture')
+  if (проекты.length) {
+    const шанс = проекты.map((s) => ((7 - (s.threshold ?? 7)) / 6) * 100)
+    const средний = шанс.reduce((a, b) => a + b, 0) / шанс.length
+    const ставка = Math.max(...проекты.map((s) => s.downPayment ?? 0))
+    из.push({
+      имя: 'Шанс выиграть в рисковом проекте',
+      тревога: средний < 40,
+      цифра: `${ПРОЦЕНТ(средний)} при ставке до ${ДЕНЬГИ(ставка)}`,
+      что: 'Ставка невозвратная. При таком шансе потерять два раза подряд — обычное дело, и со стороны игрока это неотличимо от поломки.',
+    })
+  }
+
+  // ── 9. Неравные шансы внутри колоды партнёрского бизнеса ──
+  const рынокВсего = рынок.length
+  const остаток = рынокВсего % (глСобытия.length || 1)
+  из.push({
+    имя: 'Равны ли шансы карточек партнёрского бизнеса между собой',
+    тревога: остаток !== 0,
+    цифра:
+      остаток === 0
+        ? 'равны'
+        : `первые ${остаток} из ${глСобытия.length} выпадают чаще остальных`,
+    что:
+      остаток === 0
+        ? 'Все карточки этой колоды равновероятны.'
+        : `Карта выбирается остатком от деления по колоде рынка (${рынокВсего} карт), и он делится на ${глСобытия.length} неровно. Первые карточки получают лишний шанс.`,
+  })
+
+  return из
+}
+
+/** У карт малой колоды вид лежит в kind; вынесено, чтобы не спорить с типами. */
+function videKind(c: DealCard): string {
+  return поле(c, 'kind') as unknown as string
+}
+
+/**
+ * Безопасное чтение поля карты.
+ *
+ * 🔴 Колода сделок — это несколько разных видов карт в одном списке: у бумаг
+ * нет ни взноса, ни месячного дохода. Обращаться к таким полям напрямую
+ * нельзя, а разбирать каждый вид отдельно ради показа в таблице — лишнее.
+ */
+function поле(c: unknown, имя: string): number {
+  const v = (c as Record<string, unknown>)[имя]
+  return typeof v === 'number' ? v : (v as unknown as number) ?? (0 as number)
+}
+
+function имяСтатьи(k: string): string {
+  const имена: Record<string, string> = {
+    taxes: 'налоги',
+    homeMortgagePayment: 'платёж за жильё',
+    schoolLoanPayment: 'оплата обучения',
+    carPayment: 'платёж за машину',
+    creditCardPayment: 'кредитная карта',
+    retailPayment: 'долг за технику',
+    otherExpenses: 'жизнь: еда, ЖКХ, транспорт',
+  }
+  return имена[k] ?? k
+}
+
+/** Считаем карточку бедой, если она что-то отнимает или замораживает. */
+function естьБеда(c: MarketCard): boolean {
+  const x = c as unknown as Record<string, number | undefined>
+  return Boolean(
+    (x.boostPct !== undefined && (x.boostPct as number) < 0) ||
+      (x.growthPct !== undefined && (x.growthPct as number) < 0) ||
+      x.freezePaydays ||
+      x.dipPct,
+  )
+}
+
+// ─────────────────────────── экран ───────────────────────────
+
+export function Admin({ onClose }: { onClose: () => void }) {
+  const [раздел, setРаздел] = useState<Раздел>('сходится')
+  const проверки = useMemo(собратьПроверки, [])
+  const тревог = проверки.filter((p) => p.тревога).length
+
+  return (
+    <div className="min-h-[100dvh] bg-[var(--bg)] text-[var(--ink)]">
+      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
+        <header className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="caps text-[10px] font-bold text-accent">Панель хозяина</div>
+            <h1 className="font-display text-2xl font-bold leading-tight">Игра изнутри</h1>
+            <p className="mt-1 max-w-[60ch] text-[13.5px] text-[var(--muted)]">
+              Всё содержимое игры одним списком: карточки, профессии, правила и числа.
+              Читается прямо из того же места, откуда их берёт сама игра, — разойтись
+              с партией эта страница не может.
+            </p>
+          </div>
+          <button onClick={onClose} className="topbtn shrink-0">
+            ← В игру
+          </button>
+        </header>
+
+        <nav className="flex flex-wrap gap-1.5">
+          {РАЗДЕЛЫ.map((р) => (
+            <button
+              key={р.id}
+              onClick={() => setРаздел(р.id)}
+              className={`rounded-full border px-3 py-1.5 text-[13px] transition ${
+                раздел === р.id
+                  ? 'border-accent bg-accent/12 font-semibold'
+                  : 'border-[var(--line)] text-[var(--muted)] hover:border-accent/50'
+              }`}
+            >
+              {р.имя}
+              {р.id === 'сходится' && тревог > 0 && (
+                <span className="ml-1.5 rounded-full bg-[rgb(var(--c-bad))] px-1.5 text-[10px] font-bold text-white">
+                  {тревог}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {раздел === 'сходится' && <ЧтоНеСходится проверки={проверки} />}
+        {раздел === 'карточки' && <Карточки />}
+        {раздел === 'профессии' && <Профессии />}
+        {раздел === 'правила' && <Правила />}
+        {раздел === 'шансы' && <Шансы />}
+      </div>
+    </div>
+  )
+}
+
+function ЧтоНеСходится({ проверки }: { проверки: Проверка[] }) {
+  const плохо = проверки.filter((p) => p.тревога)
+  const норм = проверки.filter((p) => !p.тревога)
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="max-w-[70ch] text-[14px] text-[var(--muted)]">
+        Считается на месте по живым данным игры. Каждая проверка выросла из того,
+        что однажды сломалось и всплыло только за столом.
+      </p>
+      {[...плохо, ...норм].map((p) => (
+        <div
+          key={p.имя}
+          className={`rounded-xl border px-4 py-3 ${
+            p.тревога
+              ? 'border-[rgb(var(--c-bad))]/40 bg-[rgb(var(--c-bad))]/8'
+              : 'border-[var(--line)] bg-[var(--panel)]'
+          }`}
+        >
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="text-[15px] font-semibold">{p.имя}</div>
+            <div
+              className={`tabnum text-[13px] font-semibold ${
+                p.тревога ? 'text-[rgb(var(--c-bad))]' : 'text-accent'
+              }`}
+            >
+              {p.цифра}
+            </div>
+          </div>
+          <p className="mt-1 max-w-[76ch] text-[13.5px] leading-relaxed text-[var(--muted)]">
+            {p.что}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const КОЛОДЫ = [
+  { id: 'малые', имя: 'Малые сделки' },
+  { id: 'крупные', имя: 'Крупные сделки' },
+  { id: 'рынок', имя: 'Рынок и события' },
+  { id: 'всячина', имя: 'Всячина и траты' },
+  { id: 'полоса', имя: 'Большой круг' },
+] as const
+
+function Карточки() {
+  const [колода, setКолода] = useState<(typeof КОЛОДЫ)[number]['id']>('малые')
+  const [искать, setИскать] = useState('')
+
+  const карты = useMemo(() => {
+    if (колода === 'малые') return smallDeals('ru') as unknown as Record<string, unknown>[]
+    if (колода === 'крупные') return bigDeals('ru') as unknown as Record<string, unknown>[]
+    if (колода === 'рынок') return marketCards('ru') as unknown as Record<string, unknown>[]
+    if (колода === 'всячина') return doodads('ru') as unknown as Record<string, unknown>[]
+    return decksRu.FAST_BOARD_RU as unknown as Record<string, unknown>[]
+  }, [колода])
+
+  const видно = карты.filter((c) => {
+    if (!искать.trim()) return true
+    return JSON.stringify(c).toLowerCase().includes(искать.toLowerCase())
+  })
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {КОЛОДЫ.map((k) => (
+          <button
+            key={k.id}
+            onClick={() => setКолода(k.id)}
+            className={`rounded-lg border px-2.5 py-1.5 text-[12.5px] transition ${
+              колода === k.id
+                ? 'border-accent bg-accent/10 font-semibold'
+                : 'border-[var(--line)] text-[var(--muted)] hover:border-accent/50'
+            }`}
+          >
+            {k.имя}
+          </button>
+        ))}
+        <input
+          value={искать}
+          onChange={(e) => setИскать(e.target.value)}
+          placeholder="Найти по любому слову или числу"
+          className="login-input ml-auto max-w-[280px]"
+        />
+      </div>
+
+      <div className="text-[13px] text-[var(--muted)]">
+        Показано {видно.length} из {карты.length}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {видно.map((c, i) => (
+          <КартаСтрока key={(c.id as string) ?? i} c={c} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function КартаСтрока({ c }: { c: Record<string, unknown> }) {
+  const [раскрыто, setРаскрыто] = useState(false)
+  const фото = artForCard(c as { id?: string; symbol?: string })
+  const название = (c.title ?? c.name ?? вид(c.type as string)) as string
+  const текст = (c.text ?? c.flavor ?? '') as string
+
+  return (
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+      <div className="flex items-start gap-3">
+        <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-[var(--panel-2)]">
+          {фото ? (
+            <img src={фото} alt="" className="size-full object-cover" loading="lazy" />
+          ) : (
+            <div className="grid size-full place-items-center text-[10px] text-[var(--muted)]">
+              нет фото
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="text-[14.5px] font-semibold">{название}</span>
+            <span className="rounded bg-[var(--panel-2)] px-1.5 py-0.5 text-[11px] text-[var(--muted)]">
+              {вид((c.kind ?? c.type) as string)}
+            </span>
+            {c.category ? (
+              <span className="text-[11.5px] text-[var(--muted)]">{c.category as string}</span>
+            ) : null}
+          </div>
+          {текст && (
+            <p className="mt-0.5 line-clamp-2 text-[12.5px] text-[var(--muted)]">{текст}</p>
+          )}
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px]">
+            {['cost', 'downPayment', 'mortgage', 'cashFlow', 'price', 'amount', 'liability'].map(
+              (поле) =>
+                typeof c[поле] === 'number' ? (
+                  <span key={поле} className="tabnum">
+                    <span className="text-[var(--muted)]">{имяПоля(поле)}: </span>
+                    {ДЕНЬГИ(c[поле] as number)}
+                  </span>
+                ) : null,
+            )}
+            {typeof c.threshold === 'number' && (
+              <span className="tabnum text-[rgb(var(--c-warn))]">
+                нужен кубик {c.threshold as number}+ — шанс{' '}
+                {ПРОЦЕНТ(((7 - (c.threshold as number)) / 6) * 100)}
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={() => setРаскрыто((v) => !v)}
+          className="shrink-0 text-[12px] text-accent hover:underline"
+        >
+          {раскрыто ? 'свернуть' : 'все поля'}
+        </button>
+      </div>
+      {раскрыто && (
+        <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-[var(--panel-2)] p-2.5 text-[11.5px] leading-relaxed">
+          {JSON.stringify(c, null, 2)}
+        </pre>
+      )}
+    </div>
+  )
+}
+
+function имяПоля(k: string): string {
+  const имена: Record<string, string> = {
+    cost: 'цена',
+    downPayment: 'взнос',
+    mortgage: 'остаток долга',
+    cashFlow: 'доход в месяц',
+    price: 'цена',
+    amount: 'сумма',
+    liability: 'обязательство',
+  }
+  return имена[k] ?? k
+}
+
+function Профессии() {
+  const список = professionsFor('ru')
+  const строки = список
+    .map((p) => {
+      const расходы = Object.values(p.expenses as unknown as Record<string, number>).reduce(
+        (a, b) => a + (b || 0),
+        0,
+      )
+      return { p, расходы, остаток: p.salary - расходы }
+    })
+    .sort((a, b) => a.p.salary - b.p.salary)
+
+  const статьи = Object.keys(список[0]?.expenses ?? {})
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="max-w-[70ch] text-[14px] text-[var(--muted)]">
+        Остаток — это скорость, с которой человек может покупать активы. Чем он больше,
+        тем быстрее партия.
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px] border-collapse text-[13px]">
+          <thead>
+            <tr className="border-b border-[var(--line)] text-left text-[11.5px] uppercase tracking-wide text-[var(--muted)]">
+              <th className="py-2 pr-3">Профессия</th>
+              <th className="py-2 pr-3 text-right">Зарплата</th>
+              {статьи.map((s) => (
+                <th key={s} className="py-2 pr-3 text-right">
+                  {имяСтатьи(s)}
+                </th>
+              ))}
+              <th className="py-2 pr-3 text-right">Остаток</th>
+              <th className="py-2 text-right">На старте</th>
+            </tr>
+          </thead>
+          <tbody>
+            {строки.map(({ p, остаток }) => (
+              <tr key={p.id} className="border-b border-[var(--line-soft,var(--line))] last:border-0">
+                <td className="py-2 pr-3 font-medium">{p.name}</td>
+                <td className="tabnum py-2 pr-3 text-right">{ДЕНЬГИ(p.salary)}</td>
+                {статьи.map((s) => {
+                  const v = (p.expenses as unknown as Record<string, number>)[s] || 0
+                  return (
+                    <td
+                      key={s}
+                      className={`tabnum py-2 pr-3 text-right ${v ? '' : 'text-[rgb(var(--c-bad))]'}`}
+                    >
+                      {v ? ДЕНЬГИ(v) : '0'}
+                    </td>
+                  )
+                })}
+                <td className="tabnum py-2 pr-3 text-right font-semibold text-accent">
+                  {ДЕНЬГИ(остаток)}
+                </td>
+                <td className="tabnum py-2 text-right text-[var(--muted)]">{ДЕНЬГИ(p.savings)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function Строка({ имя, знач, что }: { имя: string; знач: string; что?: string }) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[var(--line)] py-2 last:border-0">
+      <div className="min-w-[220px] flex-1">
+        <div className="text-[14px] font-medium">{имя}</div>
+        {что && <div className="text-[12.5px] text-[var(--muted)]">{что}</div>}
+      </div>
+      <div className="tabnum shrink-0 text-[14px] font-semibold text-accent">{знач}</div>
+    </div>
+  )
+}
+
+function Блок({ имя, children }: { имя: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3">
+      <div className="caps mb-1 text-[10px] font-bold text-[var(--muted)]">{имя}</div>
+      {children}
+    </div>
+  )
+}
+
+function Правила() {
+  const проф = professionsFor('ru')
+  /*
+   * 🔴 Берём правила ИЗ ОПИСАНИЯ РЕЖИМА, а не из живых RULES: живые
+   * настраиваются в момент создания стола, и панель, открытая до первой
+   * партии, показала бы числа классической колоды вместо русской.
+   */
+  const пр = { ...RULES, ...THEME_RULES.ru }
+  return (
+    <div className="flex flex-col gap-3">
+      <Блок имя="Поле и победа">
+        <Строка имя="Клеток в Рутине" знач={String(RAT_BOARD.length)} />
+        <Строка
+          имя="Клеток на большом круге"
+          знач={String((decksRu.FAST_BOARD_RU as unknown[]).length)}
+        />
+        <Строка
+          имя="Цель по доходу на большом круге"
+          знач={ДЕНЬГИ(пр.fastTrackTarget)}
+          что="Второй способ победить, кроме покупки мечты"
+        />
+        <Строка
+          имя="Во сколько раз выкупают при выходе из Круга"
+          знач={`×${пр.fastTrackMultiplier}`}
+          что="Множитель к доходу, который приходит без вашего участия"
+        />
+      </Блок>
+
+      <Блок имя="Деньги и долги">
+        <Строка
+          имя="Наценка рассрочки на недвижимость"
+          знач={`×${пр.installmentMarkup.realEstate}`}
+          что={`Срок ${пр.installmentTerm.realEstate} месяцев`}
+        />
+        <Строка
+          имя="Наценка рассрочки на бизнес"
+          знач={`×${пр.installmentMarkup.business}`}
+          что={`Срок ${пр.installmentTerm.business} месяцев`}
+        />
+        <Строка
+          имя="Банк с процентным кредитом"
+          знач={пр.loansEnabled ? 'есть' : 'нет — халяльный режим'}
+          что="На русском столе банка нет: вместо кредита рассрочка и вход в долю"
+        />
+        <Строка
+          имя="Если кредит всё же включат"
+          знач={`${RIBA.ratePctMonthly}% в месяц от тела, до ${RIBA.limitIncomeMul} доходов`}
+          что={`Первые ${RIBA.gracePaydays} зарплат без платежа. Тело долга платежами не гасится — это ловушка, а не путь`}
+        />
+        <Строка
+          имя="Занять у другого игрока"
+          знач="есть всегда"
+          что="Между людьми, без процента — это не банк и режимом не выключается"
+        />
+        <Строка
+          имя="Закят"
+          знач={пр.zakat.enabled ? `${пр.zakat.pct}%` : 'выключен'}
+          что={`Раз в ${пр.zakat.everyPaydays} зарплат`}
+        />
+      </Блок>
+
+      <Блок имя="Бизнес и управляющий">
+        <Строка
+          имя="Доля управляющего"
+          знач={`${MANAGER_PCT}%`}
+          что="Пока управляющего нет, доход бизнеса не идёт в зачёт свободы"
+        />
+        <Строка имя="Редкий управляющий" знач={`${MANAGER_RARE_PCT}%`} что="Берёт меньше" />
+      </Блок>
+
+      <Блок имя="Партнёрский бизнес">
+        <Строка имя="Стартовый доход структуры" знач={`${ДЕНЬГИ(GL_START_FLOW)}/мес`} />
+        <Строка
+          имя="Рост структуры"
+          знач={`${GL_START_GROWTH_PCT}% → ${GL_MAX_GROWTH_PCT}%`}
+          что="За зарплату, ускоряется по мере закрытия рангов"
+        />
+        <Строка
+          имя="Прибавка за три кабинета"
+          знач={`×${GL_TRIANGLE_BONUS}`}
+          что="Та же работа, доход выше"
+        />
+        {GL_PACKAGES.map((p) => (
+          <Строка key={p.id} имя={`Пакет «${p.name}»`} знач={ДЕНЬГИ(p.price)} />
+        ))}
+      </Блок>
+
+      <Блок имя="Прочее">
+        <Строка
+          имя="Хотелок до выгорания"
+          знач={String(WANTS_BEFORE_BURNOUT)}
+          что="Столько раз подряд отказал себе — и выгорел"
+        />
+        <Строка
+          имя="Сколько живёт мировое событие"
+          знач={`${MARKET_EFFECT_LIFE} зарплат`}
+        />
+        <Строка имя="Мировых событий в колоде" знач={String(WORLD_EVENTS.length)} />
+        <Строка имя="Профессий" знач={String(проф.length)} />
+        <Строка имя="Бумаг на рынке" знач={String(Object.keys(TICKERS).length)} />
+      </Блок>
+    </div>
+  )
+}
+
+function Шансы() {
+  const малые = smallDeals('ru')
+  const крупные = bigDeals('ru')
+  const рынок = marketCards('ru')
+  const всячина = doodads('ru')
+
+  const состав = (карты: { kind?: string }[]) => {
+    const c = new Map<string, number>()
+    for (const k of карты) c.set(k.kind ?? '—', (c.get(k.kind ?? '—') ?? 0) + 1)
+    return [...c.entries()].sort((a, b) => b[1] - a[1])
+  }
+
+  const колоды = [
+    { имя: 'Малые сделки', карты: малые },
+    { имя: 'Крупные сделки', карты: крупные },
+    { имя: 'Рынок и события', карты: рынок },
+  ]
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="max-w-[72ch] text-[14px] text-[var(--muted)]">
+        Шанс встретить карточку — это её доля в колоде. Но на неё сверху ложится
+        отбор: карта, которую игрок не может себе позволить, не показывается вовсе
+        и уходит обратно в колоду. Поэтому дорогие карточки в начале партии не
+        выпадают почти никогда, сколько бы их ни было.
+      </p>
+
+      {колоды.map(({ имя, карты }) => (
+        <Блок key={имя} имя={`${имя} — ${карты.length} карт`}>
+          {состав(карты as { kind?: string }[]).map(([k, n]) => (
+            <Строка
+              key={k}
+              имя={вид(k)}
+              знач={`${n} шт · ${ПРОЦЕНТ((n / карты.length) * 100)}`}
+            />
+          ))}
+        </Блок>
+      ))}
+
+      <Блок имя={`Всячина и траты — ${всячина.length} карт`}>
+        <Строка
+          имя="Из них «хотелки» (можно пропустить)"
+          знач={String((всячина as DoodadCard[]).filter((d) => (d as { want?: boolean }).want).length)}
+        />
+        <Строка
+          имя="Можно взять в рассрочку"
+          знач={String(
+            (всячина as DoodadCard[]).filter((d) => (d as { financeable?: boolean }).financeable)
+              .length,
+          )}
+        />
+        <Строка
+          имя="Разброс сумм"
+          знач={`${ДЕНЬГИ(
+            Math.min(...(всячина as unknown as { amount: number }[]).map((d) => d.amount)),
+          )} — ${ДЕНЬГИ(
+            Math.max(...(всячина as unknown as { amount: number }[]).map((d) => d.amount)),
+          )}`}
+        />
+      </Блок>
+
+      <Блок имя="Бумаги: разброс цены">
+        {Object.entries(TICKERS).map(([символ, t]) => (
+          <Строка
+            key={символ}
+            имя={`${символ} · ${t.name}`}
+            знач={`${ДЕНЬГИ(t.range[0])} — ${ДЕНЬГИ(t.range[1])}`}
+            что={`Во сколько раз может вырасти: ×${Math.round((t.range[1] / t.range[0]) * 10) / 10}`}
+          />
+        ))}
+      </Блок>
+    </div>
+  )
+}
+
+/** Панель открывается адресом `?admin=1` и нигде не показана ссылкой. */
+export function хочетПанель(): boolean {
+  try {
+    return new URLSearchParams(location.search).get('admin') === '1'
+  } catch {
+    return false
+  }
+}
+
+export type { Profession, DealCard, DoodadCard, MarketCard }

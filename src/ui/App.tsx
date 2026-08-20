@@ -3,6 +3,7 @@ import { Setup } from './Setup'
 import { Game } from './Game'
 import { Landing } from './Landing'
 import { AccountButton } from './AccountButton'
+import { Admin, хочетПанель } from './Admin'
 import { JoinRoom, JoinWaiting, Lobby } from './Lobby'
 import { useGame } from './useGame'
 import type { TableEvent } from '../engine/events'
@@ -293,6 +294,23 @@ export function App() {
    * пути обратно. Теперь главная показывается всегда, а прошлая партия ждёт
    * на ней отдельной карточкой «Продолжить».
    */
+  /*
+   * 🔴 Панель хозяина стоит ПЕРЕД всем остальным и открывается адресом
+   * `?admin=1`. Ссылки на неё нигде нет: она не секрет, но и не для игроков.
+   * Ничего не меняет — только показывает, поэтому и запускается так просто.
+   */
+  if (хочетПанель()) {
+    return (
+      <Admin
+        onClose={() => {
+          const u = new URL(location.href)
+          u.searchParams.delete('admin')
+          location.href = u.toString()
+        }}
+      />
+    )
+  }
+
   if (game.table && screen === 'game') {
     return (
       <Game

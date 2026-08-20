@@ -108,30 +108,48 @@ export interface TableSetup {
 
 // ─── Создание стола ───────────────────────────────────────────────────
 
+/**
+ * Правила режима: RU = рубли, халяль (без процентных кредитов), реалистичный
+ * выкуп при выходе из Круга.
+ *
+ * 🔴 Вынесено ОТДЕЛЬНО и наружу, потому что эти числа читает не только стол:
+ * панель хозяина показывает их владельцу как «правила игры». Пока они жили
+ * внутри создания стола, панель, открытая до первой партии, показывала бы
+ * не те числа — то есть врала бы ровно в том месте, ради которого её и
+ * заводили.
+ */
+export const THEME_RULES: Record<'ru' | 'classic' | 'offshore', Parameters<typeof setRules>[0]> = {
+  ru: {
+    currency: 'RUB',
+    fastTrackMultiplier: 50,
+    fastTrackTarget: 1_000_000,
+    loansEnabled: false,
+    yieldScale: 1,
+    zakat: { enabled: true, pct: 2.5, everyPaydays: 12 },
+  },
+  classic: {
+    currency: 'USD',
+    fastTrackMultiplier: 100,
+    fastTrackTarget: 150_000,
+    loansEnabled: true,
+    yieldScale: 1,
+    zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
+  },
+  offshore: {
+    currency: 'USD',
+    fastTrackMultiplier: 100,
+    fastTrackTarget: 150_000,
+    loansEnabled: true,
+    yieldScale: 1,
+    zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
+  },
+}
+
 export function createTable(setup: TableSetup): Table {
   const theme = setup.deckTheme
-  // Правила режима: RU = рубли, халяль (без кредитов), реалистичный выкуп.
   setActiveTheme(theme)
   setFastBoardTheme(theme)
-  if (theme === 'ru') {
-    setRules({
-      currency: 'RUB',
-      fastTrackMultiplier: 50,
-      fastTrackTarget: 1_000_000,
-      loansEnabled: false,
-      yieldScale: 1,
-      zakat: { enabled: true, pct: 2.5, everyPaydays: 12 },
-    })
-  } else {
-    setRules({
-      currency: 'USD',
-      fastTrackMultiplier: 100,
-      fastTrackTarget: 150_000,
-      loansEnabled: true,
-      yieldScale: 1,
-      zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
-    })
-  }
+  setRules(THEME_RULES[theme] ?? THEME_RULES.classic)
   const pool = professionsFor(theme)
   const seats: Seat[] = setup.seats.map((s, i) => {
     const profession = pool.find((p) => p.id === s.professionId) ?? pool[0]
