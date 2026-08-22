@@ -489,11 +489,57 @@ export function PlayerPanel({
                         /мес к структуре
                       </div>
                     )}
+                    {/*
+                      🔴 ДВЕ НОГИ И СЛАБАЯ — главное, чего игрок не понимал.
+                      Платит всегда меньшая сторона, и пока это не видно
+                      глазами, объяснить словами не получается. Полоски
+                      нарисованы от бо́льшей ноги, поэтому перекос читается
+                      сразу, а места занимают одну строку.
+                    */}
+                    {(g.left > 0 || g.right > 0) &&
+                      (() => {
+                        const больше = Math.max(g.left, g.right, 1)
+                        const слеваСлабее = g.left <= g.right
+                        const нога = (pv: number, слабая: boolean) => (
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-baseline justify-between gap-1">
+                              <span className={слабая ? 'font-bold text-accent' : 'text-[var(--muted)]'}>
+                                {слабая ? 'слабая' : 'сильная'}
+                              </span>
+                              <span className="tabnum">{pv.toLocaleString('ru-RU')}</span>
+                            </div>
+                            <div className="mt-0.5 h-1 rounded-full bg-[var(--t-line, var(--line))]">
+                              <div
+                                className={`h-full rounded-full ${слабая ? 'bg-accent' : 'bg-[var(--muted)]'}`}
+                                style={{ width: `${Math.round((pv / больше) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        )
+                        return (
+                          <div className="mt-1.5">
+                            <div className="flex gap-2">
+                              {нога(g.left, слеваСлабее)}
+                              {нога(g.right, !слеваСлабее)}
+                            </div>
+                            <div className="mt-0.5 text-[10px] text-[var(--muted)]">
+                              Платит слабая сторона — по ней и считается доход
+                            </div>
+                          </div>
+                        )
+                      })()}
                     {/* Строку «до ранга осталось заработать N» убрал Камиль:
                         цифра ни на что не влияет и только шумит в панели. */}
+                    {/*
+                      🔴 Причину НЕ называем: тут вшито было «наставник
+                      выгорел», а просадку даёт и уход лидера, и другие
+                      карточки — панель врала о причине. Что именно случилось,
+                      человек только что прочитал на самой карточке.
+                    */}
                     {g.dipLeft > 0 && (
                       <div className="mt-0.5 text-amber-400">
-                        Наставник выгорел — приток новых людей просел, это ещё {g.dipLeft} зарплат.
+                        Приток новых людей просел — это ещё {g.dipLeft}{' '}
+                        {g.dipLeft === 1 ? 'зарплату' : g.dipLeft < 5 ? 'зарплаты' : 'зарплат'}.
                       </div>
                     )}
                     {g.slowdownLeft > 0 && (

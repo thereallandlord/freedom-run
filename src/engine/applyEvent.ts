@@ -1,7 +1,14 @@
 import type { Ledger } from './types'
 import { DEBT_TO_PAYMENT } from './types'
 import type { LedgerEvent } from './events'
-import { glInitialState, glOnPayday, glRankFor, glTotalIncome } from './greenleaf'
+import {
+  glInitialState,
+  glOnPayday,
+  glRankFor,
+  glStructureIncome,
+  glTotalIncome,
+  glНогиЗаМесяц,
+} from './greenleaf'
 import {
   MAX_CHILDREN,
   RULES,
@@ -77,7 +84,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           const { next, note } = glOnPayday(b.gl)
           if (note) l.glNotes.push(note)
           next.age += 1
-          b.gl = next
+          // Ноги подтягиваются под доход: слабая объясняет ежемесячные деньги.
+          b.gl = glНогиЗаМесяц(next, glStructureIncome(next))
           // cashFlow держим зеркалом — его показывают списки активов.
           b.cashFlow = glTotalIncome(next)
           const rank = glRankFor(next.volume)
