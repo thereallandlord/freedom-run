@@ -1107,6 +1107,23 @@ function CardBody({
               Зарплата минус расходы — то, что реально осталось
             </div>
           </div>
+          {/*
+            🔴 Что произошло с партнёрским бизнесом — ЗДЕСЬ, а не строкой в
+            журнале. Повышение ранга проходило молча: человек видел только,
+            что доход почему-то стал другим, и не связывал одно с другим.
+          */}
+          {p.notes?.length ? (
+            <div className="space-y-1.5">
+              {p.notes.map((n, i) => (
+                <p
+                  key={i}
+                  className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-[12px] leading-snug"
+                >
+                  {n}
+                </p>
+              ))}
+            </div>
+          ) : null}
           <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
             Понятно
           </button>

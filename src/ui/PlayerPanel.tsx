@@ -19,7 +19,15 @@ import {
 import type { TableEvent } from '../engine/events'
 import { professionName } from '../engine/data'
 import { artById } from './cardArt'
-import { GL_RANKS, glPackage, glRankFor, glStructureIncome } from '../engine/greenleaf'
+import {
+  GL_RANKS,
+  glFreedomShare,
+  glPackage,
+  glRankFor,
+  glStructureIncome,
+  glUpgradeCost,
+  glUpgradeOptions,
+} from '../engine/greenleaf'
 
 export function money(n: number) {
   if (RULES.currency === 'RUB') {
@@ -477,10 +485,53 @@ export function PlayerPanel({
                     className="mt-1 rounded-lg border border-[var(--t-line, var(--line))] p-2 text-[11px] leading-snug"
                   >
                     <div className="font-bold">Партнёрский бизнес · {glPackage(g.packageId).name}</div>
-                    <div className="mt-0.5 text-[var(--muted)]">
-                      Структура приносит {money(glStructureIncome(g))} в месяц
-                      {rank.pension > 0 ? `, сверху пенсия за ранг ${money(rank.pension)}` : ''}.
-                    </div>
+                    {/*
+                      🔴 АКТИВНЫЙ И ПАССИВНЫЙ ДОХОД — ОТДЕЛЬНЫМИ СТРОКАМИ
+                      (просьба Камиля). Раньше стояла одна цифра «структура
+                      приносит столько», и главное про партнёрский бизнес
+                      терялось: сначала он держится на тебе, а с ростом
+                      структуры всё большая часть работает без тебя. Человек
+                      видит, как одна строка перетекает в другую, — это и есть
+                      наглядная разница между зарплатой и делом.
+                    */}
+                    {(() => {
+                      const структура = glStructureIncome(g)
+                      const доля = glFreedomShare(g)
+                      const пассив = Math.round((структура * доля) / 100) + rank.pension
+                      const актив = структура - Math.round((структура * доля) / 100)
+                      return (
+                        <div className="mt-1 space-y-0.5">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-[var(--muted)]">Пока держится на вас</span>
+                            <span className="tabnum">{money(актив)}/мес</span>
+                          </div>
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-emerald-600 dark:text-emerald-400">
+                              Работает без вас
+                            </span>
+                            <span className="tabnum font-semibold text-emerald-600 dark:text-emerald-400">
+                              {money(пассив)}/мес
+                            </span>
+                          </div>
+                          <div className="h-1 overflow-hidden rounded-full bg-[var(--t-line, var(--line))]">
+                            <div
+                              className="h-full rounded-full bg-emerald-500"
+                              style={{
+                                width: `${Math.round((пассив / Math.max(1, актив + пассив)) * 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <div className="text-[10px] text-[var(--muted)]">
+                            {доля === 0
+                              ? 'Пока вы сами приводите людей — в зачёт свободы это не идёт'
+                              : доля === 100
+                                ? 'Структура живёт без вас — весь доход идёт в зачёт свободы'
+                                : `С каждым рангом доля растёт: сейчас без вас работает ${доля}%`}
+                            {rank.pension > 0 ? ` · пенсия за ранг ${money(rank.pension)} — навсегда` : ''}
+                          </div>
+                        </div>
+                      )
+                    })()}
                     {rank.level > 0 && <div className="mt-0.5">Ранг: {rank.name}</div>}
                     {/*
                       🔴 Купленная возможность должна быть ВИДНА отдельной
@@ -555,6 +606,35 @@ export function PlayerPanel({
                         Команда взяла паузу — доход пока не растёт, ещё {g.slowdownLeft} зарплат.
                       </div>
                     )}
+                    {/*
+                      🔴 ПОДНЯТЬ ПАКЕТ — ЗДЕСЬ ЖЕ (решение Камиля: «я бы даже
+                      поставил слева, прямо в карточку»). Кнопка жила в двух
+                      других окнах — в карточке партнёрского бизнеса и в
+                      «Сделках», — и найти её было нельзя: человек смотрит
+                      туда, где видит сам бизнес. Здесь она и стоит.
+                    */}
+                    {dispatch &&
+                      glUpgradeOptions(g.packageId).map((pk) => {
+                        const доплата = glUpgradeCost(g.packageId, pk.id)
+                        const хватает = l.cash >= доплата
+                        return (
+                          <button
+                            key={pk.id}
+                            disabled={!хватает}
+                            onClick={() => dispatch({ type: 'GL_UPGRADE', assetId: b.id, to: pk.id })}
+                            className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-left text-[11px] font-semibold leading-snug transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                          >
+                            Поднять пакет до «{pk.name}» — доплата {money(доплата)}
+                            <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+                              {хватает
+                                ? `структура станет приносить ${money(
+                                    glStructureIncome({ ...g, packageId: pk.id }),
+                                  )}/мес вместо ${money(glStructureIncome(g))}`
+                                : `не хватает ${money(доплата - l.cash)}`}
+                            </span>
+                          </button>
+                        )
+                      })}
                   </div>
                 )
               })}

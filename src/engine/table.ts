@@ -1237,7 +1237,13 @@ function resolveLanding(t: Table, seatIdx: number) {
         // Встал ровно на зарплату — показываем это окном, а не молчанием.
         const paid =
           seat.track === 'rat' ? monthlyCashFlow(l, t.market.flow) : fastTrackIncome(l)
-        t.pending = { kind: 'payday', amount: paid }
+        t.pending = {
+          kind: 'payday',
+          amount: paid,
+          notes: t.seats[seatIdx].ledger.glNotes?.length
+            ? [...t.seats[seatIdx].ledger.glNotes]
+            : undefined,
+        }
         return
       }
     }
