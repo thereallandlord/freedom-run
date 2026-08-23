@@ -1053,6 +1053,48 @@ function CardBody({
       )
     }
 
+    /*
+     * 🔴 Событие Полосы свободы: проверка, иск, развод, просадка дохода.
+     * Раньше этих карточек не было вовсе — деньги списывались молча, и
+     * человек видел только, что их стало меньше. Показываем «было — стало»:
+     * ровно то, чего не хватало игрокам во всех остальных карточках тоже.
+     */
+    case 'ftEvent': {
+      const дельта = p.after - p.before
+      return (
+        <S badge="Полоса свободы" title={p.title} flavor={p.text} accent="#f43f5e" art="⚖️">
+          <div className="panel-2 space-y-1.5 rounded-lg px-3 py-2.5 text-[13px]">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[var(--muted)]">Было на счету</span>
+              <span className="tabnum">{money(p.before)}</span>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <span className="text-[var(--muted)]">
+                {дельта < 0 ? 'Списано' : 'Начислено'}
+              </span>
+              <span
+                className={`tabnum font-bold ${дельта < 0 ? 'text-rose-500' : 'text-emerald-500'}`}
+              >
+                {signed(дельта)}
+              </span>
+            </div>
+            <div className="hairline flex items-baseline justify-between pt-1.5">
+              <span className="font-semibold">Стало</span>
+              <span className="tabnum text-[17px] font-black">{money(p.after)}</span>
+            </div>
+          </div>
+          {p.skip ? (
+            <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-600 dark:text-amber-400">
+              Следующие {p.skip} хода пропускаете — на восстановление нужно время.
+            </p>
+          ) : null}
+          <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
+            Понятно
+          </button>
+        </S>
+      )
+    }
+
     case 'payday':
       return (
         <S badge="Зарплата" title="Пришли деньги" accent="#10b981" art="💰">

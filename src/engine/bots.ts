@@ -263,6 +263,8 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     case 'payday':
     // Поздравление с выходом из Круга — тоже просто закрыть.
     case 'freedom':
+    // Событие Полосы (проверка, иск, развод, просадка) — деньги уже списаны.
+    case 'ftEvent':
       return { type: 'PASS_CARD' }
 
     case 'ftBusiness': {

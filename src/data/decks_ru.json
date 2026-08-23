@@ -1109,7 +1109,11 @@
       "kind": "glEvent",
       "pvLeft": 275,
       "pvRight": 275,
-      "pvPersonal": 2
+      "pvPersonal": 2,
+      "stages": [
+        1,
+        2
+      ]
     },
     {
       "id": "gl-leader-in",
@@ -1120,7 +1124,10 @@
       "deck": "market",
       "kind": "glEvent",
       "pvRight": 825,
-      "pvPersonal": 1
+      "pvPersonal": 1,
+      "stages": [
+        3
+      ]
     },
     {
       "id": "gl-two-legs",
@@ -1132,7 +1139,11 @@
       "kind": "glEvent",
       "pvLeft": 550,
       "pvRight": 550,
-      "pvPersonal": 2
+      "pvPersonal": 2,
+      "stages": [
+        2,
+        3
+      ]
     },
     {
       "id": "gl-mentor-help",
@@ -1142,7 +1153,10 @@
       "growthPct": 25,
       "deck": "market",
       "kind": "glEvent",
-      "mentorPv": 275
+      "mentorPv": 275,
+      "stages": [
+        1
+      ]
     },
     {
       "id": "gl-school",
@@ -1153,7 +1167,11 @@
       "deck": "market",
       "kind": "glEvent",
       "pvLeft": 275,
-      "pvRight": 275
+      "pvRight": 275,
+      "stages": [
+        1,
+        2
+      ]
     },
     {
       "id": "gl-city",
@@ -1164,7 +1182,11 @@
       "deck": "market",
       "kind": "glEvent",
       "pvLeft": 275,
-      "pvPersonal": 1
+      "pvPersonal": 1,
+      "stages": [
+        1,
+        2
+      ]
     },
     {
       "id": "gl-blocked",
@@ -1172,7 +1194,11 @@
       "text": "Аккаунт, через который приходили люди, закрыли без объяснений. Те, кто уже в команде, никуда не делись — но приток новых остановился, пока не поднимете новую площадку.",
       "freezePaydays": 3,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "stages": [
+        1,
+        2
+      ]
     },
     {
       "id": "gl-summer",
@@ -1180,7 +1206,10 @@
       "text": "Июль, все разъехались. Никто не бросил — просто пауза. Доход остался, рост подождёт до осени.",
       "freezePaydays": 2,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "stages": [
+        3
+      ]
     },
     {
       "id": "gl-mentor-burn",
@@ -1189,7 +1218,11 @@
       "dipPct": 25,
       "dipPaydays": 4,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "stages": [
+        1,
+        2
+      ]
     },
     {
       "id": "gl-leader-gone",
@@ -1198,7 +1231,10 @@
       "dipPct": 20,
       "dipPaydays": 5,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "stages": [
+        3
+      ]
     },
     {
       "id": "gl-triangle",
@@ -1207,7 +1243,11 @@
       "triangle": true,
       "triangleCost": 57800,
       "deck": "market",
-      "kind": "glEvent"
+      "kind": "glEvent",
+      "stages": [
+        2,
+        3
+      ]
     },
     {
       "id": "gl-promo-travel",
@@ -1215,7 +1255,11 @@
       "kind": "glEvent",
       "promo": "travel",
       "title": "Компания зовёт в поездку",
-      "text": "План закрыт — вас включили в состав на выезд. Едут партнёры со всей страны. Можно поехать, а можно взять деньгами: компания выкупает место."
+      "text": "План закрыт — вас включили в состав на выезд. Едут партнёры со всей страны. Можно поехать, а можно взять деньгами: компания выкупает место.",
+      "stages": [
+        2,
+        3
+      ]
     },
     {
       "id": "gl-promo-auto",
@@ -1223,7 +1267,10 @@
       "kind": "glEvent",
       "promo": "auto",
       "title": "Годовая премия за объём",
-      "text": "Итоги года подвели: объём, который вы набрали, попадает под годовую премию. Приходит деньгами."
+      "text": "Итоги года подвели: объём, который вы набрали, попадает под годовую премию. Приходит деньгами.",
+      "stages": [
+        3
+      ]
     },
     {
       "id": "gl-after-travel",
@@ -1235,7 +1282,11 @@
       "growthPct": 35,
       "pvLeft": 550,
       "pvRight": 275,
-      "pvPersonal": 1
+      "pvPersonal": 1,
+      "stages": [
+        2,
+        3
+      ]
     },
     {
       "id": "mkt-price-moonx-rug",
@@ -1306,7 +1357,11 @@
       "kind": "glEvent",
       "upgrade": true,
       "title": "Открыли окно на повышение пакета",
-      "text": "До конца месяца разницу до старшего пакета можно доплатить одной суммой, без пересчётов. Дальше — только полная цена."
+      "text": "До конца месяца разницу до старшего пакета можно доплатить одной суммой, без пересчётов. Дальше — только полная цена.",
+      "stages": [
+        2,
+        3
+      ]
     },
     {
       "id": "gl-mentor-spill",
@@ -1316,7 +1371,10 @@
       "text": "У наставника в этом месяце много подключений. По правилам структуры часть из них оказалась и под вами — перелив. Половина работы сделана не вами: одну сторону теперь растить не нужно, ваше дело только вторая.",
       "mentorPv": 1650,
       "boostPct": 30,
-      "growthPct": 20
+      "growthPct": 20,
+      "stages": [
+        1
+      ]
     },
     {
       "id": "gl-sets-family",
@@ -1326,7 +1384,10 @@
       "text": "Наборы, которые пришли вместе с пакетом, вы раздали родственникам. Двое зарегистрировались и встали в вашу структуру — это уже не разговоры, а живые люди.",
       "pvLeft": 275,
       "pvRight": 275,
-      "pvPersonal": 2
+      "pvPersonal": 2,
+      "stages": [
+        1
+      ]
     }
   ],
   "DOODADS_RU": [

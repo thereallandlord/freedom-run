@@ -377,14 +377,29 @@ function makePlayer(draft: PlayerDraft, fallbackDifficulty: BotDifficulty, now: 
 // ─── Вход и выход ─────────────────────────────────────────────────────
 
 export function joinAsPlayer(room: RoomState, draft: PlayerDraft, now = Date.now()): RoomResult {
-  if (room.status !== 'lobby') return fail('ALREADY_STARTED')
-
   const name = cleanName(draft.name)
   if (!name) return fail('BAD_NAME')
 
-  // Повторный вход по той же ссылке — не новое место, а возврат своего.
+  /*
+   * 🔴 СНАЧАЛА смотрим, не наш ли это человек, и только потом — идёт ли уже
+   * партия.
+   *
+   * Раньше отказ «партия уже началась» стоял ПЕРВЫМ, и он бил по своим:
+   * вышел из партии на главную, вернулся по той же ссылке — а тебя не
+   * пускают за собственный стол и предлагают завести новую комнату. Со
+   * стороны это выглядело так, будто кнопка «Выйти» вычёркивает из состава,
+   * хотя место всё это время стояло на месте и за него ходил бот.
+   *
+   * Посреди партии возвращаем место КАК ЕСТЬ: профессию, мечту и цвет
+   * менять нельзя — стол собран из них, и подмена рассыпала бы партию.
+   */
   const existing = findPlayer(room, draft.id)
-  if (existing) return updatePlayer(room, draft.id, { ...draft, name })
+  if (existing) {
+    if (room.status !== 'lobby') return reclaimSeat(room, draft.id)
+    return updatePlayer(room, draft.id, { ...draft, name })
+  }
+
+  if (room.status !== 'lobby') return fail('ALREADY_STARTED')
 
   if (room.players.length >= room.settings.maxPlayers) return fail('ROOM_FULL')
   // Себя не считаем: зритель, садящийся за стол, иначе спорил бы со своим же именем.

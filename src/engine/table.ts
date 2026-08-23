@@ -1199,30 +1199,63 @@ function resolveLanding(t: Table, seatIdx: number) {
     case 'cashflowDay':
       t.phase = 'turnEnd'
       return
+    /*
+     * 🔴 Четыре клетки Полосы списывали деньги МОЛЧА: движок менял счёт, а
+     * объяснение уходило строкой в журнал. За столом это выглядело как
+     * «просто стало меньше денег, и никто не понял почему». Теперь каждая
+     * показывает карточку — с тем, что было и что стало.
+     */
     case 'taxAudit':
     case 'lawsuit': {
       const before = l.cash
       seatLedgerEvent(t, seat.id, { type: space.type === 'taxAudit' ? 'TAX_AUDIT' : 'LAWSUIT' })
-      const lost = before - t.seats[seatIdx].ledger.cash
-      log(t, seat.id, `${space.type === 'taxAudit' ? 'Налоговая проверка' : 'Иск'}: минус ${money(lost)}`)
-      t.phase = 'turnEnd'
+      const after = t.seats[seatIdx].ledger.cash
+      const проверка = space.type === 'taxAudit'
+      log(t, seat.id, `${проверка ? 'Налоговая проверка' : 'Иск'}: минус ${money(before - after)}`)
+      t.pending = {
+        kind: 'ftEvent',
+        title: проверка ? 'Налоговая проверка' : 'Иск в суде',
+        text: проверка
+          ? 'Проверка подняла отчётность за прошлые годы. Доначислили и списали со счёта.'
+          : 'На вас подали в суд. Разбирательство закончилось выплатой.',
+        before,
+        after,
+      }
+      t.phase = 'resolving'
       return
     }
     case 'divorce': {
       // Имущество супругов раздельное — делить нечего. Бьют разовые расходы:
       // махр, раздел быта, суд, переезд. Считаем от масштаба жизни игрока.
+      const before = l.cash
       const cost = Math.min(l.cash, Math.round((totalExpenses(l) * 4) / 1000) * 1000)
       seatLedgerEvent(t, seat.id, { type: 'DIVORCE', amount: cost })
       log(t, seat.id, `Развод: разовые расходы ${money(cost)} — махр, раздел быта, переезд`)
-      t.phase = 'turnEnd'
+      t.pending = {
+        kind: 'ftEvent',
+        title: 'Развод',
+        text: 'Имущество у супругов раздельное — делить нечего. Бьют разовые траты: махр, раздел быта, суд, переезд.',
+        before,
+        after: t.seats[seatIdx].ledger.cash,
+      }
+      t.phase = 'resolving'
       return
     }
     case 'downsized': {
+      const before = l.cash
       const amount = fastTrackIncome(l)
       seatLedgerEvent(t, seat.id, { type: 'FT_DOWNSIZED', amount })
       t.seats[seatIdx] = { ...t.seats[seatIdx], skipTurns: 2 }
       log(t, seat.id, `Сокращение: минус ${money(amount)}, пропуск 2 ходов`)
-      t.phase = 'turnEnd'
+      t.pending = {
+        kind: 'ftEvent',
+        title: 'Доход просел',
+        text: 'Дела встали: месячный доход в этот раз не пришёл, и на восстановление нужно время.',
+        before,
+        after: t.seats[seatIdx].ledger.cash,
+        skip: 2,
+      }
+      t.phase = 'resolving'
       return
     }
     case 'charity':
@@ -2952,7 +2985,14 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     case 'END_TURN': {
       if (t.phase === 'finished') return prev
-      if (t.pending && t.pending.kind !== 'market' && t.pending.kind !== 'deal') return prev
+      /*
+       * 🔴 Карточки, где решать нечего («Понятно»), конец хода не запирают.
+       * Иначе достаточно потерянного нажатия — и стол стоит навсегда. Заодно
+       * так переигрываются партии, записанные до появления этих карточек.
+       */
+      const безРешения = t.pending && (t.pending.kind === 'payday' || t.pending.kind === 'ftEvent')
+      if (t.pending && !безРешения && t.pending.kind !== 'market' && t.pending.kind !== 'deal')
+        return prev
       t.pending = null
       /*
        * Последняя возможность отдать партнёрский бизнес в срок: карточка хода

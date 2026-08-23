@@ -498,6 +498,14 @@ export function glFreedomShare(g: GlState): number {
 }
 
 /** Всё, что партнёрский бизнес приносит в месяц: структура плюс пенсия за ранг. */
+
+/** Стадия партнёрского бизнеса: 1 — сам двигатель, 2 — структура шевелится, 3 — ранг. */
+export type GlСтадия = 1 | 2 | 3
+export function glСтадия(g: GlState): GlСтадия {
+  const level = glRankFor(g.volume).level
+  return level === 0 ? 1 : level === 1 ? 2 : 3
+}
+
 export function glTotalIncome(g: GlState): number {
   return glStructureIncome(g) + glRankFor(g.volume).pension
 }
