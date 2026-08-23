@@ -275,6 +275,8 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     }
 
     case 'ftVenture': {
+      // Исход уже на столе — закрываем карточку, а не бросаем второй раз.
+      if (pending.rolled != null) return { type: 'PASS_CARD' }
       const space = fastBoard()[pending.space]
       if (space.type !== 'venture') return { type: 'END_TURN' }
       if (p.ventureCashFraction <= 0) return { type: 'PASS_CARD' }

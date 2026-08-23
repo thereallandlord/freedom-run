@@ -75,6 +75,7 @@ import {
   glUpgradeCost,
   glПришлиЛюди,
   glПереливНаставника,
+  glСтадия,
 } from './greenleaf'
 import {
   auctionWinner,
@@ -1113,7 +1114,7 @@ function resolveLanding(t: Table, seatIdx: number) {
            * Своя колода заодно даёт то, чего просил Камиль: пока не пройдут
            * все пятнадцать событий, ни одно не повторится.
            */
-          for (let tries = 0; tries < 3 && glDeck.length; tries++) {
+          for (let tries = 0; tries < glDeck.length; tries++) {
             const candidate = glDeck[draw(t, 'glEvent', glDeck.length)]
             if (marketCardIsLive(t, candidate)) {
               card = candidate
@@ -1301,6 +1302,11 @@ function resolveLanding(t: Table, seatIdx: number) {
 
 /** Есть ли в карте рынка хоть какое-то живое действие для стола. */
 function marketCardIsLive(t: Table, card: MarketCard): boolean {
+  if (card.kind === 'glEvent') {
+    const мой = currentSeat(t).ledger.businesses.find((b) => b.gl)?.gl
+    const st = (card as unknown as { stages?: number[] }).stages
+    if (мой && st && st.length && !st.includes(glСтадия(мой))) return false
+  }
   // Окно на повышение пакета показываем только тем, кому есть куда расти.
   if (card.kind === 'glEvent' && card.upgrade) {
     return t.seats.some(
@@ -2232,8 +2238,11 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const space = fastBoard()[spaceIdx]
       if (space.type !== 'venture') return prev
       if (l.cash < space.downPayment) return prev
+      // Второй раз по той же карточке не бросают: исход уже на столе.
+      if (t.pending.rolled != null) return prev
       const die = event.die
       if (!Number.isInteger(die) || die < 1 || die > 6) return prev
+      const before = l.cash
 
       if (die >= space.threshold) {
         seatLedgerEvent(t, seat.id, {
@@ -2249,9 +2258,21 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         seatLedgerEvent(t, seat.id, { type: 'FT_STAKE_LOST', amount: space.downPayment })
         log(t, seat.id, `🎲 ${die} — ставка ${money(space.downPayment)} сгорела`)
       }
+      /*
+       * 🔴 Карточку НЕ убираем — показываем на ней, что выпало и чем это
+       * кончилось. Раньше она исчезала мгновенно, и вся механика риска
+       * проходила мимо человека: он видел только, что денег стало меньше.
+       * Закроет её сам, нажав «Понятно».
+       */
       if ((t.phase as TablePhase) !== 'finished') {
-        t.pending = null
-        t.phase = 'turnEnd'
+        t.pending = {
+          ...t.pending,
+          rolled: die,
+          won: die >= space.threshold,
+          before,
+          after: t.seats[seatIdx].ledger.cash,
+        }
+        t.phase = 'resolving'
       }
       return t
     }

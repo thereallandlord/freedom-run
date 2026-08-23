@@ -26,6 +26,7 @@ import {
 import { fastBoard, cardText, fastSpaceText, smallDeals, bigDeals } from '../engine/data'
 import { loanOutstanding, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
+import { Pips } from './Pips'
 import {
   GL_PACKAGES,
   GL_PROMOS,
@@ -1554,21 +1555,70 @@ function CardBody({
             <Stat label="Ставка (невозвратная)" value={money(space.downPayment)} strong />
             <Stat label="При удаче" value={`${signed(space.cashFlow)}/мес`} strong />
             <Stat label="Нужно выбросить" value={`${space.threshold} или больше`} />
+            {/*
+              🔴 Говорим шансы ЧИСЛОМ. «Нужно 5 или больше» человек в уме не
+              переводит, а «один бросок из трёх» — это уже решение. Механика
+              была честная, но выглядела как обман: поставил и всё пропало.
+            */}
+            <Stat
+              label="Шанс"
+              value={`${7 - space.threshold} из 6 — примерно ${Math.round(((7 - space.threshold) / 6) * 100)}%`}
+            />
           </div>
-          <div className="flex gap-2">
-            <button
-              disabled={l.cash < space.downPayment}
-              onClick={() =>
-                dispatch({ type: 'TRY_VENTURE', die: 1 + Math.floor(Math.random() * 6) })
-              }
-              className="btn-primary flex-1"
-            >
-              🎲 Рискнуть — {money(space.downPayment)}
-            </button>
-            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
-              Мимо
-            </button>
-          </div>
+          {p.rolled == null ? (
+            <div className="flex gap-2">
+              <button
+                disabled={l.cash < space.downPayment}
+                onClick={() =>
+                  dispatch({ type: 'TRY_VENTURE', die: 1 + Math.floor(Math.random() * 6) })
+                }
+                className="btn-primary flex-1"
+              >
+                🎲 Рискнуть — {money(space.downPayment)}
+              </button>
+              <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
+                Мимо
+              </button>
+            </div>
+          ) : (
+            /*
+              🔴 Исход остаётся НА КАРТОЧКЕ. Раньше кубик бросался невидимо:
+              окно исчезало, деньги уходили, а «выпало 2, ставка сгорела»
+              падало строкой в журнал, куда никто не смотрит. Со стороны это
+              и выглядело как «механика риска не работает».
+            */
+            <>
+              <div
+                className={`rounded-xl border px-3 py-3 text-center ${
+                  p.won
+                    ? 'border-emerald-500/50 bg-emerald-500/10'
+                    : 'border-rose-500/50 bg-rose-500/10'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Pips n={p.rolled} />
+                  <span className="tabnum text-3xl font-black leading-none">{p.rolled}</span>
+                </div>
+                <div
+                  className={`mt-1.5 text-[14px] font-bold ${
+                    p.won ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {p.won
+                    ? `Выстрелило! ${signed(space.cashFlow)}/мес`
+                    : `Нужно было ${space.threshold} или больше — ставка сгорела`}
+                </div>
+                {p.before != null && p.after != null && (
+                  <div className="mt-1 text-[12px] text-[var(--muted)]">
+                    Было {money(p.before)} · стало {money(p.after)}
+                  </div>
+                )}
+              </div>
+              <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
+                Понятно
+              </button>
+            </>
+          )}
         </S>
       )
     }

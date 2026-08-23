@@ -541,7 +541,20 @@ export type Pending =
   | { kind: 'charity' }
   | { kind: 'downsized' }
   | { kind: 'ftBusiness'; space: number }
-  | { kind: 'ftVenture'; space: number; rolled?: number }
+  | {
+      kind: 'ftVenture'
+      space: number
+      /*
+       * 🔴 Что выпало и чем кончилось — ЗДЕСЬ, в самой карточке.
+       * Раньше кубик бросался невидимо: карточка исчезала, деньги уходили,
+       * а исход строкой падал в журнал. Человек не понимал, что вообще
+       * произошло, и механика риска для него просто не существовала.
+       */
+      rolled?: number
+      won?: boolean
+      before?: number
+      after?: number
+    }
   | { kind: 'ftDream'; space: number }
   | { kind: 'ftCharity' }
   /*
