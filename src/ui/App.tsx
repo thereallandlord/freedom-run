@@ -43,6 +43,16 @@ function ThemeToggle() {
 export function App() {
   /** Кто вошёл: от этого зависит, предлагать ли кабинет строкой на главной. */
   const вошёл = !!useAuthUser()
+  /*
+   * 🔴 Поднять партию из кабинета — на ОДНОМ экране. Комната из журнала не
+   * восстанавливается: людей в ней уже нет, и звать их обратно должен человек,
+   * а не игра. Стол собирается заново по журналу, дальше можно доиграть за
+   * одним экраном или завести комнату и позвать своих.
+   */
+  const поднятьИзКабинета = (setup: unknown, journal: unknown) => {
+    game.resume(setup as never, (journal ?? []) as never)
+    setScreen('game')
+  }
   // Транспорт создаётся один раз: Supabase, если заданы ключи, иначе вкладки одного браузера.
   const transport = useMemo(
     // ?netlog=1 в адресе включает журнал сети в консоли — для разбора проблем со связью.
@@ -334,7 +344,7 @@ export function App() {
         callUrl={room.room?.settings.callUrl}
         meId={online ? meSeatId : undefined}
         events={game.events}
-        topRight={<><AccountButton /><ThemeToggle /></>}
+        topRight={<><AccountButton поднять={поднятьИзКабинета} /><ThemeToggle /></>}
       />
     )
   }
@@ -364,7 +374,7 @@ export function App() {
           room.leave('quit')
           setScreen('landing')
         }}
-        topRight={<><AccountButton /><ThemeToggle /></>}
+        topRight={<><AccountButton поднять={поднятьИзКабинета} /><ThemeToggle /></>}
       />
     )
   }
@@ -412,7 +422,7 @@ export function App() {
             setScreen('game')
           }
         }}
-        topRight={<><AccountButton /><ThemeToggle /></>}
+        topRight={<><AccountButton поднять={поднятьИзКабинета} /><ThemeToggle /></>}
       />
     )
   }
@@ -467,7 +477,7 @@ export function App() {
       onLocal={() => setScreen('local')}
       onCreate={() => setScreen('create')}
       onJoin={() => setScreen('join')}
-      topRight={<><AccountButton /><ThemeToggle /></>}
+      topRight={<><AccountButton поднять={поднятьИзКабинета} /><ThemeToggle /></>}
     />
   )
 }

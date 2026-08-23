@@ -25,7 +25,20 @@ function когда(iso: string): string {
   }
 }
 
-export function Cabinet({ onClose }: { onClose: () => void }) {
+export function Cabinet({
+  onClose,
+  поднять,
+}: {
+  onClose: () => void
+  /**
+   * Поднять незаконченную партию из журнала.
+   *
+   * 🔴 Ради этого кабинет и хранит журнал. Пока партия жила только в
+   * браузерах игроков, комната, из которой вышли все, пропадала навсегда —
+   * поднять стол было неоткуда.
+   */
+  поднять?: (setup: unknown, journal: unknown) => void
+}) {
   const me = currentUser()
   const [games, setGames] = useState<SavedGame[] | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -122,26 +135,54 @@ export function Cabinet({ onClose }: { onClose: () => void }) {
             </div>
           ) : (
             <div className="space-y-1.5">
-              {games?.map((g) => (
-                <button
-                  key={g.id}
-                  onClick={() => setOpenId(g.id)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5 text-left transition hover:border-accent/50"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-semibold">{когда(g.finishedAt)}</div>
-                    <div className="truncate text-[12px] text-[var(--muted)]">
-                      {g.me.profession ?? '—'} · {g.seats.length} за столом · ходов {g.turns}
-                    </div>
+              {games?.map((g) => {
+                const незакончена = !g.finishedAt
+                return (
+                  <div
+                    key={g.id}
+                    className={`rounded-xl border bg-[var(--panel-2)] ${
+                      незакончена ? 'border-accent/50' : 'border-[var(--line)]'
+                    }`}
+                  >
+                    <button
+                      onClick={() => !незакончена && setOpenId(g.id)}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[13px] font-semibold">
+                          {незакончена ? 'Партия не доиграна' : когда(g.finishedAt)}
+                        </div>
+                        <div className="truncate text-[12px] text-[var(--muted)]">
+                          {g.me.profession ?? '—'} · {g.seats.length} за столом · ходов {g.turns}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="tabnum text-[12.5px] font-semibold text-accent">
+                          {money(g.me.passive)}
+                        </div>
+                        <div className="text-[10.5px] text-[var(--muted)]">без вас в месяц</div>
+                      </div>
+                    </button>
+                    {незакончена && поднять && !!g.setup && !!g.journal && (
+                      <div className="border-t border-[var(--line)] px-3 py-2">
+                        <button
+                          onClick={() => {
+                            поднять(g.setup, g.journal)
+                            onClose()
+                          }}
+                          className="btn-primary w-full py-2 text-[13px]"
+                        >
+                          Поднять партию с того же места
+                        </button>
+                        <p className="mt-1 text-center text-[11px] leading-snug text-[var(--muted)]">
+                          Стол соберётся заново по журналу ходов. Дальше играете за одним экраном —
+                          или заводите комнату и зовёте своих обратно.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="shrink-0 text-right">
-                    <div className="tabnum text-[12.5px] font-semibold text-accent">
-                      {money(g.me.passive)}
-                    </div>
-                    <div className="text-[10.5px] text-[var(--muted)]">без вас в месяц</div>
-                  </div>
-                </button>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

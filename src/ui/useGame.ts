@@ -21,6 +21,8 @@ import {
   smallDeals,
 } from '../engine/data'
 import { botOfferReply } from './tradeHelpers'
+import { saveGame } from '../net/gamesApi'
+import { currentUser } from '../net/auth'
 import { scheduleWorldEvent } from './worldClock'
 
 const STORAGE_KEY = 'freedom-run:save:v2'
@@ -117,6 +119,25 @@ export function useGame(net?: {
       /* испорченное сохранение просто игнорируем */
     }
   }, [])
+
+  /*
+   * 🔴 Идущая партия уезжает В КАБИНЕТ, а не только в браузер.
+   *
+   * Пока журнал жил лишь в localStorage игроков, комната, из которой вышли
+   * все, пропадала навсегда: поднять стол было неоткуда. Теперь раз в
+   * несколько ходов партия дописывается на сервер с пустым временем финиша —
+   * это и значит «ещё играем». Тихо: не вышел, сеть легла, сервер молчит —
+   * игра продолжается как ни в чём не бывало.
+   */
+  const сохраненоНаХоде = useRef(-1)
+  useEffect(() => {
+    if (!table || table.phase === 'finished') return
+    if (!currentUser()) return
+    const ход = table.turnCounter
+    if (ход < 3 || ход - сохраненоНаХоде.current < 5) return
+    сохраненоНаХоде.current = ход
+    void saveGame(table, events, meId, null, false)
+  }, [table?.turnCounter])
 
   useEffect(() => {
     if (!setup) return

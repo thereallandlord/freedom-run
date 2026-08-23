@@ -115,7 +115,13 @@ export async function saveGame(user, body) {
         game_key: key,
         room: body?.room ?? null,
         turns: Number(body?.turns) || 0,
-        finished_at: new Date().toISOString(),
+        /*
+         * 🔴 НЕЗАКОНЧЕННАЯ партия хранится с пустым временем финиша. Так
+         * получается «сохранение в облаке»: если из комнаты вышли все, поднять
+         * стол было неоткуда — журнал жил только в браузерах игроков. Отдельная
+         * колонка-флаг тут не нужна: пустой финиш и ЗНАЧИТ «ещё играем».
+         */
+        finished_at: body?.finished === false ? null : new Date().toISOString(),
         seats: seats.map((s) => ({ name: s.name, track: s.track, isBot: !!s.isBot })),
         journal: body?.journal ?? null,
         setup: body?.setup ?? null,
@@ -188,7 +194,7 @@ export async function listGames(user) {
     (await rest(
       `cf_game_players?auth_id=eq.${user.id}` +
         `&select=seat_id,name,profession,track,passive,net_worth,debrief,` +
-        `cf_games(id,room,finished_at,turns,seats)&limit=100`,
+        `cf_games(id,room,finished_at,turns,seats,setup,journal)&limit=100`,
     )) || []
 
   const games = rows
@@ -199,6 +205,9 @@ export async function listGames(user) {
       finishedAt: r.cf_games.finished_at,
       turns: r.cf_games.turns,
       seats: Array.isArray(r.cf_games.seats) ? r.cf_games.seats : [],
+      // Для незаконченных отдаём и журнал: из него стол поднимается заново.
+      setup: r.cf_games.finished_at ? null : (r.cf_games.setup ?? null),
+      journal: r.cf_games.finished_at ? null : (r.cf_games.journal ?? null),
       me: {
         seatId: r.seat_id,
         name: r.name,
@@ -209,6 +218,10 @@ export async function listGames(user) {
         debrief: r.debrief,
       },
     }))
-    .sort((a, b) => String(b.finishedAt).localeCompare(String(a.finishedAt)))
+    // Незаконченные — наверх: за ними и приходят.
+    .sort((a, b) =>
+      Number(!!a.finishedAt) - Number(!!b.finishedAt) ||
+      String(b.finishedAt ?? '').localeCompare(String(a.finishedAt ?? '')),
+    )
   return { games }
 }

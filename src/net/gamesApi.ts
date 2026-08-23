@@ -23,6 +23,9 @@ export interface SavedGame {
   turns: number
   /** Состав стола — чтобы в списке было видно, с кем играли. */
   seats: { name: string; track: string }[]
+  /** Незаконченная партия отдаётся вместе с журналом — по нему её и поднимают. */
+  setup?: unknown
+  journal?: unknown
   /** Моя строка в этой партии. */
   me: {
     seatId: string
@@ -71,6 +74,8 @@ export async function saveGame(
   events: TableEvent[],
   mySeatId: string | undefined,
   room: string | null,
+  /** Партия окончена? Незаконченную храним, чтобы её можно было поднять. */
+  finished = true,
 ): Promise<string | null> {
   try {
     const body = {
@@ -78,8 +83,15 @@ export async function saveGame(
       room,
       turns: table.turnCounter,
       mySeatId: mySeatId ?? null,
+      finished,
       // Журнал — правда партии: по нему её можно проиграть заново целиком.
       journal: events,
+      /*
+       * 🔴 Сетап хранится ТАКИМ, каким его примет движок: с `professionId` и
+       * мечтой. Раньше сюда клали человекочитаемое название профессии — по
+       * такой записи стол собрать было нельзя, то есть журнал хранился, а
+       * поднять по нему партию всё равно не получалось.
+       */
       setup: {
         seed: table.seed,
         deckTheme: table.deckTheme,
@@ -88,7 +100,9 @@ export async function saveGame(
           name: s.name,
           color: s.color,
           isBot: s.isBot,
-          profession: s.ledger.profession?.name ?? null,
+          professionId: s.ledger.profession?.id ?? '',
+          dreamSpace: s.dreamSpace,
+          botDifficulty: s.botDifficulty,
         })),
       },
       seats: table.seats.map((s) => ({

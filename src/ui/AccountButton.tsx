@@ -31,7 +31,12 @@ export function openLogin(): void {
 /** Есть ли вообще куда входить: без ключей окна не показываем. */
 export { authAvailable }
 
-export function AccountButton() {
+export function AccountButton({
+  поднять,
+}: {
+  /** Поднять незаконченную партию из кабинета. */
+  поднять?: (setup: unknown, journal: unknown) => void
+} = {}) {
   const user = useAuthUser()
   const [open, setOpen] = useState<null | 'login' | 'cabinet'>(null)
 
@@ -67,7 +72,7 @@ export function AccountButton() {
       </button>
 
       {open === 'login' && <LoginModal onClose={() => setOpen(null)} />}
-      {open === 'cabinet' && <Cabinet onClose={() => setOpen(null)} />}
+      {open === 'cabinet' && <Cabinet onClose={() => setOpen(null)} поднять={поднять} />}
     </>
   )
 }
