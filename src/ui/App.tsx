@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Setup } from './Setup'
 import { Game } from './Game'
 import { Landing } from './Landing'
-import { AccountButton } from './AccountButton'
+import { AccountButton, authAvailable, openLogin, useAuthUser } from './AccountButton'
 import { Admin, хочетПанель } from './Admin'
 import { JoinRoom, JoinWaiting, Lobby } from './Lobby'
 import { useGame } from './useGame'
@@ -41,6 +41,8 @@ function ThemeToggle() {
 }
 
 export function App() {
+  /** Кто вошёл: от этого зависит, предлагать ли кабинет строкой на главной. */
+  const вошёл = !!useAuthUser()
   // Транспорт создаётся один раз: Supabase, если заданы ключи, иначе вкладки одного браузера.
   const transport = useMemo(
     // ?netlog=1 в адресе включает журнал сети в консоли — для разбора проблем со связью.
@@ -450,6 +452,7 @@ export function App() {
           ? { ходов: game.устарела.ходов, onOk: game.забытьУстаревшую }
           : undefined
       }
+      войти={authAvailable() && !вошёл ? openLogin : undefined}
       saved={
         game.table
           ? {

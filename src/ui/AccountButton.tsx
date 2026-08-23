@@ -17,9 +17,29 @@ export function useAuthUser(): AuthUser | null {
   return user
 }
 
+/**
+ * Позвать окно входа снаружи — например, строкой на главной.
+ *
+ * 🔴 Через общее событие, а не через проброс состояния: кнопка живёт в шапке
+ * ЧЕТЫРЁХ разных экранов, и тянуть к каждому из них ещё один флаг — верный
+ * способ развести их поведение.
+ */
+export function openLogin(): void {
+  window.dispatchEvent(new CustomEvent('freedom-run:login'))
+}
+
+/** Есть ли вообще куда входить: без ключей окна не показываем. */
+export { authAvailable }
+
 export function AccountButton() {
   const user = useAuthUser()
   const [open, setOpen] = useState<null | 'login' | 'cabinet'>(null)
+
+  useEffect(() => {
+    const h = () => setOpen(currentUser() ? 'cabinet' : 'login')
+    window.addEventListener('freedom-run:login', h)
+    return () => window.removeEventListener('freedom-run:login', h)
+  }, [])
 
   // Ключей нет — вход просто не показываем, вместо неработающей кнопки.
   if (!authAvailable()) return null

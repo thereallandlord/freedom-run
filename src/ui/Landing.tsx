@@ -22,6 +22,8 @@ export interface LandingProps {
    * партию под видом своей. Лучше сказать честно.
    */
   устарела?: { ходов: number; onOk: () => void }
+  /** Открыть вход в кабинет. Пусто — человек уже вошёл или входа нет вовсе. */
+  войти?: () => void
   saved?: {
     players: string[]
     bots: number
@@ -125,7 +127,7 @@ const STEPS: { Icon: () => ReactNode; title: string; text: string }[] = [
   },
 ]
 
-export function Landing({ joinCode, saved, устарела, onLocal, onCreate, onJoin, onRules, topRight }: LandingProps) {
+export function Landing({ joinCode, saved, устарела, войти, onLocal, onCreate, onJoin, onRules, topRight }: LandingProps) {
   const [code, setCode] = useState('')
   const typed = normalizeRoomCode(code)
   const canJoinTyped = isValidRoomCode(typed)
@@ -268,6 +270,24 @@ export function Landing({ joinCode, saved, устарела, onLocal, onCreate, 
             </button>
           ))}
         </section>
+
+        {/*
+          🔴 ВЫБОР «в кабинет или гостем» — ОДНОЙ СТРОКОЙ, а не окном на входе.
+          Просьба Камиля была про выбор; но перегораживать дорогу к столу нельзя:
+          сесть и играть можно всегда, аккаунт нужен ровно для одного — чтобы
+          партии и разборы к ним не исчезали вместе с вкладкой. Раньше об этом
+          не было сказано нигде, и кнопка в углу выглядела необязательной
+          мелочью.
+        */}
+        {войти && (
+          <p className="mb-6 text-center text-[13px] leading-snug text-muted">
+            Играть можно прямо сейчас, без всякого входа.{' '}
+            <button onClick={войти} className="font-semibold text-accent hover:underline">
+              Войти в кабинет
+            </button>{' '}
+            стоит, если хотите, чтобы партии и разборы к ним сохранялись.
+          </p>
+        )}
 
         {/* ─── Вход по коду: одна строка, поле под шесть символов ─── */}
         {!joinCode && (
