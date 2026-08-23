@@ -40,7 +40,7 @@ import {
   ownShare,
   MANAGER_PCT,
 } from './ledger'
-import { TICKERS, fastBoard } from './data'
+import { TICKERS, bigDeals, fastBoard, smallDeals } from './data'
 import {
   GL_PROMOS,
   glPackage,
@@ -73,6 +73,29 @@ export interface BotProfile {
 export const BOT_PROFILES = botProfilesJson as unknown as Record<BotDifficulty, BotProfile>
 
 const inf = (v: number | null) => (v === null ? Infinity : v)
+
+/**
+ * Вилка цены бумаги: от чего считать «дорого» и «дёшево».
+ *
+ * 🔴 БРАТЬ ЕЁ ИЗ КОЛОДЫ, А НЕ ИЗ tickers.json. Я на этом уже ошибся: взял
+ * `TICKERS[symbol]`, а там лежат тикеры КЛАССИЧЕСКОЙ колоды (GRIT, SNAIL,
+ * MYCO…). В русской они свои — AAPL, GOLD, BTC, SUKUK, — и пересекаются
+ * ровно двумя мемкоинами. То есть для тринадцати бумаг из пятнадцати вилка
+ * не находилась вовсе, порог молча падал на «цену покупки», и настройка
+ * `stockSellQuantile` опять не делала ничего — та самая мина, которую я
+ * только что чинил.
+ *
+ * У карточек колоды вилка есть у всех до одной — её и спрашиваем.
+ */
+function вилкаЦены(t: Table, symbol: string): [number, number] | null {
+  for (const c of [...smallDeals(t.deckTheme), ...bigDeals(t.deckTheme)]) {
+    if (c.kind === 'stock' && (c as StockCard).symbol === symbol) {
+      const r = (c as StockCard).range
+      if (r) return r
+    }
+  }
+  return TICKERS[symbol]?.range ?? null
+}
 
 /** Порог в диапазоне цены тикера: 0 — дно, 1 — потолок. */
 function quantilePrice(range: [number, number], q: number): number {
@@ -351,7 +374,7 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
            * Считаем от диапазона САМОЙ бумаги — ровно так, как это уже сделано
            * на покупке.
            */
-          const вилка = TICKERS[card.symbol]?.range
+          const вилка = вилкаЦены(t, card.symbol)
           const продаватьВыше = вилка ? quantilePrice(вилка, p.stockSellQuantile) : lot.costPerShare
           const хорошаяЦена = card.price >= продаватьВыше && card.price >= lot.costPerShare
           /*
