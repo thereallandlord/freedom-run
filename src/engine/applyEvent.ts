@@ -255,6 +255,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         investorShare: e.investorShare,
         installmentMonthly: e.installmentMonthly,
         partnerId: e.partnerId,
+        // Сколько своих денег ушло — для панели: downPayment у долевой покупки нулевой.
+        paidIn: e.paidIn ?? e.downPayment,
         value: e.value,
       })
       return l
@@ -350,6 +352,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         gl: e.glPackage ? glInitialState(e.glPackage, e.glLuck ?? 1) : undefined,
         installmentMonthly: e.installmentMonthly,
         partnerId: e.partnerId,
+        // Сколько своих денег ушло — для панели: downPayment у долевой покупки нулевой.
+        paidIn: e.paidIn ?? e.downPayment,
         value: e.value,
       })
       return l

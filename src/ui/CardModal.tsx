@@ -570,14 +570,28 @@ function CardBody({
                  */
                 const сырые =
                   max <= 6
-                    ? Array.from({ length: max }, (_, i) => ({ ключ: i + 1, подпись: `${i + 1}`, n: i + 1 }))
+                    ? Array.from({ length: max }, (_, i) => ({
+                        ключ: i + 1,
+                        // «шт» обязательно: голые числа читаются как проценты,
+                        // а подсказки по наведению на планшете и телефоне нет.
+                        подпись: `${i + 1} шт`,
+                        n: i + 1,
+                      }))
                     : [10, 25, 50, 75, 100].map((pct) => ({
                         ключ: pct,
                         подпись: `${pct}%`,
                         n: Math.max(1, Math.floor((max * pct) / 100)),
                       }))
-                const видано = new Set<number>()
-                const пресеты = сырые.filter((x) => !видано.has(x.n) && видано.add(x.n))
+                /*
+                 * 🔴 Из одинаковых оставляем ПОСЛЕДНИЙ, а не первый: подписи
+                 * идут по возрастанию, и первый — самый маленький процент.
+                 * При семи бумагах «10%» и «25%» дают одну штуку, и раньше
+                 * оставалась кнопка «10%», которая покупала 1 из 7 — то есть
+                 * четырнадцать процентов. Ярлык врал на пять пунктов и больше.
+                 */
+                const поЧислу = new Map<number, (typeof сырые)[number]>()
+                for (const x of сырые) поЧислу.set(x.n, x)
+                const пресеты = [...поЧислу.values()].sort((a, b) => a.n - b.n)
                 return (
                   <div
                     className="grid gap-1.5"
@@ -1080,8 +1094,22 @@ function CardBody({
               {money(p.buyout)}
             </div>
             <div className="mt-1 text-[12px] text-[var(--muted)]">
-              выкуп на Полосу свободы — пятьдесят месячных доходов сразу
+              выкуп на Полосу свободы — {RULES.fastTrackMultiplier} месячных доходов
             </div>
+            {/*
+              🔴 Долги Круга гасятся ИЗ ВЫКУПА, и об этом надо сказать прямо.
+              Карточка показывала валовую сумму со словом «сразу», а на счёт
+              приходило меньше — человек видел одно число, а в кошельке
+              появлялось другое, и объяснения нигде не было.
+            */}
+            {!!p.долги && p.долги > 0 && (
+              <div className="mt-2 border-t border-amber-500/30 pt-2 text-[12px] leading-snug text-[var(--muted)]">
+                Из них закрыты долги Круга на {money(p.долги)} — на счёт придёт{' '}
+                <span className="tabnum font-semibold text-[var(--ink)]">
+                  {money(Math.max(0, p.buyout - p.долги))}
+                </span>
+              </div>
+            )}
           </div>
           <p className="text-center text-[13px] leading-snug text-[var(--muted)]">
             {mine

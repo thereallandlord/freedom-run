@@ -170,7 +170,18 @@ function AssetRow({
           </div>
           <div className="flex justify-between">
             <span>Вложено своих</span>
-            <span className="tabnum">{money(a.investorShare ? 0 : a.downPayment)}</span>
+            {/*
+              🔴 При партнёре печатался НОЛЬ. Свои деньги при этом внесены —
+              просто списаны отдельным переводом, а в актив легли нулём.
+              Считаем по доле: партнёр внёс свою часть, остальное — ваше.
+            */}
+            {/*
+              🔴 Берём то, что реально ушло из кармана. У купленного вдвоём
+              `downPayment` равен нулю (взнос списан двумя переводами до сборки
+              актива), и панель печатала «0 ₽» человеку, который только что
+              заплатил двадцать тысяч.
+            */}
+            <span className="tabnum">{money(a.paidIn ?? a.downPayment)}</span>
           </div>
           {debt > 0 && (
             <div className="flex justify-between">

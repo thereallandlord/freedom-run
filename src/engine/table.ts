@@ -2288,7 +2288,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * выглядел так: полоска цели дошла до ста процентов — и всё. Главный
        * момент игры проходил незамеченным.
        */
-      t.pending = { kind: 'freedom', seatId: seat.id, buyout }
+      t.pending = { kind: 'freedom', seatId: seat.id, buyout, долги: долгиБыли }
       /*
        * 🔴 И здесь фаза оставалась «ждём броска». Дальше выходило хуже, чем с
        * зарплатой: игрок бросал поверх карточки «Свобода», попадал на клетку
@@ -2989,7 +2989,8 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             investorShare: share,
             partnerId: buyer.id,
           })
-          seatLedgerEvent(t, from.id, { ...base, downPayment: 0 })
+          // paidIn — сколько инициатор реально достал из кармана (взнос минус доля партнёра).
+          seatLedgerEvent(t, from.id, { ...base, downPayment: 0, paidIn: mine })
           /*
            * 🔴 Доля соинвестора должна лечь ЕМУ В ПОРТФЕЛЬ, иначе он платит
            * деньги и не получает ничего: у инициатора доход уже урезан на
@@ -3003,6 +3004,8 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             name: `${localizedCardTitle(card)} · доля ${Math.round(share * 100)}%`,
             cost: Math.round((base.cost as number) * share),
             downPayment: 0,
+            // Столько внёс сам партнёр — иначе в его панели тоже стоял бы ноль.
+            paidIn: o.amount,
             cashFlow: Math.round((base.cashFlow as number) * share),
             category: card.category,
             partnerId: from.id,

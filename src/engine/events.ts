@@ -33,7 +33,7 @@ export type LedgerEvent =
     }
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse'; ratio?: number }
-  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string; value?: number }
+  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; value?: number }
   | {
       type: 'SELL_REAL_ESTATE'
       assetId: string
@@ -43,7 +43,7 @@ export type LedgerEvent =
       /** Списанная незаработанная наценка при досрочном закрытии рассрочки. */
       rebate?: number
     }
-  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string; glPackage?: import('./greenleaf').GlPackageId; glLuck?: number; value?: number }
+  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; glPackage?: import('./greenleaf').GlPackageId; glLuck?: number; value?: number }
   | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number; debtTransfers?: boolean; rebate?: number }
   | { type: 'DOODAD'; amount: number }
   | { type: 'FINANCE_DOODAD'; amount: number }

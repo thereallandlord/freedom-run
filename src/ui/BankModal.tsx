@@ -147,74 +147,116 @@ export function BankModal({
               if (balance <= 0) return null
               const payment = l.expenses[DEBT_TO_PAYMENT[debt]]
               const open = confirmDebt === debt
-              /* Сколько вообще можно внести прямо сейчас — по деньгам и по долгу. */
-              const потолок = Math.floor(Math.min(l.cash, balance) / step) * step
-              const внесу = Math.max(step, Math.min(part, потолок))
+              /*
+               * Сколько вообще можно внести прямо сейчас — по деньгам и по долгу.
+               *
+               * 🔴 БЕЗ ОКРУГЛЕНИЯ ВНИЗ. Здесь стоял `Math.floor(… / step) * step`,
+               * и долг, не кратный шагу, закрыть было НЕЛЬЗЯ ВОВСЕ: от 45 000
+               * гасились 40 000, а последние 5 000 навсегда оставались вместе
+               * со своим платежом — окно писало «сейчас вносить нечего» при
+               * полном кошельке. Из 61 стартового долга русских профессий
+               * некратны шагу 14, а в классической колоде ВСЕ финансируемые
+               * траты меньше шага, то есть не гасились ни на цент.
+               */
+              const потолок = Math.min(l.cash, balance)
+              /* Ползунок ходит шагами, но последняя ступень — ровно потолок. */
+              const ступень = Math.min(Math.max(step, Math.floor(part / step) * step), потолок)
+              const внесу = part >= потолок ? потолок : Math.max(Math.min(step, потолок), ступень)
               const остаток = balance - внесу
               const станет = остаток <= 0 ? 0 : Math.round((payment * остаток) / balance)
+              const хватаетНаВесь = l.cash >= balance
               return (
                 <div key={debt} className={`panel-2 rounded-lg ${open ? 'border-amber-500' : ''}`}>
                   <button
                     onClick={() => {
                       setConfirmDebt(open ? null : debt)
-                      setPart(Math.floor(Math.min(l.cash, balance) / step) * step)
+                      setPart(Math.min(l.cash, balance))
                     }}
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-[13px]"
+                    className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px]"
                   >
-                    <span>
+                    <span className="min-w-0">
                       {debtLabel(debt)}
-                      <span className="ml-2 text-[var(--muted)]">−{money(payment)}/мес</span>
+                      <span className="ml-2 whitespace-nowrap text-[var(--muted)]">
+                        −{money(payment)}/мес
+                      </span>
                     </span>
-                    <span className="tabnum font-semibold">{money(balance)}</span>
+                    {/* 🔴 На телефоне сумма переносила знак рубля на другую строку. */}
+                    <span className="tabnum shrink-0 whitespace-nowrap font-semibold">
+                      {money(balance)}
+                    </span>
                   </button>
                   {open && (
                     <div className="border-t border-[var(--line)] px-3 py-2.5">
-                      {потолок < step ? (
-                        /*
-                         * 🔴 Говорим ПРЯМО, чего не хватает. Раньше кнопка
-                         * просто гасла, и это читалось как «долг не гасится»:
-                         * человек жал и не понимал, почему ничего не
-                         * происходит.
-                         */
+                      {потолок <= 0 ? (
                         <p className="text-[12px] leading-snug text-[var(--muted)]">
-                          Сейчас вносить нечего: на счету {money(l.cash)}, а вносить можно от{' '}
-                          {money(step)}.
+                          Сейчас вносить нечего: на счету {money(l.cash)}.
                         </p>
                       ) : (
                         <>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="range"
-                              min={step}
-                              max={потолок}
-                              step={step}
-                              value={внесу}
-                              onChange={(e) => setPart(Number(e.target.value))}
-                              className="flex-1 accent-emerald-500"
-                            />
-                            <span className="tabnum w-24 text-right text-sm">{money(внесу)}</span>
-                          </div>
-                          <p className="mt-1 text-[11.5px] leading-snug text-[var(--muted)]">
-                            {остаток <= 0 ? (
-                              <>Долг закроется целиком — платёж {money(payment)}/мес исчезнет.</>
-                            ) : (
-                              <>
-                                Останется {money(остаток)}, платёж станет −{money(станет)}/мес
-                                {потолок < balance && (
-                                  <> · на весь долг не хватает {money(balance - l.cash)}</>
+                          {/*
+                            🔴 Закрыть целиком — ОТДЕЛЬНОЙ кнопкой, а не крайним
+                            положением ползунка: ползунок ходит ступенями и до
+                            некруглого остатка не дотягивается.
+                          */}
+                          {хватаетНаВесь && (
+                            <button
+                              onClick={() => {
+                                dispatch({ type: 'PAY_OFF_DEBT', debt })
+                                setConfirmDebt(null)
+                              }}
+                              className="btn-primary mb-2 w-full"
+                            >
+                              Закрыть целиком — {money(balance)}
+                              <span className="mt-0.5 block text-[11px] font-normal opacity-80">
+                                платёж {money(payment)}/мес исчезнет
+                              </span>
+                            </button>
+                          )}
+                          {потолок > step && (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="range"
+                                  min={Math.min(step, потолок)}
+                                  max={потолок}
+                                  step={step}
+                                  value={внесу}
+                                  onChange={(e) => setPart(Number(e.target.value))}
+                                  className="flex-1 accent-emerald-500"
+                                />
+                                <span className="tabnum w-24 shrink-0 whitespace-nowrap text-right text-sm">
+                                  {money(внесу)}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[11.5px] leading-snug text-[var(--muted)]">
+                                {остаток <= 0 ? (
+                                  <>Долг закроется целиком — платёж {money(payment)}/мес исчезнет.</>
+                                ) : (
+                                  <>
+                                    Останется {money(остаток)}, платёж станет −{money(станет)}/мес
+                                    {/*
+                                      🔴 Нехватку показываем ТОЛЬКО когда она есть.
+                                      Условие было про потолок, а сумма — про
+                                      деньги, и при полном кошельке выходило
+                                      «не хватает −86 500 ₽».
+                                    */}
+                                    {!хватаетНаВесь && (
+                                      <> · на весь долг не хватает {money(balance - l.cash)}</>
+                                    )}
+                                  </>
                                 )}
-                              </>
-                            )}
-                          </p>
-                          <button
-                            onClick={() => {
-                              dispatch({ type: 'PAY_OFF_DEBT', debt, amount: внесу })
-                              setConfirmDebt(null)
-                            }}
-                            className="btn-primary mt-2 w-full"
-                          >
-                            Внести {money(внесу)}
-                          </button>
+                              </p>
+                              <button
+                                onClick={() => {
+                                  dispatch({ type: 'PAY_OFF_DEBT', debt, amount: внесу })
+                                  setConfirmDebt(null)
+                                }}
+                                className={`mt-2 w-full ${хватаетНаВесь ? 'btn-ghost' : 'btn-primary'}`}
+                              >
+                                Внести {money(внесу)}
+                              </button>
+                            </>
+                          )}
                         </>
                       )}
                     </div>

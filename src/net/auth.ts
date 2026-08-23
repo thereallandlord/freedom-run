@@ -151,9 +151,20 @@ export async function signUpPassword(
  * 🔴 Ведётся руками: Supabase свои настройки наружу не отдаёт, угадать
  * нельзя — можно только знать. С этих адресов возврат идёт напрямую.
  */
-const ЗНАКОМЫЕ = ['cashflow.craftopen.space', 'thereallandlord.github.io']
-/** Через кого перебрасываем возврат, если адрес Supabase незнаком. */
-const ПЕРЕБРОС = 'https://cashflow.craftopen.space/auth-back'
+const ЗНАКОМЫЕ = [
+  'freedom-run-gamma.vercel.app',
+  'cashflow.craftopen.space',
+  'thereallandlord.github.io',
+]
+/**
+ * Через кого перебрасываем возврат, если адрес Supabase незнаком.
+ *
+ * 🔴 Через VERCEL, а не через Railway. Railway из России без VPN не
+ * открывается — режут всю их пограничную сеть, — и отскок вёл вход ровно
+ * через ту дверь, от которой мы уезжали: человек без VPN упирался в
+ * таймаут на середине входа. Vercel из России открывается.
+ */
+const ПЕРЕБРОС = 'https://freedom-run-gamma.vercel.app/auth-back'
 
 export function signInGoogle(): void {
   const сюда = (location.origin + location.pathname).replace(/\/$/, '')

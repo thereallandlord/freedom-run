@@ -40,6 +40,7 @@ const TYPES = {
 const AUTH_BACK = new Set(
   [
     'https://cashflow.craftopen.space',
+    'https://freedom-run-gamma.vercel.app',
     'https://thereallandlord.github.io/freedom-run',
     ...(process.env.AUTH_BACK_EXTRA || '').split(',').map((x) => x.trim()),
   ].filter(Boolean),
