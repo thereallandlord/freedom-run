@@ -95,7 +95,7 @@ export function TradesModal({
       onClose={onClose}
     >
       <div className="panel-2 flex items-baseline justify-between rounded-lg px-3 py-2 text-sm">
-        <span className="text-[var(--muted)]">Наличные</span>
+        <span className="text-[var(--muted)]">Деньги на руках</span>
         <span className="tabnum text-lg font-bold">{money(seat.ledger.cash)}</span>
       </div>
 

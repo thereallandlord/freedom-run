@@ -402,7 +402,7 @@ export function PlayerPanel({
         </div>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <div className="caps text-[10px] text-[var(--t-muted, var(--muted))]">Наличные</div>
+            <div className="caps text-[10px] text-[var(--t-muted, var(--muted))]">Деньги на руках</div>
             <div className="relative">
               {/*
                 🔴 Крупные суммы УЖИМАЮТСЯ. При миллионах строка «2 290 648 ₽»

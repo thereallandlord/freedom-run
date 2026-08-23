@@ -4,10 +4,6 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/auth-back", "destination": "/api/auth-back" },
-    {
-      "comment": "🔴 Всё неизвестное — на страницу игры, КРОМЕ /api. Без этого исключения откат перехватывал и запросы к функции: /api/health отдавал HTML вместо ответа. Статические файлы сюда не доходят — их отдаёт файловая система раньше.",
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

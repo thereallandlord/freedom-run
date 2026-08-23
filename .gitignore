@@ -17,3 +17,5 @@ tsconfig.tsbuildinfo
 # черновые проверки движка, которые я создаю по ходу отладки
 src/__t/
 src/engine/_*.ts
+.vercel
+.env*

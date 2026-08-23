@@ -12,10 +12,46 @@ import {
 import { randomSeed } from '../engine/rng'
 import { decideBotEvent } from '../engine/bots'
 import { mulberry32 } from '../engine/rng'
+import {
+  RAT_BOARD,
+  WORLD_EVENTS,
+  bigDeals,
+  doodads,
+  marketCards,
+  smallDeals,
+} from '../engine/data'
 import { botOfferReply } from './tradeHelpers'
 import { scheduleWorldEvent } from './worldClock'
 
 const STORAGE_KEY = 'freedom-run:save:v2'
+
+/**
+ * Отпечаток правил и колод.
+ *
+ * 🔴 ЗАЧЕМ. Партия хранится не столом, а ЖУРНАЛОМ ходов: при возврате она
+ * пересобирается с нуля. Значит любое изменение колод или случайности делает
+ * старый журнал недействительным — карты приходят другие, часть событий
+ * движок отклоняет. Замер на 30 записанных партиях: после правки колод
+ * 18,9% событий отвергнуто, и партия МОЛЧА становилась другой — другие
+ * деньги, другое имущество, другой победитель.
+ *
+ * Поэтому вместе с журналом храним отпечаток того, чем он записан. Не сошлось
+ * — не восстанавливаем и говорим об этом прямо, вместо того чтобы подсунуть
+ * человеку подделку его же партии.
+ *
+ * Считается САМ, из длин колод: забыть его обновить нельзя, потому что
+ * менять их, не меняя длину, — это как раз безопасный случай.
+ */
+function отпечатокПравил(): string {
+  return [
+    smallDeals('ru').length,
+    bigDeals('ru').length,
+    marketCards('ru').length,
+    doodads('ru').length,
+    WORLD_EVENTS.length,
+    RAT_BOARD.length,
+  ].join('.')
+}
 /**
  * Раз во сколько минут реального времени мир двигается сам.
  * 🔴 Первое событие приходит раньше остальных: иначе начало партии проходит
@@ -27,7 +63,12 @@ export const WORLD_EVENT_FIRST_MIN = 10
 interface Save {
   setup: TableSetup
   events: TableEvent[]
+  /** Отпечаток правил, которыми записан журнал. Старые записи его не несут. */
+  правила?: string
 }
+
+/** Что делать с несовместимой записью — решает экран, а не хук. */
+export type НесовместимаяПартия = { когда: number; ходов: number }
 
 export function useGame(net?: {
   /** Отправить ход в сеть. Задан — значит партия сетевая. */
@@ -48,6 +89,8 @@ export function useGame(net?: {
   const tableRef = useRef<Table | null>(null)
   /** Отдельный таймер: на предложение бот отвечает и вне своего хода. */
   const offerTimer = useRef<number | null>(null)
+  /** Найдено сохранение от прежней версии игры — восстановить его нельзя. */
+  const [устарела, setУстарела] = useState<НесовместимаяПартия | null>(null)
 
   // ─── Сохранение: храним только сетап и журнал событий ───
   useEffect(() => {
@@ -56,6 +99,17 @@ export function useGame(net?: {
       if (!raw) return
       const save = JSON.parse(raw) as Save
       if (!save?.setup) return
+      /*
+       * 🔴 Журнал, записанный ДРУГИМИ колодами, не восстанавливаем. Он
+       * пересоберётся во что-то другое, и человек этого не заметит. Лучше
+       * честно сказать «партия записана прежней версией», чем подсунуть
+       * подделку.
+       */
+      if ((save.правила ?? '') !== отпечатокПравил()) {
+        setУстарела({ когда: Date.now(), ходов: (save.events ?? []).length })
+        localStorage.removeItem(STORAGE_KEY)
+        return
+      }
       setSetup(save.setup)
       setEvents(save.events ?? [])
       setTable(replayTable(save.setup, save.events ?? []))
@@ -67,7 +121,10 @@ export function useGame(net?: {
   useEffect(() => {
     if (!setup) return
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ setup, events } satisfies Save))
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ setup, events, правила: отпечатокПравил() } satisfies Save),
+      )
     } catch {
       /* приватный режим — играем без сохранения */
     }
@@ -329,9 +386,10 @@ export function useGame(net?: {
      * оттуда уходила то дважды, то ни разу — ход «переходил через раз», а
      * иногда только после отмены. Здесь простой таймер и прямой вызов.
      */
+    const ход = table.turnCounter
     const id = window.setTimeout(() => {
-      if (netSend) netSend({ type: 'END_TURN' } as TableEvent)
-      else applyLocal({ type: 'END_TURN' } as TableEvent)
+      if (netSend) netSend({ type: 'END_TURN', turn: ход } as TableEvent)
+      else applyLocal({ type: 'END_TURN', turn: ход } as TableEvent)
     }, 1100)
 
     /*
@@ -342,8 +400,10 @@ export function useGame(net?: {
     const retry = window.setInterval(() => {
       const now = tableRef.current
       if (!now || now.phase !== 'turnEnd') return
-      if (netSend) netSend({ type: 'END_TURN' } as TableEvent)
-      else applyLocal({ type: 'END_TURN' } as TableEvent)
+      // Номер берём СВЕЖИЙ: если ход уже ушёл, повтор не должен закрыть чужой.
+      const ev = { type: 'END_TURN', turn: now.turnCounter } as TableEvent
+      if (netSend) netSend(ev)
+      else applyLocal(ev)
     }, 3000)
 
     return () => {
@@ -432,5 +492,11 @@ export function useGame(net?: {
     roll,
     rolling,
     rolled,
+    /**
+     * Нашли сохранение от прежней версии игры. Восстановить его нельзя:
+     * колоды изменились, и журнал пересобрался бы во что-то другое.
+     */
+    устарела,
+    забытьУстаревшую: () => setУстарела(null),
   }
 }

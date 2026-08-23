@@ -347,6 +347,22 @@ function S(props: React.ComponentProps<typeof Shell>) {
   return <Shell {...props} watching={ctx.watching} note={ctx.note} />
 }
 
+/**
+ * Сколько не хватает до покупки.
+ *
+ * 🔴 Кнопка просто гасла, и человек не понимал: он не может себе это позволить
+ * или интерфейс сломался. Разница в одной строке — но именно её и не было.
+ * У сделок такая подсказка была всегда, у пакетов и клеток Полосы — нет.
+ */
+function Нехватка({ есть, надо }: { есть: number; надо: number }) {
+  if (есть >= надо) return null
+  return (
+    <p className="mt-1 text-center text-[11.5px] text-amber-600 dark:text-amber-400">
+      Не хватает {money(надо - есть)} — на руках {money(есть)}
+    </p>
+  )
+}
+
 /** Подпись внизу карточки: почему кнопки не нажимаются. */
 function watchNote(
   table: Table,
@@ -491,7 +507,7 @@ function CardBody({
               {!!s.dividendPerShare && (
                 <Stat label="Дивиденд" value={`${signed(s.dividendPerShare)}/шт/мес`} />
               )}
-              <Stat label="Ваши наличные" value={money(l.cash)} />
+              <Stat label="Денег на руках" value={money(l.cash)} />
             </div>
 
             {max > 0 && (
@@ -765,7 +781,7 @@ function CardBody({
                 value={`+${money(growth)}/мес за каждую зарплату, до ${money((card as any).growthCap ?? 0)}`}
               />
             ) : null}
-            <Stat label="Ваши наличные" value={money(l.cash)} />
+            <Stat label="Денег на руках" value={money(l.cash)} />
           </div>
 
           {/*
@@ -1426,7 +1442,7 @@ function CardBody({
             {card.upkeep ? (
               <Stat label="И потом каждый месяц" value={`${money(card.upkeep)} на содержание`} />
             ) : null}
-            <Stat label="Ваши наличные" value={money(l.cash)} />
+            <Stat label="Денег на руках" value={money(l.cash)} />
           </div>
           {/*
             Хотелка — не обязательная трата. Можно пройти мимо, и это правильно.
@@ -1519,7 +1535,7 @@ function CardBody({
           </p>
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Расходы за месяц" value={money(cost)} />
-            <Stat label="Ваши наличные" value={money(l.cash)} strong />
+            <Stat label="Денег на руках" value={money(l.cash)} strong />
           </div>
           <button onClick={() => dispatch({ type: 'PAY_DOWNSIZED' })} className="btn-danger w-full">
             Пропустить 2 хода
@@ -1544,7 +1560,7 @@ function CardBody({
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Взнос" value={money(space.downPayment)} strong />
             <Stat label="Добавит дохода" value={`${signed(space.cashFlow)}/мес`} strong />
-            <Stat label="Ваши наличные" value={money(l.cash)} />
+            <Stat label="Денег на руках" value={money(l.cash)} />
           </div>
           <div className="flex gap-2">
             <button
@@ -1558,6 +1574,7 @@ function CardBody({
               Мимо
             </button>
           </div>
+          <Нехватка есть={l.cash} надо={space.downPayment} />
         </S>
       )
     }
@@ -1603,6 +1620,7 @@ function CardBody({
               <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
                 Мимо
               </button>
+              <Нехватка есть={l.cash} надо={space.downPayment} />
             </div>
           ) : (
             /*
@@ -1672,7 +1690,7 @@ function CardBody({
             <Stat label="Базовая цена" value={money(space.price)} />
             {bumps > 0 && <Stat label={`Соперники поднимали ×${bumps}`} value={money(price)} strong />}
             <Stat label="Цена сейчас" value={money(price)} strong />
-            <Stat label="Ваши наличные" value={money(l.cash)} />
+            <Stat label="Денег на руках" value={money(l.cash)} />
           </div>
 
           {owed > 0 && (
@@ -1754,7 +1772,7 @@ function CardBody({
       return (
         <S badge="Банкротство" title={`${seat.name} не свёл концы с концами`} accent="#f43f5e" art="🆘">
           <div className="panel-2 rounded-lg p-3">
-            <Stat label="Наличные" value={money(l.cash)} strong />
+            <Stat label="Деньги на руках" value={money(l.cash)} strong />
             <Stat label="Поток в месяц" value={signed(flow)} strong />
           </div>
           <p className="text-sm text-[var(--muted)]">

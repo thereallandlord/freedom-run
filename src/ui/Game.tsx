@@ -922,7 +922,14 @@ export function Game({
         Чужой портфель — отдельным окном и БЕЗ кнопок: посмотреть, как идут
         дела у соседа, можно всегда; трогать его деньги — никогда.
       */}
-      {peeked && peeked.id !== seat.id && (
+      {/*
+        🔴 СВОЮ карточку тоже открываем. Здесь стояло `peeked.id !== seat.id`:
+        по чужому имени окно открывалось, по своему — не происходило ничего, и
+        человек жал по себе несколько раз, решив, что сломалось. Своя панель
+        есть сбоку, но на телефоне и планшете её надо ещё долистать, а имя в
+        списке — вот оно.
+      */}
+      {peeked && (
         <div
           className="modal-layer fixed inset-0 z-[65] grid place-items-center bg-black/70 p-4"
           onClick={() => setPeekId(null)}
@@ -946,6 +953,11 @@ export function Game({
               seat={peeked}
               flowMul={table.market.flow}
               priceNow={(sym) => stockPriceNow(table, sym)}
+              /*
+               * 🔴 Кнопки — только в СВОЕЙ карточке. Посмотреть, как идут дела
+               * у соседа, можно всегда; трогать его деньги — никогда.
+               */
+              dispatch={peeked.id === seat.id && !seat.isBot ? dispatch : undefined}
             />
           </div>
         </div>

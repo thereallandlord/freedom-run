@@ -13,6 +13,15 @@ export interface LandingProps {
   /** Код из ссылки ?room=. Есть — показываем приглашение первым экраном. */
   joinCode?: string | null
   /** Незаконченная партия в этом браузере. Сама на экран не выходит. */
+  /**
+   * Нашлось сохранение от прежней версии игры.
+   *
+   * 🔴 Восстановить его нельзя: партия хранится журналом ходов и
+   * пересобирается заново, а колоды с тех пор изменились — карты пришли бы
+   * другие, часть ходов движок отклонил бы, и человек получил бы ЧУЖУЮ
+   * партию под видом своей. Лучше сказать честно.
+   */
+  устарела?: { ходов: number; onOk: () => void }
   saved?: {
     players: string[]
     bots: number
@@ -116,7 +125,7 @@ const STEPS: { Icon: () => ReactNode; title: string; text: string }[] = [
   },
 ]
 
-export function Landing({ joinCode, saved, onLocal, onCreate, onJoin, onRules, topRight }: LandingProps) {
+export function Landing({ joinCode, saved, устарела, onLocal, onCreate, onJoin, onRules, topRight }: LandingProps) {
   const [code, setCode] = useState('')
   const typed = normalizeRoomCode(code)
   const canJoinTyped = isValidRoomCode(typed)
@@ -131,6 +140,18 @@ export function Landing({ joinCode, saved, onLocal, onCreate, onJoin, onRules, t
         </header>
 
         {/* ─── Прошлая партия ждёт, но в неё не забрасывает ─── */}
+        {устарела && !saved && !joinCode && (
+          <div className="panel mb-4 rounded-2xl border-amber-500/40 bg-amber-500/5 p-4">
+            <p className="text-sm leading-snug">
+              Прошлая партия ({устарела.ходов} ходов) записана прежней версией игры — с тех пор
+              изменились колоды. Восстановить её честно уже нельзя: карты пришли бы другие.
+            </p>
+            <button onClick={устарела.onOk} className="btn-ghost mt-3 px-4 py-2 text-sm">
+              Понятно, начнём новую
+            </button>
+          </div>
+        )}
+
         {saved && !joinCode && (
           <section className="pop-in panel mb-8 overflow-hidden rounded-2xl">
             <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">

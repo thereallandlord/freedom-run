@@ -9,11 +9,14 @@
     "preview": "vite preview",
     "test": "esbuild src/engine/selftest.ts --bundle --platform=node --format=esm --outfile=.selftest.mjs --log-level=error && node .selftest.mjs",
     "test:mech": "esbuild src/engine/mechtest.ts --bundle --platform=node --format=esm --outfile=.mech.mjs --log-level=error && node .mech.mjs",
-    "test:all": "npm run test:mech && npm test",
+    "test:all": "npm run test:mech && npm test && npm run test:phase && npm run test:turn",
     "dump:state": "esbuild src/engine/dumpstate.ts --bundle --platform=node --format=esm --outfile=.dump.mjs --log-level=error && node .dump.mjs",
     "test:scen": "npx tsx src/engine/scenarios.ts",
     "fuzz": "npx tsx src/engine/fuzz.ts",
-    "audit": "npx tsx src/engine/audit.ts"
+    "audit": "npx tsx src/engine/audit.ts",
+    "test:phase": "npx tsx src/engine/phasetest.ts",
+    "test:turn": "npx tsx src/engine/dupturntest.ts",
+    "test:deck": "npx tsx src/engine/repeattest.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

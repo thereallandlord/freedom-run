@@ -445,6 +445,11 @@ export function App() {
   return (
     <Landing
       joinCode={room.urlCode ?? undefined}
+      устарела={
+        game.устарела
+          ? { ходов: game.устарела.ходов, onOk: game.забытьУстаревшую }
+          : undefined
+      }
       saved={
         game.table
           ? {

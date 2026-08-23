@@ -111,7 +111,7 @@ function checkSeat(s: Seat, seed: number, turn: number, t: Table) {
   const risk = ribaRisk(l)
   if (risk < 0 || risk > 0.6) fail('долговая нагрузка вне допустимого', `${name}: ${risk}`, seed, turn)
 
-  if (l.pets < 0 || l.pets > 3) fail('питомцев вне диапазона', `${name}: ${l.pets}`, seed, turn)
+  if (l.children < 0 || l.children > 3) fail('детей вне диапазона', `${name}: ${l.children}`, seed, turn)
 
   // Идентификаторы активов обязаны быть уникальными: иначе продажа одного
   // уносит другой. Ровно этот баг уже случался, когда id брали из журнала.
