@@ -101,6 +101,15 @@ export interface SeatSetup {
   name: string
   professionId: string
   dreamSpace: number
+  /**
+   * Цвет фишки, выбранный в лобби.
+   *
+   * 🔴 Раньше его сюда не клали вовсе, и стол раздавал цвета сам, по порядку
+   * мест. Человек выбирал синюю фишку, а по доске ехала зелёная. Функция для
+   * переноса цветов в комнате была написана — и НИ РАЗУ не вызывалась.
+   * Необязательный: одиночная партия цвет не выбирает, там порядок и решает.
+   */
+  color?: string
   isBot: boolean
   botDifficulty: BotDifficulty
 }
@@ -191,7 +200,7 @@ export function createTable(setup: TableSetup): Table {
     return {
       id: s.id ?? `seat-${i}`,
       name: s.name,
-      color: TOKEN_COLORS[i % TOKEN_COLORS.length],
+      color: s.color ?? TOKEN_COLORS[i % TOKEN_COLORS.length],
       track: 'rat',
       position: 0,
       ledger: createLedger(profession, s.name),

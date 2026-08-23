@@ -631,18 +631,13 @@ export function toTableSetup(room: RoomState): TableSetup {
     name: p.name,
     professionId: p.professionId,
     dreamSpace: p.dreamSpace,
+    // 🔴 Цвет едет вместе с местом. Без этой строки стол раздавал свои
+    // цвета по порядку, и фишка на доске была не та, что выбрали в лобби.
+    color: p.color,
     isBot: p.isBot || p.standIn,
     botDifficulty: p.botDifficulty,
   }))
   return { seed: room.seed, deckTheme: room.settings.deckTheme, seats }
-}
-
-/**
- * Цвета фишек в порядке мест. Движок раздаёт цвета сам по TOKEN_COLORS,
- * поэтому выбранные в лобби надо накатить на стол отдельно.
- */
-export function roomSeatColors(room: RoomState): string[] {
-  return room.players.map((p) => p.color)
 }
 
 /** Место игрока в столе: индекс совпадает с порядком players. */

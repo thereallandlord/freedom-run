@@ -27,6 +27,7 @@ import { fastBoard, cardText, fastSpaceText, smallDeals, bigDeals } from '../eng
 import { loanOutstanding, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
 import { Pips } from './Pips'
+import { вКругах } from './срок'
 import {
   GL_PACKAGES,
   GL_PROMOS,
@@ -1293,10 +1294,16 @@ function CardBody({
                   {card.boostPct ? <Stat label="Доход структуры" value={`+${card.boostPct}% сразу`} /> : null}
                   {card.growthPct ? <Stat label="Дальше расти будет" value={`быстрее на ${card.growthPct}%`} /> : null}
                   {card.dipPct ? (
-                    <Stat label="Доход просядет" value={`на ${card.dipPct}%, это ${card.dipPaydays ?? 4} зарплат`} />
+                    <Stat
+                      label="Доход просядет"
+                      value={`на ${card.dipPct}% · ${вКругах(card.dipPaydays ?? 4)}`}
+                    />
                   ) : null}
                   {card.freezePaydays ? (
-                    <Stat label="Приток новых людей встал" value={`на ${card.freezePaydays} зарплат`} />
+                    <Stat
+                      label="Приток новых людей встал"
+                      value={вКругах(card.freezePaydays)}
+                    />
                   ) : null}
                   {/*
                     🔴 «Теперь приносит» зелёным на ПЛОХОЙ карте читалось как
@@ -1321,7 +1328,7 @@ function CardBody({
                     <p className="pt-1 text-[11.5px] leading-snug text-amber-600 dark:text-amber-400">
                       {card.freezePaydays
                         ? 'Доход не падает, но и не растёт: пока приток новых людей стоит, структура остаётся на месте.'
-                        : 'Доход временно просел — через несколько зарплат вернётся к своему.'}
+                        : 'Доход временно просел — через круг-другой вернётся к своему.'}
                     </p>
                   )}
                 </div>

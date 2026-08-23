@@ -209,6 +209,25 @@ const SCENES_SMALL_RE = {  /* Зарубежное расширение: Бал�
     'A small country plot with survey markers and fence posts; on the neighbouring plot a freshly built wooden banya with smoke rising from its chimney, vegetable beds, summer daylight',
   'sd-land-m12':
     'A flat roadside plot of empty land beside a brand-new Russian motorway: trucks and cars streaming past, a clean concrete exit ramp curving away, steel gantry structures without any signage, wide fields to the horizon, bright day',
+
+  /*
+   * Дешёвый ярус, вернувшийся 23.08. Это самая первая покупка в игре, и кадр
+   * обязан быть СКРОМНЫМ, но не унылым: человек должен захотеть её сделать.
+   */
+  'sd-store-ufa-small':
+    'A tiny storage nook under a staircase in an old Soviet-era apartment building: worn painted wall, a narrow wooden door slightly ajar, a bicycle wheel and jars of preserves inside, warm bulb light spilling into the dim landing',
+  'sd-park-open-kzn':
+    'An open-air parking lot beside a Russian city market at dawn: numbered spaces painted on cracked asphalt, a lone white delivery van in one bay, a barrier arm and a small guard cabin, market awnings and crates behind, cold pink morning light',
+  'sd-garage-batumi':
+    'A concrete garage workshop block in Batumi, Georgia, two streets from the sea: roll-up metal door open, a furniture maker’s workbench, clamps and stacked timber inside, palm leaves and a strip of blue water visible at the end of the lane, bright southern light',
+  'sd-room-ufa':
+    'A single small room in a Russian family dormitory: a neatly made bed, a corner sink with a mirror, a kettle and two mugs on a shelf, a work jacket on a hook, thin curtains and grey daylight from a single window',
+  'sd-land-kzn':
+    'A roadside plot of land at the entrance to a Russian village: a small tyre-fitting cabin on gravel, a stack of used tyres, a compressor hose coiled by the door, cars slowing on the road beyond, flat overcast daylight',
+  'sd-studio-mersin-teje':
+    'A very small top-floor studio flat in Mersin, Turkey: a single bed, a student’s desk with an open laptop, a two-ring cooker in the corner, laundry drying on the balcony rail, sea haze and apartment blocks beyond, strong afternoon sun',
+  'sd-park-kzn-two':
+    'Two adjacent numbered parking bays in a new Kazan underground garage, both occupied by identical white car-sharing hatchbacks, clean sealed floor, bright even LED light',
 }
 
 /** Малые сделки — акции и активы. Одна картинка на ТИКЕР. */
@@ -1072,6 +1091,29 @@ const SCENES_DOODADS = {
     'A summer camp departure: children boarding a bus with backpacks and suitcases, parents waving from the kerb, tall pine forest behind, sunny morning',
   'dd-televizor-sgorel':
     'A living room with a large dead black television screen, a grandfather and two grandchildren sitting on the sofa looking disappointed, remote control in hand, warm lamp light',
+  /*
+   * Семейные карточки и своя свадьба. Кадр бытовой и тёплый: это НЕ беда,
+   * это жизнь, которая стоит денег. Кириллицу в кадр не пускаем.
+   */
+  'dd-baby-born':
+    'A newborn baby sleeping in a cot in a modest Russian apartment, a father’s hand resting on the rail, a folded pram by the wall, soft night lamp light',
+  'dd-baby-second':
+    'A toddler peering into a cot at a newborn sister in a small bright bedroom, a mother’s arm steadying the older child, morning light through thin curtains',
+  'dd-parents-move':
+    'An elderly couple’s suitcases and a houseplant just carried into a family apartment hallway, a grandmother hugging her grandchild, coats crowding the hooks, warm evening light',
+  'dd-tooth-braces':
+    'A teenager in a dental chair smiling with new braces, a dentist’s gloved hand holding a small mirror, clean bright clinic, instruments neatly laid out',
+  'dd-mother-meds':
+    'A kitchen table with a weekly pill organiser, several medicine boxes and a doctor’s prescription sheet, an older woman’s reading glasses on top, soft daylight',
+  'dd-car-old':
+    'An older car with its bonnet up in a Russian courtyard, a mechanic wiping his hands, a puddle of oil on the asphalt, wet autumn leaves, grey daylight',
+  'dd-flat-utilities':
+    'A utility bill lying on a kitchen table beside a calculator and a cooling cup of tea, a radiator and a frosted window behind, cold winter light',
+  'dd-school-paid':
+    'A child in a neat school uniform with a new backpack standing at the gates of a small private school, a parent’s hand on the shoulder, autumn trees, morning light',
+  'wt-svoya-svadba':
+    'A wedding banquet hall set for a large Muslim celebration: long tables with white cloth, plates of pilaf and fruit, floral arrangements, string lights overhead, guests arriving in their best clothes, warm golden evening light',
+
 }
 
 /** Быстрая дорожка — бизнесы. */

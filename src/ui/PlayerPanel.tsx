@@ -17,6 +17,7 @@ import {
   MANAGER_PCT,
 } from '../engine/ledger'
 import type { TableEvent } from '../engine/events'
+import { вКругах } from './срок'
 import { professionName } from '../engine/data'
 import { artById } from './cardArt'
 import {
@@ -597,13 +598,12 @@ export function PlayerPanel({
                     */}
                     {g.dipLeft > 0 && (
                       <div className="mt-0.5 text-amber-400">
-                        Приток новых людей просел — это ещё {g.dipLeft}{' '}
-                        {g.dipLeft === 1 ? 'зарплату' : g.dipLeft < 5 ? 'зарплаты' : 'зарплат'}.
+                        Приток новых людей просел — это ещё {вКругах(g.dipLeft)}.
                       </div>
                     )}
                     {g.slowdownLeft > 0 && (
                       <div className="mt-0.5 text-amber-400">
-                        Команда взяла паузу — доход пока не растёт, ещё {g.slowdownLeft} зарплат.
+                        Команда взяла паузу — доход пока не растёт, ещё {вКругах(g.slowdownLeft)}.
                       </div>
                     )}
                     {/*
