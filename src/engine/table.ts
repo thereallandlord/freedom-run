@@ -568,6 +568,19 @@ function rng(t: Table, salt: number): number {
 /** Взять следующую карту колоды, перетасовав её при исчерпании. */
 function draw(t: Table, deck: DeckName, size: number): number {
   const d = t.decks[deck]
+  /*
+   * 🔴 Размер сменился — колода пересобирается НЕМЕДЛЕННО.
+   *
+   * Дважды на одни грабли: и события GreenLeaf, и перекос к «своим» бумагам
+   * дёргали чужой курсор со своим размером. Порядок оставался коротким до
+   * самого исчерпания, и всё это время из большой колоды доставались только
+   * первые несколько карт — «опять те же карточки». Теперь несовпадение
+   * лечится на месте, а не живёт до конца прохода.
+   */
+  if (d.order.length !== size) {
+    d.order = shuffleIndices(size, t.seed + (t.rngCursor = (t.rngCursor ?? 0) + 1) + deck.length * 7919)
+    d.next = 0
+  }
   if (d.next >= d.order.length) {
     d.order = shuffleIndices(size, t.seed + (t.rngCursor = (t.rngCursor ?? 0) + 1) + deck.length * 7919)
     d.next = 0
@@ -1644,7 +1657,20 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (owned.size && card.kind !== 'stock' && rng(t, 5501) < 0.33) {
         const pool = list.filter((c) => c.kind === 'stock' && owned.has(c.symbol))
         if (pool.length) {
-          card = stockDrawPrice(t, scaled(pool[draw(t, event.size, pool.length) % pool.length]))
+          /*
+           * 🔴 ВОТ ЗДЕСЬ И ЖИЛИ ПОВТОРЫ. Выбор из горстки «своих» бумаг шёл
+           * через курсор ОБЩЕЙ колоды, но с чужим размером: при исчерпании
+           * колода сделок перетасовывалась на длину этой горстки — три-пять
+           * позиций вместо полусотни. После этого из всей колоды доставались
+           * только первые несколько карт, и за столом это читалось как
+           * «опять те же карточки». Ровно та же мина, что была у событий
+           * GreenLeaf.
+           *
+           * Перекос — это ЛОТЕРЕЯ, а не выдача из колоды: тянем броском,
+           * порядок колоды не трогаем.
+           */
+          const i = Math.min(pool.length - 1, Math.floor(rng(t, 5502) * pool.length))
+          card = stockDrawPrice(t, scaled(pool[i]))
         }
       }
       for (let tries = 0; tries < 6 && !dealDrawOk(t, card, event.size); tries++) {
