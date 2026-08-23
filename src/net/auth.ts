@@ -152,19 +152,27 @@ export async function signUpPassword(
  * нельзя — можно только знать. С этих адресов возврат идёт напрямую.
  */
 const ЗНАКОМЫЕ = [
-  'freedom-run-gamma.vercel.app',
   'cashflow.craftopen.space',
+  'freedom-run-gamma.vercel.app',
   'thereallandlord.github.io',
 ]
 /**
  * Через кого перебрасываем возврат, если адрес Supabase незнаком.
  *
- * 🔴 Через VERCEL, а не через Railway. Railway из России без VPN не
- * открывается — режут всю их пограничную сеть, — и отскок вёл вход ровно
- * через ту дверь, от которой мы уезжали: человек без VPN упирался в
- * таймаут на середине входа. Vercel из России открывается.
+ * 🔴 Этот адрес ведёт на VERCEL, а не на Railway — и это главное. Railway из
+ * России без VPN не открывается (режут всю их пограничную сеть), и отскок
+ * вёл вход ровно через ту дверь, от которой мы уезжали: человек без VPN
+ * упирался в таймаут на середине входа.
+ *
+ * 🔴 Имя домена прежнее, `cashflow.craftopen.space`, — сменилось только то,
+ * куда он смотрит. Поэтому старые ссылки у людей продолжают работать, а
+ * список разрешённых адресов у Supabase переписывать не пришлось.
+ *
+ * 🔴 Зона живёт на Cloudflare, но записи НЕ ПРОКСИРУЮТСЯ (серое облако):
+ * Cloudflare здесь только адресная книга. Включить проксирование — значит
+ * вернуть блокировку: их адреса в России тоже не открываются.
  */
-const ПЕРЕБРОС = 'https://freedom-run-gamma.vercel.app/auth-back'
+const ПЕРЕБРОС = 'https://cashflow.craftopen.space/auth-back'
 
 export function signInGoogle(): void {
   const сюда = (location.origin + location.pathname).replace(/\/$/, '')
