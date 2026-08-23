@@ -31,6 +31,7 @@ import { вКругах } from './срок'
 import {
   GL_PACKAGES,
   GL_PROMOS,
+  glPromoReady,
   glInitialState,
   glStructureIncome,
   glTotalIncome,
@@ -485,7 +486,13 @@ function CardBody({
          * вообще молчала — денег «не хватало» на цену, которой он не видел.
          */
         const s = { ...raw, price: marketStockPrice(raw.price, table.market.stock[raw.symbol]) }
-        const max = Math.floor(l.cash / s.price)
+        /*
+         * 🔴 Ноль бумаг тому, кто уже на Полосе свободы: движок покупку от
+         * него не примет (сделки Круга — только для тех, кто в Круге), а
+         * кнопка «Купить» оставалась живой и молча ничего не делала — 3619
+         * отказов из 3619 в замере.
+         */
+        const max = seat.track === 'rat' && !seat.outOfGame ? Math.floor(l.cash / s.price) : 0
         const holders = stockHolders(table, s.symbol)
         return (
           <S
@@ -701,9 +708,15 @@ function CardBody({
       const monthly = terms.instMonthly
       const flowCash = terms.cashFlow
 
-      const canCash = l.cash >= card.cost
+      /*
+       * 🔴 Тот, кто уже вырвался из Круга, в его сделки НЕ ВХОДИТ. Движок это
+       * режет всегда, а кнопки оставались живыми: гость с Полосы свободы жал
+       * «Налом» и получал молчание — 5797 отказов из 5797 в замере.
+       */
+      const вКруге = seat.track === 'rat' && !seat.outOfGame
+      const canCash = вКруге && l.cash >= card.cost
       // Рассрочки нет там, где взнос равен цене — не показываем пустой выбор.
-      const canInstallment = terms.financeable && l.cash >= card.downPayment
+      const canInstallment = вКруге && terms.financeable && l.cash >= card.downPayment
       /* Сколько не хватает до взноса — столько и просим у банка, с округлением. */
       const ribaWant = Math.min(
         ribaFree,
@@ -974,8 +987,19 @@ function CardBody({
             перебить друг друга, а он выбирает. Механика ставок в движке лежала
             готовая (BID_OFFER), ей просто никто не пользовался.
           */}
-          {/* Сделку можно не только купить: право на неё продаётся, а вход делится с партнёром. */}
-          <DealTradeActions table={table} seat={seat} card={card} dispatch={dispatch} />
+          {/*
+            Сделку можно не только купить: право на неё продаётся, а вход
+            делится с партнёром.
+
+            🔴 Но ТОЛЬКО хозяину находки. Блок рисовался всем, кого впустили в
+            чужую сделку, а движок такие события отклоняет: продать чужую
+            карту, подарить её или позвать в долю по чужой находке нельзя.
+            Три кнопки у гостя были мёртвыми на все сто — 6591 отказ из 6591
+            в замере.
+          */}
+          {seat.id === table.seats[table.turnIndex].id && (
+            <DealTradeActions table={table} seat={seat} card={card} dispatch={dispatch} />
+          )}
 
           <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
             Пропустить
@@ -1207,6 +1231,19 @@ function CardBody({
 
       if (card.kind === 'glEvent') {
         const biz = seat.ledger.businesses.find((b) => b.gl)
+        /*
+         * 🔴 Промоушен берёт ТОЛЬКО ходящий и ТОЛЬКО когда он созрел.
+         *
+         * Рыночная карточка общая, поэтому кнопки видели все — но движок
+         * принимает промоушен как действие хода и вдобавок проверяет срок,
+         * перерыв и план по объёму. У соседа кнопка не срабатывала никогда
+         * (97 отказов из 97), у ходящего — в половине случаев (34 из 65), и
+         * оба раза молча. Теперь причина написана прямо под кнопкой.
+         */
+        const мойХод = seat.id === table.seats[table.turnIndex].id
+        const промо = card.promo ? GL_PROMOS.find((x) => x.id === card.promo) : undefined
+        const созрел = biz?.gl && промо ? glPromoReady(biz.gl, промо) : { ready: false, why: '' }
+        const можноПромо = !!biz?.gl && мойХод && созрел.ready
         return (
           <S badge="Партнёрский бизнес" title={txt.title} flavor={txt.flavor} accent="#22c55e">
             {card.promo ? (
@@ -1219,13 +1256,22 @@ function CardBody({
                   />
                 </div>
                 <button
-                  disabled={!biz?.gl}
+                  disabled={!можноПромо}
                   onClick={() => dispatch({ type: 'GL_PROMO_TAKE', promo: card.promo! })}
                   className="btn-primary w-full disabled:opacity-40"
                 >
                   Взять деньгами
                 </button>
-                {card.promo === 'travel' && biz?.gl && (
+                {!можноПромо && (
+                  <p className="text-center text-[11.5px] leading-snug text-[var(--muted)]">
+                    {!biz?.gl
+                      ? 'Партнёрского бизнеса у вас нет — эта карточка не про вас'
+                      : !мойХод
+                        ? 'Это предложение тому, чей ход'
+                        : созрел.why}
+                  </p>
+                )}
+                {card.promo === 'travel' && можноПромо && (
                   <button
                     onClick={() => dispatch({ type: 'GL_PROMO_TAKE', promo: 'travel', go: true })}
                     className="btn-ghost w-full"
@@ -1294,7 +1340,14 @@ function CardBody({
                   <Stat label="Доход по структуре вырастет на" value="30%" />
                 </div>
                 <button
-                  disabled={!biz || seat.ledger.cash < (card.triangleCost ?? 0)}
+                  /*
+                    🔴 Кабинеты бывают уже открыты. Движок ищет бизнес БЕЗ
+                    них и молча отклоняет покупку, а кнопка оставалась
+                    живой — человек жал и ничего не происходило.
+                  */
+                  disabled={
+                    !biz?.gl || biz.gl.triangle || seat.ledger.cash < (card.triangleCost ?? 0)
+                  }
                   onClick={() => dispatch({ type: 'GL_BUY_TRIANGLE', cost: card.triangleCost ?? 0 })}
                   className="btn-primary w-full disabled:opacity-40"
                 >

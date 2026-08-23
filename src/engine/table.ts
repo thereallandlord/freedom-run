@@ -915,7 +915,7 @@ function dealDrawOk(t: Table, card: import('./types').DealCard, size: 'small' | 
    * что такой заработок недозволен, и решение остаётся за человеком — а
    * шанс выстрелить у них и так занижен ценой при выдаче.
    */
-  if ((card as { meme?: boolean }).meme && rng(t, 7717) > 0.4) return false
+  if ((card as { meme?: boolean }).meme && rng(t, 7717) > 0.22) return false
 
   if (card.kind === 'business') {
     const owned = l.businesses.filter((b) => !b.gl).length
