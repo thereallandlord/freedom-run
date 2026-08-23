@@ -140,7 +140,15 @@ function AssetRow({
         <span className="min-w-0 flex-1">
           <span className="block truncate">{a.name}</span>
           {a.investorShare ? (
-            <span className="block text-[10.5px] text-[var(--t-muted, var(--muted))]">50% инвестору</span>
+            /*
+             * 🔴 Печатали «50% инвестору» ВСЕГДА, какой бы ни была настоящая
+             * доля. Договорились за столом на 30 — панель всё равно писала 50,
+             * и выглядело так, будто доля бывает только пополам. Показываем
+             * ту, что записана в самом активе.
+             */
+            <span className="block text-[10.5px] text-[var(--t-muted, var(--muted))]">
+              {Math.round(a.investorShare * 100)}% партнёру
+            </span>
           ) : null}
         </span>
         <span className="tabnum shrink-0">{signed(mine)}</span>

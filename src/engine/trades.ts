@@ -85,12 +85,27 @@ export const PRICE_FLOOR = 0.1
 export const PRICE_CEIL = 2.0
 
 export function priceAllowed(asked: number, fair: number): boolean {
+  /*
+   * 🔴 ПОДАРОК РАЗРЕШЁН (просьба Камиля: «карточку можно передать только за
+   * деньги» — так быть не должно). Ноль — это честная передача: она видна
+   * всем и записана в журнал. Коридор придуман против «продам другу за
+   * рубль» — сделки, которая ПРИТВОРЯЕТСЯ сделкой; подарок ничем не
+   * притворяется, и запрещать его незачем.
+   */
+  if (asked === 0) return true
   if (fair <= 0) return asked >= 0
   const k = asked / fair
   return k >= PRICE_FLOOR && k <= PRICE_CEIL
 }
 
 export function clampPrice(asked: number, fair: number): number {
+  /*
+   * 🔴 Ноль оставляем нулём. Это ЕДИНСТВЕННОЕ место, которым пользуется
+   * движок (priceAllowed — для окна), и без этой строки подарок молча
+   * превращался бы в счёт на десятую часть цены: человек жмёт «отдать
+   * даром», а с друга списывают деньги.
+   */
+  if (asked === 0) return 0
   if (fair <= 0) return Math.max(0, asked)
   return Math.min(Math.max(asked, Math.round(fair * PRICE_FLOOR)), Math.round(fair * PRICE_CEIL))
 }

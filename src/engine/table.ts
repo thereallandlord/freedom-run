@@ -872,6 +872,16 @@ function dealDrawOk(t: Table, card: import('./types').DealCard, size: 'small' | 
     return someoneWithout
   }
 
+  /*
+   * 🔴 Мемкоины попадаются РЕЖЕ остальных карт (просьба Камиля: «выпадают
+   * слишком часто»). Их три штуки в малой колоде — при равных шансах это
+   * почти каждая десятая находка, и стол превращался в казино. Сама
+   * возможность заработать оставлена сознательно: карточка честно говорит,
+   * что такой заработок недозволен, и решение остаётся за человеком — а
+   * шанс выстрелить у них и так занижен ценой при выдаче.
+   */
+  if ((card as { meme?: boolean }).meme && rng(t, 7717) > 0.4) return false
+
   if (card.kind === 'business') {
     const owned = l.businesses.filter((b) => !b.gl).length
     if (owned === 0) return true
@@ -2643,7 +2653,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           bids: [],
         },
       ]
-      log(t, seat.id, `Предложил другим свою находку «${localizedCardTitle(card)}» за ${money(amount)}`)
+      log(
+        t,
+        seat.id,
+        amount === 0
+          ? `Отдаёт свою находку «${localizedCardTitle(card)}» даром`
+          : `Предложил другим свою находку «${localizedCardTitle(card)}» за ${money(amount)}`,
+      )
       return t
     }
 
