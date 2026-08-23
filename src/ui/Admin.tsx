@@ -35,7 +35,7 @@ import {
   professionsFor,
   smallDeals,
 } from '../engine/data'
-import { MARKET_EFFECT_LIFE, THEME_RULES, WANTS_BEFORE_BURNOUT } from '../engine/table'
+import { THEME_RULES, WANTS_BEFORE_BURNOUT } from '../engine/table'
 import { artForCard } from './cardArt'
 /*
  * Большой круг берём из файла напрямую, а не через `fastBoard()`: та функция
@@ -985,7 +985,8 @@ function Правила() {
         />
         <Строка
           имя="Сколько живёт мировое событие"
-          знач={`${MARKET_EFFECT_LIFE} зарплат`}
+          знач="до следующего события"
+          что="Новость снимает предыдущую начисто: в мире всегда ровно одна"
         />
         <Строка имя="Мировых событий в колоде" знач={String(WORLD_EVENTS.length)} />
         <Строка имя="Профессий" знач={String(проф.length)} />

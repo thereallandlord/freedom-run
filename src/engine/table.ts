@@ -251,7 +251,13 @@ export function createTable(setup: TableSetup): Table {
 export const WANTS_BEFORE_BURNOUT = 4
 export const BURNOUT_TURNS = 4
 
-/** Сколько мировых событий держится эффект рынка. */
+/**
+ * Сколько мировых событий держится эффект рынка.
+ *
+ * 🔴 БОЛЬШЕ НЕ ИСПОЛЬЗУЕТСЯ движком: новость держится до следующей новости и
+ * снимается ею начисто. Число оставлено только затем, чтобы старые партии,
+ * записанные прежним кодом, читались без ошибки.
+ */
 export const MARKET_EFFECT_LIFE = 3
 
 /**
@@ -384,10 +390,30 @@ export function applyWorldEvent(prev: Table, index: number): Table {
   const mul = (pct: number) => 1 + pct / 100
 
   t.worldTick += 1
-  const until = t.worldTick + MARKET_EFFECT_LIFE
+  /*
+   * 🔴 НОВОЕ СОБЫТИЕ СНИМАЕТ ПРЕДЫДУЩЕЕ НАЧИСТО.
+   *
+   * Раньше эффекты копились по три слоя и медленно рассасывались: на доске
+   * одновременно висели три новости, множители перемножались, и понять, во
+   * что теперь оценивается твоя квартира, было нельзя. Теперь в мире всегда
+   * ровно одна новость — она и объясняет цифры.
+   *
+   * Сплит бумаг не трогаем: это не новость рынка, а необратимая смена
+   * номинала, и она обязана пережить всё.
+   */
+  t.marketEffects = t.marketEffects.filter((x) => !x.fromWorld)
+  const until = Number.MAX_SAFE_INTEGER
   const push = (kind: 'price' | 'flow' | 'stock', keys: string[], pct: number) => {
     for (const key of keys)
-      t.marketEffects.push({ eventId: ev.id, title: ev.title, kind, key, mul: mul(pct), until })
+      t.marketEffects.push({
+        eventId: ev.id,
+        title: ev.title,
+        kind,
+        key,
+        mul: mul(pct),
+        until,
+        fromWorld: true,
+      })
   }
 
   switch (e.kind) {
