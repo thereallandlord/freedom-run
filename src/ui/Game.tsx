@@ -5,6 +5,8 @@ import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow } from 
 import {
   RULES,
   fastTrackIncome,
+  fastTrackProgress,
+  fastTrackTarget,
   isOutOfRatRace,
   freedomIncome,
   monthlyCashFlow,
@@ -58,10 +60,19 @@ function Scoreboard({
       {table.seats.map((s, i) => {
         const active = i === table.turnIndex
         const flow = s.track === 'fast' ? fastTrackIncome(s.ledger) : monthlyCashFlow(s.ledger, table.market.flow)
-        // Насколько человек близок к свободе — то же, что показывает его панель.
-        const need = totalExpenses(s.ledger)
-        const have = freedomIncome(s.ledger, table.market.flow)
-        const pct = need > 0 ? Math.min(100, Math.round((have / need) * 100)) : 0
+        /*
+         * Насколько человек близок к цели — считаем ТЕМ ЖЕ способом, что и его
+         * собственная панель (PlayerPanel).
+         *
+         * 🔴 На Полосе свободы цель другая: не «доход перерос расходы», а
+         * «доход дошёл до цели». Расходов Круга там уже нет, поэтому прежняя
+         * формула делила на ноль и показывала всем 0%, пока слева честно рос
+         * процент. Живая жалоба 19.08: «справа до свободы висит 0%».
+         */
+        const наПолосе = s.track === 'fast'
+        const have = наПолосе ? fastTrackProgress(s.ledger) : freedomIncome(s.ledger, table.market.flow)
+        const need = наПолосе ? fastTrackTarget() : totalExpenses(s.ledger)
+        const pct = Math.max(0, Math.min(100, Math.round((have / Math.max(1, need)) * 100)))
         return (
           <button
             key={s.id}

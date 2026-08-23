@@ -13,6 +13,8 @@
  * поводов сломаться на деплое.
  */
 import { createServer } from 'node:http'
+import { argv } from 'node:process'
+import { pathToFileURL } from 'node:url'
 import { readFile, stat } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
 import { cabinetReady, listGames, saveDebrief, saveGame, whoIs } from './cabinet.mjs'
@@ -214,7 +216,16 @@ async function serveStatic(req, res, url) {
   }
 }
 
-const server = createServer(async (req, res) => {
+/**
+ * Один обработчик запроса на все хостинги.
+ *
+ * 🔴 Вынесен наружу и экспортируется, потому что игра живёт на двух адресах:
+ * свой сервер (Railway) и функции (Vercel, чтобы открывалось без VPN). Если
+ * скопировать логику в оба места, они разъедутся — и человек получит разное
+ * поведение в зависимости от того, какая ссылка у него открылась. Здесь код
+ * ОДИН, а хостинги отличаются только тем, кто его зовёт.
+ */
+export async function handler(req, res) {
   const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
 
   if (req.method === 'OPTIONS') return send(res, 204, '')
@@ -303,9 +314,15 @@ const server = createServer(async (req, res) => {
   }
 
   return serveStatic(req, res, url)
-})
+}
 
-server.listen(PORT, '::', () => {
+const server = createServer(handler)
+
+// 🔴 Слушаем порт ТОЛЬКО когда файл запущен напрямую (Railway). На Vercel его
+// просто импортируют ради `handler` — там свой приёмник запросов, и попытка
+// занять порт уронила бы функцию.
+const запущенНапрямую = argv[1] && import.meta.url === pathToFileURL(argv[1]).href
+if (запущенНапрямую) server.listen(PORT, '::', () => {
   // 🔴 Слушаем '::' — приватная сеть Railway ходит по IPv6, и на '0.0.0.0'
   // запросы упирались бы в таймаут. Это уже стоило нам полдня на другом сервисе.
   console.log(`игра слушает :${PORT}`)
