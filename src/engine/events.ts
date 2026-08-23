@@ -54,7 +54,7 @@ export type LedgerEvent =
   | { type: 'TAKE_LOAN'; amount: number }
   | { type: 'REPAY_LOAN'; amount: number }
   | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
-  | { type: 'PAY_OFF_DEBT'; debt: PayableDebt }
+  | { type: 'PAY_OFF_DEBT'; debt: PayableDebt; amount?: number }
   | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
   | { type: 'ADJUST_CASH'; amount: number }
   | { type: 'FORCED_SALE'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
@@ -125,7 +125,7 @@ export type TableEventBody =
   | { type: 'TAKE_LOAN'; amount: number }
   | { type: 'REPAY_LOAN'; amount: number }
   | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
-  | { type: 'PAY_OFF_DEBT'; debt: PayableDebt }
+  | { type: 'PAY_OFF_DEBT'; debt: PayableDebt; amount?: number }
   | { type: 'ENTER_FAST_TRACK' }
   | { type: 'BUY_FT_BUSINESS' }
   | { type: 'TRY_VENTURE'; die: number }

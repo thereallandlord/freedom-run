@@ -11,6 +11,7 @@ import type {
   Table,
   TablePhase,
 } from './types'
+import { DEBT_TO_PAYMENT } from './types'
 import type { LedgerEvent, TableEvent, TableEventBody } from './events'
 import { applyEvent } from './applyEvent'
 import {
@@ -702,6 +703,32 @@ export function pendingUndecided(t: Table): Seat[] {
   const decided = new Set(p.decided ?? [])
   const out: Seat[] = []
   if (!decided.has(owner.id) && !owner.isBot) out.push(owner)
+  /*
+   * 🔴 Рыночная карта ждёт ВСЕХ, кому есть что по ней решать.
+   *
+   * Раньше ждали только ходящего: он жал «Дальше», карта пропадала со
+   * стола — и сосед, которому предлагали 130% за его дом, терял предложение,
+   * не успев ответить. Продать по такой карте движок разрешает каждому
+   * владельцу, значит и закрывать её раньше времени нельзя.
+   *
+   * Ждём только тех, у кого актив ЕСТЬ: иначе стол стоял бы на людях,
+   * которым и жать-то нечего.
+   */
+  if (p.kind === 'market') {
+    const заинтересован = (s2: Seat): boolean => {
+      if (p.card.kind === 'sellOffer')
+        return marketMatches(t, p.card.category).some((m) => m.seat.id === s2.id)
+      if (p.card.kind === 'stockPrice')
+        return stockHolders(t, p.card.symbol).some((h) => h.id === s2.id)
+      return false
+    }
+    for (const s2 of t.seats) {
+      if (s2.id === owner.id || s2.isBot || s2.outOfGame) continue
+      if (decided.has(s2.id)) continue
+      if (заинтересован(s2)) out.push(s2)
+    }
+    return out
+  }
   if (p.access && p.access.mode !== 'closed') {
     for (const s2 of t.seats) {
       if (s2.id === owner.id || s2.isBot || s2.outOfGame) continue
@@ -2089,9 +2116,22 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     case 'PAY_OFF_DEBT': {
       const balance = l.liabilities[event.debt]
-      if (balance <= 0 || l.cash < balance) return prev
-      seatLedgerEvent(t, seat.id, { type: 'PAY_OFF_DEBT', debt: event.debt })
-      log(t, seat.id, `Закрыл долг: ${money(balance)}`)
+      if (balance <= 0) return prev
+      const pay =
+        event.amount == null ? balance : Math.max(0, Math.min(Math.round(event.amount), balance))
+      if (pay <= 0 || l.cash < pay) return prev
+      const payment = l.expenses[DEBT_TO_PAYMENT[event.debt]]
+      const остаток = balance - pay
+      seatLedgerEvent(t, seat.id, { type: 'PAY_OFF_DEBT', debt: event.debt, amount: event.amount })
+      log(
+        t,
+        seat.id,
+        остаток === 0
+          ? `Закрыл долг: ${money(pay)} — платёж ${money(payment)}/мес больше не идёт`
+          : `Внёс по долгу ${money(pay)}: осталось ${money(остаток)}, платёж стал ${money(
+              Math.round((payment * остаток) / balance),
+            )}/мес`,
+      )
       return t
     }
 
@@ -2100,9 +2140,23 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       // 🔴 Множитель берём из правил: в русском режиме он 50, а не 100 —
       // журнал обещал игроку вдвое больше, чем приходило на счёт.
       const buyout = RULES.fastTrackMultiplier * freedomIncome(l)
+      const долгиБыли =
+        l.liabilities.homeMortgage +
+        l.liabilities.schoolLoans +
+        l.liabilities.carLoans +
+        l.liabilities.creditCards +
+        l.liabilities.retailDebt +
+        l.liabilities.bankLoan +
+        l.liabilities.ribaLoan
       seatLedgerEvent(t, seat.id, { type: 'ENTER_FAST_TRACK' })
       t.seats[seatIdx] = { ...t.seats[seatIdx], track: 'fast', position: 0 }
-      log(t, seat.id, `🎉 Вырвался из Круга! Выкуп ${money(buyout)}`)
+      log(
+        t,
+        seat.id,
+        долгиБыли > 0
+          ? `🎉 Вырвался из Круга! Выкуп ${money(buyout)}, из него закрыты долги на ${money(долгиБыли)}`
+          : `🎉 Вырвался из Круга! Выкуп ${money(buyout)}`,
+      )
       /*
        * 🔴 Показываем это ВСЕМ отдельным окном. Раньше выход из Круга
        * выглядел так: полоска цели дошла до ста процентов — и всё. Главный

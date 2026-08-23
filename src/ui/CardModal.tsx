@@ -529,28 +529,55 @@ function CardBody({
               денег» неудобно, а решение чаще всего именно в долях: взять
               четверть или зайти на всё.
             */}
-            {max > 1 && (
-              <div className="grid grid-cols-5 gap-1.5">
-                {[10, 25, 50, 75, 100].map((pct) => {
-                  const n = Math.max(1, Math.floor((max * pct) / 100))
-                  const on = Math.min(shares, max) === n
-                  return (
-                    <button
-                      key={pct}
-                      onClick={() => setShares(n)}
-                      className={`rounded-lg border px-1 py-1.5 text-[11.5px] font-semibold transition ${
-                        on
-                          ? 'border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                          : 'border-[var(--line)] text-[var(--muted)] hover:border-emerald-500/50'
-                      }`}
-                      title={`${n} шт · ${money(n * s.price)}`}
-                    >
-                      {pct}%
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+            {max > 1 &&
+              (() => {
+                /*
+                 * 🔴 Доли считались от того, что по карману, и при малых
+                 * количествах СХЛОПЫВАЛИСЬ: если денег хватает на 4 бумаги,
+                 * то и «10%», и «25%» — это одна и та же одна бумага. Обе
+                 * кнопки загорались разом, и выглядело так, будто выбор
+                 * срабатывает со сдвигом. Работала только «100%» — она
+                 * единственная ни с чем не совпадала.
+                 *
+                 * Когда бумаг мало, показываем прямо количество: это честнее
+                 * процентов, за которыми всё равно стоит «одна штука».
+                 * Когда много — оставляем доли, но одинаковые убираем.
+                 */
+                const сырые =
+                  max <= 6
+                    ? Array.from({ length: max }, (_, i) => ({ ключ: i + 1, подпись: `${i + 1}`, n: i + 1 }))
+                    : [10, 25, 50, 75, 100].map((pct) => ({
+                        ключ: pct,
+                        подпись: `${pct}%`,
+                        n: Math.max(1, Math.floor((max * pct) / 100)),
+                      }))
+                const видано = new Set<number>()
+                const пресеты = сырые.filter((x) => !видано.has(x.n) && видано.add(x.n))
+                return (
+                  <div
+                    className="grid gap-1.5"
+                    style={{ gridTemplateColumns: `repeat(${пресеты.length}, minmax(0, 1fr))` }}
+                  >
+                    {пресеты.map((x) => {
+                      const on = Math.min(shares, max) === x.n
+                      return (
+                        <button
+                          key={x.ключ}
+                          onClick={() => setShares(x.n)}
+                          className={`rounded-lg border px-1 py-1.5 text-[11.5px] font-semibold transition ${
+                            on
+                              ? 'border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                              : 'border-[var(--line)] text-[var(--muted)] hover:border-emerald-500/50'
+                          }`}
+                          title={`${x.n} шт · ${money(x.n * s.price)}`}
+                        >
+                          {x.подпись}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
 
             <div className="flex gap-2">
               <button
@@ -1088,7 +1115,13 @@ function CardBody({
                 )}
               </div>
             )}
-            <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-quiet w-full">
+            {/*
+              🔴 Здесь был «конец хода». Но рыночную карту видят все, а
+              завершить ход может только тот, чей ход, — у остальных кнопка
+              молча не срабатывала. «Пропустить» — это решение за себя, оно
+              есть у каждого; когда решили все, карта уходит сама.
+            */}
+            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
               Дальше
             </button>
           </S>
@@ -1285,7 +1318,13 @@ function CardBody({
                 )}
               </div>
             )}
-            <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-quiet w-full">
+            {/*
+              🔴 Здесь был «конец хода». Но рыночную карту видят все, а
+              завершить ход может только тот, чей ход, — у остальных кнопка
+              молча не срабатывала. «Пропустить» — это решение за себя, оно
+              есть у каждого; когда решили все, карта уходит сама.
+            */}
+            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
               Дальше
             </button>
           </S>
@@ -1295,7 +1334,7 @@ function CardBody({
       // Сплит и разовая выплата применились автоматически.
       return (
         <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
-          <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-primary w-full">
+          <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
             Понятно
           </button>
         </S>

@@ -438,12 +438,34 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       return l
     }
 
+    /*
+     * 🔴 Долг гасится и ЧАСТЯМИ, не только целиком.
+     *
+     * Раньше кнопка была одна — «закрыть весь долг», и она гасла, если денег
+     * не хватало. Со стороны это выглядело как поломка: «у одного
+     * погасилось, у другого рассрочка на машину не гасится». А человек с
+     * половиной суммы вообще ничего сделать не мог — только копить, пока
+     * платёж каждый месяц съедает зарплату.
+     *
+     * Платёж падает ровно во столько же раз, во сколько уменьшился остаток:
+     * внёс половину — платишь половину. Никакой переплаты за досрочность:
+     * рассрочка тем и отличается от кредита.
+     *
+     * Сумма НЕОБЯЗАТЕЛЬНА: без неё гасим целиком, как раньше. Это важно —
+     * старые партии переигрываются из журнала, и события в нём суммы не
+     * несут.
+     */
     case 'PAY_OFF_DEBT': {
       const balance = l.liabilities[e.debt]
       if (balance <= 0) return prev
-      l.cash -= balance
-      l.liabilities[e.debt] = 0
-      l.expenses[DEBT_TO_PAYMENT[e.debt]] = 0
+      const pay = e.amount == null ? balance : Math.max(0, Math.min(Math.round(e.amount), balance))
+      if (pay <= 0 || l.cash < pay) return prev
+      const payment = l.expenses[DEBT_TO_PAYMENT[e.debt]]
+      const остаток = balance - pay
+      l.cash -= pay
+      l.liabilities[e.debt] = остаток
+      l.expenses[DEBT_TO_PAYMENT[e.debt]] =
+        остаток === 0 ? 0 : Math.round((payment * остаток) / balance)
       return l
     }
 
@@ -532,6 +554,45 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.realEstate = []
       l.businesses = []
       l.stocks = []
+      /*
+       * 🔴 Выкуп ЗАКРЫВАЕТ все долги Круга, а их сумма из него вычитается.
+       *
+       * Так и происходит, когда человек распродаёт всё нажитое: сначала
+       * рассчитывается по обязательствам, остальное забирает. Раньше долги
+       * оставались висеть на Полосе свободы мёртвым грузом: платежей по ним
+       * там нет (на Полосе считается только доход), гасить их было незачем —
+       * но панель их показывала, и человек честно пытался их закрыть,
+       * выбрасывая деньги ни за что. Отсюда и «на большом круге погасить
+       * нельзя вовсе»: гасить там нечего и не нужно.
+       */
+      const долги =
+        l.liabilities.homeMortgage +
+        l.liabilities.schoolLoans +
+        l.liabilities.carLoans +
+        l.liabilities.creditCards +
+        l.liabilities.retailDebt +
+        l.liabilities.bankLoan +
+        l.liabilities.ribaLoan
+      l.cash = Math.max(0, l.cash - долги)
+      l.liabilities = {
+        homeMortgage: 0,
+        schoolLoans: 0,
+        carLoans: 0,
+        creditCards: 0,
+        retailDebt: 0,
+        bankLoan: 0,
+        ribaLoan: 0,
+      }
+      l.expenses = {
+        ...l.expenses,
+        homeMortgagePayment: 0,
+        schoolLoanPayment: 0,
+        carPayment: 0,
+        creditCardPayment: 0,
+        retailPayment: 0,
+        bankLoanPayment: 0,
+        ribaPayment: 0,
+      }
       l.phase = 'fastTrack'
       l.fastTrack = {
         beginningIncome: buyout,

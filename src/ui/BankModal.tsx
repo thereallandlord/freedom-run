@@ -40,6 +40,8 @@ export function BankModal({
   const [loan, setLoan] = useState(step)
   const [repay, setRepay] = useState(step)
   const [confirmDebt, setConfirmDebt] = useState<PayableDebt | null>(null)
+  /** Сколько вносим по выбранному долгу — гасить можно и частями. */
+  const [part, setPart] = useState(0)
   const onFast = seat.track === 'fast'
   // Халяль-режим: процентных займов нет, остаётся только досрочное погашение.
   const noLoans = !RULES.loansEnabled
@@ -132,7 +134,7 @@ export function BankModal({
 
         <div>
           <div className="mb-1.5 mt-4 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
-            Закрыть долг целиком — платёж исчезает
+            Гасить долги — платёж падает вместе с остатком
           </div>
           <div className="space-y-1.5">
             {/*
@@ -144,31 +146,80 @@ export function BankModal({
               const balance = l.liabilities[debt]
               if (balance <= 0) return null
               const payment = l.expenses[DEBT_TO_PAYMENT[debt]]
-              const armed = confirmDebt === debt
+              const open = confirmDebt === debt
+              /* Сколько вообще можно внести прямо сейчас — по деньгам и по долгу. */
+              const потолок = Math.floor(Math.min(l.cash, balance) / step) * step
+              const внесу = Math.max(step, Math.min(part, потолок))
+              const остаток = balance - внесу
+              const станет = остаток <= 0 ? 0 : Math.round((payment * остаток) / balance)
               return (
-                <button
-                  key={debt}
-                  disabled={l.cash < balance}
-                  onClick={() => {
-                    if (armed) {
-                      dispatch({ type: 'PAY_OFF_DEBT', debt })
-                      setConfirmDebt(null)
-                    } else {
-                      setConfirmDebt(debt)
-                    }
-                  }}
-                  className={`panel-2 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] disabled:opacity-40 ${
-                    armed ? 'border-amber-500 bg-amber-500/10' : ''
-                  }`}
-                >
-                  <span>
-                    {armed ? `Точно погасить? Спишется ${money(balance)}` : debtLabel(debt)}
-                    {!armed && <span className="ml-2 text-[var(--muted)]">−{money(payment)}/мес</span>}
-                  </span>
-                  <span className="tabnum font-semibold">
-                    {armed ? 'Да, погасить' : money(balance)}
-                  </span>
-                </button>
+                <div key={debt} className={`panel-2 rounded-lg ${open ? 'border-amber-500' : ''}`}>
+                  <button
+                    onClick={() => {
+                      setConfirmDebt(open ? null : debt)
+                      setPart(Math.floor(Math.min(l.cash, balance) / step) * step)
+                    }}
+                    className="flex w-full items-center justify-between px-3 py-2 text-left text-[13px]"
+                  >
+                    <span>
+                      {debtLabel(debt)}
+                      <span className="ml-2 text-[var(--muted)]">−{money(payment)}/мес</span>
+                    </span>
+                    <span className="tabnum font-semibold">{money(balance)}</span>
+                  </button>
+                  {open && (
+                    <div className="border-t border-[var(--line)] px-3 py-2.5">
+                      {потолок < step ? (
+                        /*
+                         * 🔴 Говорим ПРЯМО, чего не хватает. Раньше кнопка
+                         * просто гасла, и это читалось как «долг не гасится»:
+                         * человек жал и не понимал, почему ничего не
+                         * происходит.
+                         */
+                        <p className="text-[12px] leading-snug text-[var(--muted)]">
+                          Сейчас вносить нечего: на счету {money(l.cash)}, а вносить можно от{' '}
+                          {money(step)}.
+                        </p>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min={step}
+                              max={потолок}
+                              step={step}
+                              value={внесу}
+                              onChange={(e) => setPart(Number(e.target.value))}
+                              className="flex-1 accent-emerald-500"
+                            />
+                            <span className="tabnum w-24 text-right text-sm">{money(внесу)}</span>
+                          </div>
+                          <p className="mt-1 text-[11.5px] leading-snug text-[var(--muted)]">
+                            {остаток <= 0 ? (
+                              <>Долг закроется целиком — платёж {money(payment)}/мес исчезнет.</>
+                            ) : (
+                              <>
+                                Останется {money(остаток)}, платёж станет −{money(станет)}/мес
+                                {потолок < balance && (
+                                  <> · на весь долг не хватает {money(balance - l.cash)}</>
+                                )}
+                              </>
+                            )}
+                          </p>
+                          <button
+                            onClick={() => {
+                              dispatch({ type: 'PAY_OFF_DEBT', debt, amount: внесу })
+                              setConfirmDebt(null)
+                            }}
+                            className="btn-primary mt-2 w-full"
+                          >
+                            Внести {money(внесу)}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>
