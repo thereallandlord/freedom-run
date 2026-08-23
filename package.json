@@ -17,7 +17,8 @@
     "test:phase": "npx tsx src/engine/phasetest.ts",
     "test:turn": "npx tsx src/engine/dupturntest.ts",
     "test:deck": "npx tsx src/engine/repeattest.ts",
-    "test:meme": "npx tsx src/engine/memetest.ts"
+    "test:meme": "npx tsx src/engine/memetest.ts",
+    "bots": "npx tsx src/engine/botmeter.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

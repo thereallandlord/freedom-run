@@ -18,6 +18,7 @@ import { Board } from './Board'
 import { PlayerPanel, money, signed, tone } from './PlayerPanel'
 import { CardModal } from './CardModal'
 import { Pips } from './Pips'
+import { Лента } from './Лента'
 import { BankModal } from './BankModal'
 import { PortfolioModal } from './PortfolioModal'
 import { DebriefModal } from './DebriefModal'
@@ -893,6 +894,12 @@ export function Game({
         и половина интереса именно в этом.
         На чужом ходу окно показывается без кнопок: смотреть можно, жать нечего.
       */}
+      {/*
+        Плашки «кто что сделал». Стоят выше карточки в разметке, но ниже по
+        слою и не ловят клики — карточке они не мешают.
+      */}
+      <Лента table={table} meId={meId ?? seat.id} />
+
       {table.pending && table.pending.kind !== 'gameOver' && (
         <CardModal
           table={table}

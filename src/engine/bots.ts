@@ -1,3 +1,21 @@
+/**
+ * Ручки характера ботов.
+ *
+ * 🔴 Числа подобраны ЗАМЕРОМ (`npm run bots`), а не на глаз: до правок бот
+ * брал крупную колоду в 100% случаев и не видел бумаг вовсе, продавал лот
+ * целиком при первой же цене и ни разу не отказывал себе в хотелке.
+ */
+/** Как часто бот идёт в крупную колоду, когда денег хватает на обе. */
+const ДОЛЯ_КРУПНОЙ = 0.6
+/** Ниже этой доли от цены входа бот режет убыток и выходит из бумаги. */
+const СТОП_УБЫТОК = 0.6
+/** Сколько лота продаёт на хорошей цене: человек редко выходит разом. */
+const ДОЛЯ_ПРОДАЖИ = 0.6
+/** Цена «двух кабинетов» как доля от цены пакета. */
+const ЦЕНА_КАБИНЕТОВ = 0.5
+/** За сколько месяцев доплата за пакет должна отбиться, чтобы бот её сделал. */
+const ОКУПАЕМОСТЬ_ПАКЕТА = 18
+
 import botProfilesJson from '../data/bot-profiles.json'
 import type { BotDifficulty, Seat, StockCard, Table } from './types'
 import type { TableEvent } from './events'
@@ -22,7 +40,15 @@ import {
   ownShare,
   MANAGER_PCT,
 } from './ledger'
-import { fastBoard } from './data'
+import { TICKERS, fastBoard } from './data'
+import {
+  GL_PROMOS,
+  glPackage,
+  glPromoReady,
+  glStructureIncome,
+  glUpgradeCost,
+  glUpgradeOptions,
+} from './greenleaf'
 
 export interface BotProfile {
   buyDealChance: number
@@ -36,6 +62,8 @@ export interface BotProfile {
   stockCashFraction: number
   marketSellMultiple: number | null
   dumpNegativeFlowAt: number | null
+  /** Как часто отказывает себе в хотелке, даже когда деньги есть. */
+  skipWantChance: number
   charity: 'never' | 'sometimes' | 'rich' | 'always'
   ventureCashFraction: number
   laneBuyCashMultiple: number
@@ -102,6 +130,72 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
   if (!pending) {
     if (t.phase === 'turnEnd') {
       const step = RULES.currency === 'RUB' ? 10_000 : 1000
+
+      /*
+       * 🔴 БОТ ПОЛЬЗУЕТСЯ СВОИМ ПАРТНЁРСКИМ БИЗНЕСОМ.
+       *
+       * Замер до правки: 259 входов в GreenLeaf — и НИ ОДНОГО действия по нему
+       * дальше. У «среднего» за 20 партий лежало доступными 181 промоушен на
+       * 33,7 млн ₽ (около 420 тысяч на бота за партию), взято ноль. Пакет во
+       * всех 259 случаях выходил «Платина» — не по выбору, а потому что движок
+       * подставляет умолчание, когда бот не назвал ничего. Повышения пакета и
+       * покупки кабинетов — ноль за все прогоны.
+       *
+       * Человеку за столом это видно напрямую: у соседа-бота структура стоит
+       * на месте всю партию, и половина смысла игры про партнёрский бизнес
+       * просто не показывается.
+       */
+      const бизнес = l.businesses.find((b) => b.gl)
+      if (бизнес?.gl) {
+        const g = бизнес.gl
+        // 1. Промоушен: живые деньги, которые лежат и ждут.
+        for (const promo of GL_PROMOS) {
+          if (!glPromoReady(g, promo).ready) continue
+          /* Жадный берёт деньгами; «мягкий» иногда едет сам — так за столом
+             видно, что у этого выбора есть две стороны. */
+          const деньгами = promo.id !== 'travel' || rnd() > (p.skipWantChance ?? 0)
+          return { type: 'GL_PROMO_TAKE', promo: promo.id, go: !деньгами }
+        }
+        // 2. Кабинеты: разовая покупка, дальше просто больше дохода.
+        const кабинеты = Math.round(glPackage(g.packageId).price * ЦЕНА_КАБИНЕТОВ)
+        if (!g.triangle && l.cash - кабинеты >= cashBuffer(seat, p) * 2) {
+          return { type: 'GL_BUY_TRIANGLE', cost: кабинеты }
+        }
+        // 3. Пакет повыше — когда доплата отбивается за разумный срок.
+        for (const pk of glUpgradeOptions(g.packageId).reverse()) {
+          const доплата = glUpgradeCost(g.packageId, pk.id)
+          if (доплата <= 0 || l.cash - доплата < cashBuffer(seat, p) * 2) continue
+          const станет = glStructureIncome({ ...g, packageId: pk.id })
+          const прибавка = станет - glStructureIncome(g)
+          if (прибавка > 0 && доплата / прибавка <= ОКУПАЕМОСТЬ_ПАКЕТА) {
+            return { type: 'GL_UPGRADE', assetId: бизнес.id, to: pk.id }
+          }
+        }
+      }
+
+      /*
+       * 🔴 Актив, который каждый месяц ЕСТ деньги, бот держал до конца партии.
+       * Ручка `dumpNegativeFlowAt` была объявлена в профиле и заполнена во всех
+       * четырёх сложностях — и не читалась НИ РАЗУ. То есть настройка выглядела
+       * настройкой, а не меняла ничего: ловушка для того, кто станет
+       * калибровать ботов.
+       */
+      const порогСброса = p.dumpNegativeFlowAt
+      if (порогСброса !== null && monthlyCashFlow(l, t.market.flow) < порогСброса) {
+        const худший = [...l.realEstate, ...l.businesses]
+          .filter((a) => !(a as { gl?: unknown }).gl)
+          .sort((a, b) => a.cashFlow - b.cashFlow)[0]
+        if (худший && худший.cashFlow < 0) {
+          const вид = l.realEstate.some((x) => x.id === худший.id) ? 'realEstate' : 'business'
+          return {
+            type: 'OFFER_ASSET',
+            assetId: худший.id,
+            amount: Math.round(худший.cost * 0.8),
+            kind: вид,
+          } as TableEvent
+        }
+      }
+
       if (p.repayIdle && l.liabilities.bankLoan >= step && l.cash >= step + cashBuffer(seat, p)) {
         return { type: 'REPAY_LOAN', amount: step }
       }
@@ -127,12 +221,40 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
   switch (pending.kind) {
     case 'chooseDeal': {
-      const canBig = l.cash >= inf(p.bigDealCash)
-      return { type: 'CHOOSE_DEAL', size: canBig ? 'big' : 'small' }
+      /*
+       * 🔴 РАНЬШЕ ЭТО БЫЛ ЖЁСТКИЙ ПОРОГ, и он выключал половину игры. Замер:
+       * «средний», «сильный» и «нереальный» брали крупную колоду в 100%
+       * случаев, «лёгкий» — малую в 100%. Значит бот посильнее за всю партию
+       * НИ РАЗУ не видел бумаг: покупок акций ноль, продаж ноль, и 21
+       * рыночная карта про котировки для него не существовала.
+       *
+       * Человек так не играет: он смотрит и туда, и туда. Порог остаётся
+       * (без денег в крупную не лезут), но выше него выбор — монетка с
+       * перекосом, и малая колода открывается регулярно.
+       */
+      const хватаетНаКрупную = l.cash >= inf(p.bigDealCash)
+      if (!хватаетНаКрупную) return { type: 'CHOOSE_DEAL', size: 'small' }
+      return { type: 'CHOOSE_DEAL', size: rnd() < ДОЛЯ_КРУПНОЙ ? 'big' : 'small' }
     }
 
     case 'deal': {
       const card = pending.card
+      /*
+       * 🔴 БОТ ПУСКАЕТ ЛЮДЕЙ В СВОЮ НАХОДКУ.
+       *
+       * Замер: SET_ACCESS у ботов — ноль за все прогоны. Значит найденная
+       * ботом сделка закрыта наглухо: человек видит карточку, видит цифры и
+       * не может ничего — вход не открыт, а открыть его может только тот,
+       * кому карта выпала. За настоящим столом сосед говорит «берите, мне не
+       * потянуть»; молчаливый отказ — худшее, что бот может сделать с
+       * половиной находок партии.
+       *
+       * Открываем ОДИН РАЗ и бесплатно: торговаться бот пока не умеет, а
+       * брать с людей плату, не умея объяснить за что, — хуже, чем не брать.
+       */
+      if (!pending.access && t.seats.some((x) => !x.isBot && !x.outOfGame && x.id !== seat.id)) {
+        return { type: 'SET_ACCESS', access: { mode: 'open', allow: [], terms: { kind: 'free' } } }
+      }
       if (card.kind === 'stock') {
         const s = card as StockCard
         const buyBelow = quantilePrice(s.range, p.stockBuyQuantile)
@@ -165,19 +287,20 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
           // Платёж по займу обязан отбиваться НАСТОЯЩИМ потоком сделки.
           if (loan > 0 && flowIfFinanced > loan / 10) return { type: 'TAKE_LOAN', amount: loan }
         }
-        if (
-          !RULES.loansEnabled &&
-          card.kind === 'realEstate' &&
-          card.cashFlow > 0 &&
-          l.cash - Math.round(need / 2) >= cashBuffer(seat, p)
-        ) {
-          /*
-           * Раньше бот брал «стороннего инвестора» на половину взноса. Такой
-           * фигуры в игре больше нет — берём в рассрочку, как сделал бы
-           * человек: взнос меньше, платёж вычтен из дохода.
-           */
-          return { type: 'BUY_DEAL' }
-        }
+        /*
+         * 🔴 ЗДЕСЬ БОТ ТЕРЯЛ ХОДЫ. Стояла ветка «хватает на ПОЛОВИНУ взноса —
+         * покупаем»: она осталась от стороннего инвестора, которого в игре
+         * больше нет. Половины взноса не хватает ни на что — ни налом, ни в
+         * рассрочку (рассрочка уменьшает цену, а не взнос), движок такую
+         * покупку отклоняет, и живой водитель ботов молча заканчивает ход.
+         * Замер: 190 потерянных ходов за 20 партий у «среднего», 132 у
+         * «сильного» — то есть каждая шестая находка уходила в никуда, и
+         * партия с ботом от этого выглядела безжизненной.
+         *
+         * Карта при этом ПОКАЗЫВАЕТСЯ: фильтр выдачи считает, что войти можно
+         * вдвоём. Звать людей в долю бот пока не умеет — значит проходит мимо
+         * честно, а не делает вид, что покупает.
+         */
         return { type: 'PASS_CARD' }
       }
 
@@ -214,18 +337,38 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
         }
       }
       if (card.kind === 'stockPrice') {
-        const sellAbove = quantilePrice(
-          [1, 40],
-          p.stockSellQuantile,
-        )
         const lot = l.stocks.find((x) => x.symbol === card.symbol)
-        if (lot && card.price >= lot.costPerShare && card.price >= sellAbove) {
-          return {
-            type: 'SELL_STOCK_LOT',
-            seatId: seat.id,
-            lotId: lot.id,
-            shares: lot.shares,
-            pricePerShare: card.price,
+        if (lot) {
+          /*
+           * 🔴 ПОРОГ СЧИТАЛСЯ ОТ ДИАПАЗОНА [1, 40] — это осталось от
+           * долларовой колоды. В рублёвой бумаги стоят 300–100 000 ₽, медиана
+           * 16 000, поэтому условие «цена выше порога» было истинным ВСЕГДА:
+           * замер — 131 возможность продать в плюс, 131 продажа. Бот сбрасывал
+           * весь лот при первой же цене не ниже своей, никогда не держал до
+           * роста и никогда не резал убыток. Ручка stockSellQuantile при этом
+           * не влияла ни на что.
+           *
+           * Считаем от диапазона САМОЙ бумаги — ровно так, как это уже сделано
+           * на покупке.
+           */
+          const вилка = TICKERS[card.symbol]?.range
+          const продаватьВыше = вилка ? quantilePrice(вилка, p.stockSellQuantile) : lot.costPerShare
+          const хорошаяЦена = card.price >= продаватьВыше && card.price >= lot.costPerShare
+          /*
+           * Резать убыток — тоже человеческое решение, и без него бот выглядел
+           * упрямым: держал падающую бумагу до конца партии.
+           */
+          const глубокийМинус = card.price <= lot.costPerShare * СТОП_УБЫТОК
+          if (хорошаяЦена || глубокийМинус) {
+            // Продаём ЧАСТЬ на хорошей цене и всё — на стоп-убытке: так делают люди.
+            const штук = глубокийМинус ? lot.shares : Math.max(1, Math.round(lot.shares * ДОЛЯ_ПРОДАЖИ))
+            return {
+              type: 'SELL_STOCK_LOT',
+              seatId: seat.id,
+              lotId: lot.id,
+              shares: штук,
+              pricePerShare: card.price,
+            }
           }
         }
       }
@@ -234,11 +377,39 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
     case 'doodad': {
       const card = pending.card
+      /*
+       * 🔴 БОТ НИКОГДА СЕБЕ НЕ ОТКАЗЫВАЛ: замер — 260 хотелок, 260 оплат, ноль
+       * отказов. Из-за этого механика выгорания (отказал себе четыре раза
+       * подряд — перегорел) на ботах не срабатывала НИ РАЗУ, и человек за
+       * столом не видел, чем кончаются годы «нет, потом».
+       *
+       * Хуже: при нехватке денег бот брал БАНКОВСКИЙ ЗАЁМ ради хотелки. Так не
+       * делает никто.
+       */
+      if ((card as { want?: boolean }).want) {
+        const свободно = l.cash - cashBuffer(seat, p)
+        // Не по карману — просто проходим мимо, без всяких займов.
+        if (свободно < card.amount) return { type: 'SKIP_WANT' }
+        // По карману — но иногда всё равно откажем: у каждого свой характер.
+        if (rnd() < (p.skipWantChance ?? 0)) return { type: 'SKIP_WANT' }
+      }
       if (l.cash >= card.amount) return { type: 'PAY_DOODAD', financed: false }
       if (card.financeable) return { type: 'PAY_DOODAD', financed: true }
-      const step = RULES.currency === 'RUB' ? 10_000 : 1000
-      const loan = Math.ceil((card.amount - l.cash) / step) * step
-      if (seat.track === 'rat' && loan > 0) return { type: 'TAKE_LOAN', amount: loan }
+      /*
+       * 🔴 ОБЯЗАТЕЛЬНУЮ трату закрыть НЕЧЕМ, кроме займа, и это не прихоть
+       * бота, а устройство классической колоды: «пройти мимо» там нет, в
+       * рассрочку такая карта не берётся, а `financed:false` без денег движок
+       * отклоняет. Убрав отсюда заём заодно с хотелками, я подвесил стол:
+       * прогон дал 3 зависших партии в «классике» и 7 в «оффшоре» при нуле в
+       * русской колоде — там займов нет и карты все финансируемые.
+       *
+       * Хотелки сюда уже не доходят: они отсеяны выше и уходят в SKIP_WANT.
+       */
+      const шаг = RULES.currency === 'RUB' ? 10_000 : 1000
+      const заём = Math.ceil((card.amount - l.cash) / шаг) * шаг
+      if (RULES.loansEnabled && seat.track === 'rat' && заём > 0) {
+        return { type: 'TAKE_LOAN', amount: заём }
+      }
       return { type: 'PAY_DOODAD', financed: !RULES.loansEnabled }
     }
 

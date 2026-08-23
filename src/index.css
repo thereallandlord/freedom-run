@@ -812,3 +812,29 @@
 @media (min-width: 1024px) {
   :root { --rail: clamp(228px, 21.5vw, 320px); }
 }
+
+
+/*
+ * Плашка ленты: всплывает снизу и растворяется.
+ *
+ * 🔴 Движение короткое и одно. Плашка появляется в углу зрения, пока человек
+ * смотрит на доску, — длинная анимация здесь отвлекала бы от самой игры.
+ */
+@keyframes лента-вплыть {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.лента-плашка {
+  animation: лента-вплыть 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .лента-плашка {
+    animation: none;
+  }
+}

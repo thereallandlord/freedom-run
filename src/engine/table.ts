@@ -245,6 +245,7 @@ export function createTable(setup: TableSetup): Table {
     worldDeck: { order: shuffleIndices(WORLD_EVENTS.length, setup.seed + 5), next: 0 },
     market: { price: {}, flow: {}, stock: {} },
     marketEffects: [],
+    лента: [],
     worldTick: 0,
     lastWorldEvent: null,
     offers: [],
@@ -563,6 +564,7 @@ function cloneTable(t: Table): Table {
     worldDeck: { ...t.worldDeck },
     market: { price: { ...t.market.price }, flow: { ...t.market.flow }, stock: { ...t.market.stock } },
     marketEffects: t.marketEffects.map((e) => ({ ...e })),
+    лента: (t.лента ?? []).map((e) => ({ ...e })),
     offers: t.offers.map((o) => ({ ...o, bids: [...o.bids] })),
     loans: t.loans.map((l) => ({ ...l })),
     log: [...t.log],
@@ -574,6 +576,55 @@ function cloneTable(t: Table): Table {
 function log(t: Table, seatId: string | null, text: string) {
   t.log.push({ at: t.log.length, seatId, text })
   if (t.log.length > 300) t.log.shift()
+}
+
+/** Сколько плашек храним. Больше не нужно: они живут секунды. */
+const ЛЕНТА_ДЛИНА = 12
+
+/**
+ * Показать всем за столом, что сейчас произошло.
+ *
+ * 🔴 ЗАЧЕМ ОТДЕЛЬНО ОТ ЖУРНАЛА. Играют часто БЕЗ созвона, каждый со своего
+ * телефона: человек видит, что у соседа изменились числа, и не понимает,
+ * почему. Журнал для этого не годится — он обрезается на трёхстах строках,
+ * и на один ход туда набегает до двадцати записей, из которых человеку нужны
+ * одна-две.
+ *
+ * 🔴 `кому` — про тайну переговоров. Займы и предложения долей интерфейс
+ * НАМЕРЕННО прячет от посторонних; лента не имеет права это раскрыть.
+ *
+ * Живёт в самом столе: переигрывается из журнала ходов детерминированно и
+ * приезжает всем участникам сети без отдельной проводки.
+ */
+function плашка(
+  t: Table,
+  seatId: string | null,
+  text: string,
+  тон: 'нейтр' | 'добро' | 'худо' = 'нейтр',
+  кому?: string[],
+) {
+  t.лента = [...(t.лента ?? []), { id: (t.лента?.length ?? 0) + t.turnCounter * 1000, seatId, text, тон, кому }]
+  if (t.лента.length > ЛЕНТА_ДЛИНА) t.лента = t.лента.slice(-ЛЕНТА_ДЛИНА)
+}
+
+/** «12 акций», «1 акцию», «3 акции» — иначе плашка читается как отчёт робота. */
+function бумаг(n: number): string {
+  const сотня = n % 100
+  const единица = n % 10
+  if (сотня >= 11 && сотня <= 14) return 'акций'
+  if (единица === 1) return 'акцию'
+  if (единица >= 2 && единица <= 4) return 'акции'
+  return 'акций'
+}
+
+/** Со знаком: «+45 000 ₽» читается иначе, чем «45 000 ₽». */
+function signedMoney(n: number): string {
+  return n > 0 ? `+${money(n)}` : money(n)
+}
+
+/** Имя игрока для плашки. Без него строка бесполезна: «купил» — а кто? */
+function имя(t: Table, seatId: string | null | undefined): string {
+  return t.seats.find((s) => s.id === seatId)?.name ?? 'Игрок'
 }
 
 function money(n: number): string {
@@ -1786,6 +1837,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           glLuck: luck,
         })
         log(t, seat.id, `Вошёл в партнёрский бизнес, пакет «${glPkg.name}» за ${money(glPkg.price)}`)
+        плашка(
+          t,
+          seat.id,
+          `${seat.name} вошёл в партнёрский бизнес, пакет «${glPkg.name}» за ${money(glPkg.price)}`,
+          'добро',
+        )
         t.pending = null
         t.phase = 'turnEnd'
         return t
@@ -1887,6 +1944,14 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             ? `Купил налом: ${localizedCardTitle(card)} за ${money(fullPrice)} (${money(flow)}/мес, долгов нет)`
             : `Купил в рассрочку: ${localizedCardTitle(card)} — взнос ${money(card.downPayment)}, остаток ${money(debt)} фиксирован (${money(flow)}/мес)`,
       )
+      плашка(
+        t,
+        dealBuyer.id,
+        `${dealBuyer.name} купил «${localizedCardTitle(card)}» за ${money(
+          payCash ? fullPrice : card.downPayment,
+        )} · ${signedMoney(flow)}/мес`,
+        flow > 0 ? 'добро' : 'нейтр',
+      )
       /*
        * 🔴 Карта закрывается, когда решили ВСЕ участники, а не когда нажал
        * владелец. Раньше его «Купить» снимало окно у всех разом, и допущенные
@@ -1974,6 +2039,8 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         dividendPerShareMonthly: card.dividendPerShare ?? 0,
       })
       log(t, buyer.id, `${buyer.name} купил ${shares} × ${card.symbol} по ${money(price)}`)
+      // 🔴 В плашке ИТОГО, а не цена за штуку: за столом считают потраченное.
+      плашка(t, buyer.id, `${buyer.name} купил ${shares} ${бумаг(shares)} ${card.symbol} за ${money(total)}`)
       markDecided(t, buyer.id)
       return t
     }
@@ -2022,6 +2089,17 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         t,
         event.seatId,
         `${holder.name} продал ${soldN} × ${lot.symbol} по ${money(price)}`,
+      )
+      /*
+       * 🔴 Самый незаметный ход в игре: продать можно из портфеля в любой
+       * момент, даже на чужом ходу, и на экране у остальных не менялось
+       * НИЧЕГО, кроме числа наличных. Человек мог выйти в кэш, и стол не
+       * замечал.
+       */
+      плашка(
+        t,
+        holder.id,
+        `${holder.name} продал ${soldN} ${бумаг(soldN)} ${lot.symbol} за ${money(soldN * price)}`,
       )
 
       /*
@@ -2087,6 +2165,12 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         seatLedgerEvent(t, event.seatId, { type: 'SELL_BUSINESS', assetId: event.assetId, salePrice: price, rebate })
       }
       log(t, event.seatId, `${holder.name} продал «${asset.name}» за ${money(price)} (${card.multiplierPct}%)`)
+      плашка(
+        t,
+        holder.id,
+        `${holder.name} продал «${asset.name}» за ${money(price)} — это ${card.multiplierPct}% стоимости`,
+        card.multiplierPct >= 100 ? 'добро' : 'худо',
+      )
       return t
     }
 
@@ -2283,6 +2367,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           ? `🎉 Вырвался из Круга! Выкуп ${money(buyout)}, из него закрыты долги на ${money(долгиБыли)}`
           : `🎉 Вырвался из Круга! Выкуп ${money(buyout)}`,
       )
+      плашка(t, seat.id, `🎉 ${seat.name} вырвался из Круга! Выкуп ${money(buyout)}`, 'добро')
       /*
        * 🔴 Показываем это ВСЕМ отдельным окном. Раньше выход из Круга
        * выглядел так: полоска цели дошла до ста процентов — и всё. Главный
@@ -2350,9 +2435,11 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         })
         t.ftOwnership[spaceIdx] = seat.id
         log(t, seat.id, `🎲 ${die} — проект выстрелил! +${money(space.cashFlow)}/мес`)
+        плашка(t, seat.id, `${seat.name}: выпало ${die} — проект выстрелил, +${money(space.cashFlow)}/мес`, 'добро')
       } else {
         seatLedgerEvent(t, seat.id, { type: 'FT_STAKE_LOST', amount: space.downPayment })
         log(t, seat.id, `🎲 ${die} — ставка ${money(space.downPayment)} сгорела`)
+        плашка(t, seat.id, `${seat.name}: выпало ${die} — ставка ${money(space.downPayment)} сгорела`, 'худо')
       }
       /*
        * 🔴 Карточку НЕ убираем — показываем на ней, что выпало и чем это
@@ -2912,6 +2999,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             dealAssetEvent(t, card, `${card.id}-${nextId(t)}`, { payCash: false }),
           )
           log(t, buyer.id, `${buyer.name} выкупил находку у ${from.name} за ${money(price)} и вошёл в сделку`)
+          плашка(
+            t,
+            buyer.id,
+            price === 0
+              ? `${from.name} отдал свою находку ${buyer.name} даром`
+              : `${buyer.name} выкупил находку у ${from.name} за ${money(price)}`,
+          )
           t.offers = t.offers.filter((x) => x.id !== o.id)
           t.pending = null
           t.phase = 'turnEnd'
@@ -2962,6 +3056,7 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
           if (re) seatLedgerEvent(t, buyer.id, { type: 'BUY_REAL_ESTATE', ...common, mortgage: debt })
           else seatLedgerEvent(t, buyer.id, { type: 'BUY_BUSINESS', ...common, liability: debt })
           log(t, buyer.id, `${buyer.name} купил «${asset.name}» у ${from.name} за ${money(price)}`)
+          плашка(t, buyer.id, `${buyer.name} купил «${asset.name}» у ${from.name} за ${money(price)}`)
           t.offers = t.offers.filter((x) => x.id !== o.id)
           return t
         }
@@ -3060,6 +3155,18 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
             )
           } else {
             log(t, buyer.id, `${buyer.name} взял у ${from.name} ${money(o.amount)} без надбавки — вернуть столько же`)
+            /*
+             * 🔴 ТОЛЬКО ДВОИМ. Переговоры о деньгах интерфейс намеренно прячет
+             * от посторонних, и лента не имеет права это раскрыть: иначе весь
+             * стол видит, кто у кого занимает.
+             */
+            плашка(
+              t,
+              buyer.id,
+              `${buyer.name} взял у ${from.name} ${money(o.amount)} без надбавки`,
+              'нейтр',
+              [buyer.id, from.id],
+            )
           }
           t.offers = t.offers.filter((x) => x.id !== o.id)
           return t
