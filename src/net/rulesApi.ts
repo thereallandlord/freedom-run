@@ -34,7 +34,7 @@ export async function загрузитьПравки(): Promise<void> {
 /** Может ли этот человек править правила. Панель по этому решает, показывать ли поля. */
 export async function могуПравить(токен?: string): Promise<boolean> {
   try {
-    const res = await fetch(`${BASE}/api/rules/can-edit`, {
+    const res = await fetch(`${BASE}/api/can-edit`, {
       headers: токен ? { Authorization: `Bearer ${токен}` } : undefined,
     })
     if (!res.ok) return false

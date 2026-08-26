@@ -266,9 +266,15 @@ export async function handler(req, res) {
     return send(res, 405, { error: 'только GET и PUT' })
   }
 
-  /* Может ли этот человек править правила — панель спрашивает, чтобы не
-     показывать поля тому, кто всё равно получит отказ. */
-  if (url.pathname === '/api/rules/can-edit' && req.method === 'GET') {
+  /*
+   * Может ли этот человек править правила.
+   *
+   * 🔴 ПУТЬ ПЛОСКИЙ, И ЭТО НЕ СТИЛЬ. Vercel не отдаёт функции ничего глубже
+   * двух сегментов: `/api/rules` отвечает, `/api/rules/can-edit` — чужой 404,
+   * при любом имени файла-перехватчика. Проверено пробами `/api/x/y` и
+   * `/api/x/y/z` — обе 404. Поэтому третьего сегмента в этом API нет вовсе.
+   */
+  if (url.pathname === '/api/can-edit' && req.method === 'GET') {
     return send(res, 200, { can: этоХозяин(await whoIs(req)) })
   }
 
@@ -324,7 +330,11 @@ export async function handler(req, res) {
   // ─────────────────────── кабинет ───────────────────────
   // 🔴 Кабинет НЕОБЯЗАТЕЛЕН. Не настроен — честно говорим об этом кодом 501,
   // и игра просто живёт без него: ни один экран от этого не ломается.
-  if (url.pathname.startsWith('/api/games') || url.pathname === '/api/me') {
+  if (
+    url.pathname.startsWith('/api/games') ||
+    url.pathname === '/api/me' ||
+    url.pathname === '/api/game-debrief'
+  ) {
     if (!cabinetReady()) return send(res, 501, { error: 'кабинет не настроен' })
     const user = await whoIs(req)
     if (!user) return send(res, 401, { error: 'нужен вход' })
@@ -341,10 +351,15 @@ export async function handler(req, res) {
         return send(res, 200, await saveGame(user, JSON.parse(raw || '{}')))
       }
 
-      const m = url.pathname.match(/^\/api\/games\/([0-9a-f-]{36})\/debrief$/)
-      if (m && req.method === 'POST') {
+      /*
+       * 🔴 Раньше это был `/api/games/<id>/debrief` — три сегмента, которые
+       * Vercel до функции не доносит. Значит разбор партии не сохранялся в
+       * кабинет с самого переезда, и никто бы не заметил: ошибка глотается,
+       * разбор всё равно показывается на месте. Номер партии переехал в тело.
+       */
+      if (url.pathname === '/api/game-debrief' && req.method === 'POST') {
         const body = JSON.parse((await readBody(req, 200_000)) || '{}')
-        return send(res, 200, await saveDebrief(user, m[1], body.seatId, body.text))
+        return send(res, 200, await saveDebrief(user, body.gameId, body.seatId, body.text))
       }
     } catch (e) {
       console.error('[кабинет]', e?.message || e)

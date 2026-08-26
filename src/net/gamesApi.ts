@@ -133,9 +133,11 @@ export async function saveDebriefText(
   text: string,
 ): Promise<void> {
   try {
-    await authFetch(`${BASE}/api/games/${encodeURIComponent(gameId)}/debrief`, {
+    /* 🔴 Номер партии в ТЕЛЕ, а не в пути: Vercel не доносит до функции
+       ничего глубже двух сегментов, и запрос молча улетал в 404. */
+    await authFetch(`${BASE}/api/game-debrief`, {
       method: 'POST',
-      body: JSON.stringify({ seatId, text }),
+      body: JSON.stringify({ gameId, seatId, text }),
     })
   } catch {
     /* разбор уже на экране; не сохранился — не беда */
