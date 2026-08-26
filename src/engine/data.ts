@@ -85,23 +85,56 @@ export const TICKERS = tickersJson as unknown as Record<string, { name: string; 
 export const PETS = miscJson.PETS as { id: string; name: string }[]
 export const WORLD_EVENTS = (eventsRuJson as any).WORLD_EVENTS_RU as import('./types').WorldEvent[]
 
+import { наложить, правкиВерсия } from './правки'
+
 const D = decksJson as any
 const DRU = decksRuJson as any
 
+/*
+ * 🔴 ВСЕ ЧЕТЫРЕ КОЛОДЫ ОТДАЮТСЯ ЧЕРЕЗ ОДИН СЛОЙ ПРАВОК. Панель хозяина меняет
+ * числа и тексты карточек, не трогая файлы, — и наложить эти правки надо в
+ * ЕДИНСТВЕННОМ месте. Разложи это по вызовам — и однажды какая-нибудь ветка
+ * возьмёт колоду напрямую, мимо правок, а расхождение вылезет уже за столом.
+ *
+ * Кэш обязателен: колоды спрашивают на каждой выдаче карты, а наложение
+ * создаёт новые объекты. Ключ — тема плюс версия правок: без версии правка
+ * легла бы в память, а игра продолжала бы отдавать старое из кэша.
+ */
+const кэшКолод = new Map<string, unknown>()
+function колода<T extends { id: string }>(ключ: string, взять: () => T[]): T[] {
+  const k = `${ключ}#${правкиВерсия()}`
+  const было = кэшКолод.get(k)
+  if (было) return было as T[]
+  const готово = наложить(взять())
+  кэшКолод.set(k, готово)
+  return готово
+}
+
 export function smallDeals(theme: DeckTheme): DealCard[] {
-  if (theme === 'ru') return DRU.SMALL_DEALS_RU as DealCard[]
-  return (theme === 'offshore' ? D.OFFSHORE_SMALL_DEALS : D.SMALL_DEALS) as DealCard[]
+  return колода(`small:${theme}`, () =>
+    theme === 'ru'
+      ? (DRU.SMALL_DEALS_RU as DealCard[])
+      : ((theme === 'offshore' ? D.OFFSHORE_SMALL_DEALS : D.SMALL_DEALS) as DealCard[]),
+  )
 }
 export function bigDeals(theme: DeckTheme): DealCard[] {
-  if (theme === 'ru') return DRU.BIG_DEALS_RU as DealCard[]
-  return (theme === 'offshore' ? D.OFFSHORE_BIG_DEALS : D.BIG_DEALS) as DealCard[]
+  return колода(`big:${theme}`, () =>
+    theme === 'ru'
+      ? (DRU.BIG_DEALS_RU as DealCard[])
+      : ((theme === 'offshore' ? D.OFFSHORE_BIG_DEALS : D.BIG_DEALS) as DealCard[]),
+  )
 }
 export function marketCards(theme: DeckTheme): MarketCard[] {
-  if (theme === 'ru') return DRU.MARKET_CARDS_RU as MarketCard[]
-  return (theme === 'offshore' ? D.OFFSHORE_MARKET_CARDS : D.MARKET_CARDS) as MarketCard[]
+  return колода(`market:${theme}`, () =>
+    theme === 'ru'
+      ? (DRU.MARKET_CARDS_RU as MarketCard[])
+      : ((theme === 'offshore' ? D.OFFSHORE_MARKET_CARDS : D.MARKET_CARDS) as MarketCard[]),
+  )
 }
 export function doodads(theme: DeckTheme): DoodadCard[] {
-  return theme === 'ru' ? (DRU.DOODADS_RU as DoodadCard[]) : (D.DOODADS as DoodadCard[])
+  return колода(`doodad:${theme}`, () =>
+    theme === 'ru' ? (DRU.DOODADS_RU as DoodadCard[]) : (D.DOODADS as DoodadCard[]),
+  )
 }
 /** @deprecated используйте doodads(theme) */
 export const DOODADS = D.DOODADS as DoodadCard[]

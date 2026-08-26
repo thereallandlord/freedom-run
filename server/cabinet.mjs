@@ -225,3 +225,101 @@ export async function listGames(user) {
     )
   return { games }
 }
+
+// ─────────────────────────── правки хозяина ───────────────────────────
+
+/**
+ * Правки игры из панели: числа и тексты поверх колод.
+ *
+ * 🔴 ХРАНИМ ФАЙЛОМ В STORAGE, А НЕ ТАБЛИЦЕЙ. Таблица потребовала бы миграции,
+ * а её надо применять руками — и до тех пор панель молча не работала бы.
+ * Правки — это один небольшой JSON, которому не нужны ни строки, ни индексы,
+ * ни выборки. Файл честнее описывает то, чем они являются.
+ *
+ * 🔴 ПИСАТЬ МОЖЕТ ТОЛЬКО ХОЗЯИН. Список его учёток — в переменной
+ * `ADMIN_AUTH_IDS`. Пусто — писать не может НИКТО: открытая запись означала бы,
+ * что любой вошедший меняет правила игры всем за столом.
+ */
+const ПРАВКИ_БАКЕТ = 'game-rules'
+const ПРАВКИ_ФАЙЛ = 'current.json'
+
+function хозяева() {
+  return (process.env.ADMIN_AUTH_IDS || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+}
+
+export function этоХозяин(user) {
+  const список = хозяева()
+  return !!user?.id && список.includes(user.id)
+}
+
+async function бакетЕсть() {
+  // Заводим бакет при первой записи: отдельного шага настройки быть не должно.
+  const res = await fetch(`${SB}/storage/v1/bucket`, {
+    method: 'POST',
+    headers: {
+      apikey: SERVICE,
+      Authorization: `Bearer ${SERVICE}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ id: ПРАВКИ_БАКЕТ, name: ПРАВКИ_БАКЕТ, public: false }),
+  })
+  // 409 — бакет уже есть, это норма и не ошибка.
+  if (!res.ok && res.status !== 409) {
+    const t = await res.text()
+    throw new Error(`бакет правок: ${res.status} ${t.slice(0, 120)}`)
+  }
+}
+
+export async function читатьПравки() {
+  try {
+    const res = await fetch(
+      `${SB}/storage/v1/object/${ПРАВКИ_БАКЕТ}/${ПРАВКИ_ФАЙЛ}`,
+      { headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` } },
+    )
+    if (!res.ok) return {}
+    return await res.json()
+  } catch {
+    /*
+     * 🔴 Молчим и отдаём пустое. Правок может не быть вовсе, Storage может быть
+     * недоступен — игра обязана работать и без них, на числах из колод.
+     */
+    return {}
+  }
+}
+
+export async function писатьПравки(user, правки) {
+  if (!этоХозяин(user)) {
+    throw Object.assign(new Error('менять правила игры может только хозяин'), { status: 403 })
+  }
+  if (!правки || typeof правки !== 'object') {
+    throw Object.assign(new Error('правки должны быть объектом'), { status: 400 })
+  }
+  const тело = JSON.stringify({ ...правки, когда: new Date().toISOString() })
+  // Небольшой потолок: панель правит числа и подписи, а не грузит сюда файлы.
+  if (тело.length > 512 * 1024) {
+    throw Object.assign(new Error('правки слишком большие'), { status: 413 })
+  }
+  await бакетЕсть()
+  const res = await fetch(
+    `${SB}/storage/v1/object/${ПРАВКИ_БАКЕТ}/${ПРАВКИ_ФАЙЛ}`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: SERVICE,
+        Authorization: `Bearer ${SERVICE}`,
+        'content-type': 'application/json',
+        // Перезаписываем поверх: правки всегда одни, история тут не нужна.
+        'x-upsert': 'true',
+      },
+      body: тело,
+    },
+  )
+  if (!res.ok) {
+    const t = await res.text()
+    throw new Error(`не записалось: ${res.status} ${t.slice(0, 160)}`)
+  }
+  return { ok: true }
+}

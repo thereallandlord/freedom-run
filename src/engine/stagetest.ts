@@ -8,7 +8,7 @@
  */
 import { marketCards } from './data'
 import { glСтадия } from './greenleaf'
-import type { GlState } from './types'
+import type { GlState } from './greenleaf'
 
 const карты = marketCards('ru').filter((c) => c.kind === 'glEvent')
 const безСтадии = карты.filter((c) => !(c as unknown as { stages?: number[] }).stages?.length)

@@ -17,7 +17,16 @@ import { argv } from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { readFile, stat } from 'node:fs/promises'
 import { extname, join, normalize } from 'node:path'
-import { cabinetReady, listGames, saveDebrief, saveGame, whoIs } from './cabinet.mjs'
+import {
+  cabinetReady,
+  listGames,
+  saveDebrief,
+  saveGame,
+  whoIs,
+  читатьПравки,
+  писатьПравки,
+  этоХозяин,
+} from './cabinet.mjs'
 
 const PORT = Number(process.env.PORT || 8080)
 const ROOT = join(process.cwd(), 'dist')
@@ -232,6 +241,36 @@ export async function handler(req, res) {
   if (req.method === 'OPTIONS') return send(res, 204, '')
 
   if (url.pathname === '/api/health') return send(res, 200, { ok: true })
+
+  /*
+   * Правки игры из панели хозяина.
+   *
+   * 🔴 ЧТЕНИЕ ОТКРЫТО ВСЕМ И ЭТО НАМЕРЕННО: правки — это правила стола, по
+   * которым сейчас играют. Их обязан получить каждый участник ещё до того, как
+   * соберётся первый стол, иначе у двоих за одной партией будут разные числа.
+   * Закрыто только ПИСАНИЕ.
+   */
+  if (url.pathname === '/api/rules') {
+    if (req.method === 'GET') {
+      return send(res, 200, await читатьПравки())
+    }
+    if (req.method === 'PUT') {
+      try {
+        const user = await whoIs(req)
+        const raw = await readBody(req, 600_000)
+        return send(res, 200, await писатьПравки(user, JSON.parse(raw || '{}')))
+      } catch (e) {
+        return send(res, e?.status || 500, { error: String(e?.message || e).slice(0, 300) })
+      }
+    }
+    return send(res, 405, { error: 'только GET и PUT' })
+  }
+
+  /* Может ли этот человек править правила — панель спрашивает, чтобы не
+     показывать поля тому, кто всё равно получит отказ. */
+  if (url.pathname === '/api/rules/can-edit' && req.method === 'GET') {
+    return send(res, 200, { can: этоХозяин(await whoIs(req)) })
+  }
 
   /*
    * Возврат от Google для копий игры на других адресах.

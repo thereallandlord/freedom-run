@@ -37,6 +37,9 @@ import {
 } from '../engine/data'
 import { THEME_RULES, WANTS_BEFORE_BURNOUT } from '../engine/table'
 import { artForCard } from './cardArt'
+import { accessToken, currentUser, onAuth } from '../net/auth'
+import { могуПравить, сохранитьПравки } from '../net/rulesApi'
+import { всеПравки } from '../engine/правки'
 /*
  * Большой круг берём из файла напрямую, а не через `fastBoard()`: та функция
  * читает глобально выбранную тему, и обращение к ней из панели переключило бы
@@ -333,8 +336,100 @@ function естьБеда(c: MarketCard): boolean {
 
 // ─────────────────────────── экран ───────────────────────────
 
+
+/**
+ * Правки, с которыми работает панель: что уже наложено и что можно менять.
+ *
+ * 🔴 Правка НЕ применяется на лету. Меняешь число — оно ложится в черновик, и
+ * пока не нажал «Применить всем», игра идёт по-старому. Иначе одна опечатка в
+ * поле сразу уехала бы всем за столом, и откатывать её пришлось бы вслепую.
+ */
+interface РабочиеПравки {
+  можно: boolean
+  /** Ключ учётки того, кто вошёл: его и вносят в список хозяев. */
+  ключ: string | null
+  карточки: Record<string, Record<string, string | number>>
+  правила: Record<string, number>
+  грязно: boolean
+  поставить: (id: string, поле: string, знач: string | number | null) => void
+  правило: (ключ: string, знач: number | null) => void
+  сохранить: () => void
+  сбросить: () => void
+  занят: boolean
+  ошибка: string | null
+}
+
+function useПравки(): РабочиеПравки {
+  const [можно, setМожно] = useState(false)
+  const [ключ, setКлюч] = useState<string | null>(null)
+  const [карточки, setКарточки] = useState<Record<string, Record<string, string | number>>>(
+    () => ({ ...(всеПравки().карточки ?? {}) }) as Record<string, Record<string, string | number>>,
+  )
+  const [правила, setПравила] = useState<Record<string, number>>(() => ({
+    ...(всеПравки().правила ?? {}),
+  }))
+  const [грязно, setГрязно] = useState(false)
+  const [занят, setЗанят] = useState(false)
+  const [ошибка, setОшибка] = useState<string | null>(null)
+
+  useEffect(() => {
+    void accessToken().then((t) => могуПравить(t ?? undefined)).then(setМожно)
+    setКлюч(currentUser()?.id ?? null)
+    // Учётка может появиться позже: вход открывается прямо из шапки.
+    return onAuth((u) => setКлюч(u?.id ?? null))
+  }, [])
+
+  const поставить = (id: string, поле: string, знач: string | number | null) => {
+    if (!id) return
+    setКарточки((было) => {
+      const своя = { ...(было[id] ?? {}) }
+      if (знач === null) delete своя[поле]
+      else своя[поле] = знач
+      const дальше = { ...было }
+      if (Object.keys(своя).length) дальше[id] = своя
+      else delete дальше[id]
+      return дальше
+    })
+    setГрязно(true)
+  }
+
+  const правило = (ключ: string, знач: number | null) => {
+    setПравила((было) => {
+      const дальше = { ...было }
+      if (знач === null) delete дальше[ключ]
+      else дальше[ключ] = знач
+      return дальше
+    })
+    setГрязно(true)
+  }
+
+  const сохранить = () => {
+    setЗанят(true)
+    setОшибка(null)
+    void accessToken()
+      .then((токен) => {
+        if (!токен) return 'нужно войти в кабинет'
+        return сохранитьПравки({ карточки, правила }, токен)
+      })
+      .then((e) => {
+        setЗанят(false)
+        setОшибка(e ?? null)
+        if (!e) setГрязно(false)
+      })
+  }
+
+  const сбросить = () => {
+    setКарточки({})
+    setПравила({})
+    setГрязно(true)
+  }
+
+  return { можно, ключ, карточки, правила, грязно, поставить, правило, сохранить, сбросить, занят, ошибка }
+}
+
 export function Admin({ onClose }: { onClose: () => void }) {
   const [раздел, setРаздел] = useState<Раздел>('сходится')
+  const правки = useПравки()
   const проверки = useMemo(собратьПроверки, [])
   const тревог = проверки.filter((p) => p.тревога).length
   const осталось = worklog.правки.filter((p) => p.статус !== 'исправлено').length
@@ -383,9 +478,84 @@ export function Admin({ onClose }: { onClose: () => void }) {
           ))}
         </nav>
 
+        {/*
+          🔴 ПОЛОСА СОХРАНЕНИЯ ВИСИТ ВНИЗУ И ТОЛЬКО КОГДА ЕСТЬ ЧТО СОХРАНЯТЬ.
+          Правка не применяется на лету: пока не нажал «Применить всем», игра
+          идёт по-старому. Иначе одна опечатка в поле сразу уехала бы всем за
+          столом, а откатывать её пришлось бы вслепую.
+        */}
+        {/*
+          🔴 Кто хозяин — решает СЕРВЕР по списку учёток, а не браузер. Поэтому
+          свой ключ надо один раз показать: без него список не заполнить, а
+          догадаться о нём нельзя. Показываем только тому, кто вошёл и хозяином
+          пока не значится, — остальным эта строка не нужна.
+        */}
+        {!правки.можно && правки.ключ && (
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] px-4 py-3">
+            <div className="text-[13px] font-semibold">Править правила пока нельзя</div>
+            <p className="mt-0.5 text-[12.5px] leading-snug text-[var(--muted)]">
+              Смотреть можно всё. Чтобы разрешить правку, твой ключ хозяина надо один раз
+              внести в настройки игры:
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <code className="tabnum select-all break-all rounded-md border border-[var(--line)] bg-[var(--panel)] px-2 py-1 text-[12px]">
+                {правки.ключ}
+              </code>
+              <button
+                onClick={() => void navigator.clipboard?.writeText(правки.ключ ?? '')}
+                className="rounded-lg border border-[var(--line)] px-2.5 py-1 text-[12px] hover:border-accent"
+              >
+                Скопировать
+              </button>
+            </div>
+          </div>
+        )}
+
+        {правки.можно && правки.грязно && (
+          <div
+            className="sticky bottom-3 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-accent bg-[var(--panel)] px-4 py-3 shadow-lg"
+            style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.18)' }}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="text-[13.5px] font-semibold">
+                Правок в черновике: {Object.keys(правки.карточки).length} карточек
+                {Object.keys(правки.правила).length
+                  ? `, ${Object.keys(правки.правила).length} правил`
+                  : ''}
+              </div>
+              <p className="mt-0.5 text-[12px] leading-snug text-[var(--muted)]">
+                Пока не применил — игра идёт по-старому.{' '}
+                <b className="text-[rgb(var(--c-warn))]">
+                  Применишь — незаконченные партии восстановить будет нельзя:
+                </b>{' '}
+                стол собирается из журнала ходов, и по новым числам те же ходы дадут
+                другие карты.
+              </p>
+              {правки.ошибка && (
+                <p className="mt-1 text-[12px] font-semibold text-[rgb(var(--c-bad))]">
+                  {правки.ошибка}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={правки.сбросить}
+              className="rounded-lg border border-[var(--line)] px-3 py-2 text-[12.5px] text-[var(--muted)] hover:text-[var(--ink)]"
+            >
+              Снять всё
+            </button>
+            <button
+              onClick={правки.сохранить}
+              disabled={правки.занят}
+              className="rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-[rgb(var(--c-accent-ink))] disabled:opacity-50"
+            >
+              {правки.занят ? 'Применяю…' : 'Применить всем'}
+            </button>
+          </div>
+        )}
+
         {раздел === 'сходится' && <ЧтоНеСходится проверки={проверки} />}
         {раздел === 'правки' && <Правки />}
-        {раздел === 'карточки' && <Карточки />}
+        {раздел === 'карточки' && <Карточки правки={правки} />}
         {раздел === 'профессии' && <Профессии />}
         {раздел === 'правила' && <Правила />}
         {раздел === 'шансы' && <Шансы />}
@@ -531,7 +701,7 @@ const КОЛОДЫ = [
   { id: 'полоса', имя: 'Большой круг' },
 ] as const
 
-function Карточки() {
+function Карточки({ правки }: { правки: РабочиеПравки }) {
   const [колода, setКолода] = useState<(typeof КОЛОДЫ)[number]['id']>('малые')
   const [искать, setИскать] = useState('')
   const [открыта, setОткрыта] = useState<Record<string, unknown> | null>(null)
@@ -589,6 +759,12 @@ function Карточки() {
             key={`${колода}:${(c.id as string) ?? ''}:${i}`}
             c={c}
             onOpen={() => setОткрыта(c)}
+            правка={правки.карточки[(c.id as string) ?? '']}
+            наПравку={
+              правки.можно
+                ? (поле, знач) => правки.поставить((c.id as string) ?? '', поле, знач)
+                : undefined
+            }
           />
         ))}
       </div>
@@ -601,11 +777,18 @@ function Карточки() {
 function КартаСтрока({
   c,
   onOpen,
+  правка,
+  наПравку,
 }: {
   c: Record<string, unknown>
   onOpen: () => void
+  /** Что уже поправлено у этой карточки. Пусто — правок нет. */
+  правка?: Record<string, string | number>
+  /** Пусто — править нельзя (не хозяин): полей не показываем вовсе. */
+  наПравку?: (поле: string, значение: string | number | null) => void
 }) {
   const [раскрыто, setРаскрыто] = useState(false)
+  const [правлю, setПравлю] = useState(false)
   const фото = artForCard(c as { id?: string; symbol?: string })
   const название = (c.title ?? c.name ?? вид(c.type as string)) as string
   const текст = (c.text ?? c.flavor ?? '') as string
@@ -663,8 +846,66 @@ function КартаСтрока({
           >
             {раскрыто ? 'свернуть' : 'все поля'}
           </button>
+          {наПравку && (
+            <button
+              onClick={() => setПравлю((v) => !v)}
+              className="text-[12px] font-semibold text-[rgb(var(--c-warn))] hover:underline"
+            >
+              {правлю ? 'готово' : 'править'}
+            </button>
+          )}
         </div>
       </div>
+
+      {/*
+        🔴 Правим только то, что у карточки УЖЕ ЕСТЬ. Список полей строится из
+        самой карточки, а не из общего перечня: у бумаги нет взноса, у траты нет
+        дохода, и показывать пустые поля — верный способ завести число, которое
+        движок никогда не прочитает.
+      */}
+      {правлю && наПравку && (
+        <div className="mt-2 grid gap-2 rounded-lg border border-[rgb(var(--c-warn))]/40 bg-[rgb(var(--c-warn))]/8 p-2.5">
+          {['title', 'name', 'text', 'flavor'].map((поле) =>
+            typeof c[поле] === 'string' ? (
+              <label key={поле} className="grid gap-1 text-[12px]">
+                <span className="text-[var(--muted)]">{имяПоля(поле)}</span>
+                <textarea
+                  defaultValue={String(правка?.[поле] ?? c[поле])}
+                  onBlur={(e) => {
+                    const v = e.target.value
+                    наПравку(поле, v === String(c[поле]) ? null : v)
+                  }}
+                  rows={поле === 'text' || поле === 'flavor' ? 3 : 1}
+                  className="w-full resize-y rounded-md border border-[var(--line)] bg-[var(--panel)] px-2 py-1 text-[12.5px] outline-none focus:border-accent"
+                />
+              </label>
+            ) : null,
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {Object.keys(c)
+              .filter((k) => typeof c[k] === 'number')
+              .map((поле) => (
+                <label key={поле} className="grid gap-1 text-[12px]">
+                  <span className="text-[var(--muted)]">{имяПоля(поле)}</span>
+                  <input
+                    type="number"
+                    defaultValue={Number(правка?.[поле] ?? (c[поле] as number))}
+                    onBlur={(e) => {
+                      const v = Number(e.target.value)
+                      наПравку(поле, !Number.isFinite(v) || v === c[поле] ? null : v)
+                    }}
+                    className="tabnum w-full rounded-md border border-[var(--line)] bg-[var(--panel)] px-2 py-1 text-[12.5px] outline-none focus:border-accent"
+                  />
+                </label>
+              ))}
+          </div>
+          <p className="text-[11px] leading-snug text-[var(--muted)]">
+            Значение применяется, когда уходишь из поля. Совпало с исходным — правка
+            снимается сама.
+          </p>
+        </div>
+      )}
+
       {раскрыто && (
         <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-[var(--panel-2)] p-2.5 text-[11.5px] leading-relaxed">
           {JSON.stringify(c, null, 2)}

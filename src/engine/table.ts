@@ -44,6 +44,7 @@ import {
   localizedSpaceName,
   type DeckTheme,
 } from './data'
+import { правкиПравил } from './правки'
 import {
   RULES,
   setRules,
@@ -193,7 +194,21 @@ export function createTable(setup: TableSetup): Table {
   const theme = setup.deckTheme
   setActiveTheme(theme)
   setFastBoardTheme(theme)
-  setRules(THEME_RULES[theme] ?? THEME_RULES.classic)
+  /*
+   * 🔴 Правила темы, а СВЕРХУ — правки хозяина. Порядок важен: тема задаёт
+   * основу, панель её точечно поправляет. Наоборот было бы бессмысленно —
+   * смена темы стирала бы правку.
+   *
+   * Берём только числа и только те ключи, что в правилах УЖЕ ЕСТЬ: опечатка в
+   * панели иначе добавила бы правилам лишнее поле, а настоящее осталось бы
+   * прежним, и правка «не сработала» бы молча.
+   */
+  const базовые = THEME_RULES[theme] ?? THEME_RULES.classic
+  const свои: Record<string, number> = {}
+  for (const [k, v] of Object.entries(правкиПравил())) {
+    if (typeof v === 'number' && k in RULES) свои[k] = v
+  }
+  setRules({ ...базовые, ...свои })
   const pool = professionsFor(theme)
   const seats: Seat[] = setup.seats.map((s, i) => {
     const profession = pool.find((p) => p.id === s.professionId) ?? pool[0]
