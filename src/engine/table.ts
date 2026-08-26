@@ -551,10 +551,39 @@ export function applyWorldEvent(prev: Table, index: number): Table {
  * хватает на любую партию с запасом (при одной раз в десять минут это пять
  * часов игры). Возвращаем -1, вызывающий просто ничего не делает.
  */
+/** Выполнено ли условие выхода новости прямо сейчас. */
+function новостьУместна(t: Table, ev: import('./types').WorldEvent): boolean {
+  const у = ev.требует
+  if (!у?.категории?.length) return true
+  const надо = Math.max(1, у.минВладельцев ?? 1)
+  let сколько = 0
+  for (const s of t.seats) {
+    if (s.outOfGame) continue
+    const есть =
+      s.ledger.realEstate.some((a) => у.категории!.includes(a.category)) ||
+      s.ledger.businesses.some(
+        (a) => !(a as { gl?: unknown }).gl && у.категории!.includes(a.category),
+      )
+    if (есть) сколько += 1
+    if (сколько >= надо) return true
+  }
+  return false
+}
+
 export function nextWorldEventIndex(t: Table): number {
   const d = t.worldDeck
-  if (d.next >= d.order.length) return -1
-  return d.order[d.next]
+  /*
+   * 🔴 Ищем первую УМЕСТНУЮ новость, а не просто следующую. Указ о временном
+   * управлении логистикой, когда логистики ни у кого нет, — пустая карточка,
+   * а мировых событий за партию всего тридцать, и тратить их впустую нельзя.
+   * Неподошедшие не выбрасываем: они остаются в колоде и выйдут, когда у
+   * людей появится нужное.
+   */
+  for (let i = d.next; i < d.order.length; i++) {
+    const ev = WORLD_EVENTS[d.order[i]]
+    if (ev && новостьУместна(t, ev)) return d.order[i]
+  }
+  return -1
 }
 
 // ─── Вспомогательные ──────────────────────────────────────────────────
@@ -2803,7 +2832,19 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
 
     case 'WORLD_EVENT': {
       const t2 = applyWorldEvent(t, event.index)
-      t2.worldDeck = { ...t2.worldDeck, next: t2.worldDeck.next + 1 }
+      /*
+       * 🔴 Съедаем ИМЕННО ту новость, что вышла, а не «следующую по счёту».
+       * Отложенные ждут своего часа: меняем вышедшую местами с текущей
+       * позицией и двигаем курсор на одну. Без этого пропущенные новости
+       * терялись бы навсегда, стоило один раз перескочить через них.
+       */
+      const order = [...t2.worldDeck.order]
+      const где = order.indexOf(event.index, t2.worldDeck.next)
+      if (где >= 0) {
+        order[где] = order[t2.worldDeck.next]
+        order[t2.worldDeck.next] = event.index
+      }
+      t2.worldDeck = { order, next: t2.worldDeck.next + 1 }
       return t2
     }
 

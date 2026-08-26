@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "esbuild src/engine/selftest.ts --bundle --platform=node --format=esm --outfile=.selftest.mjs --log-level=error && node .selftest.mjs",
     "test:mech": "esbuild src/engine/mechtest.ts --bundle --platform=node --format=esm --outfile=.mech.mjs --log-level=error && node .mech.mjs",
-    "test:all": "npm run test:mech && npm test && npm run test:phase && npm run test:turn && npm run test:meme && npm run test:stage",
+    "test:all": "npm run test:mech && npm test && npm run test:phase && npm run test:turn && npm run test:meme && npm run test:stage && npm run test:world",
     "dump:state": "esbuild src/engine/dumpstate.ts --bundle --platform=node --format=esm --outfile=.dump.mjs --log-level=error && node .dump.mjs",
     "test:scen": "npx tsx src/engine/scenarios.ts",
     "fuzz": "npx tsx src/engine/fuzz.ts",
@@ -19,7 +19,8 @@
     "test:deck": "npx tsx src/engine/repeattest.ts",
     "test:meme": "npx tsx src/engine/memetest.ts",
     "bots": "npx tsx src/engine/botmeter.ts",
-    "test:stage": "npx tsx src/engine/stagetest.ts"
+    "test:stage": "npx tsx src/engine/stagetest.ts",
+    "test:world": "npx tsx src/engine/worldwaittest.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
