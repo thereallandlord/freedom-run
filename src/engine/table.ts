@@ -59,6 +59,7 @@ import {
   RIBA,
   CITIZENSHIP,
   citizenshipReady,
+  надбавкаИностранца,
 } from './ledger'
 import { mulberry32, shuffleIndices } from './rng'
 import {
@@ -1927,6 +1928,15 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         : Math.round(card.downPayment * (1 - (investorShare ?? 0)))
       const entryFee = dealTermsAccess?.kind === 'fee' ? dealTermsAccess.amount : 0
       if (dealBuyer.ledger.cash < owed + entryFee) return prev
+      /*
+       * 🔴 РЕЗИДЕНТ ВХОДИТ ДЕШЕВЛЕ ИНОСТРАНЦА — и в этом вся польза второго
+       * паспорта. Возвращаем деньгами ПОСЛЕ покупки, а не прячем в цену: так
+       * человек видит, за что заплатил за паспорт, и понимает это с первой же
+       * сделки. Спрятанная скидка объясняла бы себя только цифрой на карточке,
+       * которую не с чем сравнить.
+       */
+      const скидкаPct = надбавкаИностранца(dealBuyer.ledger, card.category)
+      const возврат = скидкаPct > 0 ? Math.round((owed * скидкаPct) / 100) : 0
       if (entryFee > 0) {
         seatLedgerEvent(t, dealBuyer.id, { type: 'ADJUST_CASH', amount: -entryFee })
         seatLedgerEvent(t, dealOwner.id, { type: 'ADJUST_CASH', amount: entryFee })
@@ -2006,6 +2016,20 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
         )} · ${signedMoney(flow)}/мес`,
         flow > 0 ? 'добро' : 'нейтр',
       )
+      if (возврат > 0) {
+        seatLedgerEvent(t, dealBuyer.id, { type: 'ADJUST_CASH', amount: возврат })
+        log(
+          t,
+          dealBuyer.id,
+          `Второй паспорт: надбавку для иностранцев не взяли — вернулось ${money(возврат)}`,
+        )
+        плашка(
+          t,
+          dealBuyer.id,
+          `${dealBuyer.name} вошёл как резидент — вернулось ${money(возврат)}`,
+          'добро',
+        )
+      }
       /*
        * 🔴 Карта закрывается, когда решили ВСЕ участники, а не когда нажал
        * владелец. Раньше его «Купить» снимало окно у всех разом, и допущенные

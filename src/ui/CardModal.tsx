@@ -26,6 +26,7 @@ import {
 import { fastBoard, cardText, fastSpaceText, smallDeals, bigDeals } from '../engine/data'
 import { loanOutstanding, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
+import { надбавкаИностранца } from '../engine/ledger'
 import { Pips } from './Pips'
 import { вКругах } from './срок'
 import {
@@ -1001,6 +1002,22 @@ function CardBody({
             перебить друг друга, а он выбирает. Механика ставок в движке лежала
             готовая (BID_OFFER), ей просто никто не пользовался.
           */}
+          {/*
+            🔴 Про возврат резиденту говорим ДО покупки. Иначе человек узнаёт о
+            пользе паспорта задним числом: деньги вернулись, а почему — непонятно.
+          */}
+          {(() => {
+            const скидка = надбавкаИностранца(l, card.category)
+            if (!скидка) return null
+            const база = canCash ? terms.cashPrice : card.downPayment
+            return (
+              <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-[12px] leading-snug">
+                У вас второй паспорт: надбавку для иностранцев не возьмут — вернётся{' '}
+                <b className="tabnum">{money(Math.round((база * скидка) / 100))}</b>.
+              </p>
+            )
+          })()}
+
           {/*
             Сделку можно не только купить: право на неё продаётся, а вход
             делится с партнёром.
