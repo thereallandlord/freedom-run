@@ -79,8 +79,8 @@ function отпечатокПравил(): string {
  * 🔴 Первое событие приходит раньше остальных: иначе начало партии проходит
  * в мёртвом рынке и игрок успевает решить, что мировых событий вообще нет.
  */
-export const WORLD_EVENT_MIN = 10
-export const WORLD_EVENT_FIRST_MIN = 10
+export const WORLD_EVENT_MIN = 7
+export const WORLD_EVENT_FIRST_MIN = 7
 
 interface Save {
   setup: TableSetup
