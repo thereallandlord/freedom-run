@@ -25,6 +25,7 @@ import {
   passiveIncome,
   totalExpenses,
   totalIncome,
+  MANAGER_PCT,
 } from './ledger'
 import {
   RAT_BOARD,
@@ -247,6 +248,13 @@ export function createTable(setup: TableSetup): Table {
         order: shuffleIndices(
           marketCards(theme).filter((c) => c.kind === 'glEvent').length,
           setup.seed + 5,
+        ),
+        next: 0,
+      },
+      bizEvent: {
+        order: shuffleIndices(
+          marketCards(theme).filter((c) => c.kind === 'bizEvent').length,
+          setup.seed + 6,
         ),
         next: 0,
       },
@@ -613,6 +621,7 @@ function cloneTable(t: Table): Table {
       market: { ...t.decks.market },
       doodad: { ...t.decks.doodad },
       glEvent: { ...t.decks.glEvent },
+      bizEvent: { ...t.decks.bizEvent },
     },
     dreamBumps: { ...t.dreamBumps },
     ftOwnership: { ...t.ftOwnership },
@@ -704,6 +713,40 @@ function money(n: number): string {
 function rng(t: Table, salt: number): number {
   t.rngCursor = (t.rngCursor ?? 0) + 1
   return mulberry32(t.seed + t.rngCursor * 2654435761 + salt)()
+}
+
+/**
+ * Тянет из личной колоды первую УМЕСТНУЮ карту, не сжигая остальные.
+ *
+ * 🔴 Зачем отдельно от `draw`. Личные колоды — событий бизнеса и партнёрского
+ * бизнеса — почти целиком состоят из карт «для своей стадии». Простой перебор
+ * с `draw` сжигал всю колоду за одну клетку рынка: человек на первом году
+ * пролистывал события сети из пяти точек, они уходили в отбой, и до них он
+ * больше не доживал. Здесь неподошедшие ОСТАЮТСЯ ждать — как ждут мировые
+ * новости, у которых пока нет адресата.
+ */
+function вытянутьУместную(t: Table, name: DeckName, cards: MarketCard[]): MarketCard | null {
+  if (!cards.length) return null
+  const d = t.decks[name]
+  // Колода сменилась или кончилась — пересобираем и заходим с начала.
+  if (d.order.length !== cards.length || d.next >= d.order.length) {
+    d.order = shuffleIndices(
+      cards.length,
+      t.seed + (t.rngCursor = (t.rngCursor ?? 0) + 1) + name.length * 7919,
+    )
+    d.next = 0
+  }
+  for (let i = d.next; i < d.order.length; i++) {
+    const c = cards[d.order[i]]
+    if (!c || !marketCardIsLive(t, c)) continue
+    // Найденную поднимаем на место курсора — остальные ждут своей очереди.
+    const order = [...d.order]
+    order[i] = order[d.next]
+    order[d.next] = d.order[i]
+    t.decks[name] = { order, next: d.next + 1 }
+    return c
+  }
+  return null
 }
 
 /** Взять следующую карту колоды, перетасовав её при исчерпании. */
@@ -1267,7 +1310,20 @@ function resolveLanding(t: Table, seatIdx: number) {
          * пробуем найти карту про его бизнес, и только потом обычную.
          */
         const hasGl = seat.ledger.businesses.some((b) => b.gl)
-        if (hasGl) {
+        /*
+         * 🔴 У обычного бизнеса та же беда, что была у партнёрского: на двенадцать
+         * заведений в колодах приходилось ДВЕ карточки, и обе про выкуп. Человек
+         * покупал кафе — и до конца партии с кафе не происходило ничего. Своя
+         * колода событий лечит ровно это.
+         */
+        const hasBiz = seat.ledger.businesses.some((b) => !b.gl)
+        if (hasBiz) {
+          const bizDeck = deck.filter((c) => c.kind === 'bizEvent')
+          // Если бизнесов два вида — кому сегодня событие, решает жребий, а не порядок в коде.
+          const сначалаБизнес = !hasGl || rng(t, 7710) < 0.5
+          if (сначалаБизнес) card = вытянутьУместную(t, 'bizEvent', bizDeck)
+        }
+        if (!card && hasGl) {
           const glDeck = deck.filter((c) => c.kind === 'glEvent')
           /*
            * 🔴 Тянем из СВОЕЙ колоды. Раньше здесь стоял курсор рынка, которому
@@ -1278,13 +1334,11 @@ function resolveLanding(t: Table, seatIdx: number) {
            * Своя колода заодно даёт то, чего просил Камиль: пока не пройдут
            * все пятнадцать событий, ни одно не повторится.
            */
-          for (let tries = 0; tries < glDeck.length; tries++) {
-            const candidate = glDeck[draw(t, 'glEvent', glDeck.length)]
-            if (marketCardIsLive(t, candidate)) {
-              card = candidate
-              break
-            }
-          }
+          card = вытянутьУместную(t, 'glEvent', glDeck)
+        }
+        // Не выпало партнёрское — добираем событие обычного бизнеса.
+        if (!card && hasBiz) {
+          card = вытянутьУместную(t, 'bizEvent', deck.filter((c) => c.kind === 'bizEvent'))
         }
         for (let tries = 0; !card && tries < 4; tries++) {
           const candidate = deck[draw(t, 'market', deck.length)]
@@ -1480,8 +1534,73 @@ function resolveLanding(t: Table, seatIdx: number) {
   }
 }
 
+/** «1 месяц / 2 месяца / 5 месяцев» — чтобы в тексте не было «3 месяцов». */
+function склонениеЗарплат(n: number): string {
+  const д = n % 10
+  const дд = n % 100
+  if (дд >= 11 && дд <= 14) return 'месяцев'
+  if (д === 1) return 'месяц'
+  if (д >= 2 && д <= 4) return 'месяца'
+  return 'месяцев'
+}
+
+/**
+ * Стадия жизни обычного бизнеса: 1 — первый год, 2 — встал на ноги, 3 — вырос.
+ *
+ * 🔴 Считаем по тому, что в игре УЖЕ ЕСТЬ, а не заводим новый счётчик.
+ * Управляющий — это и есть «бизнес крутится без тебя»: пока его нет, ты сам за
+ * прилавком. Второй бизнес — это уже сеть, и задачи там другие. Отдельный
+ * «возраст актива» пришлось бы хранить и переигрывать, а он не дал бы ничего
+ * сверх этого.
+ */
+export function бизнесСтадия(l: import('./types').Ledger): 1 | 2 | 3 {
+  const свои = l.businesses.filter((b) => !b.gl)
+  if (!свои.length) return 1
+  if (!свои.some((b) => b.managerPct)) return 1
+  /*
+   * 🔴 «Вырос» — это не только вторая точка. Замер на 80 партиях: третья
+   * стадия выпадала 2 раза из 90 событий, то есть тринадцать карточек про
+   * сеть спали почти всегда. И по жизни неправда: «Сеть шаурмы в Питере
+   * (3 точки)» за 183 500 в месяц — уже сеть, сколько бы строк она ни
+   * занимала в отчёте. Поэтому второй признак — размер дела.
+   */
+  const поток = свои.reduce((s, b) => s + b.cashFlow, 0)
+  return свои.length >= 2 || поток >= 180_000 ? 3 : 2
+}
+
+/** Подходит ли событие бизнеса этому игроку: и по стадии, и по виду дела. */
+export function событиеБизнесаУместно(t: Table, card: import('./types').BizEventCard): boolean {
+  const свои = currentSeat(t).ledger.businesses.filter((b) => !b.gl)
+  if (!свои.length) return false
+  if (card.categories?.length && !свои.some((b) => card.categories!.includes(b.category ?? ''))) {
+    return false
+  }
+  if (card.stages?.length && !card.stages.includes(бизнесСтадия(currentSeat(t).ledger))) {
+    return false
+  }
+  return true
+}
+
 /** Есть ли в карте рынка хоть какое-то живое действие для стола. */
 function marketCardIsLive(t: Table, card: MarketCard): boolean {
+  /*
+   * 🔴 Событие обычного бизнеса не показываем тому, у кого бизнеса нет: это
+   * ровно та ошибка, из-за которой карточки партнёрского бизнеса приходили
+   * людям без него и тратились впустую.
+   */
+  if (card.kind === 'bizEvent') {
+    if (!событиеБизнесаУместно(t, card)) return false
+    /*
+     * Предложение управляющего бессмысленно тому, у кого он уже есть: кнопка
+     * была бы, а нажать её движок не дал бы. Такие карточки просто ждут.
+     */
+    if (card.managerPct != null) {
+      const свои = currentSeat(t).ledger.businesses.filter(
+        (b) => !b.gl && (!card.categories?.length || card.categories.includes(b.category ?? '')),
+      )
+      if (!свои.some((b) => !b.managerPct)) return false
+    }
+  }
   if (card.kind === 'glEvent') {
     const мой = currentSeat(t).ledger.businesses.find((b) => b.gl)?.gl
     const st = (card as unknown as { stages?: number[] }).stages
@@ -1497,6 +1616,9 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
     )
   }
   switch (card.kind) {
+    // Уместность уже проверена выше — сюда доходят только подходящие.
+    case 'bizEvent':
+      return true
     case 'sellOffer':
       return marketMatches(t, card.category).length > 0
     case 'stockPrice':
@@ -1533,6 +1655,49 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
 
 /** Сплиты, выплаты и повышения применяются сразу — решать нечего. */
 function applyMarketAuto(t: Table, card: MarketCard) {
+  if (card.kind === 'bizEvent') {
+    /*
+     * 🔴 Событие ЛИЧНОЕ: касается только ходящего и только его обычных
+     * бизнесов. Если карточка названа по виду дела — задевает лишь такие
+     * заведения. Так пожар в кофейне не бьёт по типографии за соседним столом.
+     */
+    const seat = currentSeat(t)
+    const цели = seat.ledger.businesses.filter(
+      (b) => !b.gl && (!card.categories?.length || card.categories.includes(b.category ?? '')),
+    )
+    if (!цели.length) return
+    const заметки: string[] = []
+    for (const b of цели) {
+      if (card.flowPct) {
+        const было = b.cashFlow
+        // Навсегда — значит прямо в поток актива, до сотни.
+        b.cashFlow = Math.max(0, Math.round((было * (1 + card.flowPct / 100)) / 100) * 100)
+        заметки.push(
+          `${b.name}: доход ${card.flowPct > 0 ? 'вырос' : 'упал'} с ${money(было)} до ${money(b.cashFlow)} в месяц`,
+        )
+      }
+      if (card.dipPct) {
+        b.dipMul = 1 - card.dipPct / 100
+        b.dipLeft = card.dipPaydays ?? 3
+        заметки.push(
+          `${b.name}: доход просел на ${card.dipPct}% на ${b.dipLeft} ${склонениеЗарплат(b.dipLeft)}`,
+        )
+      }
+    }
+    if (card.cash) {
+      seat.ledger.cash += card.cash
+      заметки.push(card.cash > 0 ? `На счёт пришло ${money(card.cash)}` : `Со счёта ушло ${money(-card.cash)}`)
+    }
+    for (const з of заметки) log(t, seat.id, з)
+    if (card.managerPct != null) {
+      // Ничего не применяем: это предложение, а не событие. Решает игрок.
+      плашка(t, seat.id, `${seat.name}: ${card.title}`, 'добро')
+      return
+    }
+    const тон = (card.flowPct ?? 0) > 0 || (card.cash ?? 0) > 0 ? 'добро' : 'худо'
+    плашка(t, seat.id, `${seat.name}: ${card.title}`, тон)
+    return
+  }
   if (card.kind === 'glEvent' && !card.triangle) {
     /*
      * События партнёрского бизнеса. Применяются владельцу — и объясняются
@@ -2810,6 +2975,20 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
     case 'HIRE_MANAGER': {
       const b = l.businesses.find((x) => x.id === event.assetId)
       if (!b || b.gl || b.managerPct) return prev
+      /*
+       * 🔴 ДОЛЮ НАЗНАЧАЕТ НЕ КЛИЕНТ. Раньше `pct` приходил из события как есть,
+       * и ничто не мешало прислать ноль: управляющий работал бы даром, а бизнес
+       * шёл бы в зачёт свободы целиком. Своя цена бывает только у предложения,
+       * которое сейчас лежит на столе, — и только у ходящего.
+       */
+      const предложение =
+        t.pending?.kind === 'market' &&
+        t.pending.card.kind === 'bizEvent' &&
+        t.pending.card.managerPct != null &&
+        seatIdx === t.turnIndex
+          ? t.pending.card.managerPct
+          : null
+      if (event.pct !== MANAGER_PCT && event.pct !== предложение) return prev
       // Найм стоит трёх месяцев его доли — поиск, ввод в дело, первый аванс.
       const hireCost = Math.max(30_000, Math.round((ownShare(b) * event.pct * 3) / 100 / 1000) * 1000)
       if (l.cash < hireCost) return prev

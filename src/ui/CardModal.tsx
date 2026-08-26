@@ -22,6 +22,7 @@ import {
   marketStockPrice,
   dealTerms,
   marketDealFlow,
+  MANAGER_PCT,
 } from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText, smallDeals, bigDeals } from '../engine/data'
 import { loanOutstanding, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
@@ -1343,6 +1344,104 @@ function CardBody({
             */}
             <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
               Дальше
+            </button>
+          </S>
+        )
+      }
+
+      if (card.kind === 'bizEvent') {
+        /*
+         * Событие обычного бизнеса. Карточку видит весь стол — как и любую
+         * рыночную, — но касается она только ходящего: это его кофейня горит,
+         * а не соседская. Поэтому первой строкой пишем, чьё это, а эффект
+         * показываем в его деньгах.
+         */
+        const хозяин = table.seats[table.turnIndex]
+        const мои = хозяин.ledger.businesses.filter(
+          (b) => !b.gl && (!card.categories?.length || card.categories.includes(b.category ?? '')),
+        )
+        const мойХод = хозяин.id === seat.id
+        return (
+          <S
+            badge="Бизнес"
+            title={txt.title}
+            flavor={txt.flavor}
+            accent={(card.flowPct ?? card.cash ?? 0) >= 0 ? '#34d399' : '#fb923c'}
+            art="🏪"
+            photo={artById(card.id) ?? artBySpace('market')}
+          >
+            <p className="text-center text-sm text-[var(--muted)]">
+              {мойХод ? 'Это про ваш бизнес.' : `Это про бизнес игрока ${хозяин.name}.`}
+            </p>
+            {мои.length > 0 && (
+              <div className="panel-2 space-y-1 rounded-lg p-3">
+                {мои.map((b) => (
+                  <div key={b.id} className="flex items-center justify-between text-sm">
+                    <span className="text-[var(--muted)]">{b.name}</span>
+                    <span className="tabular-nums font-medium">
+                      {money(Math.round(b.cashFlow * ((b.dipLeft ?? 0) > 0 ? (b.dipMul ?? 1) : 1)))}/мес
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="panel-2 space-y-2 rounded-lg p-3">
+              {card.flowPct != null && (
+                <Stat
+                  label={card.flowPct > 0 ? 'Доход вырос навсегда' : 'Доход упал навсегда'}
+                  value={`${card.flowPct > 0 ? '+' : ''}${card.flowPct}%`}
+                  strong
+                />
+              )}
+              {card.dipPct != null && (
+                <Stat
+                  label={`Просадка на ${card.dipPaydays ?? 3} мес.`}
+                  value={`−${card.dipPct}%`}
+                  strong
+                />
+              )}
+              {card.cash != null && (
+                <Stat
+                  label={card.cash > 0 ? 'На счёт' : 'Со счёта'}
+                  value={money(Math.abs(card.cash))}
+                  strong
+                />
+              )}
+              {card.managerPct != null && (
+                <p className="text-sm text-[var(--muted)]">
+                  Обычно управляющий забирает {MANAGER_PCT}% потока. Этот согласен на{' '}
+                  {card.managerPct}%.
+                </p>
+              )}
+            </div>
+            {card.managerPct != null &&
+              мойХод &&
+              мои
+                .filter((b) => !b.managerPct)
+                .map((b) => {
+                  // Та же цена, что и в панели игрока: три месяца его доли.
+                  const цена = Math.max(
+                    30_000,
+                    Math.round((b.cashFlow * card.managerPct! * 3) / 100 / 1000) * 1000,
+                  )
+                  const хватает = хозяин.ledger.cash >= цена
+                  return (
+                    <div key={b.id} className="space-y-1">
+                      <button
+                        disabled={!хватает}
+                        onClick={() =>
+                          dispatch({ type: 'HIRE_MANAGER', assetId: b.id, pct: card.managerPct! })
+                        }
+                        className="btn-primary w-full"
+                      >
+                        Нанять в «{b.name}» за {money(цена)}
+                      </button>
+                      {!хватает && <Нехватка есть={хозяин.ledger.cash} надо={цена} />}
+                    </div>
+                  )
+                })}
+            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
+              {card.managerPct != null && мойХод ? 'Пока справлюсь сам' : 'Дальше'}
             </button>
           </S>
         )

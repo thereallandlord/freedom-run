@@ -115,10 +115,20 @@ export function ownShare(a: { cashFlow: number; investorShare?: number }): numbe
  * правды, а только зеркало для показа.
  */
 export function ownShareAt(
-  a: { cashFlow: number; investorShare?: number; category?: string; gl?: GlState; managerPct?: number },
+  a: {
+    cashFlow: number
+    investorShare?: number
+    category?: string
+    gl?: GlState
+    managerPct?: number
+    dipMul?: number
+    dipLeft?: number
+  },
   m: FlowMul,
 ): number {
-  const base = a.gl ? glTotalIncome(a.gl) : ownShare(a)
+  // Просадка после события бизнеса: временная, отсчёт идёт в дни зарплаты.
+  const просадка = !a.gl && (a.dipLeft ?? 0) > 0 ? (a.dipMul ?? 1) : 1
+  const base = a.gl ? glTotalIncome(a.gl) : Math.round(ownShare(a) * просадка)
   /*
    * 🔴 Управляющий забирает долю из ЖИВЫХ ДЕНЕГ, а не только из зачёта свободы.
    * Иначе найм был бы бесплатной выгодой: доход тот же, а к свободе ближе.

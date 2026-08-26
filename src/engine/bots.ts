@@ -233,11 +233,28 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
    * и прогон показал бы длину партии неверно.
    */
   {
-    const hireable = seat.ledger.businesses.find((b) => !b.gl && !b.managerPct)
+    /*
+     * Если на столе лежит предложение управляющего — берём ЕГО долю: она
+     * меньше рыночной, а карточка одноразовая. Без этого бот нанимал бы за
+     * полную цену прямо поверх выгодного предложения.
+     */
+    const предложение =
+      pending?.kind === 'market' &&
+      pending.card.kind === 'bizEvent' &&
+      pending.card.managerPct != null &&
+      t.turnIndex === t.seats.findIndex((s) => s.id === seat.id)
+        ? { pct: pending.card.managerPct, виды: pending.card.categories }
+        : null
+    const подходит = (b: { category?: string }) =>
+      !предложение?.виды?.length || предложение.виды.includes(b.category ?? '')
+    const hireable = seat.ledger.businesses.find(
+      (b) => !b.gl && !b.managerPct && (!предложение || подходит(b)),
+    )
     if (hireable && seat.track === 'rat') {
-      const cost = Math.max(30_000, Math.round((ownShare(hireable) * MANAGER_PCT * 3) / 100 / 1000) * 1000)
+      const pct = предложение?.pct ?? MANAGER_PCT
+      const cost = Math.max(30_000, Math.round((ownShare(hireable) * pct * 3) / 100 / 1000) * 1000)
       if (seat.ledger.cash - cost >= cashBuffer(seat, p)) {
-        return { type: 'HIRE_MANAGER', assetId: hireable.id, pct: MANAGER_PCT }
+        return { type: 'HIRE_MANAGER', assetId: hireable.id, pct }
       }
     }
   }
