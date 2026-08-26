@@ -3,7 +3,17 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/auth-back", "destination": "/api/auth-back" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/auth-back",
+      "destination": "/api/auth-back"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ]
 }
