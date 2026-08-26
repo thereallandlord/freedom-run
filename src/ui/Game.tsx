@@ -922,7 +922,15 @@ export function Game({
            */
           spectate={!myTurn && !allowedIn && table.pending?.kind !== 'market'}
           canSetAccess={myTurn && !actor.isBot}
+          /*
+            🔴 Быстрые кнопки у карточки. Пока она на столе, до шапки надо
+            ехать глазами через весь экран, а решение по сделке чаще всего
+            требует заглянуть именно в деньги. «Сделки» — только на своём
+            ходу: занимать и звать в долю за другого нельзя.
+          */
           onOpenTrades={seat.isBot || !myTurn ? undefined : () => setTradesOpen(true)}
+          onOpenBank={seat.isBot ? undefined : () => setBankOpen(true)}
+          onOpenPortfolio={seat.isBot ? undefined : () => setPortfolioOpen(true)}
         />
       )}
       {/*

@@ -143,7 +143,7 @@ function Shell({
           Сверху отступ на высоту шапки (замер приезжает из стола): иначе
           карточка накрывала бы ряд кнопок.
         */
-        className="absolute inset-0 grid place-items-center px-4 pb-4 lg:left-[calc(var(--rail)_+_12px)] lg:right-[calc(var(--rail)_+_12px)]"
+        className="absolute inset-0 flex items-center justify-center gap-2 px-4 pb-4 lg:left-[calc(var(--rail)_+_12px)] lg:right-[calc(var(--rail)_+_12px)]"
         style={{ paddingTop: 'calc(var(--topbar-h, 56px) + 8px)' }}
       >
       <div
@@ -174,8 +174,57 @@ function Shell({
           </div>
         )}
       </div>
+
+      {/*
+        🔴 БЫСТРЫЕ КНОПКИ РЯДОМ С КАРТОЧКОЙ (просьба Камиля).
+        Пока карточка на столе, до шапки надо ехать глазами через весь экран —
+        а решение по сделке чаще всего требует как раз заглянуть в деньги: чем
+        гасить, у кого занять, что продать. Ставим их вплотную к карточке.
+
+        Только на большом экране: на телефоне столбец кнопок отъел бы у
+        карточки ширину, а шапка там и так под большим пальцем.
+
+        Окна открываются ПОВЕРХ карточки и не закрывают её: карточка живёт,
+        пока не принято решение, — закрыл окно, вернулся к ней.
+      */}
+      <БыстрыеКнопки />
       </div>
     </div>
+  )
+}
+
+function БыстрыеКнопки() {
+  const д = useContext(ДействияCtx)
+  if (!д.банк && !д.сделки && !д.портфель) return null
+  return (
+    <div className="pointer-events-auto hidden shrink-0 flex-col gap-1.5 lg:flex">
+      {д.банк && <БыстраяКнопка знак="💼" подпись="Финансы" onClick={д.банк} />}
+      {д.сделки && <БыстраяКнопка знак="🤝" подпись="Сделки" onClick={д.сделки} />}
+      {д.портфель && <БыстраяКнопка знак="🎒" подпись="Портфель" onClick={д.портфель} />}
+    </div>
+  )
+}
+
+/** Кнопка в столбце у карточки: знак сверху, подпись снизу — читается боковым зрением. */
+function БыстраяКнопка({
+  знак,
+  подпись,
+  onClick,
+}: {
+  знак: string
+  подпись: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-[4.6rem] flex-col items-center gap-0.5 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-2 py-2.5 text-[10.5px] font-semibold shadow-md backdrop-blur transition hover:border-accent/60 hover:bg-accent/10"
+    >
+      <span className="text-[17px] leading-none" aria-hidden>
+        {знак}
+      </span>
+      <span>{подпись}</span>
+    </button>
   )
 }
 
@@ -339,6 +388,19 @@ function Stat({
  * число было почти невозможно. Компонент, объявленный в рендере, обязан жить
  * снаружи — иначе любое локальное состояние под ним обречено.
  */
+/**
+ * Быстрые кнопки у карточки.
+ *
+ * 🔴 Через контекст, а не пропсами: `<S>` рисуют ДВА ДЕСЯТКА веток карточек, и
+ * протаскивать три обработчика через каждую — верный способ забыть одну и
+ * получить карточку без кнопок, не заметив этого.
+ */
+const ДействияCtx = createContext<{
+  банк?: () => void
+  сделки?: () => void
+  портфель?: () => void
+}>({})
+
 const WatchingCtx = createContext<{ watching: string | null; note: string | null }>({
   watching: null,
   note: null,
@@ -401,12 +463,24 @@ export function CardModal(props: {
   spectate?: boolean
   /** Открыть экран сделок поверх карточки: занять, позвать в долю. */
   onOpenTrades?: () => void
+  /** Открыть «Финансы»: погасить долг, посмотреть остатки. */
+  onOpenBank?: () => void
+  /** Открыть портфель: продать бумаги, посмотреть активы. */
+  onOpenPortfolio?: () => void
   /** Условия входа назначает ТОЛЬКО владелец находки. */
   canSetAccess?: boolean
 }) {
   return (
     <WatchingCtx.Provider value={watchNote(props.table, props.seat, props.spectate ?? false)}>
-      <CardBody {...props} />
+      <ДействияCtx.Provider
+        value={{
+          банк: props.onOpenBank,
+          сделки: props.onOpenTrades,
+          портфель: props.onOpenPortfolio,
+        }}
+      >
+        <CardBody {...props} />
+      </ДействияCtx.Provider>
     </WatchingCtx.Provider>
   )
 }
