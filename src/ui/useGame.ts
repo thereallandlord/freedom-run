@@ -369,7 +369,15 @@ export function useGame(net?: {
         return
       }
       waiting = false
-      const ev = { type: 'WORLD_EVENT' as const, index: nextWorldEventIndex(now) }
+      const индекс = nextWorldEventIndex(now)
+      /*
+       * 🔴 Новости кончились — молчим, а не шлём пустое событие. Каждое
+       * событие выпадает не больше одного раза за партию (решение Камиля:
+       * мир не повторяется), и когда колода пройдена, слать в журнал
+       * пустышки каждые десять минут незачем.
+       */
+      if (индекс < 0) return
+      const ev = { type: 'WORLD_EVENT' as const, index: индекс }
       if (netSend) netSend(ev)
       else applyLocal(ev)
     }
