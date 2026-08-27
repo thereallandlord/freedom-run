@@ -139,6 +139,16 @@ export interface UseRoomApi {
   setSettings: (patch: Partial<RoomSettings>) => void
   resolveDisconnect: (id: string, mode: 'bot' | 'drop') => void
   leave: (mode: 'quit' | 'bot') => void
+  /**
+   * Забыть комнату у себя, никому ничего не сообщая.
+   *
+   * 🔴 Не то же, что `leave`: тот шлёт в комнату «меня больше нет» и выводит
+   * человека из партии по-настоящему. Здесь нужно другое — просто перестать
+   * считать себя участником комнаты, когда человек садится играть за одним
+   * экраном. Иначе прошлая комната продолжает жить в браузере и ломает
+   * местную партию (см. подпись действий в useGame).
+   */
+  forget: () => void
   copyInvite: () => Promise<boolean>
   start: () => TableSetup | null
   /** Прямая отправка действия — для отладки и нестандартных сценариев. */
@@ -517,6 +527,17 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
     [dispatch, me.id, room, transport],
   )
 
+  /*
+   * Забыть комнату молча. Транспорт отключаем — держать канал открытым для
+   * комнаты, в которой мы больше не играем, незачем.
+   */
+  const forget = useCallback(() => {
+    transport?.leave()
+    setRoom(null)
+    setConnecting(false)
+    setError(null)
+  }, [transport])
+
   const inviteLink = room ? buildInviteLink(room.code, origin) : ''
 
   const copyInvite = useCallback(async () => {
@@ -601,6 +622,7 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
     setSettings,
     resolveDisconnect,
     leave,
+    forget,
     copyInvite,
     start,
     dispatch,
