@@ -62,18 +62,44 @@ function CardArt({ icon, accent, photo }: { icon: string; accent: string; photo?
    * новые карты могут быть ещё не нарисованы. Поэтому эмодзи не выкидываем:
    * это честный запасной вариант, а не заглушка «загружается».
    */
+  const [загрузилась, setЗагрузилась] = useState(false)
+  /*
+   * 🔴 ПОКА КАРТИНКА ЛЕТИТ, НА ЕЁ МЕСТЕ БЫЛО БЕЛОЕ ПЯТНО.
+   *
+   * Карточка открывается мгновенно, а рисунок приезжает отдельным запросом —
+   * и первые доли секунды (на телефоне заметно дольше) верхняя треть карточки
+   * стояла пустой. Со стороны это читается как «у карточки нет картинки»:
+   * именно так это и выглядело на приёмке. Теперь под картинкой лежит та же
+   * подложка с эмодзи, что и у ненарисованных карт, а сам рисунок проявляется
+   * поверх. Пустого белого не бывает ни секунды.
+   *
+   * `loading="lazy"` убран сознательно: рисунок и так в поле зрения, ленивость
+   * тут ничего не экономит, а старт запроса откладывает.
+   */
+  const подложка = {
+    borderColor: `${accent}${photo ? '33' : '44'}`,
+    background: `radial-gradient(120% 140% at 50% 0%, ${accent}33 0%, ${accent}0d 55%, transparent 100%)`,
+  }
   if (photo) {
     return (
       <div
-        className="mb-3 overflow-hidden rounded-xl border"
-        style={{ borderColor: `${accent}33` }}
+        className="relative mb-3 grid h-32 place-items-center overflow-hidden rounded-xl border text-5xl sm:h-36"
+        style={подложка}
       >
+        {!загрузилась && (
+          <span className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]" aria-hidden>
+            {icon}
+          </span>
+        )}
         <img
           src={photo}
           alt=""
-          loading="lazy"
           decoding="async"
-          className="block h-32 w-full object-cover sm:h-36"
+          onLoad={() => setЗагрузилась(true)}
+          onError={() => setЗагрузилась(false)}
+          className={`absolute inset-0 block h-full w-full object-cover transition-opacity duration-300 ${
+            загрузилась ? 'opacity-100' : 'opacity-0'
+          }`}
         />
       </div>
     )
@@ -81,10 +107,7 @@ function CardArt({ icon, accent, photo }: { icon: string; accent: string; photo?
   return (
     <div
       className="mb-3 grid h-24 place-items-center overflow-hidden rounded-xl border text-5xl"
-      style={{
-        borderColor: `${accent}44`,
-        background: `radial-gradient(120% 140% at 50% 0%, ${accent}33 0%, ${accent}0d 55%, transparent 100%)`,
-      }}
+      style={подложка}
     >
       <span className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">{icon}</span>
     </div>
