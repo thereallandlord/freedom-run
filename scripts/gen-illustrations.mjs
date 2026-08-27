@@ -803,6 +803,283 @@ const SCENES_EVENTS = {
     EVENT_RULE + ' ' + "A rejected visa application form and an unused passport on a table with airline tickets, dim indoor light",
 }
 
+/**
+ * Кадры, которых не хватало.
+ *
+ * 🔴 Генератор МОЛЧА пропускает карточку, для которой не написана сцена, — и
+ * в отчёте бодро пишет «к отрисовке: 0». Так девяносто две карточки русской
+ * колоды остались без картинок, и никто этого не замечал. Плюс мировые
+ * новости: когда их переписали на настоящие события, у них сменились
+ * опознаватели, и ни одна из тридцати девяти не совпала со старыми файлами.
+ */
+const SCENES_NEW = {
+  "sd-re-tur-mersin2":
+    "A narrow balcony of a low white apartment block in a Mediterranean town, plastic chairs, drying towels, lemon trees below, flat blue sea between the buildings, late afternoon.",
+  "sd-tur-mersin":
+    "A quiet inland street of three-storey blocks with white railings, an old car parked under a fig tree, cats on warm concrete, dry mountains behind, hard midday sun.",
+  "sd-re-tur-alanya2":
+    "Seen from a high balcony: a kidney-shaped pool between two residential blocks, banana plants and a bare mountain ridge behind, empty sun loungers, orange evening light.",
+  "sd-dag-sulak":
+    "A small stone house with a tin roof on the rim of a deep canyon, turquoise river far below, sheep grazing on dry grass, morning haze.",
+  "sd-re-bali-ubud":
+    "A thatched bamboo bungalow at the edge of terraced rice paddies, wet green shoots, a farmer in a conical hat walking along a mud bund, low mist after rain.",
+  "sd-tur-mahmutlar":
+    "Rows of tall pale residential towers packed close to a rocky shoreline, water tanks and satellite dishes on the roofs, laundry on balconies, low sun off the sea.",
+  "sd-re-bali-canggu":
+    "A small studio with an open-air shower behind volcanic stone walls, a scooter parked on the path, a wet surf towel over a chair, banana leaves, harsh midday light.",
+  "sd-dxb-arjan":
+    "Early evening in a new Dubai district: a fruit stall lit under a canopy, delivery bikes at the kerb, men in shirts walking home between beige blocks.",
+  "sd-re-dxb-jvt":
+    "A small walled garden behind a Dubai townhouse: artificial grass, a folded parasol, a child's bicycle on its side, cream walls warm in evening light, air-conditioning units humming.",
+  "sd-tur-istanbul":
+    "A large housing complex of identical grey towers around a children's playground, wet paving, women pushing strollers, the pale flat sea far in the distance, overcast morning.",
+  "sd-dxb-jvc":
+    "A compact Dubai one-bedroom at noon: pale tiles, a new sofa still in plastic, curtains half open onto low-rise rooftops and satellite dishes, hard white light.",
+  "sd-tur-bodrum":
+    "Whitewashed cube houses stacked up a hillside, bougainvillea spilling over a stone wall, a small bay with moored fishing boats below, crisp shadows, early morning light.",
+  "biz-v-pakete-byla-tryapka":
+    "A lone clerk at a parcel pickup counter holds open a returned plastic bag containing a folded grey rag, no jacket inside, a blurred queue waiting behind under cold ceiling light.",
+  "biz-mama-poprosila-spravku":
+    "A woman in a small children's studio hands a folder of paperwork to a mother in the doorway while a child in socks waits on foam mats, afternoon light.",
+  "biz-sarafan-v-chate":
+    "A ground-floor barbershop in a panel apartment block at dusk, all three chairs busy, four neighbours waiting on a bench by the fogged window, coats on hooks.",
+  "biz-moyka-pistolety":
+    "Car wash bay at minus thirty, thick ice on coiled hoses, a worker in a padded jacket thawing a pressure gun with a heat gun, steam, empty stalls.",
+  "biz-komissiya-podnyalas":
+    "A seller in a cramped storage room lifts two product boxes off a shelf into a separate pile on the floor, an opened envelope lying face-down on a crate.",
+  "biz-popal-v-rekomendacii":
+    "A stairwell landing crowded with sealed parcels, a delivery driver carrying four at once down the steps while a woman hands him more from her doorway, harsh landing light.",
+  "biz-reestr-i-turnalog":
+    "A man on a stepladder screws a red fire extinguisher bracket to the corridor wall of a small guesthouse, an empty frame propped by the door, drill dust below.",
+  "biz-tuhum-svadba":
+    "Dusk courtyard of a two-storey guesthouse in the mountains, every window lit, huge cauldrons steaming over open fire, long tables set, men carrying stacked chairs.",
+  "biz-kassovyy-razryv":
+    "In a back room before opening, an owner counts banknotes from his own worn wallet onto a table beside the open till drawer, delivery crates stacked by the door.",
+  "biz-vladelec-sleg":
+    "A man lies under a blanket in a small Russian flat at midday, crutches against the wall, an untouched bowl on a stool, his work apron on the door handle.",
+  "biz-arenda-indeksaciya":
+    "A landlord in an overcoat stands mid-floor in a working cafe holding loose papers, the owner listening from behind the counter, guests eating at nearby tables, midday.",
+  "biz-znakomyy-pekar-v-upravlyayushchie":
+    "Two men in flour-dusted aprons by a deck oven at night, the older one pointing at proofing racks of dough, warm bulb light, empty bakery floor beyond.",
+  "mkt-price-shib-run":
+    "Three friends crowded shoulder to shoulder around a desktop monitor seen from behind at 3 a.m., energy drink cans everywhere, one standing on a kitchen chair, arms up.",
+  "mkt-price-moonx-fade":
+    "An emptied coworking corner at dawn, one chair still slowly spinning, a deflated foil balloon caught under a desk leg, cold mugs, dust drifting in low light.",
+  "gl-upgrade-offer":
+    "A woman kneeling in a narrow apartment hallway, lifting plain unlabeled jars from a big opened cardboard box onto a shelf already half full, warm ceiling lamp.",
+  "gl-mentor-spill":
+    "Four people squeezed onto a sofa in a small living room, an older man pouring tea, plain jars crowding the low table, coats piled by the door.",
+  "gl-sets-family":
+    "A crowded family table in a Russian apartment, plain boxes passed hand to hand over the dishes, an aunt tucking jars into a checkered shopping bag.",
+  "biz-postavshik-podvel":
+    "Bakery back room before dawn, an opened paper sack tipped across a steel table, floury hands sifting a white heap speckled with tiny dark insects, bare bulb overhead.",
+  "biz-pech-vstala":
+    "A repairman kneeling with a flashlight at an opened deck oven, side panel off, wires and tools spread on tile, the baker standing behind him in a dark closed bakery.",
+  "biz-vitrina-v-musor":
+    "Closing time behind the counter: a worker tipping a full tray of unsold pastries into a black bin liner, half-empty glass case, chairs upturned, rain streaking the window.",
+  "biz-povar-ne-vyshel":
+    "The owner alone in an apron working a smoking grill, plates piling on the pass, blank order slips clipped along the rail, a folded apron left on the empty second station.",
+  "biz-zhaloba-sosedey":
+    "Two women in coats stand in a panel-block courtyard pointing up at a café's rumbling ventilation duct, while a man watches from his balcony above, flat grey daylight.",
+  "biz-vyveska-smenilas":
+    "Two workmen on a stepladder lift a blank rectangular panel into brackets above a shop door at dusk, protective film half peeled, people waiting on the wet pavement below.",
+  "biz-agregator-dostavki":
+    "Three couriers with big plain insulated backpacks crowding at a lit pickup window, paper bags lined on the sill, rain and condensation on the glass.",
+  "biz-administrator-prositsya-v-upravlyayushie":
+    "A young woman in a dark work apron stands behind a small salon reception counter at closing time, holding a ring of keys; the owner watches from the doorway with delivery boxes.",
+  "biz-sosed-vozmetsya-vesti-dom":
+    "A middle-aged man in a quilted jacket carries split firewood across the snowy courtyard of a wooden guest house, waving to a minivan driver unloading bags at the gate.",
+  "biz-upravlyayushchiy-voroval":
+    "A storeroom door open at night, boxes shifted out of line, one gap in a full shelf, the owner in a coat standing in the doorway, torch beam across the floor.",
+  "biz-rospotrebnadzor-smyvy":
+    "Two inspectors in white coats and blue gloves swab a stainless-steel prep table with cotton sticks and seal sample tubes; the kitchen behind them stands stripped bare and wet.",
+  "biz-reyting-na-kartah":
+    "Two strangers with backpacks stop in the rain at a small café door, peering in at the full tables while a server carries plates past the fogged window.",
+  "biz-povar-ushel-k-setevikam":
+    "A cook in whites crosses a wet backyard at night with a rolled knife bag under his arm, the kitchen door open and steaming behind him, a van idling at the gate.",
+  "biz-postavshchik-dal-otsrochku":
+    "A loader wheels a pallet of crates into a shop owner's van at a warehouse dock while the supplier watches from the shutter door, folder under his arm, cold morning light.",
+  "biz-pyatnichnyy-potok":
+    "Men in caps stream from a mosque gate down a sunny street toward a small canteen; inside, a queue splits between two registers as a server ladles from steel trays.",
+  "biz-sertifikat-postavshika":
+    "A shop owner sweeps vacuum-packed meat off a cold-room shelf into a plastic crate, an open document folder on the trolley beside him, his breath visible in the cold.",
+  "biz-sim-zapret-parkovok":
+    "At dawn a worker loads electric scooters into a box van from an empty city-centre parking bay; the painted outlines stay bare, tram tracks and old façades behind.",
+  "biz-tipografiya-stanok-vstal":
+    "A technician holds a scorched circuit board under a work lamp beside the opened control cabinet of a large printing press; pallets of unprinted paper wait under plastic wrap.",
+  "biz-master-ushel-cherez-dva-kvartala":
+    "A young barber walks a snowy pavement carrying a rolled tool case and a mirror under his arm, past parked cars, the lit basement window of his old salon behind him.",
+  "sd-loft-kzn":
+    "A brick loft under a vaulted nineteenth-century ceiling in Kazan, one cast-iron column, tall arched window; low winter sun falls across bare floorboards and a folded ladder.",
+  "sd-re-sau-jeddah":
+    "A shaded balcony of a Jeddah apartment above the Red Sea corniche, carved wooden screen, potted jasmine, warm evening light on palms and flat blue water beyond.",
+  "sd-re-dxb-silicon":
+    "Beige mid-rise blocks in inland Dubai at midday, air-conditioning units on every facade, dusty parked cars, thin palms, hard white light and short black shadows.",
+  "sd-tur-lara":
+    "An Antalya one-bedroom between guests: stripped bed, folded fresh linens, two key sets on the counter, a rolling suitcase by the door, pine tops through balcony glass.",
+  "sd-dxb-south":
+    "A new low residential block on the desert edge south of Dubai, sand plots and a lone crane behind it, an aircraft climbing overhead through early morning haze.",
+  "sd-re-sau-riyadh":
+    "A beige stone apartment building in a quiet Riyadh district, deep-set windows, date palms along the wide clean street, sharp afternoon light, one white sedan in shade.",
+  "sd-tur-konyaalti":
+    "An empty two-room Antalya flat, sofa and folded stroller the only furniture, sliding doors open to a balcony, pine tops and grey mountains beyond, morning light on tiles.",
+  "sd-dxb-jvt":
+    "A quiet low-rise Dubai townhouse lane at dawn, sprinklers spraying trimmed grass, cream villas, a cat crossing the empty road, long soft shadows, pale sky.",
+  "sd-dxb-bay":
+    "A compact high-floor studio: unmade sofa bed, small kettle, floor-to-ceiling glass showing dark canal water and glass towers reflecting a pink Dubai sunset.",
+  "sd-tur-fethiye":
+    "A stone house among pines and olive trees above Fethiye, shutters thrown open, a dog asleep on warm gravel, a sagging hammock, hard cicada-loud noon light.",
+  "big-re-dxb-marina-1room":
+    "Night from a Dubai Marina balcony: curved lit towers ringing black water, moored yachts below, a plastic chair and a glass of tea on tiled floor.",
+  "mkt-price-moonx-alive":
+    "A candle burnt down to a stub, still flickering on a scratched windowsill at four in the morning, wax pooled, cold city glow behind dusty glass.",
+  "biz-otkrylis-v-sosednem-dome":
+    "Late afternoon in a Russian courtyard: a barber stands in the doorway of his half-empty basement salon while across the yard a brand-new shopfront glows with people queuing outside.",
+  "biz-sosednee-pomeshchenie":
+    "Workers carry chairs through a freshly knocked-through doorway into the adjoining empty room, plaster dust hanging in the light, the owner and the landlord pacing the joined floor together.",
+  "biz-moyka-shampun":
+    "Dusk at a two-bay self-service car wash: one loyal driver rinsing his sedan, while further down the wet road headlights swing into newer bays past the intersection.",
+  "biz-vozvraty-i-reyting":
+    "A woman in a cramped home stockroom opens returned poly mailers, crumpled sweaters heaped on the floor, a ring light and tripod set up on the table for reshooting.",
+  "biz-hit-skopirovali":
+    "Two nearly identical cosmetic jars stand side by side on a kitchen table under a desk lamp, a seller turning one over, her own packing boxes stacked behind.",
+  "biz-bloger-kupil-sam":
+    "Midnight packing corner in a flat: hands taping the last of forty parcels, tape gun mid-pull, boxes crowding the hallway, a propped phone playing someone's unboxing clip.",
+  "biz-s-noyabrya-nikogo":
+    "A wooden guesthouse in the snowy Caucasus, empty yard, no cars, one lit window; the caretaker shovels the path while steam rises from a boiler pipe.",
+  "biz-podnyal-cenu":
+    "July morning on a mountain guesthouse veranda: every table taken, cars filling the gravel yard, the host carrying a tray of breakfast between guests in bright sun.",
+  "biz-dorogu-perekrylo":
+    "A mountain road buried under a fresh landslide, an excavator biting into the rubble, a striped barrier across the asphalt, two cars reversing back down the gorge.",
+  "biz-vypechka-na-polku-seti":
+    "Before dawn in a small bakery: the baker slides trays of buns from the deck oven into plastic crates while a van waits with open doors at the loading step.",
+  "biz-pvz-dva-marketpleysa":
+    "A newly moved parcel pickup point: tall metal racks half filled with packages, a worker in a vest wheeling a loaded cart, three customers waiting at the counter.",
+  "biz-vtoraya-tochka-otvela-gostey":
+    "Evening street in a residential district: two small cafés a hundred metres apart, both lit and nearly empty, a barista wiping tables in one, another standing idle.",
+  "biz-kompaniya-na-abonement":
+    "Midday barbershop, four men in office shirts waiting on a bench with jackets on hooks while two barbers work at the chairs, flat daylight through the window.",
+  "biz-otzyv-s-foto":
+    "Opened parcel on a kitchen table, tissue paper and a small blank card beside it, a woman holding her phone above the item to photograph it in window light.",
+  "biz-korporativnyy-dogovor":
+    "Midday in a company canteen: office workers in shirts filing along a steel counter while two cooks refill trays from identical crates stacked against the tiled wall.",
+  "biz-vtoraya-smena":
+    "Dusk on a Russian street, wet asphalt reflecting the lit windows of a small shop, customers in coats inside at the counter, a manager handing over a bag.",
+  "biz-svoy-sklad":
+    "Concrete warehouse in an industrial estate, steel racks stacked with cardboard boxes, two men taping parcels at a packing table under fluorescent tubes, roller shutter half raised.",
+  "biz-svadby-po-vyhodnym":
+    "Saturday at a wooden country house: a marquee on the lawn, guests in light coats drifting between tables, staff carrying trays past a row of cars along the fence.",
+  "biz-tri-tochki-optom":
+    "Early morning at a curb, a delivery truck with its tail lift down, driver wheeling pallets of goods past three shop owners in aprons checking the stacked crates.",
+  "biz-upravlyayushchiy-vyros":
+    "A woman in staff uniform walking the aisle of a small shop with a tablet, pointing out shelf work to two new employees, morning light through the storefront glass.",
+  "biz-arendodatel-ne-prodlil":
+    "Two men carry a stainless dough mixer out of an emptied storefront onto a truck in a grey courtyard; bare walls show pale rectangles where shelving stood.",
+  "biz-administrator-mimo-kassy":
+    "Cramped back office at night: an owner leans toward a grainy four-way security monitor showing a reception counter, an open cash drawer and receipt rolls beside him.",
+  "biz-drobleniye-nalog":
+    "Kitchen table under a low lamp late at night, stacks of stamped paperwork out of focus, a worn calculator, a torn official envelope, a man in a sweater pressing his temples.",
+  "biz-zemlyak-kupil-franshizu":
+    "Dawn in a small bakery: a man in a suit jacket watches over the shoulder of a baker shaping dough, a thick closed folder resting on the flour-dusted table.",
+  "biz-barbershop-franshiza":
+    "Barbershop after closing, chairs empty and swept: the owner slides a thick ring binder across the counter to two visitors in jackets, clippers lined up beside a mirror.",
+  "biz-turoperator-stavit-gruppy":
+    "A tour bus unloads suitcases outside a small three-storey guesthouse in the mountains; staff hand out keys on the porch while a second bus waits on the gravel drive.",
+  "biz-vosemsot-naborov-k-novomu-godu":
+    "Workshop floor covered in long tables of identical packed gift boxes, four people tying ribbon, towers of flattened cardboard, blue winter dusk in the tall windows.",
+  "biz-ramadan-vechera":
+    "A packed dining hall minutes after sunset: long tables set with dates, soup bowls and teapots, waiters weaving between full chairs, deep blue windows behind them.",
+  "biz-yanvar-posle-novogo-goda":
+    "Cold rented storage unit stacked to the ceiling with untouched boxes; a woman in a winter coat stands between pallets under a single bulb, wet boot prints on the concrete.",
+  "biz-may-gruppy-poplyli":
+    "A studio room with a wide circle of chairs, only three people sitting together on one side; the rest stand empty, green leaves and bright sun through the open window.",
+  "biz-zavtraki-v-biznes-centr":
+    "Early morning office lobby: a courier wheels a trolley stacked with cardboard breakfast boxes past a security desk toward the elevators, low sun across the polished floor.",
+  "biz-samsa-ushla-v-rayon":
+    "Weekend queue curls outside a small bakery door in a residential block, cars double-parked along the curb; inside, a baker peels samsa off the glowing tandoor wall.",
+}
+
+const SCENES_EVENTS_NEW = {
+  "tur-vnzh-porog":
+    EVENT_RULE + " " + "Rows of new white apartment blocks on a dry Turkish hillside, balconies bare and empty, a lone agent in a shirt unlocking a ground-floor show flat under harsh midday sun.",
+  "tur-licenzia":
+    EVENT_RULE + " " + "Neighbours seated on plastic chairs in the marble lobby of a Turkish apartment building, an older woman standing with blank sheets of paper, keys and glasses on a low table.",
+  "tur-potolok":
+    EVENT_RULE + " " + "Stairwell of an Istanbul apartment block, a young man carrying a mattress down the steps past taped boxes while the landlord watches from the landing above.",
+  "tur-mersin":
+    EVENT_RULE + " " + "Crowded Mersin street under palm trees, families with suitcases and bundled blankets beside packed minibuses, mattresses roped to car roofs in warm coastal afternoon light.",
+  "dxb-arenda":
+    EVENT_RULE + " " + "A young couple carries cardboard boxes through the marble lobby of a Dubai high-rise at dusk, movers' trolley waiting, warm skyline of towers glowing through floor-to-ceiling glass.",
+  "dxb-528":
+    EVENT_RULE + " " + "Inside a glossy sales office an agent gestures over a large white architectural model of towers while a family in coats leans in, afternoon sun through tall windows.",
+  "dxb-fitch":
+    EVENT_RULE + " " + "Aerial view at dusk over a district of half-finished Dubai towers, dozens of cranes standing idle above them, most windows dark, desert haze flattening the horizon.",
+  "msk-arenda-rost":
+    EVENT_RULE + " " + "Six people in winter coats crowd a dim stairwell landing of a Moscow panel block, waiting their turn as a landlord unlocks a scuffed apartment door.",
+  "msk-arenda-proval":
+    EVENT_RULE + " " + "An emptied Moscow rental flat: bare mattress against peeling wallpaper, one mug on the windowsill with keys beside it, grey September light through unwashed glass.",
+  "posutochno-sosedi":
+    EVENT_RULE + " " + "Late at night an elderly woman in a housecoat stands in her doorway watching three strangers with rolling suitcases enter the flat across the landing, elevator doors closing.",
+  "parking-800":
+    EVENT_RULE + " " + "A Moscow boulevard lined bumper to bumper with cars in wet March slush, an inspection vehicle with a roof camera rolling slowly past a driver on the pavement.",
+  "parking-negde":
+    EVENT_RULE + " " + "A driver in a padded jacket edges his car into the last narrow bay of a packed underground garage, mirrors folded, another car waiting behind with headlights on.",
+  "anapa-mazut":
+    EVENT_RULE + " " + "Volunteers in white protective suits shovel oil-blackened sand into sacks along a deserted Black Sea beach, stacked sun loungers behind them, grey water under low clouds.",
+  "nds-nol":
+    EVENT_RULE + " " + "A small seaside guesthouse at sunrise: the owner props open freshly painted shutters, paint cans and a ladder on the porch, empty key hooks visible inside.",
+  "stroymat":
+    EVENT_RULE + " " + "An unfinished brick house on a suburban plot, bundles of rebar and stacked timber under a torn tarpaulin, a builder in a padded jacket counting boards at dawn.",
+  "yaica-maslo":
+    EVENT_RULE + " " + "In a Russian supermarket a woman lifts a cardboard egg tray from a half-empty shelf while plain butter packs sit inside a locked plastic anti-theft case, cold light.",
+  "gold-obval":
+    EVENT_RULE + " " + "A dealer's back room at night: stacks of gold bars on a steel bench scale, one stack toppled across the table, gloved hands steadying it under cold overhead light.",
+  "plzl-rost":
+    EVENT_RULE + " " + "A terraced open-pit gold mine in Siberia at sunrise, yellow haul trucks crawling up switchback roads, ore dust hanging over the benches, frost on the rim.",
+  "sukuk-trln":
+    EVENT_RULE + " " + "A Gulf bank hall behind carved wooden screens: men in white thobes seated along a polished table, a clerk laying face-down documents before them, warm late-afternoon light.",
+  "btc-etf":
+    EVENT_RULE + " " + "A windowless vault room where a technician racks matte steel devices behind a mesh cage, two guards at the door, cold blue light on concrete.",
+  "crypto-19mlrd":
+    EVENT_RULE + " " + "A pawnshop counter at night behind barred windows: a young man setting down a plain graphics card and a watch, the clerk sliding a tray forward, cold fluorescent light.",
+  "durov":
+    EVENT_RULE + " " + "A private jet parked on wet tarmac at a small French airfield at night, police cars with blue strobes at the airstairs, officers in vests, the cabin door open and empty.",
+  "meme-pump":
+    EVENT_RULE + " " + "An arcade coin-pusher machine at a fairground, a landslide of gilded plastic tokens spilling into the tray while hands reach in, neon reflections on the glass.",
+  "meme-libra":
+    EVENT_RULE + " " + "A Buenos Aires press room: dozens of raised phone cameras and television lights aimed at an empty lectern bristling with unmarked microphones, heavy gilded curtains behind.",
+  "kurier":
+    EVENT_RULE + " " + "Winter courtyard outside a Russian district polyclinic: a courier with a plain insulated backpack pulls away on an electric bike while a doctor in a white coat stands smoking by the door.",
+  "kommunalka":
+    EVENT_RULE + " " + "A kitchen in a Soviet panel flat at dusk: a woman in a cardigan turning down the gas under a big kettle, frost on the window, radiator thick with old paint.",
+  "gl-new-country":
+    EVENT_RULE + " " + "A newly opened warehouse in the morning, forklift carrying shrink-wrapped pallets toward open loading doors, a delivery van backed to the dock, workers in plain vests.",
+  "obshepit-zakrylsya":
+    EVENT_RULE + " " + "An empty cafe on the ground floor of a Russian courtyard building: chairs upside down on tables, whitewashed windows, torn wiring where a sign hung, grey February light.",
+  "dron-wb":
+    EVENT_RULE + " " + "A gutted logistics warehouse at dawn: collapsed roof trusses over blackened racks, smoke drifting, firefighters' hoses across flooded asphalt, scorched cardboard parcels heaped outside in the mud.",
+  "wb-pvz-vyplaty":
+    EVENT_RULE + " " + "After closing, a woman alone in a cramped pickup point between metal racks overloaded with parcels, counting paper receipts on a stool under one flickering fluorescent tube.",
+  "samokaty":
+    EVENT_RULE + " " + "A wet Moscow embankment at rush hour: a new barrier across the bike path, pedestrians in coats streaming past, one rental scooter lying on its side in a puddle.",
+  "pvz-potok":
+    EVENT_RULE + " " + "Seen from the street through a fogged window at dusk: a queue inside a pickup point in a panel block, a courier hauling a sack past them to the counter.",
+  "ukaz-604":
+    EVENT_RULE + " " + "Men in dark overcoats and uniform crossing a frozen plant yard past a boiler house, a wire seal fixed on the gate, helmeted workers watching from a doorway.",
+  "nvda-5trln":
+    EVENT_RULE + " " + "A data centre hall in cold blue light: two endless rows of server racks, thousands of tiny indicator lights, overhead cable trays, one technician small at the far end.",
+  "deepseek":
+    EVENT_RULE + " " + "A trading floor at opening: walls of red-lit screens with blurred descending lines, brokers half-risen from their chairs, phones at their ears, jackets left on seat backs.",
+  "msft-openai":
+    EVENT_RULE + " " + "In a glass boardroom at dusk a lawyer slides a thick bound contract across a long walnut table; two executives stand apart at the window above city lights.",
+  "tsla-2022":
+    EVENT_RULE + " " + "Rows of new unbadged electric sedans parked under floodlights in a rain-soaked delivery lot, dust film on their roofs, the lit assembly hall still working behind glass.",
+  "tsla-2024":
+    EVENT_RULE + " " + "A school gym polling station after closing: folding cardboard voting booths, sealed ballot boxes on a trestle table, a volunteer stacking chairs under bright ceiling lights.",
+  "gold-4000":
+    EVENT_RULE + " " + "A refiner in a heat-proof apron tips a crucible of molten gold into a row of bar moulds; orange glare fills the dark workshop, sparks scattering.",
+}
+
 const SCENES_WORLD = {
   'world-diorama': WORLD_RULE + ' Style: photoreal miniature model under warm evening light, tiny glowing windows, soft deep shadows.',
   'world-isometric': WORLD_RULE + ' Style: bright crisp 3D render, vivid saturated colours, soft clouds at the corners, cheerful daylight.',
@@ -1263,7 +1540,7 @@ function buildJobs() {
       /* 🔴 Часть бизнесов живёт в колоде МАЛЫХ сделок (их перенесли туда,
          чтобы бизнес попадался раньше) — сцены им искать надо и в бизнес-таблице,
          иначе у них не будет картинки вовсе. */
-      const scene = SCENES_SMALL_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_BIG_RE[c.id]
+      const scene = SCENES_SMALL_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_BIG_RE[c.id] || SCENES_NEW[c.id]
       push(c.id, c.id, scene, 'small-deal', () => {
         manifest.byId[c.id] = `/cards/${c.id}.webp`
       })
@@ -1272,7 +1549,7 @@ function buildJobs() {
 
   // Большие сделки
   for (const c of decks.BIG_DEALS_RU) {
-    const scene = SCENES_BIG_RE[c.id] || SCENES_BIG_BIZ[c.id]
+    const scene = SCENES_BIG_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_NEW[c.id]
     push(c.id, c.id, scene, 'big-deal', () => {
       manifest.byId[c.id] = `/cards/${c.id}.webp`
     })
@@ -1287,7 +1564,7 @@ function buildJobs() {
 
   // Карточки рынка
   for (const c of decks.MARKET_CARDS_RU) {
-    push(c.id, c.id, SCENES_MARKET[c.id], 'market', () => {
+    push(c.id, c.id, SCENES_MARKET[c.id] || SCENES_NEW[c.id], 'market', () => {
       manifest.byId[c.id] = `/cards/${c.id}.webp`
     })
   }
@@ -1328,7 +1605,7 @@ function buildJobs() {
 
   // Мир доски без клеток
   manifest.byWorld = manifest.byWorld || {}
-  for (const [k, scene] of Object.entries(SCENES_EVENTS)) {
+  for (const [k, scene] of Object.entries({ ...SCENES_EVENTS, ...SCENES_EVENTS_NEW })) {
     push(k, `event-${k}`, scene, 'event', () => {
       manifest.byWorld = manifest.byWorld || {}
       manifest.byWorld[k] = `/cards/event-${k}.webp`
