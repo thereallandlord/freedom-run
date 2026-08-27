@@ -136,7 +136,7 @@ function Shell({
       лежит карта, — но своими деньгами и портфелем пользоваться можно.
     */
     <div className="modal-layer pointer-events-none fixed inset-0 z-40">
-      <div className="absolute inset-0 bg-black/55" />
+      <div className="modal-scrim absolute inset-0 bg-black/55" />
       <div
         /*
           Карточка стоит по центру ПОЛЯ, а не всего экрана: на большом экране
@@ -219,7 +219,19 @@ function БыстраяКнопка({
   return (
     <button
       onClick={onClick}
-      className="flex w-[4.6rem] flex-col items-center gap-0.5 rounded-xl border border-[var(--line)] bg-[var(--panel)]/95 px-2 py-2.5 text-[10.5px] font-semibold shadow-md backdrop-blur transition hover:border-accent/60 hover:bg-accent/10"
+      /*
+       * 🔴 ФОН БЕРЁМ ТОКЕНОМ `panel`, А НЕ `bg-[var(--panel)]/95`.
+       *
+       * Второй вариант Tailwind v3 МОЛЧА не собирает: правила для такого класса
+       * в готовом CSS нет вовсе. Проверено замером на живой странице — фон у
+       * кнопок был `rgba(0,0,0,0)`, то есть его не было совсем, и почти чёрная
+       * подпись читалась поверх затемнённой доски как чёрное по чёрному.
+       * Прозрачность к произвольному значению `var(…)` применить нельзя:
+       * переменная хранит готовый `rgb(…)`, а не каналы. Токен `panel` в
+       * tailwind.config.js объявлен через `<alpha-value>` — с ним модификатор
+       * работает. Тот же капкан был в ленте плашек.
+       */
+      className="flex w-[4.6rem] flex-col items-center gap-0.5 rounded-xl border border-line bg-panel/95 px-2 py-2.5 text-[10.5px] font-semibold text-ink shadow-md backdrop-blur transition hover:border-accent/60 hover:bg-accent/10"
     >
       <span className="text-[17px] leading-none" aria-hidden>
         {знак}

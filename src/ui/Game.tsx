@@ -18,7 +18,7 @@ import { Board } from './Board'
 import { PlayerPanel, money, signed, tone } from './PlayerPanel'
 import { CardModal } from './CardModal'
 import { Pips } from './Pips'
-import { Лента } from './Лента'
+import { Лента, ЛентаКолонка } from './Лента'
 import { BankModal } from './BankModal'
 import { PortfolioModal } from './PortfolioModal'
 import { DebriefModal } from './DebriefModal'
@@ -869,6 +869,9 @@ export function Game({
                 </div>
                 <WorldEvents table={table} seat={seat} compact />
               </div>
+
+              {/* Кто что сделал — здесь, а не поверх стола: карточке не мешает. */}
+              <ЛентаКолонка table={table} meId={meId ?? seat.id} />
 
               {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — загадка. */}
               {myDebt > 0 && !seat.isBot && (
