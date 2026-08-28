@@ -345,20 +345,43 @@ export function Landing({ joinCode, saved, устарела, войти, onLocal
           </div>
 
           <div className="panel mt-3 rounded-2xl p-5">
+            {/*
+              🔴 Текст ЗАВИСИТ ОТ ЧИСЛА КОЛОД, а не написан на глаз. Пока их
+              было три, здесь обещали «три разных мира» и выбор перед партией.
+              Английские колоды убрали 28.08.2026 — и обещание стало враньём
+              на главной странице. Появится вторая колода — текст вернётся сам.
+            */}
             <div className="text-[11px] font-bold uppercase tracking-wider text-accent">
-              Три колоды
+              {DECKS.length > 1 ? `${DECKS.length} колоды` : 'Колода'}
             </div>
-            <div className="mt-1 text-lg font-bold">Один стол — три разных мира</div>
+            <div className="mt-1 text-lg font-bold">
+              {DECKS.length > 1 ? 'Один стол — разные миры' : 'Наши деньги, наши объекты'}
+            </div>
             <p className="mt-1.5 max-w-[60ch] text-sm leading-relaxed text-muted">
-              Колода решает, чем вы торгуете и в какой валюте считаете. Меняются цены,
-              зарплаты и сами сделки. Выбрать можно перед началом партии.
+              {DECKS.length > 1
+                ? 'Колода решает, чем вы торгуете и в какой валюте считаете. Меняются цены, зарплаты и сами сделки. Выбрать можно перед началом партии.'
+                : 'Зарплаты, квартиры и дела — российские, в рублях. Рассрочка и партнёрство вместо процентных кредитов, и партнёрский бизнес, который растёт сам.'}
             </p>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div
+              className={
+                DECKS.length > 1
+                  ? 'mt-5 grid gap-4 sm:grid-cols-3'
+                  : 'mt-5 flex flex-col gap-3 sm:flex-row sm:items-center'
+              }
+            >
               {DECKS.map((d) => (
-                <div key={d.id} className="group">
-                  <DeckCard deck={d} selected={d.id === 'ru'} />
-                  <p className="mt-3 max-w-[188px] text-[12.5px] leading-snug text-muted">
+                <div key={d.id} className={DECKS.length > 1 ? 'group' : 'flex items-center gap-4'}>
+                  <div className="w-[188px] shrink-0">
+                    <DeckCard deck={d} selected={d.id === 'ru'} />
+                  </div>
+                  <p
+                    className={
+                      DECKS.length > 1
+                        ? 'mt-3 max-w-[188px] text-[12.5px] leading-snug text-muted'
+                        : 'text-[13px] leading-snug text-muted'
+                    }
+                  >
                     {d.about}
                   </p>
                 </div>

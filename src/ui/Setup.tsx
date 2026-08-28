@@ -12,6 +12,7 @@ import {
 import { RULES, setRules } from '../engine/ledger'
 import { randomSeed } from '../engine/rng'
 import type { SeatSetup, TableSetup } from '../engine/table'
+import { THEME_RULES } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
 import { ROOM_MAX_PLAYERS } from '../engine/room'
 import { DECKS, DeckCard } from './DeckCard'
@@ -40,11 +41,15 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
   const { dreams, professions, isRub } = useMemo(() => {
     setActiveTheme(theme)
     setFastBoardTheme(theme)
-    setRules(
-      theme === 'ru'
-        ? { currency: 'RUB', fastTrackMultiplier: 50, fastTrackTarget: 1_000_000, loansEnabled: false, yieldScale: 0.3 }
-        : { currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true, yieldScale: 1 },
-    )
+    /*
+     * 🔴 Правила берём ОТТУДА ЖЕ, откуда их берёт стол. Здесь лежала своя
+     * копия чисел, и в ней уже разъехался `yieldScale` (0.3 против 1 у стола).
+     * Экран настройки показывает профессии и мечты — если числа разойдутся
+     * сильнее, человек увидит здесь одно, а в партии другое. Проверено: на
+     * том, что показывает этот экран, разницы сейчас нет — но копия чисел
+     * рано или поздно соврёт, поэтому копии больше нет.
+     */
+    setRules(THEME_RULES[theme])
     return { dreams: dreamSpaces(), professions: professionsFor(theme), isRub: RULES.currency === 'RUB' }
   }, [theme])
 
