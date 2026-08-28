@@ -2,10 +2,12 @@
  * Прогон движка без интерфейса: боты играют полные партии.
  * Ловит зависания, отрицательные балансы и недостижимую победу.
  */
-import { createTable, applyTableEvent, currentSeat, type TableSetup } from './table'
+import { createTable, applyTableEvent, currentSeat, type TableSetup,
+  THEME_RULES,
+} from './table'
 import { decideBotEvent } from './bots'
 import { mulberry32 } from './rng'
-import { PROFESSIONS, dreamSpaces, professionsFor, setActiveTheme, setFastBoardTheme } from './data'
+import { PROFESSIONS_RU, dreamSpaces, professionsFor, setActiveTheme, setFastBoardTheme } from './data'
 import { RULES, setRules } from './ledger'
 import {
   monthlyCashFlow,
@@ -19,7 +21,7 @@ import type { BotDifficulty } from './types'
 
 const MAX_EVENTS = 20000
 
-type Theme = 'classic' | 'offshore' | 'ru'
+type Theme = 'ru'
 
 function buildSetup(seed: number, difficulties: BotDifficulty[], theme: Theme): TableSetup {
   // Поле и профессии зависят от темы — переключаем до чтения списков.
@@ -107,16 +109,22 @@ function playGame(seed: number, difficulties: BotDifficulty[], theme: Theme): Re
 // ─── Проверки формул на известных числах ──────────────────────────────
 
 function checkFormulas() {
+  /*
+   * 🔴 Числа пересчитаны на русские профессии 28.08.2026. Раньше здесь стояли
+   * долларовые из классической колоды — её убрали, и проверка сравнивала
+   * формулу с профессиями, которых в игре больше нет. Смысл проверки прежний:
+   * поймать, если кто-то тронет расчёт потока или стартовых денег.
+   */
   const cases: [string, number, number][] = [
-    ['engineer', 1690, 2090],
-    ['truck-driver', 880, 1630],
-    ['airline-pilot', 2600, 3000],
-    ['doctor', 3550, 3950],
-    ['janitor', 650, 1210],
+    ['teacher', 50500, 71500],
+    ['nurse', 57000, 80000],
+    ['courier', 59000, 81000],
+    ['mechanic', 59500, 83500],
+    ['accountant', 63000, 89000],
   ]
   let ok = true
   for (const [id, flow, cash] of cases) {
-    const p = PROFESSIONS.find((x) => x.id === id)!
+    const p = PROFESSIONS_RU.find((x) => x.id === id)!
     const f = professionMonthlyCashFlow(p)
     const c = startingCash(p)
     const good = f === flow && c === cash
@@ -130,8 +138,8 @@ function checkFormulas() {
 
 // ─── Запуск ───────────────────────────────────────────────────────────
 
-console.log('\n=== Формулы против живой игры (классика) ===')
-setRules({ currency: 'USD', fastTrackMultiplier: 100, fastTrackTarget: 150_000, loansEnabled: true, yieldScale: 1 })
+console.log('\n=== Формулы против живой игры ===')
+setRules(THEME_RULES.ru)
 const formulasOk = checkFormulas()
 
 const mixes: BotDifficulty[][] = [
@@ -142,7 +150,7 @@ const mixes: BotDifficulty[][] = [
 ]
 
 let anyStalled = 0
-for (const theme of ['classic', 'offshore', 'ru'] as Theme[]) {
+for (const theme of ['ru'] as Theme[]) {
   console.log(`\n=== 30 партий ботов · тема «${theme}» ===`)
   const results: Result[] = []
   for (let i = 0; i < 30; i++) {

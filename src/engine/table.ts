@@ -164,7 +164,7 @@ function отдатьGreenleafВСрок(t: Table, seatIdx: number) {
  * не те числа — то есть врала бы ровно в том месте, ради которого её и
  * заводили.
  */
-export const THEME_RULES: Record<'ru' | 'classic' | 'offshore', Parameters<typeof setRules>[0]> = {
+export const THEME_RULES: Record<DeckTheme, Parameters<typeof setRules>[0]> = {
   ru: {
     currency: 'RUB',
     fastTrackMultiplier: 50,
@@ -173,22 +173,6 @@ export const THEME_RULES: Record<'ru' | 'classic' | 'offshore', Parameters<typeo
     yieldScale: 1,
     zakat: { enabled: true, pct: 2.5, everyPaydays: 12 },
     lifestyleCreepPct: 33,
-  },
-  classic: {
-    currency: 'USD',
-    fastTrackMultiplier: 100,
-    fastTrackTarget: 150_000,
-    loansEnabled: true,
-    yieldScale: 1,
-    zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
-  },
-  offshore: {
-    currency: 'USD',
-    fastTrackMultiplier: 100,
-    fastTrackTarget: 150_000,
-    loansEnabled: true,
-    yieldScale: 1,
-    zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
   },
 }
 
@@ -205,7 +189,7 @@ export function createTable(setup: TableSetup): Table {
    * панели иначе добавила бы правилам лишнее поле, а настоящее осталось бы
    * прежним, и правка «не сработала» бы молча.
    */
-  const базовые = THEME_RULES[theme] ?? THEME_RULES.classic
+  const базовые = THEME_RULES[theme] ?? THEME_RULES.ru
   const свои: Record<string, number> = {}
   for (const [k, v] of Object.entries(правкиПравил())) {
     if (typeof v === 'number' && k in RULES) свои[k] = v

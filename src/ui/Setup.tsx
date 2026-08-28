@@ -129,25 +129,41 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
         </p>
       </header>
 
+      {/*
+        🔴 КОЛОДА ОДНА — ЭТО НЕ ВЫБОР, А РАССКАЗ. Выбирать из одного нечего:
+        сетка на три столбца оставляла карточку с двумя дырами справа, и экран
+        читался как недоделанный. Пока колода одна — показываем её строкой, без
+        нажатия. Появится вторая — вернётся выбор, ради этого и оставлена
+        развилка, а не выпилена вместе с колодами.
+      */}
       <div className="panel mb-4 rounded-xl p-4">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
           Колода сделок
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {DECKS.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => setTheme(d.id)}
-              aria-pressed={theme === d.id}
-              className="group rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              <DeckCard deck={d} selected={theme === d.id} />
-              <p className="mt-3 max-w-[188px] text-[12px] leading-snug text-[var(--muted)]">
-                {d.about}
-              </p>
-            </button>
-          ))}
-        </div>
+        {DECKS.length === 1 ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="w-[188px] shrink-0">
+              <DeckCard deck={DECKS[0]} selected />
+            </div>
+            <p className="text-[13px] leading-snug text-[var(--muted)]">{DECKS[0].about}</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-3">
+            {DECKS.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => setTheme(d.id)}
+                aria-pressed={theme === d.id}
+                className="group rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <DeckCard deck={d} selected={theme === d.id} />
+                <p className="mt-3 max-w-[188px] text-[12px] leading-snug text-[var(--muted)]">
+                  {d.about}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">

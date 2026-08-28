@@ -19,6 +19,7 @@ import {
   doodads,
   marketCards,
   smallDeals,
+  известнаяКолода,
 } from '../engine/data'
 import { botOfferReply } from './tradeHelpers'
 import { saveGame } from '../net/gamesApi'
@@ -127,6 +128,18 @@ export function useGame(net?: {
        * честно сказать «партия записана прежней версией», чем подсунуть
        * подделку.
        */
+      /*
+       * 🔴 Колода, которой больше нет, — партию не поднимаем. Отпечаток
+       * считается по РУССКОЙ колоде, поэтому запись, сделанная убранными
+       * английскими, отпечаток пройдёт и переиграется русскими карточками:
+       * человек увидит свою партию, в которой всё другое. Лучше честно
+       * сказать «записана прежней версией».
+       */
+      if (!известнаяКолода(save.setup.deckTheme)) {
+        setУстарела({ когда: Date.now(), ходов: (save.events ?? []).length })
+        localStorage.removeItem(STORAGE_KEY)
+        return
+      }
       if ((save.правила ?? '') !== отпечатокПравил()) {
         setУстарела({ когда: Date.now(), ходов: (save.events ?? []).length })
         localStorage.removeItem(STORAGE_KEY)

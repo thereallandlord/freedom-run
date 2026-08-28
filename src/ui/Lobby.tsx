@@ -35,8 +35,6 @@ const BOT_LABEL: Record<BotDifficulty, string> = {
 
 const THEME_LABEL: Record<DeckTheme, string> = {
   ru: 'Россия · халяль',
-  offshore: 'Уругвай',
-  classic: 'Классическая',
 }
 
 function money(n: number, rub: boolean) {

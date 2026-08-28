@@ -15,7 +15,7 @@ import { createTable, applyTableEvent } from './table'
 import { decideBotEvent } from './bots'
 import type { Table } from './types'
 
-function стол(seed: number, тема: 'ru' | 'classic'): Table {
+function стол(seed: number, тема: 'ru'): Table {
   return createTable({
     seed,
     deckTheme: тема,
@@ -30,7 +30,7 @@ function стол(seed: number, тема: 'ru' | 'classic'): Table {
 const нарушения: string[] = []
 let проверено = 0
 
-for (const тема of ['ru', 'classic'] as const) {
+for (const тема of ['ru'] as const) {
   for (let seed = 1; seed <= 120; seed++) {
     let t = стол(seed, тема)
     let к = seed

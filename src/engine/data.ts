@@ -1,6 +1,4 @@
-import decksJson from '../data/decks.json'
 import decksRuJson from '../data/decks_ru.json'
-import professionsJson from '../data/professions.json'
 import professionsRuJson from '../data/professions_ru.json'
 import boardsJson from '../data/boards.json'
 import tickersJson from '../data/tickers.json'
@@ -19,13 +17,44 @@ import type {
 } from './types'
 
 export type Locale = 'ru' | 'en'
-export type DeckTheme = 'classic' | 'offshore' | 'ru'
 
-export const PROFESSIONS = professionsJson as unknown as Profession[]
+/**
+ * Колода игры.
+ *
+ * 🔴 СПИСОК ИЗ ОДНОГО — ЭТО НЕ ОШИБКА И НЕ УПРОЩЕНИЕ. 28.08.2026 убрали две
+ * английские колоды («Классическая» и «Уругвай»): замер на ботах показал, что
+ * из классической не выбирался НИКТО — 0 партий из 30, — а из уругвайской 6
+ * из 30 при потолке в 600 ходов, тогда как русская даёт 28 из 30 за 270 ходов.
+ * Плюс английский текст в русской игре, картинок нет у 93–100% карточек,
+ * партнёрского бизнеса нет вовсе. Содержимое лежит в `архив/`, там же сказано,
+ * как поднять его обратно.
+ *
+ * САМ МЕХАНИЗМ КОЛОД ОСТАВЛЕН НАРОЧНО: следующие версии игры (другой язык,
+ * другая ниша, другой партнёр) заводятся сюда новым именем и своим набором
+ * карточек — образцом служит русская, а не выброшенные.
+ */
+export type DeckTheme = 'ru'
+
+/** Колоды, которые в игре ЕСТЬ. Всё остальное — из прежних версий. */
+export const КОЛОДЫ: DeckTheme[] = ['ru']
+
+/**
+ * Знаем ли мы такую колоду.
+ *
+ * 🔴 Нужна на восстановлении партий. Отпечаток правил считается по русской
+ * колоде, поэтому партия, записанная убранной английской колодой, отпечаток
+ * ПРОЙДЁТ — и переиграется русскими карточками, молча превратившись в другую
+ * партию. Ровно от этого отпечаток и заводили, так что колоду проверяем
+ * отдельно.
+ */
+export function известнаяКолода(t: unknown): t is DeckTheme {
+  return typeof t === 'string' && (КОЛОДЫ as string[]).includes(t)
+}
+
 export const PROFESSIONS_RU = professionsRuJson as unknown as Profession[]
 
-export function professionsFor(theme: DeckTheme): Profession[] {
-  return theme === 'ru' ? PROFESSIONS_RU : PROFESSIONS
+export function professionsFor(_theme: DeckTheme): Profession[] {
+  return PROFESSIONS_RU
 }
 
 /**
@@ -69,8 +98,8 @@ const FAST_BOARD_RU = ((decksRuJson as any).FAST_BOARD_RU ?? FAST_BOARD_CLASSIC)
 /** Активное поле Полосы свободы — задаётся темой при создании стола. */
 let ACTIVE_FAST_BOARD: FastSpace[] = FAST_BOARD_CLASSIC
 
-export function setFastBoardTheme(theme: DeckTheme) {
-  ACTIVE_FAST_BOARD = theme === 'ru' ? FAST_BOARD_RU : FAST_BOARD_CLASSIC
+export function setFastBoardTheme(_theme: DeckTheme) {
+  ACTIVE_FAST_BOARD = FAST_BOARD_RU
 }
 
 export function fastBoard(): FastSpace[] {
@@ -87,7 +116,6 @@ export const WORLD_EVENTS = (eventsRuJson as any).WORLD_EVENTS_RU as import('./t
 
 import { наложить, правкиВерсия } from './правки'
 
-const D = decksJson as any
 const DRU = decksRuJson as any
 
 /*
@@ -110,34 +138,23 @@ function колода<T extends { id: string }>(ключ: string, взять: ()
   return готово
 }
 
+/*
+ * Наборы карточек по колодам. Ветка одна, потому что колода одна — но
+ * подписаны они темой не зря: следующая колода добавляется сюда строкой,
+ * а не переписыванием всего вокруг.
+ */
 export function smallDeals(theme: DeckTheme): DealCard[] {
-  return колода(`small:${theme}`, () =>
-    theme === 'ru'
-      ? (DRU.SMALL_DEALS_RU as DealCard[])
-      : ((theme === 'offshore' ? D.OFFSHORE_SMALL_DEALS : D.SMALL_DEALS) as DealCard[]),
-  )
+  return колода(`small:${theme}`, () => DRU.SMALL_DEALS_RU as DealCard[])
 }
 export function bigDeals(theme: DeckTheme): DealCard[] {
-  return колода(`big:${theme}`, () =>
-    theme === 'ru'
-      ? (DRU.BIG_DEALS_RU as DealCard[])
-      : ((theme === 'offshore' ? D.OFFSHORE_BIG_DEALS : D.BIG_DEALS) as DealCard[]),
-  )
+  return колода(`big:${theme}`, () => DRU.BIG_DEALS_RU as DealCard[])
 }
 export function marketCards(theme: DeckTheme): MarketCard[] {
-  return колода(`market:${theme}`, () =>
-    theme === 'ru'
-      ? (DRU.MARKET_CARDS_RU as MarketCard[])
-      : ((theme === 'offshore' ? D.OFFSHORE_MARKET_CARDS : D.MARKET_CARDS) as MarketCard[]),
-  )
+  return колода(`market:${theme}`, () => DRU.MARKET_CARDS_RU as MarketCard[])
 }
 export function doodads(theme: DeckTheme): DoodadCard[] {
-  return колода(`doodad:${theme}`, () =>
-    theme === 'ru' ? (DRU.DOODADS_RU as DoodadCard[]) : (D.DOODADS as DoodadCard[]),
-  )
+  return колода(`doodad:${theme}`, () => DRU.DOODADS_RU as DoodadCard[])
 }
-/** @deprecated используйте doodads(theme) */
-export const DOODADS = D.DOODADS as DoodadCard[]
 
 // ─── Локализация ──────────────────────────────────────────────────────
 
@@ -163,7 +180,7 @@ export function cardText(
   return { title: card.title, flavor: card.flavor ?? card.text ?? '' }
 }
 
-let ACTIVE_THEME: DeckTheme = 'classic'
+let ACTIVE_THEME: DeckTheme = 'ru'
 export function setActiveTheme(t: DeckTheme) {
   ACTIVE_THEME = t
 }

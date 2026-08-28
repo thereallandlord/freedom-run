@@ -2,7 +2,7 @@
 import { createTable, applyTableEvent, type TableSetup } from './table'
 import { decideBotEvent } from './bots'
 import { mulberry32 } from './rng'
-import { PROFESSIONS, dreamSpaces } from './data'
+import { PROFESSIONS_RU as PROFESSIONS, dreamSpaces } from './data'
 import type { TableEvent } from './events'
 import { writeFileSync } from 'node:fs'
 
@@ -11,7 +11,7 @@ const dreams = dreamSpaces()
 const rnd0 = mulberry32(seed)
 const setup: TableSetup = {
   seed,
-  deckTheme: 'offshore',
+  deckTheme: 'ru',
   seats: [
     { name: 'Камиль', professionId: 'engineer', dreamSpace: dreams[0].index, isBot: true, botDifficulty: 'unreal' },
     { name: 'Бот', professionId: 'lawyer', dreamSpace: dreams[3].index, isBot: true, botDifficulty: 'high' },

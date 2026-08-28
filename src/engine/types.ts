@@ -714,7 +714,7 @@ export interface Table {
   seed: number
   /** Счётчик обращений к ГПСЧ — состояние генератора живёт в самом столе. */
   rngCursor: number
-  deckTheme: 'classic' | 'offshore' | 'ru'
+  deckTheme: import('./data').DeckTheme
   seats: Seat[]
   turnIndex: number
   phase: TablePhase
