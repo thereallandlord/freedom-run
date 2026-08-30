@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { CAT_SHORT, CAT_FULL } from '../engine/категории'
 import type { Seat, Table, WorldEffect, WorldEvent } from '../engine/types'
 import { WORLD_EVENTS } from '../engine/data'
 import { stockBasePrice } from '../engine/table'
@@ -21,42 +22,7 @@ const SEEN_AT = new Map<string, number>()
 // ─── Человеческие имена классов активов ───────────────────────────────
 
 /** Коротко — для тесной строки индикатора. */
-const CAT_SHORT: Record<string, string> = {
-  roomUFA: 'Уфа',
-  aptKZN: 'Казань',
-  aptMSK: 'Москва',
-  aptSPB: 'Питер',
-  aptDXB: 'Дубай',
-  aptBALI: 'Бали',
-  aptSAU: 'Саудия',
-  aptTUR: 'Турция',
-  parking: 'машиноместа',
-  land: 'участки',
-  houseRF: 'загород',
-  bizFood: 'общепит',
-  bizService: 'услуги',
-  bizDigital: 'цифровой бизнес',
-  partnership: 'партнёрские доли',
-}
 
-/** Полностью — для карточки события и истории. */
-const CAT_FULL: Record<string, string> = {
-  roomUFA: 'комнаты в Уфе',
-  aptKZN: 'квартиры в Казани',
-  aptMSK: 'квартиры в Москве',
-  aptSPB: 'квартиры в Питере',
-  aptDXB: 'квартиры в Дубае',
-  aptBALI: 'виллы на Бали',
-  aptSAU: 'квартиры в Саудии',
-  aptTUR: 'квартиры в Турции',
-  parking: 'машиноместа',
-  land: 'участки',
-  houseRF: 'дома за городом',
-  bizFood: 'общепит',
-  bizService: 'услуги',
-  bizDigital: 'цифровой бизнес',
-  partnership: 'партнёрские доли',
-}
 
 const SYM_FULL: Record<string, string> = {
   GOLD: 'золото',

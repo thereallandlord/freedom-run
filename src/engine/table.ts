@@ -1630,6 +1630,9 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
     const мой = currentSeat(t).ledger.businesses.find((b) => b.gl)?.gl
     const st = (card as unknown as { stages?: number[] }).stages
     if (мой && st && st.length && !st.includes(glСтадия(мой))) return false
+    // Последствие промо — только тому, кто это промо действительно взял.
+    const нужноПромо = (card as { требуетПромо?: string }).требуетПромо
+    if (нужноПромо && !(мой?.lastPromo?.[нужноПромо] != null)) return false
   }
   // Окно на повышение пакета показываем только тем, кому есть куда расти.
   if (card.kind === 'glEvent' && card.upgrade) {
@@ -2055,6 +2058,22 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       const dealOwner = t.seats[t.turnIndex]
       const dealBuyer = event.seatId ? t.seats.find((x) => x.id === event.seatId) : seat
       if (!dealBuyer || dealBuyer.outOfGame || dealBuyer.track === 'fast') return prev
+      /*
+       * 🔴 ЧУЖИМИ ДЕНЬГАМИ РАСПОРЯЖАЕТСЯ ТОЛЬКО ХОЗЯИН ЭТИХ ДЕНЕГ.
+       *
+       * Владельцу находки разрешалось покупать ЗА ДРУГОГО игрока: «давай
+       * пополам, тебе 40, мне 60» — и деньги списывались у соседа без его
+       * согласия, одним нажатием. Камиль называл этот косяк дважды, второй
+       * раз прямо на живой игре: «я могу принять предложение за другого
+       * человека, всё ещё не починил».
+       *
+       * За одним экраном это по-прежнему можно: там один человек честно жмёт
+       * за всех по очереди, и подписи у хода нет. Как только подпись есть
+       * (сетевая партия) — каждый платит сам за себя, а позвать в долю можно
+       * через «Сделки»: там предложение уходит человеку, и он отвечает сам.
+       */
+      const своимиРуками = !event.by || !event.seatId || event.seatId === seat.id
+      if (!своимиРуками) return prev
       if (event.seatId && event.seatId !== seat.id && seat.id !== dealOwner.id) return prev
       if (dealBuyer.id !== dealOwner.id && !accessAllows(t.pending.access, dealBuyer.id)) return prev
       const dealTermsAccess =
@@ -3085,10 +3104,23 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        */
       const order = [...t2.worldDeck.order]
       const где = order.indexOf(event.index, t2.worldDeck.next)
-      if (где >= 0) {
-        order[где] = order[t2.worldDeck.next]
-        order[t2.worldDeck.next] = event.index
-      }
+      /*
+       * 🔴 НОВОСТЬ, КОТОРУЮ УЖЕ ИСПОЛЬЗОВАЛИ, НЕ ПРИМЕНЯЕМ ВТОРОЙ РАЗ.
+       *
+       * Раньше при `где < 0` (новость уже за курсором, то есть отыграна) мы
+       * всё равно применяли её эффект и двигали курсор. А повтор случается
+       * легко: часы мира тикают у хозяина стола, и если событие ушло в сеть,
+       * а эхо ещё не вернулось, следующий тик считает ТУ ЖЕ новость — она
+       * ведь всё ещё первая подходящая. На живой игре Камиль поймал именно
+       * это: «для гостиницы обнулили НДС... 2 раза получается вышло. Тогда
+       * косяк, должны выходить только один раз».
+       *
+       * Проверять надо здесь, а не в часах: только у стола есть правда о том,
+       * что уже случилось, и только он одинаков у всех.
+       */
+      if (где < 0) return prev
+      order[где] = order[t2.worldDeck.next]
+      order[t2.worldDeck.next] = event.index
       t2.worldDeck = { order, next: t2.worldDeck.next + 1 }
       return t2
     }

@@ -111,7 +111,13 @@ function Scoreboard({
                   />
                 </span>
                 <span className="mt-1 flex justify-between text-[10.5px]">
-                  <span className="text-[var(--t-muted, var(--muted))]">до свободы {pct}%</span>
+                  {/*
+                    🔴 «До свободы 39%» читалось как «осталось 39%», а это
+                    доля УЖЕ СОБРАННОГО — и полоска рядом заполнена ровно на
+                    неё. Камиль поймал на живой игре: «по факту это 39% у тебя
+                    собрано, до свободы получается 61%».
+                  */}
+                  <span className="text-[var(--t-muted, var(--muted))]">собрано {pct}%</span>
                   <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>
                 </span>
               </>
