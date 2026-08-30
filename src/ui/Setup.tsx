@@ -34,7 +34,7 @@ function money(n: number, rub: boolean) {
   return rub ? n.toLocaleString('ru-RU') + ' ₽' : '$' + n.toLocaleString('en-US')
 }
 
-export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
+export function Setup({ onStart, onBack }: { onStart: (s: TableSetup) => void; onBack?: () => void }) {
   const [theme, setTheme] = useState<DeckTheme>('ru')
 
   // Поле Полосы и набор профессий зависят от темы — переключаем до чтения списков.
@@ -127,6 +127,19 @@ export function Setup({ onStart }: { onStart: (s: TableSetup) => void }) {
 
   return (
     <Page width="room">
+      {/*
+        🔴 ВЫХОД С ЭТОГО ЭКРАНА. Его не было вовсе: зашёл посмотреть настройку —
+        и единственный способ вернуться это перезагрузить вкладку. Именно так
+        человек и терял начатую онлайн-партию: уходил на главную кружным путём.
+      */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--muted)] transition hover:text-[var(--ink)]"
+        >
+          ← Назад
+        </button>
+      )}
       <header className="mb-7 text-center">
         <Wordmark size="lg" className="justify-center" />
         <p className="mt-2 text-sm text-[var(--muted)]">
