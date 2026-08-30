@@ -8,6 +8,37 @@
 import { useEffect, useMemo, useState } from 'react'
 import { голосДоступен, создатьГолос, type Голос } from '../net/voice'
 
+/** Полоска громкости с подписью — своя, крупная. */
+function Полоска({ уровень, подпись, тихо }: { уровень: number; подпись: string; тихо?: boolean }) {
+  return (
+    <div className="flex items-center gap-2 px-0.5">
+      <span className="w-[92px] shrink-0 text-[10.5px] text-[var(--t-muted, var(--muted))]">
+        {подпись}
+      </span>
+      <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--t-line,var(--line))]">
+        <span
+          className={`block h-full rounded-full transition-[width] duration-100 ${
+            тихо ? 'bg-rose-500/60' : 'bg-emerald-500'
+          }`}
+          style={{ width: `${Math.round(Math.min(1, уровень) * 100)}%` }}
+        />
+      </span>
+    </div>
+  )
+}
+
+/** Та же полоска, но в строке участника — без подписи. */
+function ПолоскаТонкая({ уровень }: { уровень: number }) {
+  return (
+    <span className="block h-1 overflow-hidden rounded-full bg-[var(--t-line,var(--line))]">
+      <span
+        className="block h-full rounded-full bg-emerald-500 transition-[width] duration-100"
+        style={{ width: `${Math.round(Math.min(1, уровень) * 100)}%` }}
+      />
+    </span>
+  )
+}
+
 export function ГолосПанель({
   комната,
   я,
@@ -42,8 +73,21 @@ export function ГолосПанель({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [комната, доступен])
 
+  /*
+   * 🔴 ПОЛОСКИ ГРОМКОСТИ ПЕРЕРИСОВЫВАЕМ ПО ЧАСАМ, а не по каждому замеру.
+   * Замер идёт десять раз в секунду на КАЖДОГО собеседника: на десятерых это
+   * сотня оповещений в секунду, и интерфейс начал бы дёргаться на ровном
+   * месте. Восьми кадров в секунду глазу достаточно, чтобы полоска выглядела
+   * живой.
+   */
+  useEffect(() => {
+    if (!г?.состояние().включён) return
+    const t = window.setInterval(() => перерисовать((n) => n + 1), 125)
+    return () => window.clearInterval(t)
+  }, [г, г?.состояние().включён])
+
   if (!доступен) return null
-  const с = г?.состояние() ?? { включён: false, микрофонВкл: true, участники: [] }
+  const с = г?.состояние() ?? { включён: false, микрофонВкл: true, участники: [], мойУровень: 0 }
   const ошибка = г?.ошибка() ?? null
 
   return (
@@ -81,6 +125,16 @@ export function ГолосПанель({
             </button>
           </div>
 
+          {/*
+            Своя громкость. Единственный способ проверить собственный микрофон,
+            не спрашивая «меня слышно?»: скажи что-нибудь и посмотри на полоску.
+          */}
+          <Полоска
+            уровень={с.мойУровень}
+            подпись={с.микрофонВкл ? 'вы' : 'микрофон выключен'}
+            тихо={!с.микрофонВкл}
+          />
+
           {с.участники.length === 0 ? (
             <p className="px-0.5 text-[11px] leading-snug text-[var(--t-muted, var(--muted))]">
               Ждём остальных — голос включает каждый у себя.
@@ -97,9 +151,13 @@ export function ГолосПанель({
                   }`}
                 >
                   <span aria-hidden>{u.говорит ? '🔊' : u.состояние === 'слышно' ? '🎧' : '⏳'}</span>
-                  <span className="min-w-0 truncate">{u.имя}</span>
-                  {u.состояние === 'не вышло' && (
+                  <span className="min-w-0 shrink-0 truncate">{u.имя}</span>
+                  {u.состояние === 'не вышло' ? (
                     <span className="ml-auto shrink-0 text-[10.5px] text-rose-400">нет связи</span>
+                  ) : (
+                    <span className="ml-auto min-w-0 flex-1">
+                      <ПолоскаТонкая уровень={u.уровень} />
+                    </span>
                   )}
                 </div>
               ))}

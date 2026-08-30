@@ -34,6 +34,8 @@ export interface УчастникГолоса {
   состояние: СостояниеУчастника
   /** Говорит прямо сейчас — для подсветки в списке. */
   говорит: boolean
+  /** Громкость 0..1 — чтобы видеть, что звук ИДЁТ, а не гадать. */
+  уровень: number
 }
 
 export interface Голос {
@@ -41,7 +43,13 @@ export interface Голос {
   выключить(): void
   /** Свой микрофон: выключенный — нас не слышно, но мы слышим всех. */
   микрофон(вкл: boolean): void
-  состояние(): { включён: boolean; микрофонВкл: boolean; участники: УчастникГолоса[] }
+  состояние(): {
+    включён: boolean
+    микрофонВкл: boolean
+    участники: УчастникГолоса[]
+    /** Своя громкость 0..1: единственный способ проверить, что микрофон живой. */
+    мойУровень: number
+  }
   /** Подписка на изменения — чтобы интерфейс перерисовывался. */
   наИзменение(cb: () => void): () => void
   ошибка(): string | null
@@ -71,11 +79,14 @@ export function создатьГолос(комната: string, я: { id: strin
     имя: string
     состояние: СостояниеУчастника
     говорит: boolean
-    анализ?: { ctx: AudioContext; stop: () => void }
+    уровень: number
+    анализ?: { stop: () => void }
   }
   const связи = new Map<string, Связь>()
   let канал: RealtimeChannel | null = null
   let мой: MediaStream | null = null
+  let свойАнализ: { stop: () => void } | null = null
+  let мойУровень = 0
   let включён = false
   let микВкл = true
   let ошибкаТекст: string | null = null
@@ -107,7 +118,7 @@ export function создатьГолос(комната: string, я: { id: strin
     audio.setAttribute('playsinline', '')
     audio.style.display = 'none'
     document.body.appendChild(audio)
-    const связь: Связь = { pc, audio, имя, состояние: 'соединяемся', говорит: false }
+    const связь: Связь = { pc, audio, имя, состояние: 'соединяемся', говорит: false, уровень: 0 }
 
     if (мой) for (const t of мой.getTracks()) pc.addTrack(t, мой)
 
@@ -117,7 +128,9 @@ export function создатьГолос(комната: string, я: { id: strin
     pc.ontrack = (e) => {
       audio.srcObject = e.streams[0]
       void audio.play().catch(() => {})
-      связь.анализ = следитьЗаГолосом(e.streams[0], (гов) => {
+      связь.анализ = следитьЗаГолосом(e.streams[0], (ур) => {
+        связь.уровень = ур
+        const гов = ур > 0.08
         if (связь.говорит !== гов) {
           связь.говорит = гов
           изменилось()
@@ -217,6 +230,14 @@ export function создатьГолос(комната: string, я: { id: strin
       }
       // Нажатие уже случилось — самое время разбудить звук, пока жест «живой».
       звук()
+      /*
+       * 🔴 СВОЙ УРОВЕНЬ МЕРЯЕМ ТОЖЕ. Без него человек не может проверить
+       * собственный микрофон: он говорит, а слышат его или нет — знают только
+       * другие. Полоска своей громкости отвечает на это сразу и без спроса.
+       */
+      свойАнализ = следитьЗаГолосом(мой, (ур) => {
+        мойУровень = ур
+      })
       включён = true
       микВкл = true
       /*
@@ -255,6 +276,9 @@ export function создатьГолос(комната: string, я: { id: strin
       // включение упрётся в занятое имя и молча не поднимется.
       if (канал) void getSupabase()?.removeChannel(канал)
       канал = null
+      свойАнализ?.stop()
+      свойАнализ = null
+      мойУровень = 0
       мой?.getTracks().forEach((t) => t.stop())
       мой = null
       включён = false
@@ -274,7 +298,9 @@ export function создатьГолос(комната: string, я: { id: strin
           имя: с.имя,
           состояние: с.состояние,
           говорит: с.говорит,
+          уровень: с.уровень,
         })),
+        мойУровень: микВкл ? мойУровень : 0,
       }
     },
     наИзменение(cb) {
@@ -310,27 +336,34 @@ function звук(): AudioContext {
  * Нужен только для подсветки: без него голос работает, но не видно, кто из
  * десяти сейчас в эфире, и все начинают говорить разом.
  */
-function следитьЗаГолосом(stream: MediaStream, cb: (говорит: boolean) => void) {
+function следитьЗаГолосом(stream: MediaStream, cb: (уровень: number) => void) {
   const ctx = звук()
   const src = ctx.createMediaStreamSource(stream)
   const an = ctx.createAnalyser()
-  an.fftSize = 512
+  an.fftSize = 1024
   src.connect(an)
-  const buf = new Uint8Array(an.frequencyBinCount)
+  const buf = new Uint8Array(an.fftSize)
   let живой = true
-  let было = false
+  let сглаж = 0
+  /*
+   * 🔴 ГРОМКОСТЬ СЧИТАЕМ ПО ВОЛНЕ, А НЕ ПО СПЕКТРУ. Среднее по частотным
+   * корзинам занижает всё, что звучит узко: чистый тон размазывался в 6% на
+   * полоске, хотя звук шёл в полный голос. Обычная мера громкости — сила
+   * колебания (RMS): она одинаково честна и к тону, и к речи.
+   */
   const тик = () => {
     if (!живой) return
-    an.getByteFrequencyData(buf)
+    an.getByteTimeDomainData(buf)
     let сумма = 0
-    for (const v of buf) сумма += v
-    const средн = сумма / buf.length
-    const сейчас = средн > 12
-    if (сейчас !== было) {
-      было = сейчас
-      cb(сейчас)
+    for (const v of buf) {
+      const d = (v - 128) / 128
+      сумма += d * d
     }
-    setTimeout(тик, 180)
+    const rms = Math.sqrt(сумма / buf.length)
+    // Плавно поднимаем и плавно опускаем: иначе полоска дрожит на каждом слоге.
+    сглаж = Math.max(rms, сглаж * 0.75)
+    cb(Math.min(1, сглаж * 3.2))
+    setTimeout(тик, 100)
   }
   тик()
   return {
