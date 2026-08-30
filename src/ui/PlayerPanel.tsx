@@ -514,12 +514,23 @@ export function PlayerPanel({
                       return (
                         <div className="mt-1 space-y-0.5">
                           <div className="flex items-baseline justify-between gap-2">
-                            <span className="text-[var(--muted)]">Пока держится на вас</span>
+                            {/*
+                              🔴 Камиль с игры 30.08: «слева на карточке
+                              партнёрского бизнеса нормально покажи, что
+                              пассивный доход, а что активный. Работает без вас
+                              — напиши пассивный доход, а пока держится на вас
+                              — активный». Это не украшение: вся цель игры
+                              меряется пассивным доходом, и слово должно быть
+                              то же самое.
+                            */}
+                            <span className="text-[var(--muted)]">
+                              Активный — держится на вас
+                            </span>
                             <span className="tabnum">{money(актив)}/мес</span>
                           </div>
                           <div className="flex items-baseline justify-between gap-2">
                             <span className="text-emerald-600 dark:text-emerald-400">
-                              Работает без вас
+                              Пассивный — работает без вас
                             </span>
                             <span className="tabnum font-semibold text-emerald-600 dark:text-emerald-400">
                               {money(пассив)}/мес
@@ -656,7 +667,10 @@ export function PlayerPanel({
                 приходят и тратятся, но пока ты сам за прилавком — свободу они
                 не приближают. В зачёт идёт только то, что крутится без тебя.
               */}
-              <Row label="Из них работает без вас" value={money(freedomIncome(l, flowMul))} />
+              <Row
+                label="Из них пассивный (работает без вас)"
+                value={money(freedomIncome(l, flowMul))}
+              />
               <Row label="Всего доходов" value={money(income)} />
             </div>
           </Section>

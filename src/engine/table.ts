@@ -172,7 +172,21 @@ export const THEME_RULES: Record<DeckTheme, Parameters<typeof setRules>[0]> = {
     loansEnabled: false,
     yieldScale: 1,
     zakat: { enabled: true, pct: 2.5, everyPaydays: 12 },
-    lifestyleCreepPct: 33,
+    /*
+     * 🔴 РАСХОДЫ ТЯНУТСЯ ЗА ДОХОДОМ СИЛЬНЕЕ (просьба Камиля с игры 30.08):
+     * «расходы растут не как в реальной жизни, за это время уже и хату можно
+     * было бы купить». Начал больше зарабатывать — переехал в квартиру
+     * получше, стал путешествовать, взял вторую машину.
+     *
+     * Цифра выбрана замером, а не на глаз. 24 партии ботами:
+     *   33% → вышли 79%, 313 ходов   (было)
+     *   45% → 73%, 321
+     *   55% → 71%, 339               (взяли)
+     *   65% → 63%, 352
+     *   75% → 65%, 422
+     * Выше 65 партия начинает тянуться, а выбраться становится редкостью.
+     */
+    lifestyleCreepPct: 55,
   },
 }
 
@@ -1232,6 +1246,17 @@ function advance(t: Table, seatIdx: number, steps: number) {
   }
   t.seats[seatIdx] = { ...seat, position: (seat.position + steps) % size }
 
+  /*
+   * 🔴 ЧИСЛА ОБЯЗАНЫ ОБЪЯСНЯТЬ СЕБЯ САМИ. Всё, что ниже, писалось в журнал —
+   * а журнал спрятан за кнопкой, и туда никто не смотрит. На живой игре 30.08
+   * Камиль пять раз просил одно и то же: «непонятно, за счёт чего вырос
+   * доход», «надо было уведомление показать», «надо это всё уведомлениями
+   * игроку показывать». Поэтому важное едет в ленту, а не только в журнал.
+   */
+  const доПартнёрский = t.seats[seatIdx].ledger.businesses
+    .filter((b) => b.gl)
+    .reduce((n, b) => n + glTotalIncome(b.gl!), 0)
+
   for (let i = 0; i < payouts; i++) {
     if (seat.track === 'rat') {
       seatLedgerEvent(t, seat.id, { type: 'PAYCHECK', flowMul: t.market.flow })
@@ -1243,7 +1268,11 @@ function advance(t: Table, seatIdx: number, steps: number) {
      * выбрасывал — игра знала, почему изменился доход, и молчала об этом.
      * Живая жалоба 19.08: три раза за партию никто не понял, откуда деньги.
      */
-    for (const note of t.seats[seatIdx].ledger.glNotes ?? []) log(t, seat.id, note)
+    for (const note of t.seats[seatIdx].ledger.glNotes ?? []) {
+      log(t, seat.id, note)
+      // Премия за ранг — не «доход подрос», а событие: о нём говорим вслух.
+      if (note.startsWith('Премия за ранг')) плашка(t, seat.id, `${seat.name}: ${note}`, 'добро')
+    }
   }
   if (payouts > 0) {
     const l = t.seats[seatIdx].ledger
@@ -1262,8 +1291,32 @@ function advance(t: Table, seatIdx: number, steps: number) {
       const creep = Math.round((fromAssets * 0.03) / 500) * 500
       if (creep >= 500) {
         seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: creep })
-        log(t, seat.id, `Образ жизни подрос: расходы +${money(creep)}/мес`)
+        const текст = `Образ жизни подрос: расходы +${money(creep)}/мес`
+        log(t, seat.id, текст)
+        // Своё — только себе: чужой рост расходов столу неинтересен.
+        плашка(t, seat.id, `${seat.name}: ${текст}`, 'худо', [seat.id])
       }
+    }
+
+    /*
+     * 🔴 РУБЕЖИ ПАРТНЁРСКОГО БИЗНЕСА (просьба Камиля: «на каждые 100 тысяч
+     * пассивного дохода — уведомление»). Он растёт сам между зарплатами, и
+     * человек замечает это только по чужой реплике за столом. Говорим о
+     * каждой взятой сотне тысяч — и ровно один раз.
+     */
+    const послеПартнёрский = t.seats[seatIdx].ledger.businesses
+      .filter((b) => b.gl)
+      .reduce((n, b) => n + glTotalIncome(b.gl!), 0)
+    const РУБЕЖ = 100_000
+    const былоРубежей = Math.floor(доПартнёрский / РУБЕЖ)
+    const сталоРубежей = Math.floor(послеПартнёрский / РУБЕЖ)
+    if (сталоРубежей > былоРубежей) {
+      плашка(
+        t,
+        seat.id,
+        `${seat.name}: партнёрский бизнес перевалил за ${money(сталоРубежей * РУБЕЖ)}/мес`,
+        'добро',
+      )
     }
 
     // Год прошёл — время закята. Берётся с того, что лежало без дела.
