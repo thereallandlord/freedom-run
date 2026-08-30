@@ -292,6 +292,10 @@ export function Game({
   meId,
   events,
   topRight,
+  хозяин,
+  ходитЗа,
+  подхватить,
+  моёМесто,
 }: {
   table: Table
   dispatch: (e: TableEvent) => void
@@ -321,6 +325,13 @@ export function Game({
    */
   meId?: string
   topRight?: React.ReactNode
+  /** Я хозяин стола — значит могу походить за отошедшего. */
+  хозяин?: boolean
+  /** За кого сейчас ходит хозяин. Пусто — за себя. */
+  ходитЗа?: string | null
+  подхватить?: (seatId: string | null) => void
+  /** Моё собственное место — за себя ходить не «подхватывают». */
+  моёМесто?: string
 }) {
   const actor = currentSeat(table)
   /** Кем я играю: онлайн — своим местом, на одном устройстве — тем, чей ход. */
@@ -533,6 +544,30 @@ export function Game({
             className="btn-ghost ml-auto text-xs"
           >
             Завершить партию
+          </button>
+        </div>
+      )}
+
+      {/*
+        🔴 ПРО ПОДМЕНУ НАПОМИНАЕМ ГРОМКО. Хозяин подхватывает чужой ход на
+        минуту, а забыть про это можно на весь круг — и тогда он сходит за
+        соседа на СВОЁМ ходу, никого не спросив. Полоса висит поверх всего,
+        пока подмена включена, и снимается прямо с неё.
+      */}
+      {хозяин && ходитЗа && подхватить && (
+        <div className="sticky top-0 z-30 -mx-1 mb-2 flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-500/15 px-3 py-2 text-[12.5px] leading-snug">
+          <span
+            className="size-2.5 shrink-0 rounded-full"
+            style={{ background: table.seats.find((s) => s.id === ходитЗа)?.color }}
+            aria-hidden
+          />
+          <span className="min-w-0">
+            Вы ходите за{' '}
+            <b>{table.seats.find((s) => s.id === ходитЗа)?.name ?? 'игрока'}</b> — все действия
+            и деньги на экране его.
+          </span>
+          <button onClick={() => подхватить(null)} className="btn-quiet ml-auto shrink-0 text-xs">
+            Вернуться к себе
           </button>
         </div>
       )}
@@ -872,6 +907,50 @@ export function Game({
 
               {/* Кто что сделал — здесь, а не поверх стола: карточке не мешает. */}
               <ЛентаКолонка table={table} meId={meId ?? seat.id} />
+
+              {/*
+                🔴 ПОДХВАТИТЬ ЧУЖОЙ ХОД — ТОЛЬКО ХОЗЯИНУ СТОЛА.
+                Партия на десятерых идёт вживую: кто-то отошёл, у кого-то завис
+                телефон, у кого-то отвалилась сеть — и стол стоит, потому что
+                ход не перейдёт, пока человек не нажмёт. Раньше выход был один:
+                сделать его ботом насовсем. Теперь хозяин ходит за него, пока
+                тот не вернётся.
+              */}
+              {хозяин && подхватить && (
+                <div>
+                  <div className="caps mb-1 px-0.5 text-[9.5px] font-bold text-[var(--t-muted, var(--muted))]">
+                    Походить за игрока
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {table.seats
+                      .filter((s) => !s.isBot && !s.outOfGame && s.id !== моёМесто)
+                      .map((s) => {
+                        const я = s.id === ходитЗа
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => подхватить(я ? null : s.id)}
+                            className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[11.5px] leading-snug transition ${
+                              я
+                                ? 'border-amber-500/60 bg-amber-500/15 font-semibold'
+                                : 'border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] hover:border-accent/60'
+                            }`}
+                          >
+                            <span
+                              className="size-2 shrink-0 rounded-full"
+                              style={{ background: s.color }}
+                              aria-hidden
+                            />
+                            <span className="min-w-0 truncate">{s.name}</span>
+                            <span className="ml-auto shrink-0 text-[10.5px] text-[var(--t-muted, var(--muted))]">
+                              {я ? 'вернуть' : 'ходить'}
+                            </span>
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
 
               {/* Про долг перед людьми говорим вслух: молча погашенная кнопка «купить мечту» — загадка. */}
               {myDebt > 0 && !seat.isBot && (
