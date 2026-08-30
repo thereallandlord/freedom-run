@@ -1181,11 +1181,26 @@ export function dealAffordable(t: Table, card: import('./types').DealCard, deckS
   const l = currentSeat(t).ledger
   if (card.kind === 'stock') return l.cash >= card.price // хотя бы одна акция
   if (l.cash >= card.downPayment) return true
-  // С партнёром хватит половины взноса — но не нуля.
+  /*
+   * 🔴 В СКЛАДЧИНУ БЕРУТ НЕ ТОЛЬКО КВАРТИРЫ.
+   *
+   * Половина взноса засчитывалась лишь крупной НЕДВИЖИМОСТИ — значит бизнес,
+   * который двое легко потянули бы вдвоём, не показывался вовсе. А в малой
+   * колоде все обычные дела стоят от 300 тысяч взноса при стартовых 70–200:
+   * первые полчаса игры единственным доступным бизнесом оказывался
+   * партнёрский за 28 900. Ровно это Камиль и увидел на живой игре: «почему
+   * не выпадают другие бизнесы? Куда делись остальные?»
+   *
+   * Половину засчитываем, только если партнёр за столом реально есть —
+   * в одиночку скидываться не с кем.
+   */
+  const естьСКемСкинуться = t.seats.some(
+    (s) => !s.outOfGame && s.track === 'rat' && s.id !== currentSeat(t).id,
+  )
   return (
     !RULES.loansEnabled &&
-    deckSize === 'big' &&
-    card.kind === 'realEstate' &&
+    естьСКемСкинуться &&
+    (card.kind === 'realEstate' || card.kind === 'business') &&
     card.cashFlow > 0 &&
     l.cash >= Math.round(card.downPayment / 2)
   )
@@ -1363,8 +1378,8 @@ function resolveLanding(t: Table, seatIdx: number) {
           t.phase = 'resolving'
           return
         }
-        applyMarketAuto(t, card)
-        t.pending = { kind: 'market', card }
+        const объяснение = applyMarketAuto(t, card)
+        t.pending = { kind: 'market', card, notes: объяснение.length ? объяснение : undefined }
         t.phase = 'resolving'
         return
       }
@@ -1663,8 +1678,11 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
   }
 }
 
-/** Сплиты, выплаты и повышения применяются сразу — решать нечего. */
-function applyMarketAuto(t: Table, card: MarketCard) {
+/**
+ * Сплиты, выплаты и повышения применяются сразу — решать нечего.
+ * Возвращает объяснение: что именно произошло, словами для человека.
+ */
+function applyMarketAuto(t: Table, card: MarketCard): string[] {
   if (card.kind === 'bizEvent') {
     /*
      * 🔴 Событие ЛИЧНОЕ: касается только ходящего и только его обычных
@@ -1675,7 +1693,7 @@ function applyMarketAuto(t: Table, card: MarketCard) {
     const цели = seat.ledger.businesses.filter(
       (b) => !b.gl && (!card.categories?.length || card.categories.includes(b.category ?? '')),
     )
-    if (!цели.length) return
+    if (!цели.length) return []
     const заметки: string[] = []
     for (const b of цели) {
       if (card.flowPct) {
@@ -1702,11 +1720,11 @@ function applyMarketAuto(t: Table, card: MarketCard) {
     if (card.managerPct != null) {
       // Ничего не применяем: это предложение, а не событие. Решает игрок.
       плашка(t, seat.id, `${seat.name}: ${card.title}`, 'добро')
-      return
+      return []
     }
     const тон = (card.flowPct ?? 0) > 0 || (card.cash ?? 0) > 0 ? 'добро' : 'худо'
     плашка(t, seat.id, `${seat.name}: ${card.title}`, тон)
-    return
+    return []
   }
   if (card.kind === 'glEvent' && !card.triangle) {
     /*
@@ -1768,7 +1786,7 @@ function applyMarketAuto(t: Table, card: MarketCard) {
       log(t, s.id, `${s.name}: ${card.title} — доход по партнёрскому бизнесу теперь ${money(glTotalIncome(g))}/мес`)
       for (const о of объяснения) log(t, s.id, о)
     }
-    return
+    return []
   }
   if (card.kind === 'stockSplit') {
     for (const s of t.seats) {
@@ -1818,6 +1836,7 @@ function applyMarketAuto(t: Table, card: MarketCard) {
     seatLedgerEvent(t, seat.id, { type: 'SALARY_RAISE', amount: card.amount })
     log(t, seat.id, `Повышение: зарплата +${money(card.amount)}/мес`)
   }
+  return []
 }
 
 // ─── Переход хода ─────────────────────────────────────────────────────
@@ -1828,19 +1847,19 @@ function nextTurn(t: Table) {
   if (alive.length === 0) {
     t.phase = 'finished'
     t.pending = { kind: 'gameOver' }
-    return
+    return []
   }
   if (alive.length === 1 && t.seats.filter((s) => !s.outOfGame).length > 1 && t.winnerId) {
     // Остался один играющий при уже известном победителе — партия окончена.
     t.phase = 'finished'
     t.pending = { kind: 'gameOver' }
-    return
+    return []
   }
   if (alive.length === 1 && t.seats.length > 1 && t.seats.every((s) => s.outOfGame || s.id === alive[0].id)) {
     t.winnerId ??= alive[0].id
     t.phase = 'finished'
     t.pending = { kind: 'gameOver' }
-    return
+    return []
   }
 
   let guard = 0
@@ -3004,6 +3023,19 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       if (l.cash < hireCost) return prev
       seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -hireCost })
       seatLedgerEvent(t, seat.id, { type: 'SET_MANAGER', assetId: event.assetId, pct: event.pct })
+      /*
+       * 🔴 ПРИНЯЛ ПРЕДЛОЖЕНИЕ — КАРТОЧКА УХОДИТ. На живой игре Камиль нанял
+       * управляющего, а карточка осталась висеть с кнопкой «пока справлюсь
+       * сам»: решение принято, а стол делает вид, что ещё думает.
+       */
+      if (
+        t.pending?.kind === 'market' &&
+        t.pending.card.kind === 'bizEvent' &&
+        t.pending.card.managerPct != null
+      ) {
+        t.pending = null
+        t.phase = 'turnEnd'
+      }
       const after = t.seats[seatIdx].ledger.businesses.find((x) => x.id === event.assetId)
       log(
         t,

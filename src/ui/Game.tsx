@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Table } from '../engine/types'
+import type { Table, Seat } from '../engine/types'
 import type { TableEvent } from '../engine/events'
-import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow } from '../engine/table'
+import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow,
+  pendingUndecided,
+} from '../engine/table'
 import {
   RULES,
   fastTrackIncome,
@@ -1014,7 +1016,25 @@ export function Game({
            * 130% за его дом, не мог ни продать, ни закрыть окно. На месте
            * кнопки оставалось бледное пятно.
            */
-          spectate={!myTurn && !allowedIn && table.pending?.kind !== 'market'}
+          /*
+           * 🔴 ЗРИТЕЛЬ — ТОТ, КОГО КАРТОЧКА НЕ ЖДЁТ. Спрашиваем об этом сам
+           * движок, а не гадаем по виду карты.
+           *
+           * Раньше рыночную карту исключали целиком, и на чужом событии
+           * партнёрского бизнеса у соседа была ЖИВАЯ кнопка «Понятно». Он
+           * жал — карточка не уходила (движок правильно ждёт только хозяина),
+           * и это читалось как «оба должны нажать». Ровно на это Камиль и
+           * пожаловался в игре: «теперь на все карточки засунул, что нужно
+           * ждать других участников».
+           *
+           * Теперь: ждут тебя — есть кнопки; не ждут — честно написано, что
+           * ты смотришь.
+           */
+          spectate={
+            table.pending?.kind === 'deal' || table.pending?.kind === 'market'
+              ? !pendingUndecided(table).some((x: Seat) => x.id === seat.id)
+              : !myTurn && !allowedIn
+          }
           canSetAccess={myTurn && !actor.isBot}
           /*
             🔴 Быстрые кнопки у карточки. Пока она на столе, до шапки надо

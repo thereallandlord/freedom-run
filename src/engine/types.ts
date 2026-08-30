@@ -612,7 +612,19 @@ export type Pending =
       access?: DealAccess
       decided?: string[]
     }
-  | { kind: 'market'; card: MarketCard; access?: DealAccess; decided?: string[] }
+  | {
+      kind: 'market'
+      card: MarketCard
+      access?: DealAccess
+      decided?: string[]
+      /**
+       * Что карточка СДЕЛАЛА, человеческими фразами.
+       * 🔴 Без этого событие бизнеса выглядело загадкой: «Сменил вывеску —
+       * район пришёл посмотреть», а больше стало приносить дело или меньше,
+       * человек не понимал. Считает эффект движок — он же и объясняет.
+       */
+      notes?: string[]
+    }
   | { kind: 'doodad'; card: DoodadCard }
   /**
    * Встал ровно на клетку зарплаты. Отдельное окно, потому что иначе ход

@@ -1420,6 +1420,22 @@ function CardBody({
                 ))}
               </div>
             )}
+            {/*
+              🔴 ЧТО ИМЕННО ПРОИЗОШЛО С ДЕЛОМ — СЛОВАМИ И ЧИСЛАМИ.
+              На живой игре Камиль прочитал «Сменил вывеску — район пришёл
+              посмотреть» и спросил: «а что случилось? Он начал больше
+              приносить или меньше?» Проценты на карточке этого не отвечали:
+              человеку нужно ЕГО дело и ЕГО цифры. Считает движок, здесь
+              просто показываем.
+            */}
+            {p.notes?.length ? (
+              <div className="space-y-1 rounded-lg border border-accent/40 bg-accent/10 p-3 text-[12.5px] leading-snug">
+                {p.notes.map((н: string, i: number) => (
+                  <div key={i}>{н}</div>
+                ))}
+              </div>
+            ) : null}
+
             <div className="panel-2 space-y-2 rounded-lg p-3">
               {card.flowPct != null && (
                 <Stat
