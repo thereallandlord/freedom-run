@@ -382,6 +382,8 @@ export function App() {
         ходитЗа={ходитЗа}
         подхватить={setХодитЗа}
         моёМесто={meSeatIdBase}
+        голосКомната={online ? room.room?.code : undefined}
+        голосЯ={{ id: room.me.id, имя: room.me.name || 'Игрок' }}
         events={game.events}
         topRight={<><AccountButton поднять={поднятьИзКабинета} /><ThemeToggle /></>}
       />

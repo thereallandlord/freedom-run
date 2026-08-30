@@ -19,6 +19,7 @@ import { PlayerPanel, money, signed, tone } from './PlayerPanel'
 import { CardModal } from './CardModal'
 import { Pips } from './Pips'
 import { Лента, ЛентаКолонка } from './Лента'
+import { ГолосПанель } from './ГолосПанель'
 import { BankModal } from './BankModal'
 import { PortfolioModal } from './PortfolioModal'
 import { DebriefModal } from './DebriefModal'
@@ -296,6 +297,8 @@ export function Game({
   ходитЗа,
   подхватить,
   моёМесто,
+  голосКомната,
+  голосЯ,
 }: {
   table: Table
   dispatch: (e: TableEvent) => void
@@ -332,6 +335,9 @@ export function Game({
   подхватить?: (seatId: string | null) => void
   /** Моё собственное место — за себя ходить не «подхватывают». */
   моёМесто?: string
+  /** Код комнаты для голоса. Пусто — партия местная, голос не нужен. */
+  голосКомната?: string
+  голосЯ?: { id: string; имя: string }
 }) {
   const actor = currentSeat(table)
   /** Кем я играю: онлайн — своим местом, на одном устройстве — тем, чей ход. */
@@ -904,6 +910,12 @@ export function Game({
                 </div>
                 <WorldEvents table={table} seat={seat} compact />
               </div>
+
+              {/*
+                Голос — рядом с игроками: смотришь, кто ходит, и видишь, кто
+                говорит. Партии он не касается: отвалится — стол не заметит.
+              */}
+              {голосКомната && голосЯ && <ГолосПанель комната={голосКомната} я={голосЯ} />}
 
               {/* Кто что сделал — здесь, а не поверх стола: карточке не мешает. */}
               <ЛентаКолонка table={table} meId={meId ?? seat.id} />

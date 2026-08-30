@@ -1,0 +1,348 @@
+/**
+ * Голос прямо в игре: слышим друг друга без Zoom и без второго приложения.
+ *
+ * 🔴 ПОЧЕМУ БЕЗ СТОРОННЕГО СЕРВИСА. Звук идёт НАПРЯМУЮ между браузерами
+ * (WebRTC, схема «каждый с каждым»). Сервер нужен только чтобы участники нашли
+ * друг друга — для этого берём тот же Supabase, на котором уже держатся
+ * комнаты, и заводим ОТДЕЛЬНЫЙ канал. Игровой журнал голос не трогает вовсе:
+ * перепутать сигнальное сообщение с ходом невозможно, они ездят по разным
+ * каналам.
+ *
+ * 🔴 ЧЕГО ЭТА СХЕМА СТОИТ. Каждый шлёт свой звук каждому: на десятерых это
+ * девять исходящих дорожек с человека. Для звука это терпимо (Opus ~30 кбит/с,
+ * то есть около 300 кбит/с вверх), для видео было бы нельзя. Потолок мы честно
+ * показываем в интерфейсе, а не делаем вид, что схема бесконечная.
+ *
+ * 🔴 ЧЕГО НЕ УМЕЕМ. Нет своего TURN-сервера: если у кого-то жёсткий NAT
+ * (корпоративная сеть, редкие мобильные операторы), соединение может не
+ * подняться — у него не будет слышно, у остальных всё в порядке. Это видно в
+ * списке участников, а не молчаливо.
+ */
+import { getSupabase } from './supabase'
+import type { RealtimeChannel } from '@supabase/supabase-js'
+
+/** Публичные STUN — только чтобы узнать свой внешний адрес. Бесплатны. */
+const ICE: RTCIceServer[] = [
+  { urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] },
+]
+
+export type СостояниеУчастника = 'соединяемся' | 'слышно' | 'не вышло'
+
+export interface УчастникГолоса {
+  id: string
+  имя: string
+  состояние: СостояниеУчастника
+  /** Говорит прямо сейчас — для подсветки в списке. */
+  говорит: boolean
+}
+
+export interface Голос {
+  включить(): Promise<void>
+  выключить(): void
+  /** Свой микрофон: выключенный — нас не слышно, но мы слышим всех. */
+  микрофон(вкл: boolean): void
+  состояние(): { включён: boolean; микрофонВкл: boolean; участники: УчастникГолоса[] }
+  /** Подписка на изменения — чтобы интерфейс перерисовывался. */
+  наИзменение(cb: () => void): () => void
+  ошибка(): string | null
+}
+
+type Сигнал =
+  | { t: 'привет'; from: string; имя: string }
+  | { t: 'оффер'; from: string; to: string; имя: string; sdp: string }
+  | { t: 'ответ'; from: string; to: string; sdp: string }
+  | { t: 'лёд'; from: string; to: string; ice: RTCIceCandidateInit }
+  | { t: 'пока'; from: string }
+
+/** Голос доступен только когда есть чем сигналить и что записывать. */
+export function голосДоступен(): boolean {
+  return (
+    !!getSupabase() &&
+    typeof navigator !== 'undefined' &&
+    !!navigator.mediaDevices?.getUserMedia &&
+    typeof RTCPeerConnection !== 'undefined'
+  )
+}
+
+export function создатьГолос(комната: string, я: { id: string; имя: string }): Голос {
+  type Связь = {
+    pc: RTCPeerConnection
+    audio: HTMLAudioElement
+    имя: string
+    состояние: СостояниеУчастника
+    говорит: boolean
+    анализ?: { ctx: AudioContext; stop: () => void }
+  }
+  const связи = new Map<string, Связь>()
+  let канал: RealtimeChannel | null = null
+  let мой: MediaStream | null = null
+  let включён = false
+  let микВкл = true
+  let ошибкаТекст: string | null = null
+  const слушатели = new Set<() => void>()
+  const изменилось = () => {
+    for (const cb of слушатели) cb()
+  }
+
+  const шлём = (s: Сигнал) => {
+    канал?.send({ type: 'broadcast', event: 'voice', payload: s })
+  }
+
+  /**
+   * 🔴 КТО КОМУ ЗВОНИТ, РЕШАЕТ СРАВНЕНИЕ КЛЮЧЕЙ, А НЕ «КТО ПЕРВЫЙ УСПЕЛ».
+   * Иначе двое одновременно шлют оффер друг другу, и соединение не встаёт
+   * (классическая «встречка»). Звонит тот, чей ключ меньше.
+   */
+  const язвоню = (кому: string) => я.id < кому
+
+  function создатьСвязь(id: string, имя: string): Связь {
+    const pc = new RTCPeerConnection({ iceServers: ICE })
+    /*
+     * 🔴 Элемент звука ДОБАВЛЯЕМ В СТРАНИЦУ. Оторванный от документа он играет
+     * не везде: Safari на айфоне такой звук молча глушит, а на экране всё
+     * выглядит подключённым. Прячем стилем, а не отсутствием в документе.
+     */
+    const audio = document.createElement('audio')
+    audio.autoplay = true
+    audio.setAttribute('playsinline', '')
+    audio.style.display = 'none'
+    document.body.appendChild(audio)
+    const связь: Связь = { pc, audio, имя, состояние: 'соединяемся', говорит: false }
+
+    if (мой) for (const t of мой.getTracks()) pc.addTrack(t, мой)
+
+    pc.onicecandidate = (e) => {
+      if (e.candidate) шлём({ t: 'лёд', from: я.id, to: id, ice: e.candidate.toJSON() })
+    }
+    pc.ontrack = (e) => {
+      audio.srcObject = e.streams[0]
+      void audio.play().catch(() => {})
+      связь.анализ = следитьЗаГолосом(e.streams[0], (гов) => {
+        if (связь.говорит !== гов) {
+          связь.говорит = гов
+          изменилось()
+        }
+      })
+    }
+    pc.onconnectionstatechange = () => {
+      const s = pc.connectionState
+      связь.состояние = s === 'connected' ? 'слышно' : s === 'failed' || s === 'closed' ? 'не вышло' : 'соединяемся'
+      изменилось()
+    }
+    связи.set(id, связь)
+    return связь
+  }
+
+  async function позвонить(id: string, имя: string) {
+    const связь = связи.get(id) ?? создатьСвязь(id, имя)
+    const offer = await связь.pc.createOffer({ offerToReceiveAudio: true })
+    await связь.pc.setLocalDescription(offer)
+    шлём({ t: 'оффер', from: я.id, to: id, имя: я.имя, sdp: offer.sdp ?? '' })
+  }
+
+  async function приняли(s: Сигнал) {
+    if (s.t === 'привет') {
+      if (s.from === я.id) return
+      if (!связи.has(s.from)) создатьСвязь(s.from, s.имя)
+      else связи.get(s.from)!.имя = s.имя
+      изменилось()
+      // Здороваемся в ответ, чтобы нас увидел и тот, кто пришёл раньше.
+      шлём({ t: 'привет', from: я.id, имя: я.имя })
+      if (язвоню(s.from)) await позвонить(s.from, s.имя)
+      return
+    }
+    if (s.t === 'пока') {
+      закрыть(s.from)
+      return
+    }
+    if (s.to !== я.id) return
+    if (s.t === 'оффер') {
+      const связь = связи.get(s.from) ?? создатьСвязь(s.from, s.имя)
+      связь.имя = s.имя
+      await связь.pc.setRemoteDescription({ type: 'offer', sdp: s.sdp })
+      const ans = await связь.pc.createAnswer()
+      await связь.pc.setLocalDescription(ans)
+      шлём({ t: 'ответ', from: я.id, to: s.from, sdp: ans.sdp ?? '' })
+      изменилось()
+      return
+    }
+    if (s.t === 'ответ') {
+      const связь = связи.get(s.from)
+      if (связь && !связь.pc.currentRemoteDescription)
+        await связь.pc.setRemoteDescription({ type: 'answer', sdp: s.sdp })
+      return
+    }
+    if (s.t === 'лёд') {
+      const связь = связи.get(s.from)
+      if (связь) await связь.pc.addIceCandidate(s.ice).catch(() => {})
+    }
+  }
+
+  function закрыть(id: string) {
+    const связь = связи.get(id)
+    if (!связь) return
+    связь.анализ?.stop()
+    связь.pc.close()
+    связь.audio.srcObject = null
+    связь.audio.remove()
+    связи.delete(id)
+    изменилось()
+  }
+
+  return {
+    async включить() {
+      if (включён) return
+      ошибкаТекст = null
+      const sb = getSupabase()
+      if (!sb) {
+        ошибкаТекст = 'Голос работает только в онлайн-комнате.'
+        изменилось()
+        return
+      }
+      try {
+        /*
+         * 🔴 Просим ТОЛЬКО микрофон и просим его ДО подключения к каналу:
+         * браузер обязан спросить разрешение по нажатию, а если сначала уйти
+         * в сеть, айфон успевает потерять «жест пользователя» и молча
+         * отказывает.
+         */
+        мой = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: false,
+        })
+      } catch {
+        ошибкаТекст = 'Не дали доступ к микрофону. Разрешите его в настройках браузера.'
+        изменилось()
+        return
+      }
+      // Нажатие уже случилось — самое время разбудить звук, пока жест «живой».
+      звук()
+      включён = true
+      микВкл = true
+      /*
+       * 🔴 ОДНО ИМЯ КАНАЛА — ОДИН КАНАЛ НА КЛИЕНТА.
+       *
+       * Второй канал с тем же именем у Supabase просто не поднимается: подписка
+       * висит вечно, ошибки нет, голос молчит. А второй берётся легко: в
+       * разработке React монтирует всё дважды, и панель успевала создать две
+       * связи. Поймано живой проверкой — связь не вставала НИ РАЗУ, при том что
+       * тот же канал вручную работал.
+       */
+      const имяКанала = `voice:${комната}`
+      for (const c of sb.getChannels()) {
+        if (c.topic === `realtime:${имяКанала}` || c.topic === имяКанала) void sb.removeChannel(c)
+      }
+      канал = sb.channel(имяКанала, { config: { broadcast: { self: false } } })
+      канал.on('broadcast', { event: 'voice' }, (m) => {
+        /*
+         * 🔴 Ловим ошибку ЗДЕСЬ. Обработчик асинхронный: без этого любая
+         * осечка в разборе сигнала уходила бы в пустоту, и голос просто не
+         * поднимался бы — молча, без единой строки в консоли. Именно так я и
+         * потерял час на живой проверке.
+         */
+        приняли(m.payload as Сигнал).catch((e) => console.error('[голос] сигнал не разобран:', e))
+      })
+      канал.subscribe((st) => {
+        if (st === 'SUBSCRIBED') шлём({ t: 'привет', from: я.id, имя: я.имя })
+      })
+      изменилось()
+    },
+    выключить() {
+      if (!включён) return
+      шлём({ t: 'пока', from: я.id })
+      for (const id of [...связи.keys()]) закрыть(id)
+      // Освобождаем ИМЯ канала, а не просто отписываемся: иначе повторное
+      // включение упрётся в занятое имя и молча не поднимется.
+      if (канал) void getSupabase()?.removeChannel(канал)
+      канал = null
+      мой?.getTracks().forEach((t) => t.stop())
+      мой = null
+      включён = false
+      изменилось()
+    },
+    микрофон(вкл) {
+      микВкл = вкл
+      мой?.getAudioTracks().forEach((t) => (t.enabled = вкл))
+      изменилось()
+    },
+    состояние() {
+      return {
+        включён,
+        микрофонВкл: микВкл,
+        участники: [...связи.entries()].map(([id, с]) => ({
+          id,
+          имя: с.имя,
+          состояние: с.состояние,
+          говорит: с.говорит,
+        })),
+      }
+    },
+    наИзменение(cb) {
+      слушатели.add(cb)
+      return () => слушатели.delete(cb)
+    },
+    ошибка() {
+      return ошибкаТекст
+    },
+  }
+}
+
+/**
+ * 🔴 ОДИН ЗВУКОВОЙ КОНТЕКСТ НА ВСЕХ, И ЕГО НАДО БУДИТЬ.
+ *
+ * Создавали по контексту на собеседника — на десятерых это десять звуковых
+ * движков впустую. Хуже другое: контекст, созданный без нажатия, стартует
+ * СПЯЩИМ, и замер громкости честно возвращает нули — подсветка «говорит» не
+ * загоралась никогда. Поймано живой проверкой: связь стояла, а огонёк молчал.
+ */
+let общийКонтекст: AudioContext | null = null
+function звук(): AudioContext {
+  const Ctx =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+  if (!общийКонтекст) общийКонтекст = new Ctx()
+  if (общийКонтекст.state === 'suspended') void общийКонтекст.resume().catch(() => {})
+  return общийКонтекст
+}
+
+/**
+ * Кто сейчас говорит — по громкости дорожки.
+ * Нужен только для подсветки: без него голос работает, но не видно, кто из
+ * десяти сейчас в эфире, и все начинают говорить разом.
+ */
+function следитьЗаГолосом(stream: MediaStream, cb: (говорит: boolean) => void) {
+  const ctx = звук()
+  const src = ctx.createMediaStreamSource(stream)
+  const an = ctx.createAnalyser()
+  an.fftSize = 512
+  src.connect(an)
+  const buf = new Uint8Array(an.frequencyBinCount)
+  let живой = true
+  let было = false
+  const тик = () => {
+    if (!живой) return
+    an.getByteFrequencyData(buf)
+    let сумма = 0
+    for (const v of buf) сумма += v
+    const средн = сумма / buf.length
+    const сейчас = средн > 12
+    if (сейчас !== было) {
+      было = сейчас
+      cb(сейчас)
+    }
+    setTimeout(тик, 180)
+  }
+  тик()
+  return {
+    ctx,
+    stop: () => {
+      живой = false
+      // Контекст общий — закрывать его нельзя, отключаем только свой источник.
+      try {
+        src.disconnect()
+      } catch {
+        /* уже отключён */
+      }
+    },
+  }
+}
