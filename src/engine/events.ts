@@ -53,9 +53,33 @@ export type LedgerEvent =
   | { type: 'CHARITY_TURN_USED' }
   | { type: 'TAKE_LOAN'; amount: number }
   | { type: 'REPAY_LOAN'; amount: number }
-  | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
+  | {
+      type: 'PAYOFF_ASSET'
+      assetId: string
+      discountPct: number
+      /**
+       * Погасить ЧАСТЬ рассрочки. Пусто — закрываем целиком.
+       * 🔴 Камиль сам усомнился, что в частичном погашении есть толк: «ты то,
+       * что закроешь, а у тебя ничего не поменяется». Так и было бы, если
+       * оставить платёж прежним. Поэтому платёж уменьшается пропорционально:
+       * закрыл половину долга — половина платежа сразу вернулась в доход.
+       */
+      amount?: number
+    }
   | { type: 'PAY_OFF_DEBT'; debt: PayableDebt; amount?: number }
-  | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
+  | {
+      type: 'PAYOFF_ASSET'
+      assetId: string
+      discountPct: number
+      /**
+       * Погасить ЧАСТЬ рассрочки. Пусто — закрываем целиком.
+       * 🔴 Камиль сам усомнился, что в частичном погашении есть толк: «ты то,
+       * что закроешь, а у тебя ничего не поменяется». Так и было бы, если
+       * оставить платёж прежним. Поэтому платёж уменьшается пропорционально:
+       * закрыл половину долга — половина платежа сразу вернулась в доход.
+       */
+      amount?: number
+    }
   | { type: 'ADJUST_CASH'; amount: number }
   | { type: 'FORCED_SALE'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
   | { type: 'HALVE_CONSUMER_DEBT' }
@@ -124,7 +148,19 @@ export type TableEventBody =
   | { type: 'PAY_DOWNSIZED' }
   | { type: 'TAKE_LOAN'; amount: number }
   | { type: 'REPAY_LOAN'; amount: number }
-  | { type: 'PAYOFF_ASSET'; assetId: string; discountPct: number }
+  | {
+      type: 'PAYOFF_ASSET'
+      assetId: string
+      discountPct: number
+      /**
+       * Погасить ЧАСТЬ рассрочки. Пусто — закрываем целиком.
+       * 🔴 Камиль сам усомнился, что в частичном погашении есть толк: «ты то,
+       * что закроешь, а у тебя ничего не поменяется». Так и было бы, если
+       * оставить платёж прежним. Поэтому платёж уменьшается пропорционально:
+       * закрыл половину долга — половина платежа сразу вернулась в доход.
+       */
+      amount?: number
+    }
   | { type: 'PAY_OFF_DEBT'; debt: PayableDebt; amount?: number }
   | { type: 'ENTER_FAST_TRACK' }
   | { type: 'BUY_FT_BUSINESS' }

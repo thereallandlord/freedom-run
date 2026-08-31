@@ -838,15 +838,31 @@ export function Game({
                   {actor.name} думает…
                 </div>
               ) : canEscape ? (
-                <button
-                  onClick={() => dispatch({ type: 'ENTER_FAST_TRACK' })}
-                  className="btn-primary w-full px-3 py-3.5 text-[13px] leading-tight"
-                >
-                  Вырваться из крысиных бегов
-                  <span className="mt-0.5 block text-[11px] font-normal opacity-80">
-                    выкуп {money(RULES.fastTrackMultiplier * freedomIncome(seat.ledger))}
-                  </span>
-                </button>
+                /*
+                 * 🔴 ВЫХОД ИЗ КРУГА — ОДНИМ БЛОКОМ, А НЕ КНОПКОЙ И ОГРЫЗКОМ.
+                 * Строчка «или остаться и бросить» висела отдельно, ниже по
+                 * колонке, голым подчёркнутым текстом без всякой рамки — и
+                 * читалась как мусор на экране. Камиль на игре: «как только
+                 * предложило вырваться из крысиных бегов, вместо кнопки
+                 * бросок начал появляться артефакт».
+                 */
+                <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] p-2">
+                  <button
+                    onClick={() => dispatch({ type: 'ENTER_FAST_TRACK' })}
+                    className="btn-primary w-full px-3 py-3.5 text-[13px] leading-tight"
+                  >
+                    Вырваться из крысиных бегов
+                    <span className="mt-0.5 block text-[11px] font-normal opacity-80">
+                      выкуп {money(RULES.fastTrackMultiplier * freedomIncome(seat.ledger))}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => roll(diceOptions[diceOptions.length - 1])}
+                    className="mt-1.5 w-full rounded-lg px-2 py-1.5 text-[11.5px] text-[var(--t-muted, var(--muted))] transition hover:bg-[var(--t-line,var(--line))]"
+                  >
+                    или остаться и бросить кубик
+                  </button>
+                </div>
               ) : canRoll ? (
                 /* Кнопка броска живёт ТОЛЬКО по центру доски — там, куда смотрят. */
                 null
@@ -877,15 +893,6 @@ export function Game({
                   Ход переходит дальше…
                 </div>
               ) : null}
-
-              {canEscape && (
-                <button
-                  onClick={() => roll(diceOptions[0])}
-                  className="text-[11px] text-[var(--t-muted, var(--muted))] hover:underline"
-                >
-                  или остаться и бросить
-                </button>
-              )}
 
               {/* Что выпало — рядом с кнопкой, а не в центре доски. */}
               <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-2.5 text-center">

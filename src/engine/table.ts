@@ -560,6 +560,37 @@ export function applyWorldEvent(prev: Table, index: number): Table {
  */
 /** Выполнено ли условие выхода новости прямо сейчас. */
 function новостьУместна(t: Table, ev: import('./types').WorldEvent): boolean {
+  /*
+   * 🔴 НОВОСТЬ ДОЛЖНА КОГО-ТО ЗАДЕВАТЬ. Камиль повторил это на игре трижды:
+   * «толку показывать мировые события, если ни у кого нет никаких объектов»,
+   * «а какой толк-то от этого, если ни у кого такого бизнеса нет», «надо
+   * сделать, чтобы мировые события актуальны в любом случае были».
+   *
+   * Раньше условие было только у тех карточек, которым его проставили руками.
+   * Теперь смотрим на САМ ЭФФЕКТ: двигает цены или доход по видам активов —
+   * значит нужен хоть один владелец такого; двигает бумагу — нужен держатель.
+   * Новость без адреса не выбрасывается: она ждёт в колоде своего часа.
+   *
+   * Новости, которые никого не задевают по определению (общий фон, разовые
+   * деньги), выходят как раньше: их и так интересно прочитать.
+   */
+  const eff = ev.effect as {
+    price?: Record<string, number>
+    flow?: Record<string, number>
+    stock?: Record<string, number>
+  }
+  const виды = new Set([...Object.keys(eff?.price ?? {}), ...Object.keys(eff?.flow ?? {})])
+  const бумаги = Object.keys(eff?.stock ?? {})
+  if (виды.size || бумаги.length) {
+    const естьАдресат = t.seats.some((s) => {
+      if (s.outOfGame) return false
+      if (s.ledger.realEstate.some((a) => виды.has(a.category))) return true
+      if (s.ledger.businesses.some((a) => !a.gl && виды.has(a.category ?? ''))) return true
+      return s.ledger.stocks.some((x) => бумаги.includes(x.symbol))
+    })
+    if (!естьАдресат) return false
+  }
+
   const у = ev.требует
   if (!у?.категории?.length) return true
   const надо = Math.max(1, у.минВладельцев ?? 1)
@@ -1067,6 +1098,17 @@ function dealDrawOk(t: Table, card: import('./types').DealCard, size: 'small' | 
   if ((card as { meme?: boolean }).meme && rng(t, 7717) > 0.22) return false
 
   if (card.kind === 'business') {
+    /*
+     * 🔴 ОДНО И ТО ЖЕ ДЕЛО ВТОРОЙ РАЗ НЕ ПРЕДЛАГАЕМ. Камиль на игре: «у меня
+     * уже одно кафе есть, и вот вышло ещё раз халяль-кафе в Казани. Пусть
+     * одинаковый бизнес второй раз не попадается». Заведение в игре —
+     * конкретное место с адресом, а не строка каталога: второй такой же
+     * читается как ошибка, а не как возможность.
+     *
+     * Сравниваем по НАЗВАНИЮ: у купленного актива к опознавателю приписан
+     * номер хода, поэтому по нему совпадения не найти.
+     */
+    if (l.businesses.some((b) => !b.gl && b.name === card.title)) return false
     const owned = l.businesses.filter((b) => !b.gl).length
     if (owned === 0) return true
     // 1 бизнес → 55%, 2 → 30%, 3 → 17%, дальше всё реже, но никогда не ноль.
@@ -1135,7 +1177,15 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   BUY_DEAL: 'карта',
   BUY_STOCK_SHARES: 'карта',
   PASS_CARD: 'карта',
-  SELL_STOCK_LOT: 'карта',
+  /*
+   * 🔴 СВОИ БУМАГИ — ЭТО СВОЁ, А НЕ «РЕШЕНИЕ ПО КАРТЕ».
+   * Класс «карта» пускал только тех, кого касается открытая карточка, — и
+   * пока у соседа на столе лежала находка, продать свои акции было нельзя.
+   * Камиль на игре: «когда у кого-то выходит малая сделка, я продать не могу.
+   * Сделай, чтобы я мог продавать». Продажа своего к чужой находке отношения
+   * не имеет; за себя и только за себя — это и проверяет класс «своё».
+   */
+  SELL_STOCK_LOT: 'своё',
   ACCEPT_OFFER: 'карта',
 
   // ── своё хозяйство ──
@@ -2120,6 +2170,26 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
       for (let tries = 0; tries < 6 && !dealDrawOk(t, card, event.size); tries++) {
         card = stockDrawPrice(t, scaled(list[draw(t, event.size, list.length)]))
       }
+      /*
+       * 🔴 ПОСЛЕДНИЙ ПРОХОД ПРОТИВ ДУБЛЯ. Шесть попыток выше — мягкие: не
+       * нашли подходящую, показываем какая есть, лишь бы ход не сгорел. Для
+       * большинства правил это верно, но не для «второй раз то же самое
+       * заведение»: замер поймал два таких показа на 360 — та же типография
+       * в Казани у того, у кого она уже есть. Здесь ищем целенаправленно и
+       * только против этого случая.
+       */
+      const дубль = (c: import('./types').DealCard) =>
+        c.kind === 'business' &&
+        seat.ledger.businesses.some((b) => !b.gl && b.name === c.title)
+      if (дубль(card)) {
+        for (let tries = 0; tries < list.length; tries++) {
+          const другая = stockDrawPrice(t, scaled(list[draw(t, event.size, list.length)]))
+          if (!дубль(другая) && dealDrawOk(t, другая, event.size)) {
+            card = другая
+            break
+          }
+        }
+      }
       t.pending = { kind: 'deal', deck: event.size, card }
       return t
     }
@@ -2467,10 +2537,13 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * НИЧЕГО, кроме числа наличных. Человек мог выйти в кэш, и стол не
        * замечал.
        */
+      const прибыль = Math.round((price - lot.costPerShare) * soldN)
       плашка(
         t,
         holder.id,
-        `${holder.name} продал ${soldN} ${бумаг(soldN)} ${lot.symbol} за ${money(soldN * price)}`,
+        `${holder.name} продал ${soldN} ${бумаг(soldN)} ${lot.symbol} за ${money(soldN * price)}` +
+          (прибыль !== 0 ? ` · ${прибыль > 0 ? 'заработал' : 'потерял'} ${money(Math.abs(прибыль))}` : ''),
+        прибыль > 0 ? 'добро' : прибыль < 0 ? 'худо' : 'нейтр',
       )
 
       /*
@@ -2480,18 +2553,30 @@ export function applyTableEvent(prev: Table, event: TableEvent): Table {
        * Считается только с ПРИБЫЛИ: продал в минус — не должен ничего.
        */
       if (lot.profitShareTo && lot.profitSharePct) {
-        const profit = (event.pricePerShare - lot.costPerShare) * soldN
+        /*
+         * 🔴 Прибыль считаем по ТОЙ ЖЕ цене, по которой прошла продажа.
+         * Раньше здесь стояла цена, присланная клиентом, а сама сделка шла по
+         * рыночной — доля отщипывалась не от того числа.
+         */
+        const profit = Math.round((price - lot.costPerShare) * soldN)
         if (profit > 0) {
           const cut = Math.round((profit * lot.profitSharePct) / 100)
           const owner = t.seats.find((x) => x.id === lot.profitShareTo)
           if (owner && cut > 0) {
             seatLedgerEvent(t, event.seatId, { type: 'ADJUST_CASH', amount: -cut })
             seatLedgerEvent(t, owner.id, { type: 'ADJUST_CASH', amount: cut })
-            log(
-              t,
-              owner.id,
-              `${owner.name} получил ${money(cut)} — ${lot.profitSharePct}% с прибыли ${holder.name} по договорённости о входе`,
-            )
+            const текст =
+              `${holder.name} продал ${soldN} ${бумаг(soldN)} ${lot.symbol}, ` +
+              `заработал ${money(profit)} — вам ${money(cut)} (${lot.profitSharePct}% с прибыли за вход)`
+            log(t, owner.id, текст)
+            /*
+             * 🔴 ГОВОРИМ ОБ ЭТОМ ВСЛУХ ТОМУ, КОМУ ПРИШЛИ ДЕНЬГИ. Камиль на
+             * игре: «пусть мне выходит уведомление, что такой-то игрок продал
+             * столько-то, он заработал столько-то, и ты с этого заработал
+             * столько-то. А то сейчас это происходит просто в фоне».
+             * Видит только он: чужая доля — не новость стола.
+             */
+            плашка(t, owner.id, `${owner.name}: ${текст}`, 'добро', [owner.id])
           }
         }
       }

@@ -232,6 +232,38 @@ function AssetRow({
               </button>
             )
           )}
+          {/*
+            🔴 ЧАСТЬ РАССРОЧКИ — ОТДЕЛЬНОЙ КНОПКОЙ (просьба Камиля: «давай
+            добавим, что можно закрывать частично»). Показываем её, только
+            когда на всё денег НЕ хватает: иначе она лишняя, рядом уже есть
+            «закрыть целиком». Платёж уменьшается на ту же долю, что и долг,
+            поэтому доход растёт сразу — ровно то сомнение, которое Камиль
+            высказал вслух («а толк-то будет?»).
+          */}
+          {debt > 0 && dispatch && (cash ?? 0) > 0 && (cash ?? 0) < debt && (
+            <button
+              onClick={() =>
+                dispatch({
+                  type: 'PAYOFF_ASSET',
+                  assetId: a.id,
+                  discountPct: 0,
+                  amount: Math.min(cash ?? 0, debt),
+                })
+              }
+              className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold transition hover:border-emerald-500/60 hover:bg-emerald-500/10"
+            >
+              Погасить часть — {money(Math.min(cash ?? 0, debt))} из {money(debt)}
+              {(a as RealEstateAsset).installmentMonthly
+                ? ` · платёж упадёт до ${money(
+                    Math.round(
+                      (((a as RealEstateAsset).installmentMonthly ?? 0) *
+                        (debt - Math.min(cash ?? 0, debt))) /
+                        debt,
+                    ),
+                  )}/мес`
+                : ''}
+            </button>
+          )}
           {debt > 0 && dispatch && (
             <button
               disabled={(cash ?? 0) < debt}

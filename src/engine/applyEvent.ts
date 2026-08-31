@@ -494,16 +494,30 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       const biz = l.businesses.find((x) => x.id === e.assetId)
       const a = re ?? biz
       if (!a) return prev
-      const debt = re ? re.mortgage : (biz as any).liability
+      const debt = re ? re.mortgage : (biz as { liability: number }).liability
       if (debt <= 0) return prev
-      const pay = Math.round(debt * (1 - e.discountPct / 100))
+      /*
+       * Гасим целиком или частью. Часть не может быть больше долга и не может
+       * быть нулевой: «погасить ноль» — это не действие.
+       */
+      const часть = e.amount != null ? Math.min(Math.max(0, Math.round(e.amount)), debt) : debt
+      if (часть <= 0) return prev
+      const pay = Math.round(часть * (1 - e.discountPct / 100))
       if (l.cash < pay) return prev
       l.cash -= pay
-      // Платёж по рассрочке больше не съедает доход — поток актива вырастает.
-      a.cashFlow += a.installmentMonthly ?? 0
-      a.installmentMonthly = 0
-      if (re) re.mortgage = 0
-      else (biz as any).liability = 0
+      /*
+       * 🔴 ПЛАТЁЖ УМЕНЬШАЕТСЯ ВМЕСТЕ С ДОЛГОМ, и ровно на ту же долю. Иначе
+       * частичное погашение не давало бы НИЧЕГО до самого конца — деньги
+       * ушли, а доход прежний. Закрыл треть долга — треть платежа сразу
+       * вернулась в поток.
+       */
+      const былПлатёж = a.installmentMonthly ?? 0
+      const остаток = debt - часть
+      const новыйПлатёж = остаток > 0 ? Math.round((былПлатёж * остаток) / debt) : 0
+      a.cashFlow += былПлатёж - новыйПлатёж
+      a.installmentMonthly = новыйПлатёж
+      if (re) re.mortgage = остаток
+      else (biz as { liability: number }).liability = остаток
       return l
     }
 
