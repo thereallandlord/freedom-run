@@ -98,6 +98,12 @@ export interface RealEstateAsset {
   paidIn?: number
   /** Кто соинвестор, если актив куплен в долях. */
   partnerId?: string
+  /**
+   * Вошёл в чужую находку на условиях доли с прибыли: кому и сколько процентов
+   * отдать при продаже. Ровно как у бумаг — отщипывается только с ПРИБЫЛИ.
+   */
+  profitShareTo?: string
+  profitSharePct?: number
 }
 
 export interface BusinessAsset {
@@ -137,6 +143,12 @@ export interface BusinessAsset {
   gl?: import('./greenleaf').GlState
   installmentMonthly?: number
   partnerId?: string
+  /**
+   * Вошёл в чужую находку на условиях доли с прибыли: кому и сколько процентов
+   * отдать при продаже. Ровно как у бумаг — отщипывается только с ПРИБЫЛИ.
+   */
+  profitShareTo?: string
+  profitSharePct?: number
   /** Рыночная стоимость без наценки за рассрочку — от неё считается выкуп. */
   value?: number  /**
    * Сколько СВОИХ денег реально ушло на вход. См. пояснение у недвижимости:

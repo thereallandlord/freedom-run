@@ -723,7 +723,7 @@ export function Game({
             бы хода безвозвратно.
           */}
           {canUndo && (
-            <button onClick={undo} className="topbtn" title="Откатить последнее событие">
+            <button onClick={undo} className="topbtn" title="Отменить последний ход: бросок и всё, что было после него">
               ↩️<span className="ml-1 hidden sm:max-lg:inline xl:inline">Отменить</span>
             </button>
           )}

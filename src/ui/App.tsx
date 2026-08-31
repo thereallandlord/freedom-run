@@ -210,18 +210,33 @@ export function App() {
      * работают у всех одинаково и переживают перезаход.
      */
     const moves: TableEvent[] = []
-    const undone: TableEvent[] = []
+    /*
+     * 🔴 ОТМЕНЯЕМ ХОД, А НЕ ПОСЛЕДНЮЮ ЗАПИСЬ ЖУРНАЛА.
+     *
+     * В общем журнале лежит всё, что кто-либо отправил, — включая события,
+     * которые движок отклонил: конец хода шлют ДВОЕ (хозяин стола и сам
+     * ходящий), плюс страховочный повтор раз в три секунды. Сняв такую
+     * пустышку, мы не меняли на столе ровно ничего — и кнопка выглядела
+     * мёртвой. Живая жалоба: «отмена ничего не даёт», жал несколько раз.
+     *
+     * Снимаем последний бросок и всё, что было после него, одной пачкой:
+     * тогда пустышки уходят вместе с ходом, стол встаёт перед броском, и все
+     * продажи этого хода откатываются пересбором сами.
+     */
+    const undone: TableEvent[][] = []
     for (const raw of room.gameJournal()) {
       const type = (raw as { type?: string })?.type
       if (type === '__START') continue
       if (type === '__UNDO') {
-        const last = moves.pop()
-        if (last) undone.push(last)
+        let i = moves.length - 1
+        while (i >= 0 && moves[i].type !== 'ROLL') i--
+        // Броска в журнале нет — отменять нечего, журнал не трогаем.
+        if (i >= 0) undone.push(moves.splice(i))
         continue
       }
       if (type === '__REDO') {
         const back = undone.pop()
-        if (back) moves.push(back)
+        if (back) moves.push(...back)
         continue
       }
       moves.push(raw as TableEvent)

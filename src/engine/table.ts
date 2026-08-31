@@ -406,6 +406,46 @@ function settleCoInvestor(
 }
 
 /**
+ * Доля с прибыли владельцу находки при продаже ОБЪЕКТА — зеркало того, что
+ * уже работает у бумаг. Считается только с ПРИБЫЛИ: выручка на руки минус
+ * свои вложенные. Продал в минус — не должен ничего.
+ *
+ * 🔴 Раньше этой механики для объектов не было вовсе: условие принималось,
+ * показывалось на экране и писалось в журнал — а до актива не доезжало.
+ * Владелец находки не получал ничего и даже не узнавал об этом. За столом
+ * это выглядело как «деньги ушли в никуда» и списывалось на процент,
+ * который в тот момент переставили, — процент был ни при чём.
+ */
+function settleProfitShare(
+  t: Table,
+  seller: Seat,
+  asset: {
+    name: string
+    downPayment: number
+    paidIn?: number
+    profitShareTo?: string
+    profitSharePct?: number
+  },
+  net: number,
+) {
+  if (!asset.profitShareTo || !asset.profitSharePct) return
+  const вложено = asset.paidIn ?? asset.downPayment
+  const profit = Math.round(net - вложено)
+  if (profit <= 0) return
+  const cut = Math.round((profit * asset.profitSharePct) / 100)
+  const owner = t.seats.find((x) => x.id === asset.profitShareTo)
+  if (!owner || cut <= 0) return
+  seatLedgerEvent(t, seller.id, { type: 'ADJUST_CASH', amount: -cut })
+  seatLedgerEvent(t, owner.id, { type: 'ADJUST_CASH', amount: cut })
+  const текст =
+    `${seller.name} продал «${asset.name}», заработал ${money(profit)} — ` +
+    `вам ${money(cut)} (${asset.profitSharePct}% с прибыли за вход)`
+  log(t, owner.id, текст)
+  // Видит только тот, кому пришли деньги: чужая доля — не новость стола.
+  плашка(t, owner.id, `${owner.name}: ${текст}`, 'добро', [owner.id])
+}
+
+/**
  * Вторая запись ТОГО ЖЕ дела — у совладельца.
  *
  * 🔴 У купленного вдвоём объекта ДВЕ записи: у ведущего `<карта>-<номер>` с
@@ -2487,6 +2527,15 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
               category: card.category,
               investorShare,
               installmentMonthly: payCash ? 0 : monthly,
+              /*
+               * 🔴 Вошёл в чужую находку на долю с прибыли — условие обязано
+               * лечь НА АКТИВ, иначе договорённость остаётся честным словом.
+               * У бумаг это работало, у объектов терялось молча: владелец
+               * находки не получал ничего и даже не узнавал об этом.
+               */
+              profitShareTo: dealTermsAccess?.kind === 'profitShare' ? dealOwner.id : undefined,
+              profitSharePct:
+                dealTermsAccess?.kind === 'profitShare' ? dealTermsAccess.pct : undefined,
             })
           : ({
               type: 'BUY_BUSINESS' as const,
@@ -2500,6 +2549,15 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
               growthPerPayday: (card as { growthPerPayday?: number }).growthPerPayday,
               growthCap: (card as { growthCap?: number }).growthCap,
               installmentMonthly: payCash ? 0 : monthly,
+              /*
+               * 🔴 Вошёл в чужую находку на долю с прибыли — условие обязано
+               * лечь НА АКТИВ, иначе договорённость остаётся честным словом.
+               * У бумаг это работало, у объектов терялось молча: владелец
+               * находки не получал ничего и даже не узнавал об этом.
+               */
+              profitShareTo: dealTermsAccess?.kind === 'profitShare' ? dealOwner.id : undefined,
+              profitSharePct:
+                dealTermsAccess?.kind === 'profitShare' ? dealTermsAccess.pct : undefined,
             })
       // Актив уходит ПОКУПАТЕЛЮ: им может быть и вошедший по разрешению.
       seatLedgerEvent(t, dealBuyer.id, assetEvent)
@@ -2761,6 +2819,11 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       } else {
         seatLedgerEvent(t, event.seatId, { type: 'SELL_BUSINESS', assetId: event.assetId, salePrice: price, rebate })
       }
+      /*
+       * Долю отщипываем ПОСЛЕ зачисления выручки — как у бумаг: иначе платёж
+       * уходит раньше денег и наличные ныряют в минус на ровном месте.
+       */
+      settleProfitShare(t, holder, asset, price - (debtOnSale - rebate))
       log(t, event.seatId, `${holder.name} продал «${asset.name}» за ${money(price)} (${card.multiplierPct}%)`)
       плашка(
         t,
@@ -3696,6 +3759,11 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
               salePrice: price,
               debtTransfers: true,
             })
+          /*
+           * И при продаже СОСЕДУ тоже: иначе от доли уходят одним движением —
+           * продал не рынку, а другому игроку, и владелец находки ни при чём.
+           */
+          settleProfitShare(t, from, asset, price - debt)
           const common = {
             id: `${o.assetId}-${nextId(t)}`,
             name: asset.name,
@@ -3870,7 +3938,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       if (!ln || ln.lenderId !== seat.id) return prev
       t.loans = t.loans.filter((x) => x.id !== ln.id)
       const borrower = t.seats.find((x) => x.id === ln.borrowerId)
-      log(t, seat.id, `${seat.name} простил долг ${borrower?.name ?? ''} — ${money(ln.amount - ln.repaid)}`)
+      log(t, seat.id, `${seat.name} простил долг ${borrower?.name ?? ''} — ${money(loanOwed(ln) - ln.repaid)}`)
       return t
     }
 

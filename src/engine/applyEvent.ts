@@ -269,6 +269,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         // Сколько своих денег ушло — для панели: downPayment у долевой покупки нулевой.
         paidIn: e.paidIn ?? e.downPayment,
         value: e.value,
+        profitShareTo: e.profitShareTo,
+        profitSharePct: e.profitSharePct,
       })
       return l
 
@@ -366,6 +368,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         // Сколько своих денег ушло — для панели: downPayment у долевой покупки нулевой.
         paidIn: e.paidIn ?? e.downPayment,
         value: e.value,
+        profitShareTo: e.profitShareTo,
+        profitSharePct: e.profitSharePct,
       })
       return l
 

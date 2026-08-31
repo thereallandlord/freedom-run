@@ -157,9 +157,16 @@ export function loanOwed(l: PlayerLoan): number {
 }
 
 export function loanOutstanding(loans: PlayerLoan[], seatId: string): number {
+  /*
+   * 🔴 ДОЛГ — ЭТО ТЕЛО ПЛЮС НАДБАВКА, а не одно тело. Движок при погашении
+   * берёт `loanOwed`, а этот счётчик считал только `amount` — и экран
+   * рапортовал «закрыто», когда оставалась вся надбавка. Живая жалоба:
+   * «полностью погасил, денег ноль, кредита нет» — и тут же «осталось
+   * вернуть ещё миллион сто».
+   */
   return loans
     .filter((l) => l.borrowerId === seatId)
-    .reduce((s, l) => s + Math.max(0, l.amount - l.repaid), 0)
+    .reduce((s, l) => s + Math.max(0, loanOwed(l) - l.repaid), 0)
 }
 
 /**

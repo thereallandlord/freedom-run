@@ -25,7 +25,7 @@ import {
   MANAGER_PCT,
 } from '../engine/ledger'
 import { fastBoard, cardText, fastSpaceText, smallDeals, bigDeals } from '../engine/data'
-import { loanOutstanding, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
+import { loanOutstanding, loanOwed, fairCardPrice, PRICE_CEIL, PRICE_FLOOR } from '../engine/trades'
 import { money, signed, tone } from './PlayerPanel'
 import { надбавкаИностранца } from '../engine/ledger'
 import { Pips } from './Pips'
@@ -2078,7 +2078,7 @@ function CardBody({
                 disabled={l.cash < owed + price}
                 onClick={() => {
                   for (const ln of debtsOf(table.loans, seat.id)) {
-                    dispatch({ type: 'REPAY_PLAYER_LOAN', loanId: ln.id, amount: ln.amount - ln.repaid })
+                    dispatch({ type: 'REPAY_PLAYER_LOAN', loanId: ln.id, amount: loanOwed(ln) - ln.repaid })
                   }
                   dispatch({ type: 'BUY_DREAM' })
                 }}

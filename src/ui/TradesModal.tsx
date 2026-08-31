@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import type { Seat, Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
-import { PRICE_CEIL, PRICE_FLOOR, fairAssetPrice } from '../engine/trades'
+import { PRICE_CEIL, PRICE_FLOOR, fairAssetPrice, loanOwed } from '../engine/trades'
 import { RULES } from '../engine/ledger'
 import { Dropdown, type Option } from './Dropdown'
 import { money, signed } from './PlayerPanel'
@@ -120,7 +120,7 @@ export function TradesModal({
           </p>
           {debts.map((ln) => {
             const to = seatOf(table, ln.lenderId)
-            const left = ln.amount - ln.repaid
+            const left = loanOwed(ln) - ln.repaid
             const max = Math.min(left, seat.ledger.cash)
             const value = Math.min(repay[ln.id] ?? max, max)
             return (
@@ -161,7 +161,7 @@ export function TradesModal({
         <TradeBlock title="Мне должны">
           {credits.map((ln) => {
             const who = seatOf(table, ln.borrowerId)
-            const left = ln.amount - ln.repaid
+            const left = loanOwed(ln) - ln.repaid
             const armed = forgiveArmed === ln.id
             return (
               <div key={ln.id} className="mt-1.5 flex items-center justify-between gap-2 text-[13px]">

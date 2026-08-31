@@ -306,7 +306,8 @@ export function useGame(net?: {
    * Отменённое складываем в стопку, чтобы можно было ВЕРНУТЬ: промах по
    * кнопке «Отменить» иначе стоил бы хода без всякого способа его вернуть.
    */
-  const [undone, setUndone] = useState<TableEvent[]>([])
+  // Стопка отмен: в каждой ячейке ЦЕЛЫЙ ход, а не одно событие.
+  const [undone, setUndone] = useState<TableEvent[][]>([])
   /** Сколько ходов отменено в СЕТЕВОЙ партии (там стопка живёт в журнале). */
   const [undoneNet, setUndoneNet] = useState(0)
 
@@ -318,10 +319,15 @@ export function useGame(net?: {
   const undoLocal = useCallback(() => {
     if (!setup) return
     setEvents((evs) => {
-      if (!evs.length) return evs
-      const last = evs[evs.length - 1]
-      const next = evs.slice(0, -1)
-      setUndone((u) => [...u, last])
+      /*
+       * Ход = бросок и всё, что после него. Снимать одно событие бессмысленно:
+       * это почти всегда конец хода, который автопилот вернёт через секунду.
+       */
+      let i = evs.length - 1
+      while (i >= 0 && evs[i].type !== 'ROLL') i--
+      if (i < 0) return evs
+      const next = evs.slice(0, i)
+      setUndone((u) => [...u, evs.slice(i)])
       setTable(replayTable(setup, next))
       return next
     })
@@ -342,9 +348,9 @@ export function useGame(net?: {
     if (!setup) return
     setUndone((u) => {
       if (!u.length) return u
-      const ev = u[u.length - 1]
+      const пачка = u[u.length - 1]
       setEvents((evs) => {
-        const next = [...evs, ev]
+        const next = [...evs, ...пачка]
         setTable(replayTable(setup, next))
         return next
       })
