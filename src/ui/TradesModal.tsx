@@ -54,6 +54,14 @@ export function TradesModal({
     [...others].sort((a, b) => b.ledger.cash - a.ledger.cash)[0]?.id ?? '',
   )
   const [loanAmount, setLoanAmount] = useState(step)
+  /*
+   * 🔴 Сумма займа, который ДАЮ. Раньше её не было вовсе — кнопки предлагали
+   * `min(наличные, 200 000)`, то есть дать 10 миллионов было физически нечем,
+   * а на экране висело загадочное «10 700». Теперь сумму выбирает человек,
+   * ровно как в блоке «Попросить в долг».
+   */
+  const [giveTo, setGiveTo] = useState(others[0]?.id ?? '')
+  const [giveAmount, setGiveAmount] = useState(step)
   const [repay, setRepay] = useState<Record<string, number>>({})
   const [forgiveArmed, setForgiveArmed] = useState<string | null>(null)
 
@@ -71,6 +79,10 @@ export function TradesModal({
   const lender = seatOf(table, lenderId)
   const loanMax = Math.max(step, Math.floor((lender?.ledger.cash ?? step) / step) * step)
   const loanValue = Math.min(loanAmount, loanMax)
+  const giveMax = Math.max(step, Math.floor(seat.ledger.cash / step) * step)
+  const giveValue = Math.min(giveAmount, giveMax)
+  const giveSeat = others.find((s2) => s2.id === giveTo) ?? others[0]
+  const giveOptions: Option<string>[] = others.map((s2) => ({ value: s2.id, label: s2.name }))
 
   const assetOptions: Option<string>[] = myAssets.map((a) => ({
     value: a.id,
@@ -366,52 +378,59 @@ export function TradesModal({
           <p className="mb-2 text-[12px] leading-snug text-[var(--muted)]">
             По-хорошему — сколько дали, столько и вернут. Можно и с надбавкой: вернут больше.
           </p>
-          {others.map((o) => (
-            <div key={o.id} className="mt-1 flex items-center gap-2">
-              <span className="flex-1 text-[13px]">
-                <span style={{ color: o.color }}>●</span> {o.name}
-              </span>
-              {/*
-                🔴 «Без надбавки» стоит ПЕРВЫМ и живёт в движке давно
-                (OFFER_LOAN) — а кнопки на него не было вовсе: предложить
-                беспроцентный заём было нельзя, только под процент. Мёртвая
-                механика в игре, которая как раз про заём без надбавки.
-              */}
-              <button
-                disabled={Math.min(seat.ledger.cash, 200_000) < 10_000}
-                onClick={() =>
-                  dispatch({
-                    type: 'OFFER_LOAN',
-                    toId: o.id,
-                    amount: Math.min(seat.ledger.cash, 200_000),
-                  })
-                }
-                className="rounded-lg border border-emerald-500/50 px-2 py-1 text-[11px] transition hover:bg-emerald-500/10 disabled:opacity-40"
-              >
-                {money(Math.min(seat.ledger.cash, 200_000))} без надбавки
-              </button>
-              {[10, 25].map((pct) => {
-                const amt = Math.min(seat.ledger.cash, 200_000)
-                return (
+          {giveSeat && (
+            <>
+              <Dropdown value={giveSeat.id} options={giveOptions} onChange={setGiveTo} />
+              <div className="mt-3">
+                <MoneySlider
+                  label="Сумма"
+                  value={giveValue}
+                  min={step}
+                  max={giveMax}
+                  step={step}
+                  onChange={setGiveAmount}
+                  note={`у вас ${money(seat.ledger.cash)}`}
+                />
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {/*
+                  🔴 «Без надбавки» стоит ПЕРВЫМ и живёт в движке давно
+                  (OFFER_LOAN) — а кнопки на него не было вовсе: предложить
+                  беспроцентный заём было нельзя, только под процент. Мёртвая
+                  механика в игре, которая как раз про заём без надбавки.
+                */}
+                <button
+                  disabled={giveValue > seat.ledger.cash}
+                  onClick={() =>
+                    dispatch({ type: 'OFFER_LOAN', toId: giveSeat.id, amount: giveValue })
+                  }
+                  className="rounded-lg border border-emerald-500/50 px-2 py-1 text-[11px] transition hover:bg-emerald-500/10 disabled:opacity-40"
+                >
+                  без надбавки
+                </button>
+                {[10, 25].map((pct) => (
                   <button
                     key={pct}
-                    disabled={amt < 10_000}
+                    disabled={giveValue > seat.ledger.cash}
                     onClick={() =>
                       dispatch({
                         type: 'OFFER_LOAN_WITH_INTEREST',
-                        toId: o.id,
-                        amount: amt,
+                        toId: giveSeat.id,
+                        amount: giveValue,
                         interestPct: pct,
                       })
                     }
                     className="rounded-lg border border-amber-500/50 px-2 py-1 text-[11px] transition hover:bg-amber-500/10 disabled:opacity-40"
                   >
-                    {money(amt)} под {pct}%
+                    под {pct}%
                   </button>
-                )
-              })}
-            </div>
-          ))}
+                ))}
+              </div>
+              <p className="mt-2 text-center text-[12px] text-[var(--muted)]">
+                Предложить {money(giveValue)} — {giveSeat.name}
+              </p>
+            </>
+          )}
         </TradeBlock>
       )}
 

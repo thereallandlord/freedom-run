@@ -292,7 +292,18 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
        * Открываем ОДИН РАЗ и бесплатно: торговаться бот пока не умеет, а
        * брать с людей плату, не умея объяснить за что, — хуже, чем не брать.
        */
-      if (!pending.access && t.seats.some((x) => !x.isBot && !x.outOfGame && x.id !== seat.id)) {
+      /*
+       * 🔴 КРОМЕ ПАРТНЁРСКОГО БИЗНЕСА — его вход не открывается никому.
+       * Без этой оговорки бот попадает в мёртвую петлю: он предлагает открыть
+       * вход, движок такое событие для партнёрского бизнеса отклоняет,
+       * состояние не меняется — и бот предлагает то же самое снова.
+       */
+      const партнёрский = !!(card as { greenleaf?: boolean }).greenleaf
+      if (
+        !партнёрский &&
+        !pending.access &&
+        t.seats.some((x) => !x.isBot && !x.outOfGame && x.id !== seat.id)
+      ) {
         return { type: 'SET_ACCESS', access: { mode: 'open', allow: [], terms: { kind: 'free' } } }
       }
       if (card.kind === 'stock') {

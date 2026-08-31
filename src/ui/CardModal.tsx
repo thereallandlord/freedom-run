@@ -124,6 +124,7 @@ function Shell({
   note,
   art,
   photo,
+  своё,
 }: {
   badge: string
   title: string
@@ -132,6 +133,11 @@ function Shell({
   accent?: string
   art?: string
   photo?: string | null
+  /**
+   * Свои действия — их не гасит НИЧТО. В движке это класс «своё»: к чужой
+   * находке они отношения не имеют, поэтому и живут вне гасящего слоя.
+   */
+  своё?: React.ReactNode
   /** Имя того, чей сейчас ход, если смотрим со стороны. Гасит кнопки. */
   watching?: string | null
   /**
@@ -192,6 +198,15 @@ function Shell({
         >
           {children}
         </div>
+        {/*
+          🔴 СВОИ БУМАГИ ПРОДАЮТСЯ ВСЕГДА, чья бы карта ни лежала на столе.
+          Раньше этот блок стоял среди `children` и умирал вместе с чужой
+          находкой: он был ВИДЕН, но не нажимался — человек решал, что
+          сломалось, и просил «почини, я же просил». Одним `pointer-events-auto`
+          не обойтись: `opacity` родителя потомок не отменяет, блок остался бы
+          бледным пятном. Поэтому — отдельный слот вне обёртки.
+        */}
+        {своё && <div className="mt-3 space-y-3">{своё}</div>}
         {(watching || note) && (
           <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-center text-[12px] text-[var(--muted)]">
             {watching || note}
@@ -605,8 +620,46 @@ function CardBody({
          */
         const max = seat.track === 'rat' && !seat.outOfGame ? Math.floor(l.cash / s.price) : 0
         const holders = stockHolders(table, s.symbol)
+        /*
+         * 🔴 Свои бумаги — ОТДЕЛЬНЫМ слотом, вне гасящей обёртки. Пока этот
+         * блок жил среди обычного содержимого, он гас вместе с чужой карточкой:
+         * человек видел свои строки продажи и не мог по ним нажать.
+         */
+        const моиБумаги = holders.some((h) => h.id === seat.id) ? (
+          <div className="panel-2 space-y-1 rounded-lg p-2">
+            <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+              {/* Продажа идёт по РЫНОЧНОЙ цене — той же, что списывает движок. */}
+              Продать по цене сегодня — {money(s.price)}
+            </div>
+            {/* Только СВОИ лоты: чужими распоряжается их владелец. */}
+            {holders
+              .filter((h) => h.id === seat.id)
+              .map((h) =>
+                h.ledger.stocks
+                  .filter((lot) => lot.symbol === s.symbol)
+                  .map((lot) => (
+                    <SellLotRow
+                      key={lot.id}
+                      holder={h}
+                      lot={lot}
+                      price={s.price}
+                      onSell={(n) =>
+                        dispatch({
+                          type: 'SELL_STOCK_LOT',
+                          seatId: h.id,
+                          lotId: lot.id,
+                          shares: n,
+                          pricePerShare: s.price,
+                        })
+                      }
+                    />
+                  )),
+              )}
+          </div>
+        ) : null
         return (
           <S
+            своё={моиБумаги}
             badge={badge}
             title={txt.title}
             flavor={txt.flavor}
@@ -775,41 +828,6 @@ function CardBody({
             )}
 
 
-            {holders.some((h) => h.id === seat.id) && (
-              <div className="panel-2 space-y-1 rounded-lg p-2">
-                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                  {/* 🔴 Продажа идёт по РЫНОЧНОЙ цене — той же, что списывает движок.
-                      Раньше карточка продавала по цене с карты: при обвале держатель
-                      сбрасывал бумагу по докризисной цене, то есть делал деньги из воздуха. */}
-                  Продать по цене сегодня — {money(s.price)}
-                </div>
-                {/* 🔴 Только СВОИ лоты: раньше здесь были строки всех держателей,
-                    и любой участник мог продать чужие бумаги за него. */}
-                {holders
-                  .filter((h) => h.id === seat.id)
-                  .map((h) =>
-                  h.ledger.stocks
-                    .filter((lot) => lot.symbol === s.symbol)
-                    .map((lot) => (
-                      <SellLotRow
-                        key={lot.id}
-                        holder={h}
-                        lot={lot}
-                        price={s.price}
-                        onSell={(n) =>
-                          dispatch({
-                            type: 'SELL_STOCK_LOT',
-                            seatId: h.id,
-                            lotId: lot.id,
-                            shares: n,
-                            pricePerShare: s.price,
-                          })
-                        }
-                      />
-                    )),
-                )}
-              </div>
-            )}
           </S>
         )
       }
@@ -1099,8 +1117,12 @@ function CardBody({
             заём у соседей и кредит; доля — только с живым человеком.
           */}
 
-          {/* Кто нашёл — тот и решает, кого пускать и на каких условиях. */}
-          {canSetAccess && (
+          {/*
+            Кто нашёл — тот и решает, кого пускать и на каких условиях.
+            🔴 КРОМЕ ПАРТНЁРСКОГО БИЗНЕСА: пакет берёт только тот, кому карта
+            выпала. Партнёр заключает СВОЙ договор, а не входит в чужой.
+          */}
+          {canSetAccess && !isGl && (
               <div className="hairline mt-3 pt-3">
                 <AccessPicker table={table} seat={seat} access={p.access} dispatch={dispatch} />
               </div>
@@ -1683,8 +1705,41 @@ function CardBody({
         const holders = stockHolders(table, card.symbol)
         // Цена с поправкой на мировые события — иначе баннер обещает одно, а платят другое.
         const px = marketStockPrice(card.price, table.market.stock[card.symbol])
+        /*
+         * 🔴 Свои бумаги — вне гасящей обёртки. Иначе стоит нажать «Дальше»,
+         * как тебя убирают из списка ожидающих, карточка считает тебя зрителем
+         * и гасит ТВОИ ЖЕ строки продажи — при подписи «передумать ещё можно».
+         */
+        const моиБумаги = holders.some((h) => h.id === seat.id) ? (
+          <div className="space-y-1">
+            {/* Только свои бумаги: чужими распоряжается их владелец. */}
+            {holders
+              .filter((h) => h.id === seat.id)
+              .map((h) =>
+                h.ledger.stocks
+                  .filter((lot) => lot.symbol === card.symbol)
+                  .map((lot) => (
+                    <SellLotRow
+                      key={lot.id}
+                      holder={h}
+                      lot={lot}
+                      price={px}
+                      onSell={(n) =>
+                        dispatch({
+                          type: 'SELL_STOCK_LOT',
+                          seatId: h.id,
+                          lotId: lot.id,
+                          shares: n,
+                          pricePerShare: px,
+                        })
+                      }
+                    />
+                  )),
+              )}
+          </div>
+        ) : null
         return (
-          <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
+          <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8" своё={моиБумаги}>
             <div className="panel-2 rounded-lg p-3">
               <Stat label={card.symbol} value={money(px)} strong />
               {px !== card.price && (
@@ -1693,35 +1748,8 @@ function CardBody({
                 </p>
               )}
             </div>
-            {!holders.some((h) => h.id === seat.id) ? (
+            {!holders.some((h) => h.id === seat.id) && (
               <p className="text-center text-sm text-[var(--muted)]">Ни у кого нет этих бумаг.</p>
-            ) : (
-              <div className="space-y-1">
-                {/* Только свои бумаги: чужими распоряжается их владелец. */}
-                {holders
-                  .filter((h) => h.id === seat.id)
-                  .map((h) =>
-                  h.ledger.stocks
-                    .filter((lot) => lot.symbol === card.symbol)
-                    .map((lot) => (
-                      <SellLotRow
-                        key={lot.id}
-                        holder={h}
-                        lot={lot}
-                        price={px}
-                        onSell={(n) =>
-                          dispatch({
-                            type: 'SELL_STOCK_LOT',
-                            seatId: h.id,
-                            lotId: lot.id,
-                            shares: n,
-                            pricePerShare: px,
-                          })
-                        }
-                      />
-                    )),
-                )}
-              </div>
             )}
             {/*
               🔴 Здесь был «конец хода». Но рыночную карту видят все, а

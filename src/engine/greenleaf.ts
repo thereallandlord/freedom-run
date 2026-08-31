@@ -80,7 +80,7 @@ export interface GlRank {
   level: number
   name: string
   volume: number
-  /** Разово в момент закрытия. У Менеджера цифра от Камиля — 70 000 ₽. */
+  /** Разово в момент закрытия. Цифры от Камиля: 70 000 / 140 000 / 210 000 ₽. */
   bonus: number
   pension: number
 }
@@ -98,8 +98,8 @@ export const GL_RANKS: GlRank[] = [
    * добирает Директора.
    */
   { level: 1, name: 'Менеджер', volume: 45_000, bonus: 70_000, pension: 20_000 },
-  { level: 2, name: 'Старший менеджер', volume: 180_000, bonus: 105_000, pension: 30_000 },
-  { level: 3, name: 'Директор', volume: 600_000, bonus: 140_000, pension: 40_000 },
+  { level: 2, name: 'Старший менеджер', volume: 180_000, bonus: 140_000, pension: 30_000 },
+  { level: 3, name: 'Директор', volume: 600_000, bonus: 210_000, pension: 40_000 },
 ]
 
 export const glRankFor = (volume: number): GlRank =>

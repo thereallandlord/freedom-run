@@ -235,11 +235,34 @@ export function OfferInbox({
       )}
 
       {/* ─── Ответ ─── */}
+      {/*
+        🔴 Автору кнопок ответа не показываем: движок ответ автора отклоняет,
+        и человек жмёт в пустоту. Именно так «не работало с обеих сторон».
+      */}
       {!offer.bids.length &&
+        !яАвтор &&
         humans
           .filter((r) => !declined.includes(r.id))
+          /*
+           * 🔴 Кнопки ответа — ТОЛЬКО у того, кого спрашивают. Раньше в
+           * сетевой партии каждому рисовали строку на КАЖДОГО участника, и
+           * можно было нажать «принять» за соседа: движок такое согласие
+           * отклоняет, но кнопка врала, будто можно. Живая жалоба: «опять я
+           * за Адама могу принять».
+           * Пустой meId — игра за одним экраном: там один человек честно жмёт
+           * за всех по очереди, поэтому строки оставляем все.
+           */
+          .filter((r) => !meId || r.id === meId)
           .map((r) => {
-          const need = offerNeed(table, offer, offer.amount)
+          /*
+           * 🔴 По займу платит КРЕДИТОР. Когда отвечает заёмщик — деньги ему
+           * предлагают, — с него не спишется ничего. Раньше здесь всем ставили
+           * сумму займа, и кнопка гасла ровно у того, кому нечем: чтобы взять
+           * в долг, надо было уже иметь эти деньги на руках. Наличные кредитора
+           * движок проверяет сам.
+           */
+          const мнеДают = offer.kind === 'loan' && r.id !== offer.fromId
+          const need = мнеДают ? 0 : offerNeed(table, offer, offer.amount)
           // Партнёрство собирается только целиком: если у инициатора не осталось
           // на его часть входа, движок сделку не соберёт — говорим это заранее.
           const initiatorPart =
@@ -280,7 +303,11 @@ export function OfferInbox({
                   onClick={() => accept(r)}
                   className="btn-primary w-full sm:col-span-2"
                 >
-                  {offer.kind === 'loan' ? `Дать ${money(offer.amount)}` : `Принять — ${money(need)}`}
+                  {offer.kind === 'loan'
+                    ? мнеДают
+                      ? `Взять ${money(offer.amount)}`
+                      : `Дать ${money(offer.amount)}`
+                    : `Принять — ${money(need)}`}
                 </button>
                 {canBid && bidCeil >= bidFloor && (
                   <button
@@ -334,6 +361,13 @@ export function OfferInbox({
           )
         })}
 
+      {/* Автору — статус вместо мёртвых кнопок: видно, чьего ответа ждём. */}
+      {яАвтор && !мнеРешать && !offer.bids.length && (
+        <p className="text-center text-[12px] text-[var(--muted)]">
+          Предложение отправлено — ответ за {responders.map((x) => x.name).join(', ')}.
+        </p>
+      )}
+
       {humans.every((r) => declined.includes(r.id)) && !offer.bids.length && (
         <p className="text-center text-[12px] text-[var(--muted)]">
           Никто не взял. Такое бывает — цена решает.
@@ -344,7 +378,7 @@ export function OfferInbox({
         <button onClick={onHide} className="btn-ghost flex-1">
           Позже
         </button>
-        {humans.length > 1 && !offer.bids.length && (
+        {(яАвтор || humans.length > 1) && !offer.bids.length && (
           <button onClick={cancel} className="btn-ghost flex-1">
             Снять предложение
           </button>
