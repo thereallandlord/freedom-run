@@ -1,5 +1,6 @@
 import type {
   BotDifficulty,
+  BusinessAsset,
   DealCard,
   DeckName,
   DoodadCard,
@@ -402,6 +403,34 @@ function settleCoInvestor(
       businesses: pl.businesses.filter((a) => !mirror(a)),
     },
   }
+}
+
+/**
+ * Вторая запись ТОГО ЖЕ дела — у совладельца.
+ *
+ * 🔴 У купленного вдвоём объекта ДВЕ записи: у ведущего `<карта>-<номер>` с
+ * долей инвестора, у соинвестора зеркало `<карта>-part-<номер>`. Ищем по
+ * имени карты — тем же способом, что и `settleCoInvestor` выше, где общее
+ * дело уже считается общим. Работает в обе стороны: ходить может любой.
+ */
+function зеркалаСовладельцев(
+  t: Table,
+  owner: Seat,
+  b: { id: string; partnerId?: string },
+): { seat: Seat; asset: BusinessAsset }[] {
+  if (!b.partnerId) return []
+  const partner = t.seats.find((x) => x.id === b.partnerId)
+  if (!partner) return []
+  const этоЗеркало = b.id.includes('-part-')
+  const cardKey = b.id.replace(этоЗеркало ? /-part-\d+$/ : /-\d+$/, '')
+  const подходит = (a: { id: string; partnerId?: string }) =>
+    a.partnerId === owner.id &&
+    (этоЗеркало
+      ? a.id.startsWith(`${cardKey}-`) && !a.id.includes('-part-')
+      : a.id.startsWith(`${cardKey}-part-`))
+  return partner.ledger.businesses
+    .filter((a) => !a.gl && подходит(a))
+    .map((a) => ({ seat: partner, asset: a }))
 }
 
 /** Списать или начислить по мировому событию, не уводя наличные в минус. */
@@ -1828,21 +1857,37 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
     )
     if (!цели.length) return []
     const заметки: string[] = []
-    for (const b of цели) {
+    /*
+     * 🔴 ДЕЛО ОДНО НА ДВОИХ. У купленного в долях две записи: у ведущего
+     * полный поток, у соинвестора зеркало «… · доля N%». Событие происходит с
+     * САМИМ заведением, значит бьёт по обеим — процент один и тот же, каждый
+     * теряет ровно по своей доле. Иначе выходило как в живой игре: у одного
+     * мастер ушёл, а у второго кресло полное, «на меня это не повлияло».
+     */
+    const применить = (владелец: Seat, b: BusinessAsset, свои: boolean) => {
+      // Свои заметки уходят в окно карточки, чужие — в журнал совладельца.
+      const пиши = (з: string) => (свои ? заметки.push(з) : log(t, владелец.id, з))
       if (card.flowPct) {
         const было = b.cashFlow
         // Навсегда — значит прямо в поток актива, до сотни.
         b.cashFlow = Math.max(0, Math.round((было * (1 + card.flowPct / 100)) / 100) * 100)
-        заметки.push(
+        пиши(
           `${b.name}: доход ${card.flowPct > 0 ? 'вырос' : 'упал'} с ${money(было)} до ${money(b.cashFlow)} в месяц`,
         )
       }
       if (card.dipPct) {
         b.dipMul = 1 - card.dipPct / 100
         b.dipLeft = card.dipPaydays ?? 3
-        заметки.push(
-          `${b.name}: доход просел на ${card.dipPct}% на ${b.dipLeft} ${склонениеЗарплат(b.dipLeft)}`,
-        )
+        пиши(`${b.name}: доход просел на ${card.dipPct}% на ${b.dipLeft} ${склонениеЗарплат(b.dipLeft)}`)
+      }
+    }
+    const тонСобытия = (card.flowPct ?? 0) > 0 || (card.cash ?? 0) > 0 ? 'добро' : 'худо'
+    for (const b of цели) {
+      применить(seat, b, true)
+      for (const с of зеркалаСовладельцев(t, seat, b)) {
+        применить(с.seat, с.asset, false)
+        // Совладелец обязан УВИДЕТЬ, что его дела это тоже коснулось.
+        плашка(t, с.seat.id, `${с.seat.name}: ${card.title} — по общему делу`, тонСобытия)
       }
     }
     if (card.cash) {
@@ -1855,16 +1900,26 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
       плашка(t, seat.id, `${seat.name}: ${card.title}`, 'добро')
       return []
     }
-    const тон = (card.flowPct ?? 0) > 0 || (card.cash ?? 0) > 0 ? 'добро' : 'худо'
-    плашка(t, seat.id, `${seat.name}: ${card.title}`, тон)
+    плашка(t, seat.id, `${seat.name}: ${card.title}`, тонСобытия)
     return []
   }
   if (card.kind === 'glEvent' && !card.triangle) {
     /*
      * События партнёрского бизнеса. Применяются владельцу — и объясняются
      * человеческой фразой: игрок должен понимать, почему доход изменился.
+     *
+     * 🔴 ТОЛЬКО ТОМУ, КТО ВЫТЯНУЛ КАРТОЧКУ — как и у обычного бизнеса выше.
+     * Раньше цикл шёл по ВСЕМ креслам: «наставник выгорел» у одного игрока
+     * срезал доход всем владельцам партнёрского бизнеса за столом, включая
+     * тех, кто к его структуре отношения не имеет. Живая жалоба: «карточка
+     * вышла у Ислама — при чём тут мой доход?». Сама карточка при этом
+     * отбирается по стадии ходящего, а применялась и тем, чью стадию никто
+     * не смотрел.
+     *
+     * Форма цикла оставлена нарочно: если решим, что карточка задевает ещё
+     * кого-то, меняется содержимое списка, а не весь блок.
      */
-    for (const s of t.seats) {
+    for (const s of [currentSeat(t)]) {
       if (s.outOfGame || s.track === 'fast') continue
       const biz = s.ledger.businesses.find((b) => b.gl)
       if (!biz?.gl) continue

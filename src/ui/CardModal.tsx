@@ -509,6 +509,8 @@ function watchNote(
 export function CardModal(props: {
   table: Table
   seat: Seat
+  /** Моё место в онлайн-партии. Пусто — играем за одним экраном. */
+  meId?: string
   dispatch: (e: TableEvent) => void
   /** Чужой ход: карту показываем, но решать нечего — кнопок нет. */
   spectate?: boolean
@@ -539,6 +541,7 @@ export function CardModal(props: {
 function CardBody({
   table,
   seat,
+  meId,
   dispatch,
   spectate = false,
   onOpenTrades,
@@ -546,6 +549,7 @@ function CardBody({
 }: {
   table: Table
   seat: Seat
+  meId?: string
   dispatch: (e: TableEvent) => void
   spectate?: boolean
   onOpenTrades?: () => void
@@ -1354,6 +1358,19 @@ function CardBody({
 
       if (card.kind === 'sellOffer') {
         const matches = marketMatches(table, card.category)
+        /*
+         * 🔴 ЗА ОДНИМ ЭКРАНОМ ПРОДАЁТ КАЖДЫЙ ВЛАДЕЛЕЦ, А НЕ ТОЛЬКО ХОДЯЩИЙ.
+         * В хот-сите `seat` — всегда тот, чей ход, поэтому чужие объекты не
+         * рисовались вовсе: выпадала карта на машиноместа, сосед говорил «у
+         * меня же есть» — и продать было негде, ходящий вторым «Дальше»
+         * снимал карту со стола. Онлайн не меняется: там подпись не даёт
+         * нажать за другого. Ботов не показываем — за них решает бот.
+         */
+        const хотсит = !meId
+        const мои = хотсит
+          ? matches.filter((m) => !m.seat.isBot)
+          : matches.filter((m) => m.seat.id === seat.id)
+        const чужие = matches.filter((m) => m.seat.id !== seat.id)
         return (
           <S
             badge="Рынок"
@@ -1366,22 +1383,28 @@ function CardBody({
             <div className="panel-2 rounded-lg p-3">
               <Stat label="Покупатель даёт" value={`${card.multiplierPct}% от стоимости`} strong />
             </div>
-            {/* Только СВОИ объекты: чужими распоряжается их владелец. */}
-            {matches.filter((m) => m.seat.id === seat.id).length === 0 ? (
+            {/*
+              🔴 «Ни у кого нет» — утверждение ПРО ВЕСЬ СТОЛ, а считалось по
+              одному смотрящему. Карточка вообще не выпадает, пока владельца
+              нет, — значит эта фраза была ложной каждый раз, когда её видели.
+              Живая жалоба: «а у меня написано, что подходящих нет, при том что
+              у него есть двушка». Теперь честно: не твоё — сказано, чьё.
+            */}
+            {мои.length === 0 ? (
               <p className="text-center text-sm text-[var(--muted)]">
-                Ни у кого нет подходящих активов.
+                {чужие.length
+                  ? `Это не про ваши активы. Подходящие есть у: ${чужие.map((m) => m.seat.name).join(', ')}.`
+                  : 'Ни у кого нет подходящих активов.'}
               </p>
             ) : (
               <div className="space-y-1">
-                {matches
-                  .filter((m) => m.seat.id === seat.id)
-                  .map((m) =>
+                {мои.map((m) =>
                   m.assets.map((a) => {
                     const price = sellOfferPrice(a.cost, card.multiplierPct, table.market.price[card.category] ?? 1)
                     return (
                       <SellAssetRow
                         key={a.id}
-                        name={a.name}
+                        name={m.seat.id === seat.id ? a.name : `${m.seat.name}: ${a.name}`}
                         color={m.seat.color}
                         net={Math.round((price - a.debt) * (1 - (a.investorShare ?? 0)))}
                         onSell={() =>

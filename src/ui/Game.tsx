@@ -1013,6 +1013,7 @@ export function Game({
         <CardModal
           table={table}
           seat={seat}
+          meId={meId}
           dispatch={dispatch}
           /*
            * 🔴 Карточка принадлежит ТОМУ, КОМУ ВЫПАЛА. Остальные её видят, но

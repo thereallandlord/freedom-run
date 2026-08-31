@@ -7,6 +7,7 @@ import {
   isOutOfRatRace,
   freedomIncome,
   monthlyCashFlow,
+  ownShareAt,
   passiveIncome,
   childExpenses,
   totalExpenses,
@@ -119,16 +120,25 @@ function AssetRow({
   kind,
   dispatch,
   cash,
+  flowMul,
 }: {
   a: RealEstateAsset | BusinessAsset
   kind: 'realEstate' | 'business'
   dispatch?: (e: TableEvent) => void
   cash?: number
+  flowMul?: Record<string, number>
 }) {
   const [open, setOpen] = useState(false)
   const shot = artById(a.id)
   const debt = kind === 'realEstate' ? (a as RealEstateAsset).mortgage : (a as BusinessAsset).liability
-  const mine = Math.round(a.cashFlow * (1 - (a.investorShare ?? 0)))
+  /*
+   * 🔴 «Приносит в месяц» — СЕГОДНЯ, а не по бумагам. Строка считала голый
+   * поток минус доля партнёра и не знала ни про просадку после события, ни
+   * про управляющего, ни про рынок. Живая жалоба: «мастер ушёл, −25%» — а
+   * число в панели прежнее, и человек решает, что событие не сработало.
+   * Тот же расчёт, что и в деньгах на зарплате.
+   */
+  const mine = ownShareAt(a, flowMul ?? {})
   return (
     <div>
       <button
@@ -509,10 +519,10 @@ export function PlayerPanel({
               <Row key={d.symbol} label={`Дивиденды ${d.symbol}`} value={money(d.amount)} dim />
             ))}
             {l.realEstate.map((a) => (
-              <AssetRow key={a.id} a={a} kind="realEstate" dispatch={dispatch} cash={l.cash} />
+              <AssetRow key={a.id} a={a} kind="realEstate" dispatch={dispatch} cash={l.cash} flowMul={flowMul} />
             ))}
             {l.businesses.map((a) => (
-              <AssetRow key={a.id} a={a} kind="business" dispatch={dispatch} cash={l.cash} />
+              <AssetRow key={a.id} a={a} kind="business" dispatch={dispatch} cash={l.cash} flowMul={flowMul} />
             ))}
             {/*
               Партнёрский бизнес объясняет себя человеческим языком: игрок должен
