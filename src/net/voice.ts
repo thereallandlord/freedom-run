@@ -124,6 +124,14 @@ export function создатьГолос(комната: string, я: { id: strin
     говорит: boolean
     уровень: number
     анализ?: { stop: () => void }
+    /*
+     * 🔴 ЛЁД, ПРИШЕДШИЙ РАНЬШЕ ОФФЕРА, НАДО ПРИДЕРЖАТЬ, А НЕ ВЫБРОСИТЬ.
+     * addIceCandidate до setRemoteDescription бросает исключение; оно у нас
+     * гасилось пустым catch — и адреса молча пропадали. На быстрой сети
+     * кандидаты обгоняют оффер регулярно, и связь оставалась без путей.
+     */
+    лёдОчередь: RTCIceCandidateInit[]
+    звонил: boolean
   }
   const связи = new Map<string, Связь>()
   let канал: RealtimeChannel | null = null
@@ -161,7 +169,7 @@ export function создатьГолос(комната: string, я: { id: strin
     audio.setAttribute('playsinline', '')
     audio.style.display = 'none'
     document.body.appendChild(audio)
-    const связь: Связь = { pc, audio, имя, состояние: 'соединяемся', говорит: false, уровень: 0 }
+    const связь: Связь = { pc, audio, имя, состояние: 'соединяемся', говорит: false, уровень: 0, лёдОчередь: [], звонил: false }
 
     if (мой) for (const t of мой.getTracks()) pc.addTrack(t, мой)
 
@@ -191,18 +199,48 @@ export function создатьГолос(комната: string, я: { id: strin
 
   async function позвонить(id: string, имя: string) {
     const связь = связи.get(id) ?? создатьСвязь(id, имя)
+    // Звоним один раз: повторный оффер по живой связи ломает уже собранную.
+    if (связь.звонил) return
+    связь.звонил = true
     const offer = await связь.pc.createOffer({ offerToReceiveAudio: true })
     await связь.pc.setLocalDescription(offer)
     шлём({ t: 'оффер', from: я.id, to: id, имя: я.имя, sdp: offer.sdp ?? '' })
   }
 
-  async function приняли(s: Сигнал) {
+  /*
+   * 🔴 СИГНАЛЫ РАЗБИРАЕМ СТРОГО ПО ОЧЕРЕДИ. Обработчик асинхронный, а сообщения
+   * приходят пачкой: два разбора одной связи наперегонки роняют согласование
+   * (оффер и ответ применяются вперемешку). Цепочка обещаний стоит дёшево и
+   * снимает целый класс плавающих отказов.
+   */
+  let очередьСигналов: Promise<void> = Promise.resolve()
+  function приняли(s: Сигнал): Promise<void> {
+    очередьСигналов = очередьСигналов.then(() => обработать(s)).catch((e) => {
+      console.error('[голос] сигнал не разобран:', e)
+    })
+    return очередьСигналов
+  }
+
+  async function обработать(s: Сигнал) {
     if (s.t === 'привет') {
       if (s.from === я.id) return
-      if (!связи.has(s.from)) создатьСвязь(s.from, s.имя)
+      /*
+       * 🔴 ЗДОРОВАЕМСЯ В ОТВЕТ ТОЛЬКО С НЕЗНАКОМЫМ.
+       *
+       * Раньше отвечали на КАЖДОЕ «привет» — и двое здоровались бесконечно:
+       * моё «привет» будило его ответ, его ответ будил мой. Канал один на всех,
+       * поэтому на десятерых это лавина сообщений, которая забивает связь и
+       * заодно гонит бесконечную перепись оффера. Голос при этом включается,
+       * микрофон горит, а до собеседника не доходит ничего.
+       *
+       * Со знакомым просто освежаем имя и молчим — обмен затухает после
+       * трёх сообщений: его «привет» → мой ответ → его молчание.
+       */
+      const новичок = !связи.has(s.from)
+      if (новичок) создатьСвязь(s.from, s.имя)
       else связи.get(s.from)!.имя = s.имя
       изменилось()
-      // Здороваемся в ответ, чтобы нас увидел и тот, кто пришёл раньше.
+      if (!новичок) return
       шлём({ t: 'привет', from: я.id, имя: я.имя })
       if (язвоню(s.from)) await позвонить(s.from, s.имя)
       return
@@ -216,6 +254,7 @@ export function создатьГолос(комната: string, я: { id: strin
       const связь = связи.get(s.from) ?? создатьСвязь(s.from, s.имя)
       связь.имя = s.имя
       await связь.pc.setRemoteDescription({ type: 'offer', sdp: s.sdp })
+      await разобратьЛёд(связь)
       const ans = await связь.pc.createAnswer()
       await связь.pc.setLocalDescription(ans)
       шлём({ t: 'ответ', from: я.id, to: s.from, sdp: ans.sdp ?? '' })
@@ -224,14 +263,31 @@ export function создатьГолос(комната: string, я: { id: strin
     }
     if (s.t === 'ответ') {
       const связь = связи.get(s.from)
-      if (связь && !связь.pc.currentRemoteDescription)
-        await связь.pc.setRemoteDescription({ type: 'answer', sdp: s.sdp })
+      /*
+       * Ждём ответ, только пока сами держим оффер. Прежняя проверка «ещё нет
+       * удалённой стороны» после первого же соединения запирала связь навсегда.
+       */
+      if (!связь || связь.pc.signalingState !== 'have-local-offer') return
+      await связь.pc.setRemoteDescription({ type: 'answer', sdp: s.sdp })
+      await разобратьЛёд(связь)
       return
     }
     if (s.t === 'лёд') {
       const связь = связи.get(s.from)
-      if (связь) await связь.pc.addIceCandidate(s.ice).catch(() => {})
+      if (!связь) return
+      if (!связь.pc.remoteDescription) {
+        связь.лёдОчередь.push(s.ice)
+        return
+      }
+      await связь.pc.addIceCandidate(s.ice).catch((e) => console.warn('[голос] лёд не принят:', e))
     }
+  }
+
+  /** Отдаём придержанные адреса, как только появилась удалённая сторона. */
+  async function разобратьЛёд(связь: Связь) {
+    const очередь = связь.лёдОчередь.splice(0)
+    for (const ice of очередь)
+      await связь.pc.addIceCandidate(ice).catch((e) => console.warn('[голос] лёд не принят:', e))
   }
 
   function закрыть(id: string) {
