@@ -9,6 +9,8 @@ import { useState } from 'react'
 import type { Seat, Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { PRICE_CEIL, PRICE_FLOOR, fairCardPrice, shareOf } from '../engine/trades'
+import { dealTerms } from '../engine/ledger'
+import { dealTerms } from '../engine/ledger'
 import { Dropdown, type Option } from './Dropdown'
 import { money, signed } from './PlayerPanel'
 import { Corridor, MoneySlider, TradeBlock, TradeLine, payback } from './TradeBits'
@@ -29,6 +31,16 @@ export function DealTradeActions({
     (s) => s.id !== seat.id && !s.outOfGame && !s.won && s.track === 'rat',
   )
   const fair = fairCardPrice(card.downPayment)
+  /*
+   * 🔴 ПОТОК БЕРЁМ ИЗ ДВИЖКА, А НЕ С КАРТОЧКИ. Вход вдвоём движок всегда
+   * оформляет В РАССРОЧКУ (ветка coInvest зовёт dealAssetEvent с payCash:false),
+   * и платёж по ней уже вычтен из дохода. Окно же считало от `card.cashFlow` —
+   * от потока НАЛОМ — и обещало кратно больше, чем приходит: «Дарк-стор в
+   * Москве» 114 250 ₽/мес против 37 450 ₽/мес на деле. Расходились 63 карты
+   * из 64. Это тот же урок, что уже закреплён в dealTerms: одна функция на
+   * движок и на интерфейс.
+   */
+  const потокВдвоём = dealTerms(card, card.kind === 'realEstate' ? 'realEstate' : 'business').instFlow
   const floor = Math.round(fair * PRICE_FLOOR)
   const ceil = Math.round(fair * PRICE_CEIL)
 
@@ -62,6 +74,13 @@ export function DealTradeActions({
 
   // Партнёр вносит свою часть входа; остальное — с инициатора.
   const partnerShare = shareOf(partnerMoney, card.downPayment)
+  /*
+   * 🔴 ПОТОК СЧИТАЕМ ТОЙ ЖЕ ФУНКЦИЕЙ, ЧТО И ДВИЖОК. Вдвоём объект берётся
+   * ТОЛЬКО в рассрочку, значит делить надо доход ЗА ВЫЧЕТОМ платежа, а окно
+   * показывало доход как при покупке налом: на 63 картах из 64 обещание
+   * расходилось с тем, что приходит на счёт.
+   */
+  const общийПоток = dealTerms(card, card.kind === 'realEstate' ? 'realEstate' : 'business').instFlow
   const myPart = Math.max(0, card.downPayment - partnerMoney)
   const notEnoughForMyPart = seat.ledger.cash < myPart
 
@@ -193,12 +212,12 @@ export function DealTradeActions({
             <TradeLine label="Ваш взнос" value={money(myPart)} />
             <TradeLine
               label="Вам в месяц"
-              value={`${signed(Math.round(card.cashFlow * (1 - partnerShare)))}/мес`}
+              value={`${signed(Math.round(общийПоток * (1 - partnerShare)))}/мес`}
               valueClass="text-emerald-400"
             />
             <TradeLine
               label="Партнёру в месяц"
-              value={`${signed(Math.round(card.cashFlow * partnerShare))}/мес`}
+              value={`${signed(Math.round(общийПоток * partnerShare))}/мес`}
             />
           </div>
 

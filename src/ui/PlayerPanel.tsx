@@ -139,6 +139,16 @@ function AssetRow({
    * Тот же расчёт, что и в деньгах на зарплате.
    */
   const mine = ownShareAt(a, flowMul ?? {})
+  /*
+   * 🔴 ВТОРАЯ ПОЛОВИНА ОБЩЕЙ СДЕЛКИ — запись о ЧУЖОМ объекте: долг, рассрочка
+   * и управляющий живут на стороне ведущего. Кнопки действий здесь показывать
+   * нельзя: цену они посчитать не могут, а движок такие события отвергает.
+   */
+  const вторая = !!a.partnerId && !a.investorShare
+  // Своя часть общего долга — платит каждый по своей доле.
+  const мойДолг = Math.round(debt * (1 - (a.investorShare ?? 0)))
+  // Управляющего нанимают В ДЕЛО целиком, поэтому цена — от полного потока.
+  const наймCost = Math.max(30_000, Math.round((a.cashFlow * MANAGER_PCT * 3) / 100 / 1000) * 1000)
   return (
     <div>
       <button
@@ -221,7 +231,7 @@ function AssetRow({
             бизнес приносит деньги, но не приближает свободу: перестал ходить —
             перестало платить. Нанял — отдал долю, зато остаток пошёл в зачёт.
           */}
-          {kind === 'business' && !(a as BusinessAsset).gl && dispatch && (
+          {kind === 'business' && !(a as BusinessAsset).gl && dispatch && !вторая && (
             (a as BusinessAsset).managerPct ? (
               <div className="mt-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[11px] leading-snug">
                 Управляющий забирает {(a as BusinessAsset).managerPct}% — остальное работает без вас
@@ -229,12 +239,11 @@ function AssetRow({
               </div>
             ) : (
               <button
-                disabled={(cash ?? 0) < Math.max(30_000, Math.round((mine * MANAGER_PCT * 3) / 100 / 1000) * 1000)}
+                disabled={(cash ?? 0) < наймCost}
                 onClick={() => dispatch({ type: 'HIRE_MANAGER', assetId: a.id, pct: MANAGER_PCT })}
                 className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold leading-snug transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
               >
-                Нанять управляющего за{' '}
-                {money(Math.max(30_000, Math.round((mine * MANAGER_PCT * 3) / 100 / 1000) * 1000))}
+                Нанять управляющего за {money(наймCost)}
                 <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
                   заберёт {MANAGER_PCT}%, зато {money(Math.round((mine * (100 - MANAGER_PCT)) / 100))}/мес
                   пойдут в зачёт свободы
@@ -250,7 +259,7 @@ function AssetRow({
             поэтому доход растёт сразу — ровно то сомнение, которое Камиль
             высказал вслух («а толк-то будет?»).
           */}
-          {debt > 0 && dispatch && (cash ?? 0) > 0 && (cash ?? 0) < debt && (
+          {debt > 0 && dispatch && !вторая && (cash ?? 0) > 0 && (cash ?? 0) < мойДолг && (
             <button
               onClick={() =>
                 dispatch({
@@ -274,15 +283,26 @@ function AssetRow({
                 : ''}
             </button>
           )}
-          {debt > 0 && dispatch && (
+          {debt > 0 && dispatch && !вторая && (
             <button
-              disabled={(cash ?? 0) < debt}
+              disabled={(cash ?? 0) < мойДолг}
               onClick={() => dispatch({ type: 'PAYOFF_ASSET', assetId: a.id, discountPct: 0 })}
               className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
             >
-              Закрыть рассрочку за {money(debt)}
+              {/*
+                🔴 У ОБЩЕГО ОБЪЕКТА ДОЛГ ОБЩИЙ: каждый вносит свою долю, и
+                платёж возвращается в доход обоим. Кнопка обещала полный размер
+                прибавки, а приходила половина.
+              */}
+              {a.investorShare
+                ? `Закрыть рассрочку — ваша часть ${money(мойДолг)} из ${money(debt)}`
+                : `Закрыть рассрочку за ${money(debt)}`}
               {(a as RealEstateAsset).installmentMonthly
-                ? ` — доход вырастет на ${money((a as RealEstateAsset).installmentMonthly ?? 0)}/мес`
+                ? ` — доход вырастет на ${money(
+                    Math.round(
+                      ((a as RealEstateAsset).installmentMonthly ?? 0) * (1 - (a.investorShare ?? 0)),
+                    ),
+                  )}/мес`
                 : ''}
               {/*
                 🔴 Говорим ПРЯМО, куда пойдут освободившиеся деньги. У жилья
@@ -363,7 +383,7 @@ function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, numb
   const done = onFast ? fastTrackProgress(l) : freedomIncome(l, flowMul)
   const need = onFast ? fastTrackTarget() : totalExpenses(l)
   const pct = Math.max(0, Math.min(100, (done / Math.max(1, need)) * 100))
-  const won = onFast ? done >= need : isOutOfRatRace(l)
+  const won = onFast ? done >= need : isOutOfRatRace(l, flowMul)
 
   return (
     <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3.5 backdrop-blur-md">

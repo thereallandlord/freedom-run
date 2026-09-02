@@ -8,6 +8,7 @@ import {
   marketMatches,
   pendingUndecided,
   sellOfferPrice,
+  sellOfferQuote,
   stockHolders,
   canRecover,
   hasConsumerDebt,
@@ -556,7 +557,16 @@ function CardBody({
   canSetAccess?: boolean
 }) {
   /** Соседи по столу — у кого вообще можно занять. */
-  const others = table.seats.filter((x) => x.id !== seat.id && !x.outOfGame)
+  /*
+   * 🔴 ТОЛЬКО ИГРОКИ КРУГА. Долю в сделке Круга предлагали и тому, кто уже на
+   * Полосе свободы: он платил деньги, получал зеркальную запись в портфель —
+   * и не получал с неё НИ РУБЛЯ, потому что доход Полосы считает fastTrackIncome,
+   * а realEstate/businesses в него не входят вовсе. Тот же фильтр стоит в
+   * DealTradeActions и в списке покупателей TradesModal.
+   */
+  const others = table.seats.filter(
+    (x) => x.id !== seat.id && !x.outOfGame && !x.won && x.track === 'rat',
+  )
   /** Кто ещё не решил по этой карте — их и ждём, прежде чем закрыть окно. */
   const waitingFor = pendingUndecided(table).filter((x: Seat) => x.id !== seat.id)
 
@@ -1244,10 +1254,11 @@ function CardBody({
               Доход, который работает без него, перерос расходы
             </div>
             <div className="tabnum mt-1 text-[24px] font-black leading-none text-amber-600 dark:text-amber-400">
-              {money(p.buyout)}
+              {money(p.buyout + (p.бумаги ?? 0))}
             </div>
             <div className="mt-1 text-[12px] text-[var(--muted)]">
               выкуп на Полосу свободы — {RULES.fastTrackMultiplier} месячных доходов
+              {!!p.бумаги && p.бумаги > 0 && <> и бумаги по рынку на {money(p.бумаги)}</>}
             </div>
             {/*
               🔴 Долги Круга гасятся ИЗ ВЫКУПА, и об этом надо сказать прямо.
@@ -1259,7 +1270,7 @@ function CardBody({
               <div className="mt-2 border-t border-amber-500/30 pt-2 text-[12px] leading-snug text-[var(--muted)]">
                 Из них закрыты долги Круга на {money(p.долги)} — на счёт придёт{' '}
                 <span className="tabnum font-semibold text-[var(--ink)]">
-                  {money(Math.max(0, p.buyout - p.долги))}
+                  {money(Math.max(0, p.buyout - p.долги) + (p.бумаги ?? 0))}
                 </span>
               </div>
             )}
@@ -1400,13 +1411,24 @@ function CardBody({
               <div className="space-y-1">
                 {мои.map((m) =>
                   m.assets.map((a) => {
-                    const price = sellOfferPrice(a.cost, card.multiplierPct, table.market.price[card.category] ?? 1)
+                    /*
+                     * 🔴 ОДНА ФОРМУЛА С ДВИЖКОМ. Окно считало от цены С НАЦЕНКОЙ
+                     * за рассрочку и не знало про списание незаработанной
+                     * наценки — обещало одно, приходило другое (на «двушке»
+                     * расхождение 330 000 ₽ за одну продажу).
+                     */
+                    const { mine } = sellOfferQuote(
+                      a,
+                      a.debt,
+                      card.multiplierPct,
+                      table.market.price[card.category] ?? 1,
+                    )
                     return (
                       <SellAssetRow
                         key={a.id}
                         name={m.seat.id === seat.id ? a.name : `${m.seat.name}: ${a.name}`}
                         color={m.seat.color}
-                        net={Math.round((price - a.debt) * (1 - (a.investorShare ?? 0)))}
+                        net={mine}
                         onSell={() =>
                           dispatch({ type: 'ACCEPT_OFFER', seatId: m.seat.id, assetId: a.id })
                         }

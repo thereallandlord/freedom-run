@@ -18,6 +18,8 @@ import {
   type PlayerLoan,
 } from '../engine/trades'
 import { localizedCardTitle } from '../engine/data'
+import { dealTerms } from '../engine/ledger'
+import { dealTerms } from '../engine/ledger'
 
 /** Карточка, право на которую можно перепродать. Акции сюда не входят. */
 export type TradeCard = Exclude<DealCard, { kind: 'stock' }>
@@ -39,8 +41,15 @@ export function seatOf(t: Table, id?: string): Seat | undefined {
 }
 
 export function assetsOf(seat: Seat): TradeAsset[] {
+  /*
+   * 🔴 Вторая половина общей сделки в список на продажу НЕ идёт: это запись о
+   * чужом объекте, у неё нет ни долга, ни рыночной цены. Движок такую продажу
+   * отвергает — значит и предлагать её нельзя, иначе «жму и ничего».
+   */
+  const своё = <A extends { partnerId?: string; investorShare?: number }>(a: A) =>
+    !a.partnerId || !!a.investorShare
   return [
-    ...seat.ledger.realEstate.map((a) => ({
+    ...seat.ledger.realEstate.filter(своё).map((a) => ({
       id: a.id,
       name: a.name,
       kind: 'realEstate' as const,
@@ -49,7 +58,7 @@ export function assetsOf(seat: Seat): TradeAsset[] {
       cashFlow: a.cashFlow,
       investorShare: a.investorShare,
     })),
-    ...seat.ledger.businesses.map((a) => ({
+    ...seat.ledger.businesses.filter(своё).map((a) => ({
       id: a.id,
       name: a.name,
       kind: 'business' as const,
@@ -128,7 +137,17 @@ export function offerGain(t: Table, o: Offer): number {
     case 'resellCard':
       return card?.cashFlow ?? 0
     case 'coInvest':
-      return Math.round((card?.cashFlow ?? 0) * (o.share ?? 0))
+      /*
+       * 🔴 Вдвоём объект берётся ТОЛЬКО в рассрочку — делим поток за вычетом
+       * платежа (instFlow), а не доход как при покупке налом. Иначе подпись
+       * «это уже чистыми» под этим числом была прямой неправдой.
+       */
+      return card
+        ? Math.round(
+            dealTerms(card, card.kind === 'realEstate' ? 'realEstate' : 'business').instFlow *
+              (o.share ?? 0),
+          )
+        : 0
     case 'sellAsset':
       return findAsset(t, o.fromId, o.assetId)?.cashFlow ?? 0
     case 'loan':
@@ -185,8 +204,13 @@ export function offerResponders(t: Table, o: Offer): Seat[] {
     const другой = seatOf(t, автор === o.fromId ? o.toId : o.fromId)
     return другой && !другой.outOfGame ? [другой] : []
   }
+  /*
+   * 🔴 Дорожку проверяем и у ИМЕННОГО адресата, а не только в рассылке «всем».
+   * Активы Круга на Полосе свободы не приносят ничего, движок такие сделки
+   * теперь отклоняет — кнопка «Принять» у такого адресата врала бы.
+   */
   const named = seatOf(t, o.toId)
-  if (named) return named.outOfGame ? [] : [named]
+  if (named) return named.outOfGame || named.won || named.track !== 'rat' ? [] : [named]
   return t.seats.filter((s) => s.id !== автор && !s.outOfGame && !s.won && s.track === 'rat')
 }
 

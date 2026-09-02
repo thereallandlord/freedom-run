@@ -41,6 +41,17 @@ function clone(l: Ledger): Ledger {
 }
 
 /**
+ * Та же глубокая копия — для стола.
+ *
+ * 🔴 Стол копировал места ПОВЕРХНОСТНО, и объекты активов оставались общими с
+ * предыдущим снимком. Из-за этого «сухой» прогон хода бота — проверка «примет
+ * ли движок этот ход» в useGame.ts:557 и :582 — применял событие бизнеса
+ * ПО-НАСТОЯЩЕМУ, а потом тот же ход уходил в сеть и применялся ВТОРОЙ раз:
+ * −40 000 списывались как −80 000, +10% к доходу выходили +21%.
+ */
+export const cloneLedger = clone
+
+/**
  * Чистый редьюсер кошелька. Никаких побочных эффектов, никакого рандома —
  * всё, что нужно, приходит внутри события.
  */
@@ -55,11 +66,21 @@ function clone(l: Ledger): Ledger {
  * Возвращает true, если долг закрылся: тогда платёж исчезает и поток актива
  * вырастает ровно на его величину — тот же хвост, что у досрочного закрытия.
  */
-function amortizeAsset(a: { cashFlow: number; installmentMonthly?: number }, debtRef: { get(): number; set(v: number): void }): boolean {
+function amortizeAsset(
+  a: { cashFlow: number; installmentMonthly?: number; downPayment: number; paidIn?: number; investorShare?: number },
+  debtRef: { get(): number; set(v: number): void },
+): boolean {
   const monthly = a.installmentMonthly ?? 0
   const debt = debtRef.get()
   if (monthly <= 0 || debt <= 0) return false
   const pay = Math.min(monthly, debt)
+  /*
+   * 🔴 ПОГАШЕННОЕ ТЕЛО ДОЛГА — ЭТО СВОИ ДЕНЬГИ. Без этой строки каждый
+   * заплаченный по рассрочке рубль движок засчитывал в «прибыль» при продаже,
+   * и с несуществующего заработка отщипывалась доля владельцу находки:
+   * продажа ровно в ноль превращалась в «заработал».
+   */
+  a.paidIn = (a.paidIn ?? a.downPayment) + Math.round(pay * (1 - (a.investorShare ?? 0)))
   debtRef.set(debt - pay)
   if (debtRef.get() <= 0) {
     debtRef.set(0)
@@ -218,7 +239,10 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'SELL_STOCK': {
       const lot = l.stocks.find((x) => x.id === e.lotId)
       if (!lot) return prev
-      const n = Math.min(e.shares, lot.shares)
+      // 🔴 Второй рубеж: журнал переигрывается и на клиенте, и в тестах —
+      // отрицательное или дробное количество не должно доезжать сюда никогда.
+      const n = Math.min(Math.floor(e.shares), lot.shares)
+      if (!Number.isFinite(n) || n <= 0) return prev
       l.cash += n * e.pricePerShare
       lot.shares -= n
       l.stocks = l.stocks.filter((x) => x.shares > 0)
@@ -289,13 +313,22 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       return l
     }
 
-    case 'TAKE_RIBA_L':
+    case 'TAKE_RIBA_L': {
+      /*
+       * 🔴 ЛЬГОТА ДАЁТСЯ ОДИН РАЗ — на ПЕРВЫЙ кредит. Раньше любое добирание,
+       * хоть на 10 000, обнуляло уже начисленный платёж и заново открывало
+       * беспроцентный период: платить можно было не начинать никогда, а тело
+       * долга при этом росло. Вся денежная часть урока обходилась копейками.
+       */
+      const былоТело = l.liabilities.ribaLoan
       l.cash += e.amount
       l.liabilities.ribaLoan += e.amount
+      if (былоТело <= 0) l.ribaGraceLeft = e.grace
       // Пока идёт беспроцентный период, платежа нет — в этом весь соблазн.
-      l.ribaGraceLeft = e.grace
-      l.expenses.ribaPayment = e.grace > 0 ? 0 : e.payment
+      // Кончился — платёж считается от ВСЕГО тела, включая добор.
+      l.expenses.ribaPayment = (l.ribaGraceLeft ?? 0) > 0 ? 0 : e.payment
       return l
+    }
 
     case 'REPAY_RIBA_L': {
       const pay = Math.min(e.amount, l.cash, l.liabilities.ribaLoan)
@@ -509,6 +542,10 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       const pay = Math.round(часть * (1 - e.discountPct / 100))
       if (l.cash < pay) return prev
       l.cash -= pay
+      // Досрочное погашение — тоже свои деньги: в ОСНОВУ прибыли, а не в неё.
+      a.paidIn = (a.paidIn ?? a.downPayment) + pay
+      // Досрочное погашение — тоже свои деньги: в ОСНОВУ прибыли, а не в неё.
+      a.paidIn = (a.paidIn ?? a.downPayment) + pay
       /*
        * 🔴 ПЛАТЁЖ УМЕНЬШАЕТСЯ ВМЕСТЕ С ДОЛГОМ, и ровно на ту же долю. Иначе
        * частичное погашение не давало бы НИЧЕГО до самого конца — деньги
@@ -529,6 +566,19 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.cash += e.amount
       return l
 
+    /**
+     * Поток одной записи изменился снаружи. Нужно ровно для общих объектов:
+     * когда рассрочка закрыта, освободившийся платёж возвращается в поток
+     * ОБЕИХ половин, а вторая половина живёт в чужом кошельке.
+     */
+    case 'SET_ASSET_FLOW': {
+      const a =
+        l.realEstate.find((x) => x.id === e.assetId) ?? l.businesses.find((x) => x.id === e.assetId)
+      if (!a) return prev
+      a.cashFlow = e.cashFlow
+      return l
+    }
+
     /** Продажа банку за полцены при банкротстве. */
     case 'FORCED_SALE': {
       if (e.assetKind === 'stock') {
@@ -539,12 +589,15 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       } else if (e.assetKind === 'realEstate') {
         const a = l.realEstate.find((x) => x.id === e.assetId)
         if (!a) return prev
-        l.cash += Math.floor(a.downPayment / 2)
+        // 🔴 Половина ВЛОЖЕННОГО, а не «первого взноса»: у долевой покупки
+        // взнос в активе нулевой (его списали двумя переводами), и банк
+        // возвращал ноль обоим участникам общего объекта.
+        l.cash += Math.floor((a.paidIn ?? a.downPayment) / 2)
         l.realEstate = l.realEstate.filter((x) => x.id !== e.assetId)
       } else {
         const a = l.businesses.find((x) => x.id === e.assetId)
         if (!a) return prev
-        l.cash += Math.floor(a.downPayment / 2)
+        l.cash += Math.floor((a.paidIn ?? a.downPayment) / 2)
         l.businesses = l.businesses.filter((x) => x.id !== e.assetId)
       }
       return l
@@ -578,7 +631,17 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'ENTER_FAST_TRACK': {
       if (l.phase !== 'ratRace') return prev
       const buyout = RULES.fastTrackMultiplier * freedomIncome(l)
-      l.cash += buyout
+      /*
+       * 🔴 БУМАГИ ПРОДАЮТСЯ, А НЕ СГОРАЮТ. Выкуп считается от свободного
+       * дохода, а бумаги дают его только дивидендами — у 14 из 15 бумаг колоды
+       * дивиденд ноль. Значит пакет в выкуп не входил вообще, а строкой ниже
+       * уничтожался: замер на 200 партиях — 634 человека из 728 вышли из Круга
+       * с непустым пакетом, сгорело 1 155 227 920 ₽, худший случай 58 925 800 ₽
+       * у одного человека. Это и есть «на лям ты нас швырнул».
+       * Цену считает стол (там рынок) и передаёт сюда.
+       */
+      const пакет = Math.max(0, Math.round(e.stocksValue ?? 0))
+      l.cash += buyout + пакет
       /*
        * 🔴 Выкуп — это ПРОДАЖА всего нажитого в Круге. Активы обязаны уйти:
        * раньше они оставались в портфеле, и человек продавал их второй раз
@@ -606,7 +669,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         l.liabilities.retailDebt +
         l.liabilities.bankLoan +
         l.liabilities.ribaLoan
-      l.cash = Math.max(0, l.cash - долги)
+      /*
+       * 🔴 БЕЗ Math.max(0, …). Пол на нуле ПЕЧАТАЛ ДЕНЬГИ: если ведомость была
+       * больше, чем выкуп плюс наличные, разница просто списывалась в никуда,
+       * а долги обнулялись. Стол на этом терял связь с арифметикой. Уйти в
+       * минус здесь нельзя — стол не пускает в выход того, кому не хватает
+       * (проверка стоит в table.ts, ветка ENTER_FAST_TRACK).
+       */
+      l.cash -= долги
       l.liabilities = {
         homeMortgage: 0,
         schoolLoans: 0,
@@ -638,6 +708,13 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
     case 'CASHFLOW_DAY':
       if (!l.fastTrack) return prev
       l.cash += l.fastTrack.beginningIncome + fastTrackProgress(l)
+      /*
+       * 🔴 День потока — ТОЖЕ месяц. Счётчик вёл только PAYCHECK, поэтому на
+       * Полосе он замирал на числе, с которым человек вышел из Круга: кратно
+       * 12 — закят брали КАЖДЫЙ день потока до конца партии, не кратно — не
+       * брали ни разу. Лотерея по чётности, а не правило.
+       */
+      l.paydays += 1
       return l
 
     case 'BUY_FT_BUSINESS':

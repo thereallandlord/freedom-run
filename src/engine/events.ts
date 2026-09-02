@@ -81,10 +81,12 @@ export type LedgerEvent =
       amount?: number
     }
   | { type: 'ADJUST_CASH'; amount: number }
+  | { type: 'SET_ASSET_FLOW'; assetId: string; cashFlow: number }
   | { type: 'FORCED_SALE'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
   | { type: 'HALVE_CONSUMER_DEBT' }
   | { type: 'DECLARE_GAME_OVER' }
-  | { type: 'ENTER_FAST_TRACK' }
+  /** stocksValue — рыночная стоимость пакета бумаг: считает стол, кошелёк её не знает. */
+  | { type: 'ENTER_FAST_TRACK'; stocksValue?: number }
   | { type: 'CASHFLOW_DAY' }
   | { type: 'BUY_FT_BUSINESS'; id: string; name: string; downPayment: number; cashFlow: number }
   | { type: 'FT_STAKE_LOST'; amount: number }

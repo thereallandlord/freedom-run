@@ -260,9 +260,18 @@ export function freedomIncome(l: Ledger, m?: FlowMul): number {
   return stocks + realEstate + businesses
 }
 
-/** Условие выхода из Круга: строго больше, не «больше или равно». */
-export function isOutOfRatRace(l: Ledger): boolean {
-  return freedomIncome(l) > totalExpenses(l)
+/**
+ * Условие выхода из Круга: строго больше, не «больше или равно».
+ *
+ * 🔴 Рынок ОБЯЗАН учитываться. Полоска прогресса (Game.tsx) и панель игрока
+ * считают свободу как `freedomIncome(l, market)`, а ворота считали без него —
+ * и пока висело любое мировое событие с множителем потока (таких в колоде 16),
+ * человек видел «свобода достигнута, 115%», жал кнопку и стол не менялся.
+ * В обратную сторону было хуже: при кризисе −40% ворота выпускали по
+ * докризисному потоку и выкуп платили по нему же.
+ */
+export function isOutOfRatRace(l: Ledger, m?: FlowMul): boolean {
+  return freedomIncome(l, m) > totalExpenses(l)
 }
 
 /** Новый доход, собранный на Полосе свободы. */
@@ -475,12 +484,36 @@ export function zakatDue(l: Ledger): number {
   return Math.round((zakatBase(l) * RULES.zakat.pct) / 100 / 100) * 100
 }
 
+/**
+ * Сколько стоит ДОЛЯ ИГРОКА в объекте: цена минус непогашенный долг, всё по
+ * его доле.
+ *
+ * 🔴 Раньше капитал складывал полную цену объекта у ведущего и ещё раз долю
+ * той же вещи у соинвестора, а долг вычитал один раз: одна квартира попадала
+ * в капитал полтора раза. Запись соинвестора считаем по ВЛОЖЕННОМУ — это
+ * единственное честное число, которое на ней есть: долг объекта на ней не
+ * числится, а цена стоит с наценкой за рассрочку.
+ */
+function долевойКапитал(
+  x: {
+    cost: number
+    downPayment: number
+    paidIn?: number
+    investorShare?: number
+    partnerId?: string
+  },
+  debt: number,
+): number {
+  if (x.partnerId && !x.investorShare) return x.paidIn ?? x.downPayment
+  return Math.round((x.cost - debt) * (1 - (x.investorShare ?? 0)))
+}
+
 export function netWorth(l: Ledger): number {
   const assets =
     l.cash +
     l.stocks.reduce((s, x) => s + x.shares * x.costPerShare, 0) +
-    l.realEstate.reduce((s, x) => s + x.cost, 0) +
-    l.businesses.reduce((s, x) => s + x.cost, 0)
+    l.realEstate.reduce((s, x) => s + долевойКапитал(x, x.mortgage), 0) +
+    l.businesses.reduce((s, x) => s + долевойКапитал(x, x.liability), 0)
   const debts =
     l.liabilities.homeMortgage +
     l.liabilities.schoolLoans +
@@ -489,9 +522,7 @@ export function netWorth(l: Ledger): number {
     l.liabilities.retailDebt +
     // 🔴 Процентный кредит — такой же долг: без него капитал завышен.
     l.liabilities.ribaLoan +
-    l.liabilities.bankLoan +
-    l.realEstate.reduce((s, x) => s + x.mortgage, 0) +
-    l.businesses.reduce((s, x) => s + x.liability, 0)
+    l.liabilities.bankLoan
   return assets - debts
 }
 

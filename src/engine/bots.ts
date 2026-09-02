@@ -30,6 +30,7 @@ import {
   canRecover,
   marketMatches,
   sellOfferPrice,
+  можноВыйтиИзКруга,
 } from './table'
 import {
   RULES,
@@ -136,7 +137,7 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
   }
 
   // 2. Пора на Полосу свободы — уходим сразу.
-  if (t.phase === 'awaitingRoll' && seat.track === 'rat' && isOutOfRatRace(l)) {
+  if (t.phase === 'awaitingRoll' && можноВыйтиИзКруга(t, seat)) {
     return { type: 'ENTER_FAST_TRACK' }
   }
 
@@ -380,8 +381,10 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
         for (const m of marketMatches(t, card.category)) {
           if (m.seat.id !== seat.id) continue
           for (const a of m.assets) {
-            const price = sellOfferPrice(a.cost, card.multiplierPct, t.market.price[card.category] ?? 1)
-            if (price >= a.cost * mult) {
+            // База — та же, по которой платит стол: рыночная цена, не цена с наценкой.
+            const база = a.value ?? a.cost
+            const price = sellOfferPrice(база, card.multiplierPct, t.market.price[card.category] ?? 1)
+            if (price >= база * mult) {
               return { type: 'ACCEPT_OFFER', seatId: seat.id, assetId: a.id }
             }
           }

@@ -3,6 +3,7 @@ import type { Table, Seat } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow,
   pendingUndecided,
+  можноВыйтиИзКруга,
 } from '../engine/table'
 import {
   RULES,
@@ -474,7 +475,7 @@ export function Game({
   const diceOptions = diceCountFor(actor)
   const canRoll = table.phase === 'awaitingRoll' && myTurn && !seat.isBot && !rolling && !rolled
   const canEscape =
-    table.phase === 'awaitingRoll' && myTurn && seat.track === 'rat' && isOutOfRatRace(seat.ledger) && !seat.isBot
+    table.phase === 'awaitingRoll' && myTurn && можноВыйтиИзКруга(table, seat) && !seat.isBot
 
   /*
    * 🔴 Прокрутка запрещена ТОЛЬКО на большом экране.
@@ -853,7 +854,15 @@ export function Game({
                   >
                     Вырваться из крысиных бегов
                     <span className="mt-0.5 block text-[11px] font-normal opacity-80">
-                      выкуп {money(RULES.fastTrackMultiplier * freedomIncome(seat.ledger))}
+                      {/* 🔴 Кнопка обещает РОВНО то, что придёт: выкуп плюс бумаги по рынку. */}
+                      выкуп{' '}
+                      {money(
+                        RULES.fastTrackMultiplier * freedomIncome(seat.ledger) +
+                          seat.ledger.stocks.reduce(
+                            (s, lot) => s + lot.shares * stockPriceNow(table, lot.symbol),
+                            0,
+                          ),
+                      )}
                     </span>
                   </button>
                   <button
