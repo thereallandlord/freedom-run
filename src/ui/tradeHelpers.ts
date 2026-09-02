@@ -19,7 +19,6 @@ import {
 } from '../engine/trades'
 import { localizedCardTitle } from '../engine/data'
 import { dealTerms } from '../engine/ledger'
-import { dealTerms } from '../engine/ledger'
 
 /** Карточка, право на которую можно перепродать. Акции сюда не входят. */
 export type TradeCard = Exclude<DealCard, { kind: 'stock' }>

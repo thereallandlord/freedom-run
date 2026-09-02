@@ -22,7 +22,6 @@ import {
   fastTrackProgress,
   isOutOfRatRace,
   freedomIncome,
-  ownShareAt,
   monthlyCashFlow,
   ownShare,
   ownShareAt,
@@ -1044,8 +1043,6 @@ export function marketMatches(
     /** Рыночная цена без наценки за рассрочку — движок считает выкуп ОТ НЕЁ. */
     value?: number
     debt: number
-    /** Рыночная цена без наценки за рассрочку — движок считает выкуп ОТ НЕЁ. */
-    value?: number
     /** Доля соинвестора — без неё окно обещало владельцу всю выручку. */
     investorShare?: number
   }[]
@@ -1253,73 +1250,6 @@ export function markupRebate(a: { cost: number; value?: number }, debt: number):
   const markup = Math.max(0, a.cost - (a.value ?? a.cost))
   if (markup <= 0 || a.cost <= 0) return 0
   return Math.round(markup * (debt / a.cost))
-}
-
-/**
- * Выкуп при выходе из Круга — это ПРОДАЖА всего нажитого, а не подарок.
- *
- * 🔴 Раньше считалось `50 × freedomIncome`, и на этом терялись деньги в обе
- * стороны: остаток рассрочки, сидящий НЕ в ведомости, а в самом объекте
- * (`mortgage` / `liability`), не вычитался вовсе — долг просто испарялся
- * вместе с объектом; а пакет бумаг сгорал целиком, потому что в свободу он
- * входит только дивидендами, а у 14 из 15 бумаг колоды дивиденд нулевой.
- *
- * Теперь за каждый объект платят по-честному: столько, сколько он стоит как
- * готовое дело (50 месячных потоков) или сколько он стоит на рынке — что
- * больше, — минус его непогашенная рассрочка со списанием незаработанной
- * наценки, ровно как при обычной продаже (`markupRebate`). Бумаги — по
- * сегодняшней рыночной цене.
- *
- * 🔴 Эту же функцию обязан звать интерфейс (кнопка «Вырваться из крысиных
- * бегов» в Game.tsx): иначе экран снова начнёт обещать одно, а движок платить
- * другое.
- */
-export function выкупЗаВыход(t: Table, seat: Seat, m?: Record<string, number>): number {
-  const l = seat.ledger
-  const K = RULES.fastTrackMultiplier
-  const бумаги = l.stocks.reduce((n, lot) => n + lot.shares * stockPriceNow(t, lot.symbol), 0)
-  /*
-   * 🔴 Рыночную ногу тоже режем на долю партнёра. `ownShareAt` уже отдаёт
-   * ТОЛЬКО свой поток, а `value`/`cost` — это стоимость ВСЕГО объекта: без
-   * множителя ведущий получал бы за половину дома цену целого дома.
-   */
-  const заОбъект = (
-    a: { cost: number; value?: number; investorShare?: number },
-    долг: number,
-    поток: number,
-  ) => {
-    const моё = 1 - (a.investorShare ?? 0)
-    const рынок = Math.round((a.value ?? a.cost) * моё)
-    return Math.max(K * поток, рынок) - Math.max(0, долг - markupRebate(a, долг))
-  }
-  const объекты =
-    l.realEstate.reduce((n, a) => n + заОбъект(a, a.mortgage, ownShareAt(a, m)), 0) +
-    l.businesses.reduce(
-      (n, b) => n + заОбъект(b, b.liability, b.managerPct || b.gl ? ownShareAt(b, m) : 0),
-      0,
-    )
-  return Math.max(0, объекты + бумаги)
-}
-
-/** Сумма ведомости долгов — её выкуп обязан закрыть при выходе из Круга. */
-export function долгиВедомости(l: Ledger): number {
-  const d = l.liabilities
-  return (
-    d.homeMortgage + d.schoolLoans + d.carLoans + d.creditCards + d.retailDebt + d.bankLoan + d.ribaLoan
-  )
-}
-
-/**
- * Можно ли вырваться из Круга: доход, работающий без тебя, перерос расходы —
- * И выкупа с наличными хватает, чтобы закрыть долги.
- *
- * 🔴 Одна функция на движок, ботов и кнопку. Пока условие было размазано,
- * панель показывала «свобода достигнута», а кнопка молча не работала.
- */
-export function можноВыйтиИзКруга(t: Table, seat: Seat): boolean {
-  const l = seat.ledger
-  if (seat.track !== 'rat' || !isOutOfRatRace(l, t.market.flow)) return false
-  return выкупЗаВыход(t, seat, t.market.flow) + l.cash >= долгиВедомости(l)
 }
 
 /**
@@ -2884,9 +2814,6 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
               category: card.category,
               investorShare,
               installmentMonthly: payCash ? 0 : monthly,
-              // Своих денег ушло ровно столько — от этого и считается прибыль.
-              // При долевом входе `downPayment` полный, а с кармана снимают долю.
-              paidIn: owed,
               /*
                * 🔴 Вошёл в чужую находку на долю с прибыли — условие обязано
                * лечь НА АКТИВ, иначе договорённость остаётся честным словом.

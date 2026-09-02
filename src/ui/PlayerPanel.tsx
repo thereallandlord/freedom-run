@@ -31,6 +31,16 @@ import {
   glUpgradeOptions,
 } from '../engine/greenleaf'
 
+/** «1 месяц / 2 месяца / 5 месяцев» — иначе число выглядит машинным. */
+function склонение(n: number, один: string, два: string, много: string): string {
+  const д = Math.abs(n) % 100
+  if (д > 10 && д < 20) return много
+  const е = д % 10
+  if (е === 1) return один
+  if (е >= 2 && е <= 4) return два
+  return много
+}
+
 export function money(n: number) {
   if (RULES.currency === 'RUB') {
     const s = Math.abs(Math.round(n)).toLocaleString('ru-RU')
@@ -210,10 +220,37 @@ function AssetRow({
             </div>
           )}
           {(a as RealEstateAsset).installmentMonthly ? (
-            <div className="flex justify-between">
-              <span>Платёж по рассрочке</span>
-              <span className="tabnum">−{money((a as RealEstateAsset).installmentMonthly ?? 0)}</span>
-            </div>
+            <>
+              <div className="flex justify-between">
+                <span>Платёж по рассрочке</span>
+                <span className="tabnum">−{money((a as RealEstateAsset).installmentMonthly ?? 0)}</span>
+              </div>
+              {/*
+                🔴 СКОЛЬКО УЖЕ ВЫПЛАЧЕНО И СКОЛЬКО ОСТАЛОСЬ — просьба Камиля.
+                Рассрочка гасится сама на каждой зарплате, но человек этого не
+                видел: на экране был только остаток долга, и было непонятно,
+                движется ли что-то вообще и доживёт ли объект до закрытия.
+                Считаем от ПОЛНОГО долга (остаток плюс уже внесённое), поэтому
+                число честное и на общем объекте тоже: у второй половины свой
+                платёж и своя часть долга.
+              */}
+              {(() => {
+                const платёж = (a as RealEstateAsset).installmentMonthly ?? 0
+                const осталось = Math.ceil(debt / Math.max(1, платёж))
+                const всего = Math.ceil(
+                  (debt + ((a as { paidOff?: number }).paidOff ?? 0)) / Math.max(1, платёж),
+                )
+                return (
+                  <div className="flex justify-between text-[var(--muted)]">
+                    <span>Осталось платить</span>
+                    <span className="tabnum">
+                      {осталось} {склонение(осталось, 'месяц', 'месяца', 'месяцев')}
+                      {всего > осталось ? ` из ${всего}` : ''}
+                    </span>
+                  </div>
+                )
+              })()}
+            </>
           ) : null}
           <div className="flex justify-between">
             <span>Приносит в месяц</span>
