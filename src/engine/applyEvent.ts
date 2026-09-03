@@ -63,16 +63,23 @@ export const cloneLedger = clone
  * выручка считалась как цена минус ПОЛНЫЙ остаток — всё уплаченное сгорало.
  * Ровно отсюда и бралась «несходимость денег за партию».
  *
- * Возвращает true, если долг закрылся: тогда платёж исчезает и поток актива
- * вырастает ровно на его величину — тот же хвост, что у досрочного закрытия.
+ * 🔴 ПОСЛЕДНИЙ ПЛАТЁЖ НЕ УНОСИТ БОЛЬШЕ ОСТАТКА. Тело гасится на
+ * min(платёж, долг), а из потока в этот месяц вычтен ПОЛНЫЙ платёж: долг почти
+ * никогда не делится на платёж нацело (платёж округлён до сотни), и разница
+ * просто исчезала. Возвращаем её на руки — свою часть, как и в paidIn: у
+ * общего объекта платёж вычтен из потока обеих половин по долям.
+ *
+ * Возвращает переплату последнего месяца — её кладут человеку в наличные.
+ * Долг закрылся, если платёж исчез: поток актива вырастает ровно на его
+ * величину — тот же хвост, что у досрочного закрытия.
  */
 function amortizeAsset(
   a: { cashFlow: number; installmentMonthly?: number; downPayment: number; paidIn?: number; investorShare?: number },
   debtRef: { get(): number; set(v: number): void },
-): boolean {
+): number {
   const monthly = a.installmentMonthly ?? 0
   const debt = debtRef.get()
-  if (monthly <= 0 || debt <= 0) return false
+  if (monthly <= 0 || debt <= 0) return 0
   const pay = Math.min(monthly, debt)
   /*
    * 🔴 ПОГАШЕННОЕ ТЕЛО ДОЛГА — ЭТО СВОИ ДЕНЬГИ. Без этой строки каждый
@@ -86,9 +93,8 @@ function amortizeAsset(
     debtRef.set(0)
     a.cashFlow += monthly
     a.installmentMonthly = 0
-    return true
   }
-  return false
+  return Math.round((monthly - pay) * (1 - (a.investorShare ?? 0)))
 }
 
 export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
@@ -106,13 +112,23 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           if (note) l.glNotes.push(note)
           next.age += 1
           // Ноги подтягиваются под доход: слабая объясняет ежемесячные деньги.
-          b.gl = glНогиЗаМесяц(next, glStructureIncome(next))
+          const сНогами = glНогиЗаМесяц(next, glStructureIncome(next))
+          b.gl = сНогами
           // cashFlow держим зеркалом — его показывают списки активов.
           b.cashFlow = glTotalIncome(next)
           const rank = glRankFor(next.volume)
           if (rank.level > next.rankPaid) {
             l.cash += rank.bonus
-            b.gl = { ...next, rankPaid: rank.level }
+            /*
+             * 🔴 Метку ранга ставим ПОВЕРХ подтянутых ног. Раньше здесь
+             * пересобиралось `{ ...next }` — состояние ДО подтягивания, и в
+             * месяц закрытия ранга ноги вместе с глубиной откатывались на
+             * месяц назад: панель показывала слабую ногу, которая не
+             * объясняет уже выплаченный доход, а пришедшая следом карточка
+             * «пришли люди» доплачивала за уровни, уже сидящие в месячном
+             * доходе.
+             */
+            b.gl = { ...сНогами, rankPaid: rank.level }
             /*
              * Разовая премия за ранг — отдельное событие, и о нём надо
              * сказать отдельно: в жизни это не «доход подрос», а именно
@@ -139,7 +155,26 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           l.expenses.ribaPayment = Math.round((l.liabilities.ribaLoan * 2) / 100 / 100) * 100
         }
       }
-      l.cash += monthlyCashFlow(l, e.flowMul)
+      /*
+       * 🔴 ЧЕК = ТО, ЧТО ОБЕЩАЛА ПАНЕЛЬ. Партнёрский бизнес выше по коду уже
+       * подрос — и это верно, люди пришли между зарплатами, — но за прошедший
+       * месяц платить надо по ТОЙ структуре, что весь месяц и работала.
+       * Иначе на счёт всегда падает больше, чем написано на экране: замер на
+       * «Платине» дал расхождение во ВСЕХ 20 зарплатах подряд, +235 000 ₽
+       * сверх обещанного, и разрыв растёт вместе со структурой.
+       *
+       * Так же считает и сам движок партнёрского бизнеса: объём за месяц
+       * (`next.volume += glStructureIncome(g)`) копится по доходу ДО роста.
+       * А просадка после карточки теперь длится ровно столько зарплат,
+       * сколько обещано, — раньше последний урезанный чек приходил полным.
+       *
+       * Расходы берём уже новые: беспроцентный период мог кончиться прямо
+       * сейчас, и первый чек после льготы обязан быть честным.
+       */
+      const чек = monthlyCashFlow({ ...l, businesses: prev.businesses }, e.flowMul)
+      l.cash += чек
+      // Сумму чека кладём в ведомость: её показывают и окно, и журнал.
+      l.lastPaycheck = чек
       l.paydays += 1
       /*
        * Просадка обычного бизнеса тает. Списываем ПОСЛЕ начисления — значит
@@ -147,6 +182,8 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
        * ровно три месяца и длятся.
        */
       for (const b of l.businesses) {
+        // Вторая половина общего дела свой срок не отсчитывает: он один на двоих.
+        if (b.partnerId && !b.investorShare) continue
         if (!b.gl && (b.dipLeft ?? 0) > 0) {
           b.dipLeft = (b.dipLeft ?? 0) - 1
           if (b.dipLeft === 0) b.dipMul = 1
@@ -157,17 +194,17 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
        * чек человек получил целиком, а прибавка к расходам пришла со
        * следующего месяца. Так это и ощущается в жизни.
        */
-      подтянутьРасходы(l)
+      подтянутьРасходы(l, e.flowMul)
 
       /*
        * Рассрочка за активы гасится ПОСЛЕ начисления потока — иначе последний
        * платёж уйдёт дважды: и из потока этого месяца, и из тела долга.
        */
       for (const a of l.realEstate) {
-        amortizeAsset(a, { get: () => a.mortgage, set: (v) => (a.mortgage = v) })
+        l.cash += amortizeAsset(a, { get: () => a.mortgage, set: (v) => (a.mortgage = v) })
       }
       for (const b of l.businesses) {
-        amortizeAsset(b, { get: () => b.liability, set: (v) => (b.liability = v) })
+        l.cash += amortizeAsset(b, { get: () => b.liability, set: (v) => (b.liability = v) })
       }
 
       /*
@@ -542,8 +579,17 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       const pay = Math.round(часть * (1 - e.discountPct / 100))
       if (l.cash < pay) return prev
       l.cash -= pay
-      // Досрочное погашение — тоже свои деньги: в ОСНОВУ прибыли, а не в неё.
-      a.paidIn = (a.paidIn ?? a.downPayment) + pay
+      /*
+       * Досрочное погашение — тоже свои деньги: в ОСНОВУ прибыли, а не в неё.
+       * 🔴 НО НА ОБЩЕМ ОБЪЕКТЕ СВОЯ ТОЛЬКО СВОЯ ЧАСТЬ. Стол заносит ведущему
+       * долю партнёра ДО платежа, поэтому из кармана ведущего уходит
+       * `pay − доля партнёра`, а сюда клали ВЕСЬ платёж. От «вложено» считаются
+       * и доля владельцу находки, и возврат банка при банкротстве: на
+       * кафе 50/50 с долгом 6 400 000 у ведущего выходило 6 800 000 вместо
+       * 3 600 000, и банк вернул бы вдвое больше внесённого.
+       */
+      const чужаяЧасть = Math.round(pay * (a.investorShare ?? 0))
+      a.paidIn = (a.paidIn ?? a.downPayment) + (pay - чужаяЧасть)
       /*
        * 🔴 ПЛАТЁЖ УМЕНЬШАЕТСЯ ВМЕСТЕ С ДОЛГОМ, и ровно на ту же долю. Иначе
        * частичное погашение не давало бы НИЧЕГО до самого конца — деньги
@@ -564,6 +610,15 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.cash += e.amount
       return l
 
+    /** Просадка общего дела — снаружи: срок у заведения один на двоих. */
+    case 'SET_ASSET_DIP': {
+      const a = l.businesses.find((x) => x.id === e.assetId)
+      if (!a) return prev
+      a.dipMul = e.dipMul
+      a.dipLeft = e.dipLeft
+      return l
+    }
+
     /**
      * Поток одной записи изменился снаружи. Нужно ровно для общих объектов:
      * когда рассрочка закрыта, освободившийся платёж возвращается в поток
@@ -574,6 +629,18 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         l.realEstate.find((x) => x.id === e.assetId) ?? l.businesses.find((x) => x.id === e.assetId)
       if (!a) return prev
       a.cashFlow = e.cashFlow
+      return l
+    }
+
+    /**
+     * Вложенное растёт снаружи — у второй половины общего объекта. Дельтой, а
+     * не абсолютом: тогда порядок событий не важен и повтор партии сходится.
+     */
+    case 'ADD_ASSET_PAID_IN': {
+      const a =
+        l.realEstate.find((x) => x.id === e.assetId) ?? l.businesses.find((x) => x.id === e.assetId)
+      if (!a) return prev
+      a.paidIn = (a.paidIn ?? a.downPayment) + e.amount
       return l
     }
 

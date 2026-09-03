@@ -30,6 +30,7 @@ import {
   canRecover,
   marketMatches,
   sellOfferPrice,
+  stockPriceNow,
   можноВыйтиИзКруга,
 } from './table'
 import {
@@ -38,6 +39,7 @@ import {
   monthlyCashFlow,
   totalExpenses,
   dealTerms,
+  marketStockPrice,
   ownShare,
   MANAGER_PCT,
 } from './ledger'
@@ -310,10 +312,18 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
       if (card.kind === 'stock') {
         const s = card as StockCard
         const buyBelow = quantilePrice(s.range, p.stockBuyQuantile)
-        const worthIt = s.price <= buyBelow || (s.dividendPerShare ?? 0) > 0
+        /*
+         * 🔴 И НА ПОКУПКЕ ТОЖЕ ЦЕНА СТОЛА, А НЕ ЦИФРА КАРТЫ. Движок списывает
+         * marketStockPrice(цена карты × множитель новости), а бот считал по
+         * сырой: на удвоении рынка он планировал потратить 884 000, а платил
+         * 1 768 000 — вдвое больше собственного потолка, а на просадке проходил
+         * мимо подешевевшей бумаги, хотя докупать надо как раз тогда.
+         */
+        const цена = marketStockPrice(s.price, t.market.stock[s.symbol])
+        const worthIt = цена <= buyBelow || (s.dividendPerShare ?? 0) > 0
         if (!worthIt) return { type: 'PASS_CARD' }
         const spendable = Math.max(0, l.cash - cashBuffer(seat, p)) * p.stockCashFraction
-        const shares = Math.floor(spendable / s.price)
+        const shares = Math.floor(spendable / цена)
         if (shares < 1) return { type: 'PASS_CARD' }
         return { type: 'BUY_STOCK_SHARES', shares }
       }
@@ -407,12 +417,22 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
            */
           const вилка = вилкаЦены(t, card.symbol)
           const продаватьВыше = вилка ? quantilePrice(вилка, p.stockSellQuantile) : lot.costPerShare
-          const хорошаяЦена = card.price >= продаватьВыше && card.price >= lot.costPerShare
+          /*
+           * 🔴 РЕШАЕМ ПО ТОЙ ЖЕ ЦЕНЕ, ПО КОТОРОЙ ПЛАТИТ СТОЛ. `card.price` —
+           * это число, напечатанное на карточке, БЕЗ множителя мировой
+           * новости; движок продаёт по stockPriceNow. Бот думал, что фиксирует
+           * прибыль, а резал убыток: золото с карты 12 000 при себестоимости
+           * 9 500 на обвале золота стоит 6 000 — вместо +150 000 выходит
+           * −210 000. Соседняя ветка sellOffer уже считает правильно: база —
+           * рыночная цена, а не цифра карты.
+           */
+          const цена = stockPriceNow(t, card.symbol)
+          const хорошаяЦена = цена >= продаватьВыше && цена >= lot.costPerShare
           /*
            * Резать убыток — тоже человеческое решение, и без него бот выглядел
            * упрямым: держал падающую бумагу до конца партии.
            */
-          const глубокийМинус = card.price <= lot.costPerShare * СТОП_УБЫТОК
+          const глубокийМинус = цена <= lot.costPerShare * СТОП_УБЫТОК
           if (хорошаяЦена || глубокийМинус) {
             // Продаём ЧАСТЬ на хорошей цене и всё — на стоп-убытке: так делают люди.
             const штук = глубокийМинус ? lot.shares : Math.max(1, Math.round(lot.shares * ДОЛЯ_ПРОДАЖИ))
@@ -421,7 +441,7 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
               seatId: seat.id,
               lotId: lot.id,
               shares: штук,
-              pricePerShare: card.price,
+              pricePerShare: цена,
             }
           }
         }

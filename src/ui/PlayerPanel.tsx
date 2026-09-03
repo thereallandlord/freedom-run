@@ -131,12 +131,14 @@ function AssetRow({
   dispatch,
   cash,
   flowMul,
+  cashOf,
 }: {
   a: RealEstateAsset | BusinessAsset
   kind: 'realEstate' | 'business'
   dispatch?: (e: TableEvent) => void
   cash?: number
   flowMul?: Record<string, number>
+  cashOf?: (seatId: string) => number | undefined
 }) {
   const [open, setOpen] = useState(false)
   const shot = artById(a.id)
@@ -157,6 +159,21 @@ function AssetRow({
   const вторая = !!a.partnerId && !a.investorShare
   // Своя часть общего долга — платит каждый по своей доле.
   const мойДолг = Math.round(debt * (1 - (a.investorShare ?? 0)))
+  /*
+   * 🔴 ЧАСТЬ ПАРТНЁРА ДВИЖОК БЕРЁТ У НЕГО, И ЕСЛИ ЕЁ НЕТ — ПОГАШЕНИЕ НЕ
+   * ПРОХОДИТ ВООБЩЕ. Кнопка про это не знала: смотрела только в кошелёк
+   * ведущего, честно писала «ваша часть N из M» и оставалась активной. Нажатие
+   * не делало НИЧЕГО — ни денег, ни записи в журнале. Тот же класс, что чинили
+   * у мёртвой кнопки «Погасить часть». Кошелька соседа нет под рукой (панель
+   * открыта у соседа за столом) — не блокируем, ведём себя как раньше.
+   */
+  const частьПартнёра = Math.round(debt * (a.investorShare ?? 0))
+  const партнёрТянет = (часть: number) =>
+    !a.investorShare ||
+    !a.partnerId ||
+    !cashOf ||
+    (cashOf(a.partnerId) ?? 0) >= Math.round(часть * (a.investorShare ?? 0))
+  const партнёрМожет = партнёрТянет(debt)
   // Управляющего нанимают В ДЕЛО целиком, поэтому цена — от полного потока.
   const наймCost = Math.max(30_000, Math.round((a.cashFlow * MANAGER_PCT * 3) / 100 / 1000) * 1000)
   return (
@@ -237,9 +254,16 @@ function AssetRow({
               {(() => {
                 const платёж = (a as RealEstateAsset).installmentMonthly ?? 0
                 const осталось = Math.ceil(debt / Math.max(1, платёж))
-                const всего = Math.ceil(
-                  (debt + ((a as { paidOff?: number }).paidOff ?? 0)) / Math.max(1, платёж),
-                )
+                /*
+                 * 🔴 «ИЗ M» БРАЛОСЬ ИЗ НЕСУЩЕСТВУЮЩЕГО ПОЛЯ. `paidOff` нет ни у
+                 * одного актива — ни в types.ts, ни в кошельке, нигде в src, —
+                 * значит «всего» всегда равнялось «осталось», условие
+                 * `всего > осталось` не выполнялось никогда и вторая половина
+                 * обещания не рисовалась НИ РАЗУ. Полный срок берём оттуда же,
+                 * откуда его показывают в карточке сделки ДО покупки, — из
+                 * правил рассрочки: жильё 300 месяцев, дело 84.
+                 */
+                const всего = Math.max(осталось, RULES.installmentTerm[kind])
                 return (
                   <div className="flex justify-between text-[var(--muted)]">
                     <span>Осталось платить</span>
@@ -296,7 +320,18 @@ function AssetRow({
             поэтому доход растёт сразу — ровно то сомнение, которое Камиль
             высказал вслух («а толк-то будет?»).
           */}
-          {debt > 0 && dispatch && !вторая && (cash ?? 0) > 0 && (cash ?? 0) < мойДолг && (
+          {/*
+            🔴 И ЧАСТЬ ОБЩЕГО ДОЛГА ТОЖЕ ЗАКРЫВАЮТ ВДВОЁМ: движок берёт с
+            партнёра его долю ОТ ЭТОЙ СУММЫ и без неё не делает ничего. Пока
+            партнёр её не тянет, кнопку не показываем — рядом остаётся полная,
+            и она объясняет, чего ждём.
+          */}
+          {debt > 0 &&
+            dispatch &&
+            !вторая &&
+            (cash ?? 0) > 0 &&
+            (cash ?? 0) < мойДолг &&
+            партнёрТянет(Math.min(cash ?? 0, debt)) && (
             <button
               onClick={() =>
                 dispatch({
@@ -322,7 +357,7 @@ function AssetRow({
           )}
           {debt > 0 && dispatch && !вторая && (
             <button
-              disabled={(cash ?? 0) < мойДолг}
+              disabled={(cash ?? 0) < мойДолг || !партнёрМожет}
               onClick={() => dispatch({ type: 'PAYOFF_ASSET', assetId: a.id, discountPct: 0 })}
               className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
             >
@@ -355,6 +390,11 @@ function AssetRow({
                   в зачёт свободы это не пойдёт, пока в бизнесе нет управляющего
                 </span>
                 )}
+              {!партнёрМожет && (
+                <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+                  ждём партнёра: его часть {money(частьПартнёра)}, столько у него сейчас нет
+                </span>
+              )}
             </button>
           )}
         </div>
@@ -478,12 +518,20 @@ export function PlayerPanel({
   dispatch,
   flowMul,
   priceNow,
+  cashOf,
 }: {
   seat: Seat
   dispatch?: (e: TableEvent) => void
   flowMul?: Record<string, number>
   /** Цена бумаги сегодня — чтобы портфель показывал рынок, а не цену покупки. */
   priceNow?: (symbol: string) => number
+  /**
+   * 🔴 Деньги СОСЕДА — ровно для одной вещи: общий долг закрывают вдвоём, и
+   * кнопка обязана знать, может ли партнёр внести свою часть. Без этого она
+   * горела активной, человек жал — и не происходило ничего: движок возвращал
+   * прежний стол, ни денег, ни сообщения. Не передали — не блокируем.
+   */
+  cashOf?: (seatId: string) => number | undefined
 }) {
   const l = seat.ledger
   const income = totalIncome(l, flowMul)
@@ -576,10 +624,26 @@ export function PlayerPanel({
               <Row key={d.symbol} label={`Дивиденды ${d.symbol}`} value={money(d.amount)} dim />
             ))}
             {l.realEstate.map((a) => (
-              <AssetRow key={a.id} a={a} kind="realEstate" dispatch={dispatch} cash={l.cash} flowMul={flowMul} />
+              <AssetRow
+                key={a.id}
+                a={a}
+                kind="realEstate"
+                dispatch={dispatch}
+                cash={l.cash}
+                flowMul={flowMul}
+                cashOf={cashOf}
+              />
             ))}
             {l.businesses.map((a) => (
-              <AssetRow key={a.id} a={a} kind="business" dispatch={dispatch} cash={l.cash} flowMul={flowMul} />
+              <AssetRow
+                key={a.id}
+                a={a}
+                kind="business"
+                dispatch={dispatch}
+                cash={l.cash}
+                flowMul={flowMul}
+                cashOf={cashOf}
+              />
             ))}
             {/*
               Партнёрский бизнес объясняет себя человеческим языком: игрок должен
@@ -879,6 +943,20 @@ export function PlayerPanel({
             .filter((a) => (a.installmentMonthly ?? 0) > 0)
             .map((a) => {
               const left = 'mortgage' in a ? a.mortgage : a.liability
+              /*
+               * 🔴 ОДИН ДОЛГ НЕ МОЖЕТ СТОИТЬ ПО-РАЗНОМУ НА ОДНОМ ЭКРАНЕ. В
+               * карточке объекта у общей рассрочки написано «ваша часть N из
+               * M» и кнопка зажигается от своей половины — верно. А здесь та
+               * же рассрочка предлагалась «Закрыть за M» и гасла, пока на
+               * руках нет ещё и доли партнёра, которую вносит он сам. Считаем
+               * ровно как в карточке: своя часть, своя прибавка к доходу и та
+               * же оглядка на кошелёк партнёра.
+               */
+              const моё = Math.round(left * (1 - (a.investorShare ?? 0)))
+              const егоЧасть = Math.round(left * (a.investorShare ?? 0))
+              const прибавка = Math.round((a.installmentMonthly ?? 0) * (1 - (a.investorShare ?? 0)))
+              const партнёрМожет =
+                !a.investorShare || !a.partnerId || !cashOf || (cashOf(a.partnerId) ?? 0) >= егоЧасть
               return (
                 <div key={`inst-${a.id}`} className="py-0.5">
                   <Row
@@ -888,13 +966,16 @@ export function PlayerPanel({
                   />
                   {dispatch && left > 0 && (
                     <button
-                      disabled={l.cash < left}
+                      disabled={l.cash < моё || !партнёрМожет}
                       onClick={() =>
                         dispatch({ type: 'PAYOFF_ASSET', assetId: a.id, discountPct: 0 })
                       }
                       className="mt-0.5 w-full rounded-lg border border-[var(--t-line,var(--line))] px-2 py-1 text-[10.5px] font-semibold transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
                     >
-                      Закрыть за {money(left)} · доход +{money(a.installmentMonthly ?? 0)}/мес
+                      {a.investorShare
+                        ? `Закрыть — ваша часть ${money(моё)} из ${money(left)}`
+                        : `Закрыть за ${money(left)}`}{' '}
+                      · доход +{money(прибавка)}/мес
                     </button>
                   )}
                 </div>

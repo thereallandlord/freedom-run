@@ -82,6 +82,13 @@ export type LedgerEvent =
     }
   | { type: 'ADJUST_CASH'; amount: number }
   | { type: 'SET_ASSET_FLOW'; assetId: string; cashFlow: number }
+  /**
+   * Дописать «вложено» одной записи. Нужен ровно для общих объектов: долг
+   * гасится в записи ведущего, а деньги за него платят двое — и вторая
+   * половина живёт в чужом кошельке, куда кошелёк ведущего не дотянется.
+   */
+  | { type: 'ADD_ASSET_PAID_IN'; assetId: string; amount: number }
+  | { type: 'SET_ASSET_DIP'; assetId: string; dipMul?: number; dipLeft?: number }
   | { type: 'FORCED_SALE'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
   | { type: 'HALVE_CONSUMER_DEBT' }
   | { type: 'DECLARE_GAME_OVER' }
@@ -121,6 +128,12 @@ export type TableEventBody =
   /** glPackage — выбранный пакет GreenLeaf, если карта партнёрская. */
   | {
       type: 'BUY_DEAL'
+      /**
+       * 🔴 МЁРТВОЕ ПОЛЕ, ДВИЖОК ЕГО НЕ СЛУШАЕТ. Осталось от убранного
+       * «стороннего инвестора»: он давал активу долю без владельца, и половина
+       * денег пропадала со стола. Складываться вдвоём — только OFFER_COINVEST
+       * с живым соседом. Поле оставлено, чтобы старые журналы читались.
+       */
       withInvestor?: boolean
       payCash?: boolean
       /** Кто покупает. Пусто — ходящий. Заполнено — вошедший по разрешению. */

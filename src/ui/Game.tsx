@@ -4,6 +4,8 @@ import type { TableEvent } from '../engine/events'
 import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow,
   pendingUndecided,
   выкупЗаВыход,
+  долгиВедомости,
+  долиЗаВыходИзКруга,
   можноВыйтиИзКруга,
 } from '../engine/table'
 import {
@@ -477,6 +479,18 @@ export function Game({
   const canRoll = table.phase === 'awaitingRoll' && myTurn && !seat.isBot && !rolling && !rolled
   const canEscape =
     table.phase === 'awaitingRoll' && myTurn && можноВыйтиИзКруга(table, seat) && !seat.isBot
+  /*
+   * 🔴 КНОПКА ОБЯЗАНА НАЗЫВАТЬ ТО, ЧТО ЛЯЖЕТ НА СЧЁТ. Выкуп — честная цена
+   * нажитого, но из него ещё гасится вся ведомость долгов Круга и
+   * отщипывается доля с прибыли владельцу чужой находки. Замер: на кнопке
+   * 5 400 000 ₽ при долгах 5 000 000 ₽ — приходило 400 000 ₽, и узнать об
+   * этом до нажатия было неоткуда. Считаем теми же функциями, что и движок.
+   */
+  const выкупСейчас = canEscape ? выкупЗаВыход(table, seat, table.market.flow) : 0
+  const долгиСейчас = canEscape ? долгиВедомости(seat.ledger) : 0
+  const долиСейчас = canEscape
+    ? долиЗаВыходИзКруга(table, seat, table.market.flow).reduce((n, x) => n + x.сумма, 0)
+    : 0
 
   /*
    * 🔴 Прокрутка запрещена ТОЛЬКО на большом экране.
@@ -611,6 +625,7 @@ export function Game({
             dispatch={!seat.isBot ? dispatch : undefined}
             priceNow={(sym) => stockPriceNow(table, sym)}
             flowMul={table.market.flow}
+            cashOf={(id) => table.seats.find((s) => s.id === id)?.ledger.cash}
           />
         </div>
 
@@ -855,9 +870,10 @@ export function Game({
                   >
                     Вырваться из крысиных бегов
                     <span className="mt-0.5 block text-[11px] font-normal opacity-80">
-                      {/* 🔴 Кнопка обещает РОВНО то, что придёт: выкуп плюс бумаги по рынку. */}
-                      выкуп{' '}
-                      {money(выкупЗаВыход(table, seat, table.market.flow))}
+                      {/* 🔴 Кнопка обещает РОВНО то, что придёт: выкуп минус долги и доля за вход. */}
+                      выкуп {money(выкупСейчас)}
+                      {долгиСейчас + долиСейчас > 0 &&
+                        ` · на счёт ${money(Math.max(0, выкупСейчас - долгиСейчас - долиСейчас))}`}
                     </span>
                   </button>
                   <button
@@ -1108,6 +1124,7 @@ export function Game({
               seat={peeked}
               flowMul={table.market.flow}
               priceNow={(sym) => stockPriceNow(table, sym)}
+              cashOf={(id) => table.seats.find((s) => s.id === id)?.ledger.cash}
               /*
                * 🔴 Кнопки — только в СВОЕЙ карточке. Посмотреть, как идут дела
                * у соседа, можно всегда; трогать его деньги — никогда.
