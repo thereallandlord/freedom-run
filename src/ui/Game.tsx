@@ -3,6 +3,7 @@ import type { Table, Seat } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow,
   pendingUndecided,
+  выкупЗаВыход,
   можноВыйтиИзКруга,
 } from '../engine/table'
 import {
@@ -856,13 +857,7 @@ export function Game({
                     <span className="mt-0.5 block text-[11px] font-normal opacity-80">
                       {/* 🔴 Кнопка обещает РОВНО то, что придёт: выкуп плюс бумаги по рынку. */}
                       выкуп{' '}
-                      {money(
-                        RULES.fastTrackMultiplier * freedomIncome(seat.ledger) +
-                          seat.ledger.stocks.reduce(
-                            (s, lot) => s + lot.shares * stockPriceNow(table, lot.symbol),
-                            0,
-                          ),
-                      )}
+                      {money(выкупЗаВыход(table, seat, table.market.flow))}
                     </span>
                   </button>
                   <button

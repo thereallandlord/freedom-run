@@ -630,7 +630,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
      */
     case 'ENTER_FAST_TRACK': {
       if (l.phase !== 'ratRace') return prev
-      const buyout = RULES.fastTrackMultiplier * freedomIncome(l)
+      const buyout = e.buyout ?? RULES.fastTrackMultiplier * freedomIncome(l)
       /*
        * 🔴 БУМАГИ ПРОДАЮТСЯ, А НЕ СГОРАЮТ. Выкуп считается от свободного
        * дохода, а бумаги дают его только дивидендами — у 14 из 15 бумаг колоды

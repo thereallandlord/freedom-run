@@ -2839,6 +2839,14 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
               growthPerPayday: (card as { growthPerPayday?: number }).growthPerPayday,
               growthCap: (card as { growthCap?: number }).growthCap,
               /*
+               * 🔴 ПЛАТЁЖ ПО РАССРОЧКЕ — И У БИЗНЕСА ТОЖЕ. Без него долг не
+               * гасится ВООБЩЕ: `amortizeAsset` выходит на нулевом платеже, а
+               * из потока взнос всё равно вычтен — деньги уходят в никуда.
+               * Замер: за 24 зарплаты у бизнеса погашено 0 ₽ из 6 400 000 ₽,
+               * у такой же недвижимости — 259 200 ₽.
+               */
+              installmentMonthly: payCash ? 0 : monthly,
+              /*
                * 🔴 Вошёл в чужую находку на долю с прибыли — условие обязано
                * лечь НА АКТИВ, иначе договорённость остаётся честным словом.
                * У бумаг это работало, у объектов терялось молча: владелец
@@ -3273,7 +3281,21 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       if (!asset) return prev
       const debt = re ? re.mortgage : (biz as any).liability
       if (debt <= 0) return prev
-      const pay = Math.round(debt * (1 - event.discountPct / 100))
+      /*
+       * 🔴 ГАСИМ ЧАСТЬ, ЕСЛИ ПРОСЯТ ЧАСТЬ. Стол считал платёж всегда от ПОЛНОГО
+       * долга и не передавал `amount` дальше в кошелёк. Кнопку «Погасить часть»
+       * показывают ровно тогда, когда на весь долг денег НЕ хватает, — она
+       * упиралась в проверку по полному долгу и молча не делала НИЧЕГО.
+       * Кошелёк частичное погашение умеет давно, до него просто не доезжало
+       * число. Клампы здесь и в кошельке одинаковые, поэтому проверка денег и
+       * списание считают одно и то же. Событие без `amount` ведёт себя ровно
+       * как раньше — старые журналы переигрываются без изменений.
+       */
+      const часть =
+        event.amount != null ? Math.min(Math.max(0, Math.round(event.amount)), debt) : debt
+      if (часть <= 0) return prev
+      const pay = Math.round(часть * (1 - event.discountPct / 100))
+      const остатокДолга = debt - часть
       /*
        * 🔴 ОБЩИЙ ДОЛГ ЗАКРЫВАЮТ ВДВОЁМ. Платёж по рассрочке всё это время
        * вычитался из потока ОБОИХ (у зеркала он уже вычтен), значит и остаток
@@ -3287,12 +3309,25 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       const своя = pay - партнёрская
       if (l.cash < своя) return prev
       if (доля && (!половина || половина.seat.ledger.cash < партнёрская)) return prev
-      seatLedgerEvent(t, seat.id, { type: 'PAYOFF_ASSET', assetId: event.assetId, discountPct: event.discountPct })
+      /*
+       * 🔴 ДОЛЮ ПАРТНЁРА ЗАНОСИМ ДО ПЛАТЕЖА, а не возвращаем после. Кошелёк
+       * снимает с ведущего ВСЮ сумму и молча отказывается, если у него на руках
+       * меньше (`if (l.cash < pay) return prev`). Возврат доли следом за
+       * платежом этого не спасал: у ведущего с одной своей частью на руках
+       * рассрочка не гасилась вовсе, деньги партнёра всё равно уходили, а в
+       * журнал писалось «закрыл». Теперь к моменту платежа на руках ровно
+       * `pay`, и отказать кошелёк не может.
+       */
       if (половина && партнёрская > 0) {
-        // Кошелёк снял с ведущего всю сумму — возвращаем ему долю партнёра.
-        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: партнёрская })
         seatLedgerEvent(t, половина.seat.id, { type: 'ADJUST_CASH', amount: -партнёрская })
+        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: партнёрская })
       }
+      seatLedgerEvent(t, seat.id, {
+        type: 'PAYOFF_ASSET',
+        assetId: event.assetId,
+        discountPct: event.discountPct,
+        amount: event.amount,
+      })
       if (половина) {
         const после =
           t.seats[seatIdx].ledger.realEstate.find((x) => x.id === event.assetId) ??
@@ -3307,7 +3342,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
           log(
             t,
             половина.seat.id,
-            `${половина.seat.name} внёс ${money(партнёрская)} — свою часть закрытия рассрочки по «${asset.name}», его доход вырос на ${money(
+            `${половина.seat.name} внёс ${money(партнёрская)} — свою часть погашения рассрочки по «${asset.name}», его доход вырос на ${money(
               Math.round(освободилось * доля),
             )}/мес`,
           )
@@ -3316,9 +3351,11 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       log(
         t,
         seat.id,
-        event.discountPct > 0
-          ? `Закрыл рассрочку по «${asset.name}» досрочно: ${money(pay)}, продавец скинул ${event.discountPct}%`
-          : `Закрыл рассрочку по «${asset.name}»: ${money(pay)}`,
+        остатокДолга > 0
+          ? `Погасил часть рассрочки по «${asset.name}»: ${money(pay)} — осталось ${money(остатокДолга)}`
+          : event.discountPct > 0
+            ? `Закрыл рассрочку по «${asset.name}» досрочно: ${money(pay)}, продавец скинул ${event.discountPct}%`
+            : `Закрыл рассрочку по «${asset.name}»: ${money(pay)}`,
       )
       return t
     }
@@ -3345,10 +3382,15 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
     }
 
     case 'ENTER_FAST_TRACK': {
-      if (seat.track !== 'rat' || !isOutOfRatRace(l)) return prev
-      // 🔴 Множитель берём из правил: в русском режиме он 50, а не 100 —
-      // журнал обещал игроку вдвое больше, чем приходило на счёт.
-      const buyout = RULES.fastTrackMultiplier * freedomIncome(l)
+      if (!можноВыйтиИзКруга(t, seat)) return prev
+      /*
+       * 🔴 Выкуп считает ОДНА функция — та же, что зажигает кнопку и держит
+       * гейт: за каждый объект платят большее из «50 месячных потоков» и
+       * рыночной цены, минус его непогашенная рассрочка, плюс бумаги по рынку.
+       * Пока здесь стояло «50 × свободный доход», рассрочка с объекта просто
+       * испарялась, а кнопка обещала не ту сумму, что приходила на счёт.
+       */
+      const всего = выкупЗаВыход(t, seat, t.market.flow)
       /*
        * 🔴 ВЫКУП — ЭТО ПРОДАЖА ВСЕГО НАЖИТОГО, включая общие объекты. Кошелёк
        * двигать деньги между игроками не умеет, поэтому вторую половину
@@ -3377,21 +3419,19 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
           снятьДолюСАктива(t, п)
         }
       }
-      const долгиБыли =
-        l.liabilities.homeMortgage +
-        l.liabilities.schoolLoans +
-        l.liabilities.carLoans +
-        l.liabilities.creditCards +
-        l.liabilities.retailDebt +
-        l.liabilities.bankLoan +
-        l.liabilities.ribaLoan
+      const долгиБыли = долгиВедомости(l)
       /*
        * 🔴 Пакет бумаг продаётся по рынку вместе с остальным нажитым — раньше
        * он молча уничтожался (см. ENTER_FAST_TRACK в applyEvent).
        */
       const лоты = l.stocks.map((lot) => ({ lot, price: stockPriceNow(t, lot.symbol) }))
       const пакет = лоты.reduce((sum, x) => sum + x.lot.shares * x.price, 0)
-      seatLedgerEvent(t, seat.id, { type: 'ENTER_FAST_TRACK', stocksValue: пакет })
+      /*
+       * 🔴 Бумаги вычитаем: в `всего` они уже есть, а кошелёк прибавит их сам
+       * из stocksValue. Без этого пакет посчитался бы дважды.
+       */
+      const buyout = Math.max(0, всего - пакет)
+      seatLedgerEvent(t, seat.id, { type: 'ENTER_FAST_TRACK', buyout, stocksValue: пакет })
       t.seats[seatIdx] = { ...t.seats[seatIdx], track: 'fast', position: 0 }
       log(
         t,
@@ -4282,6 +4322,22 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
             id: `${o.assetId}-${nextId(t)}`,
             name: asset.name,
             cost: asset.cost,
+            /*
+             * 🔴 УСЛОВИЕ ВХОДА ЕДЕТ ВМЕСТЕ С ОБЪЕКТОМ. Иначе его смывает первой
+             * же перепродажей: подарил объект соседу за 0 — договорённость
+             * испарилась, тот продал по рынку и оставил всё себе. Замер до
+             * правки: владельцу находки 0 ₽ вместо 425 000 ₽.
+             * К самому владельцу находки условие, понятно, не переезжает —
+             * иначе он платил бы долю сам себе.
+             */
+            profitShareTo:
+              (asset as { profitShareTo?: string }).profitShareTo === buyer.id
+                ? undefined
+                : (asset as { profitShareTo?: string }).profitShareTo,
+            profitSharePct:
+              (asset as { profitShareTo?: string }).profitShareTo === buyer.id
+                ? undefined
+                : (asset as { profitSharePct?: number }).profitSharePct,
             /*
              * 🔴 Рыночная цена переезжает вместе с объектом. Без неё у объекта,
              * купленного в рассрочку, за стоимость начинала считаться цена С

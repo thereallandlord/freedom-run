@@ -85,8 +85,12 @@ export type LedgerEvent =
   | { type: 'FORCED_SALE'; assetKind: 'stock' | 'realEstate' | 'business'; assetId: string }
   | { type: 'HALVE_CONSUMER_DEBT' }
   | { type: 'DECLARE_GAME_OVER' }
-  /** stocksValue — рыночная стоимость пакета бумаг: считает стол, кошелёк её не знает. */
-  | { type: 'ENTER_FAST_TRACK'; stocksValue?: number }
+  /**
+   * buyout — сколько дали за нажитое: считает стол (у него рынок и цены бумаг),
+   * кошелёк такого знать не может. stocksValue — бумаги по рынку, отдельным
+   * числом, чтобы журнал и карточка могли сказать, из чего сложилась сумма.
+   */
+  | { type: 'ENTER_FAST_TRACK'; buyout?: number; stocksValue?: number }
   | { type: 'CASHFLOW_DAY' }
   | { type: 'BUY_FT_BUSINESS'; id: string; name: string; downPayment: number; cashFlow: number }
   | { type: 'FT_STAKE_LOST'; amount: number }

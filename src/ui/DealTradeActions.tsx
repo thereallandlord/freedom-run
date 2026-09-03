@@ -30,16 +30,6 @@ export function DealTradeActions({
     (s) => s.id !== seat.id && !s.outOfGame && !s.won && s.track === 'rat',
   )
   const fair = fairCardPrice(card.downPayment)
-  /*
-   * 🔴 ПОТОК БЕРЁМ ИЗ ДВИЖКА, А НЕ С КАРТОЧКИ. Вход вдвоём движок всегда
-   * оформляет В РАССРОЧКУ (ветка coInvest зовёт dealAssetEvent с payCash:false),
-   * и платёж по ней уже вычтен из дохода. Окно же считало от `card.cashFlow` —
-   * от потока НАЛОМ — и обещало кратно больше, чем приходит: «Дарк-стор в
-   * Москве» 114 250 ₽/мес против 37 450 ₽/мес на деле. Расходились 63 карты
-   * из 64. Это тот же урок, что уже закреплён в dealTerms: одна функция на
-   * движок и на интерфейс.
-   */
-  const потокВдвоём = dealTerms(card, card.kind === 'realEstate' ? 'realEstate' : 'business').instFlow
   const floor = Math.round(fair * PRICE_FLOOR)
   const ceil = Math.round(fair * PRICE_CEIL)
 
