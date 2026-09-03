@@ -211,7 +211,7 @@ export type TableEventBody =
   | { type: 'WORLD_EVENT'; index: number }
   // ─── Сделки между игроками ───
   | { type: 'OFFER_CARD'; amount: number; toId?: string }
-  | { type: 'OFFER_COINVEST'; amount: number; share: number; toId?: string }
+  | { type: 'OFFER_COINVEST'; amount: number; share: number; toId?: string; payCash?: boolean }
   | { type: 'OFFER_ASSET'; assetId: string; amount: number; toId?: string }
   | { type: 'OFFER_LOAN'; toId: string; amount: number }
   /** Заём просят чаще, чем предлагают: fromId — тот, у КОГО просят. */

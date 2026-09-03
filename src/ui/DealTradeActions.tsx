@@ -40,6 +40,13 @@ export function DealTradeActions({
   const [price, setPrice] = useState(Math.round(fair * 0.25))
   const [partnerId, setPartnerId] = useState('all')
   const [partnerMoney, setPartnerMoney] = useState(Math.round(card.downPayment / 2))
+  /*
+   * 🔴 СКЛАДЫВАТЬСЯ МОЖНО И НАЛОМ. Раньше выбора не было вовсе: двое, у
+   * которых на руках вся цена, всё равно получали объект с долгом и урезанным
+   * платежом потоком. На «Двушке на Васильевском» это 33 200 ₽/мес вместо
+   * 87 500 — рассрочка навязывалась без всякой причины.
+   */
+  const [заНал, setЗаНал] = useState(false)
 
   const mine = liveOffers(table).filter(
     (o) => o.fromId === seat.id && (o.kind === 'resellCard' || o.kind === 'coInvest'),
@@ -62,15 +69,19 @@ export function DealTradeActions({
   }
 
   // Партнёр вносит свою часть входа; остальное — с инициатора.
-  const partnerShare = shareOf(partnerMoney, card.downPayment)
+  /** База входа: налом — полная цена, в рассрочку — только взнос. */
+  const базаВхода = заНал ? card.cost : card.downPayment
+  const partnerShare = shareOf(partnerMoney, базаВхода)
   /*
    * 🔴 ПОТОК СЧИТАЕМ ТОЙ ЖЕ ФУНКЦИЕЙ, ЧТО И ДВИЖОК. Вдвоём объект берётся
    * ТОЛЬКО в рассрочку, значит делить надо доход ЗА ВЫЧЕТОМ платежа, а окно
    * показывало доход как при покупке налом: на 63 картах из 64 обещание
    * расходилось с тем, что приходит на счёт.
    */
-  const общийПоток = dealTerms(card, card.kind === 'realEstate' ? 'realEstate' : 'business').instFlow
-  const myPart = Math.max(0, card.downPayment - partnerMoney)
+  const условия = dealTerms(card, card.kind === 'realEstate' ? 'realEstate' : 'business')
+  // Налом поток полный — платежа по рассрочке нет.
+  const общийПоток = заНал ? условия.cashFlow : условия.instFlow
+  const myPart = Math.max(0, базаВхода - partnerMoney)
   const notEnoughForMyPart = seat.ledger.cash < myPart
 
   return (
@@ -183,13 +194,45 @@ export function DealTradeActions({
             <Dropdown value={partnerId} options={who} onChange={setPartnerId} />
           </div>
 
+          {/*
+            🔴 ДВА СПОСОБА СЛОЖИТЬСЯ. Есть деньги на всю цену — берите целиком,
+            без долга и без платежа: поток тогда полный. Нет — складывайтесь на
+            взнос, как раньше. Раньше второй путь был единственным.
+          */}
+          {условия.financeable && (
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              {[
+                { нал: false, имя: 'В рассрочку', сумма: card.downPayment, поток: условия.instFlow },
+                { нал: true, имя: 'Налом целиком', сумма: card.cost, поток: условия.cashFlow },
+              ].map((в) => (
+                <button
+                  key={в.имя}
+                  onClick={() => {
+                    setЗаНал(в.нал)
+                    setPartnerMoney(Math.round(в.сумма / 2))
+                  }}
+                  className={`rounded-xl px-2.5 py-2 text-left text-[12px] leading-snug transition ${
+                    заНал === в.нал
+                      ? 'border border-[rgb(var(--c-accent))] bg-[rgb(var(--c-accent))]/10'
+                      : 'btn-ghost'
+                  }`}
+                >
+                  <span className="block font-bold">{в.имя}</span>
+                  <span className="tabnum block text-[11px] text-[var(--muted)]">
+                    вдвоём {money(в.сумма)} · {signed(в.поток)}/мес
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <MoneySlider
             label="Партнёр вносит"
             value={partnerMoney}
-            min={Math.ceil(card.downPayment * 0.1)}
-            max={Math.floor(card.downPayment * 0.9)}
+            min={Math.ceil(базаВхода * 0.1)}
+            max={Math.floor(базаВхода * 0.9)}
             onChange={setPartnerMoney}
-            note={`вход в сделку ${money(card.downPayment)}`}
+            note={заНал ? `вся цена ${money(card.cost)}` : `вход в сделку ${money(card.downPayment)}`}
           />
 
           <div className="mt-2 border-t border-[var(--line)] pt-2">
@@ -229,6 +272,7 @@ export function DealTradeActions({
                 type: 'OFFER_COINVEST',
                 amount: partnerMoney,
                 share: partnerShare,
+                payCash: заНал,
                 toId: partnerId === 'all' ? undefined : partnerId,
               })
               setMode(null)

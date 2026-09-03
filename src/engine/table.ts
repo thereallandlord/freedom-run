@@ -4611,9 +4611,16 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       const amount = Math.max(0, Math.round(event.amount))
       const share = event.share
       if (!Number.isFinite(share) || share < 0.1 || share > 0.9) return prev
-      if (amount <= 0 || amount >= card.downPayment) return prev
+      /*
+       * 🔴 СКЛАДЫВАТЬСЯ МОЖНО И НАЛОМ. Тогда база — полная цена объекта, а не
+       * взнос: двое закрывают его целиком, без долга и без платежа. Раньше
+       * такого пути не было вовсе, и пара с деньгами на руках всё равно
+       * получала рассрочку и урезанный поток.
+       */
+      const базаВхода = event.payCash ? card.cost : card.downPayment
+      if (amount <= 0 || amount >= базаВхода) return prev
       // Деньги и доля обязаны соответствовать друг другу — с точностью до рубля округления.
-      if (Math.abs(amount - Math.round(card.downPayment * share)) > 1) return prev
+      if (Math.abs(amount - Math.round(базаВхода * share)) > 1) return prev
       t.offers = [
         ...t.offers,
         {
@@ -4623,6 +4630,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
           toId: event.toId,
           amount,
           share,
+          payCash: !!event.payCash,
           askedBy: seat.id,
           expiresAtTurn: t.turnCounter + 1,
           bids: [],
@@ -4953,7 +4961,9 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
           const card = t.pending.card
           if (card.kind === 'stock') return prev
           if (buyer.ledger.cash < o.amount) return prev
-          const mine = Math.max(0, card.downPayment - o.amount)
+          // Складываемся налом — закрываем полную цену; иначе только взнос.
+          const базаВхода = o.payCash ? card.cost : card.downPayment
+          const mine = Math.max(0, базаВхода - o.amount)
           if (from.ledger.cash < mine) return prev
           // Каждый вносит свою часть; доля партнёра записана в актив инициатора.
           seatLedgerEvent(t, buyer.id, { type: 'ADJUST_CASH', amount: -o.amount })
@@ -4967,7 +4977,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
            * Взнос уже списан выше двумя переводами, поэтому downPayment=0.
            */
           const base = dealAssetEvent(t, card, `${card.id}-${nextId(t)}`, {
-            payCash: false,
+            payCash: !!o.payCash,
             investorShare: share,
             partnerId: buyer.id,
           })
