@@ -247,7 +247,11 @@ const raises = marketCards('ru').filter((c: any) => c.kind === 'payRaise')
 check('карт повышения есть', raises.length >= 3, String(raises.length))
 const autopromo = marketCards('ru').find((c: any) => c.amountPerPartnership)
 check('автопромоушен-карта есть', !!autopromo, (autopromo as any)?.title)
-check('профессий РФ 18', professionsFor('ru').length === 18)
+/*
+ * Число сверяем, чтобы профессия не пропала молча при правке данных. Растёт
+ * оно только осознанно: 19-й стал «Вайб-кодер» — Камиль просил его отдельно.
+ */
+check('профессий РФ 19', professionsFor('ru').length === 19, String(professionsFor('ru').length))
 
 console.log(`\n${ok ? '✅ ВСЕ МЕХАНИКИ РАБОТАЮТ' : '❌ ЕСТЬ ПРОБЛЕМЫ'}\n`)
 if (!ok) process.exit(1)
