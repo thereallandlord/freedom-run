@@ -527,27 +527,51 @@ function Section({
  * Шкала сделана по образцу панели GreenLeaf: крупное число, под ним полоса,
  * рядом процент.
  */
-function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, number> }) {
+function GoalCard({
+  seat,
+  flowMul,
+  ценаМечты = 0,
+}: {
+  seat: Seat
+  flowMul?: Record<string, number>
+  /** Цена мечты этого игрока — на втором круге она и есть цель. */
+  ценаМечты?: number
+}) {
   const l = seat.ledger
   const onFast = seat.track === 'fast'
-  // 🔴 Шкала свободы считает то, что работает БЕЗ тебя, а не весь доход с активов.
-  const done = onFast ? fastTrackProgress(l) : freedomIncome(l, flowMul)
-  const need = onFast ? fastTrackTarget() : totalExpenses(l)
-  const pct = Math.max(0, Math.min(100, (done / Math.max(1, need)) * 100))
-  const won = onFast ? done >= need : isOutOfRatRace(l, flowMul)
+  /*
+   * 🔴 НА ВТОРОМ КРУГЕ ЦЕЛЬ — МЕЧТА, А НЕ «СОБРАТЬ N РУБЛЕЙ ДОХОДА». Прежняя
+   * шкала показывала прогресс к отменённой цели Полосы и после переделки
+   * говорила бы неправду: победа теперь одна — купить свою мечту наличными.
+   * Значит и шкала считает деньги на руках против цены мечты.
+   */
+  const done = onFast ? l.cash : freedomIncome(l, flowMul)
+  /*
+   * 🔴 Мечта не найдена (старая партия, где клетка была выбрана до правок) —
+   * шкалу НЕ показываем как выполненную. С `Math.max(1, 0)` она рисовала
+   * «608 827 ₽ из 1 ₽ · 100% · победа ваша» на ровном месте.
+   */
+  const безМечты = onFast && ценаМечты <= 0
+  const need = onFast ? ценаМечты : totalExpenses(l)
+  const pct = безМечты ? 0 : Math.max(0, Math.min(100, (done / Math.max(1, need)) * 100))
+  const won = безМечты ? false : onFast ? done >= need : isOutOfRatRace(l, flowMul)
+  // Рубеж свободы: доход вдвое выше расходов. Не победа, но сказать о нём надо.
+  const рубежВзят = onFast && l.свободенС != null
 
   return (
     <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3.5 backdrop-blur-md">
       <div className="flex items-baseline gap-2">
         <span className="caps text-[10px] font-bold text-[var(--t-muted, var(--muted))]">
-          {onFast ? 'Цель Полосы свободы' : 'Цель: вырваться из крысиных бегов'}
+          {onFast ? 'Цель: купить свою мечту' : 'Цель: вырваться из крысиных бегов'}
         </span>
         <span className="tabnum ml-auto text-[11px] font-bold text-[var(--t-accent,rgb(var(--c-accent)))]">{Math.round(pct)}%</span>
       </div>
 
       <div className="mt-1.5 flex items-baseline gap-1.5">
         <span className="tabnum text-2xl font-black leading-none text-[var(--t-accent,rgb(var(--c-accent)))]">{money(done)}</span>
-        <span className="text-[11px] text-[var(--t-muted, var(--muted))]">из {money(need)}</span>
+        <span className="text-[11px] text-[var(--t-muted, var(--muted))]">
+          {безМечты ? 'мечта не выбрана' : `из ${money(need)}`}
+        </span>
       </div>
 
       {/*
@@ -575,6 +599,11 @@ function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, numb
         сумму, запертую в делах без управляющего, и куда за ней идти.
         Партнёрский бизнес сюда не берём: у него своя лестница.
       */}
+      {рубежВзят && (
+        <p className="mt-2 rounded-md bg-emerald-500/15 px-2 py-1 text-[11px] leading-snug text-emerald-600">
+          Рубеж свободы взят: доход вдвое перекрыл расходы. Дальше — мечта.
+        </p>
+      )}
       {!onFast &&
         (() => {
           const заперто = l.businesses.reduce(
@@ -591,10 +620,12 @@ function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, numb
       <p className="mt-2 text-[11px] leading-snug text-[var(--t-muted, var(--muted))]">
         {won
           ? onFast
-            ? 'Цель достигнута — победа ваша.'
+            ? 'Денег хватает — дойдите до своей клетки мечты и покупайте.'
             : 'Доход, который работает без вас, перерос расходы — можно уходить.'
           : onFast
-            ? 'Соберите новый доход на Полосе свободы.'
+            ? безМечты
+              ? 'Мечта не выбрана — победить на втором круге можно только купив её.'
+              : 'Копите наличными на свою мечту: купить её можно, дойдя до своей клетки.'
             : 'Доход, который работает без вас, должен перерасти расходы — тогда работа больше не нужна.'}
       </p>
     </div>
@@ -612,10 +643,13 @@ export function PlayerPanel({
   flowMul,
   priceNow,
   cashOf,
+  ценаМечты = 0,
 }: {
   seat: Seat
   dispatch?: (e: TableEvent) => void
   flowMul?: Record<string, number>
+  /** Цена мечты этого игрока — на втором круге она и есть цель шкалы. */
+  ценаМечты?: number
   /** Цена бумаги сегодня — чтобы портфель показывал рынок, а не цену покупки. */
   priceNow?: (symbol: string) => number
   /**
@@ -640,7 +674,7 @@ export function PlayerPanel({
       блоки уходят под края окна, а не обрываются об них.
     */
     <div className="space-y-2 pb-4 pt-3">
-      <GoalCard seat={seat} flowMul={flowMul} />
+      <GoalCard seat={seat} flowMul={flowMul} ценаМечты={ценаМечты} />
       <div className="rounded-xl border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel))] p-3 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <span className="size-3 rounded-full ring-2 ring-white/15" style={{ background: seat.color }} />
@@ -681,7 +715,7 @@ export function PlayerPanel({
               {onFast ? 'Доход свободы' : 'Чистый доход в месяц'}
             </div>
             <div className={`tabnum text-xl font-bold ${tone(onFast ? 1 : flow)}`}>
-              {onFast ? money(fastTrackIncome(l)) : signed(flow)}
+              {onFast ? money(fastTrackIncome(l, flowMul)) : signed(flow)}
             </div>
           </div>
         </div>
@@ -698,9 +732,24 @@ export function PlayerPanel({
       </div>
 
       {onFast ? (
-        <Section title="Цель Полосы свободы" tone="asset">
-          <Row label="Новый доход собран" value={money(fastTrackProgress(l))} />
-          <Row label="Нужно для победы" value={money(fastTrackTarget())} dim />
+        /*
+         * 🔴 БЛОК ГОВОРИЛ ПРО ОТМЕНЁННУЮ ЦЕЛЬ. «Новый доход собран 0 ₽,
+         * нужно для победы 1 000 000 ₽» — это старая цель Полосы, которой
+         * больше нет: победа теперь одна, купить свою мечту. Показываем то,
+         * что человеку действительно нужно знать: сколько до неё осталось.
+         */
+        <Section title="Второй круг" tone="asset">
+          <Row label="Мечта стоит" value={ценаМечты > 0 ? money(ценаМечты) : '—'} />
+          <Row
+            label={l.cash >= ценаМечты && ценаМечты > 0 ? 'Хватает — ищите свою клетку' : 'Ещё копить'}
+            value={ценаМечты > 0 ? money(Math.max(0, ценаМечты - l.cash)) : '—'}
+            dim
+          />
+          <Row
+            label="Рубеж свободы"
+            value={l.свободенС != null ? 'взят' : `нужно ${money(totalExpenses(l) * 2)}/мес`}
+            dim
+          />
           {l.fastTrack && l.fastTrack.businesses.length > 0 && (
             <div className="mt-2 space-y-0.5">
               {l.fastTrack.businesses.map((b) => (

@@ -5,6 +5,7 @@ import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow,
   pendingUndecided,
   долгиВедомости,
   можноВыйтиИзКруга,
+  dreamPriceAt,
 } from '../engine/table'
 import {
   RULES,
@@ -78,8 +79,9 @@ function Scoreboard({
          * процент. Живая жалоба 19.08: «справа до свободы висит 0%».
          */
         const наПолосе = s.track === 'fast'
-        const have = наПолосе ? fastTrackProgress(s.ledger) : freedomIncome(s.ledger, table.market.flow)
-        const need = наПолосе ? fastTrackTarget() : totalExpenses(s.ledger)
+        // На втором круге цель одна — мечта, и меряется она наличными.
+        const have = наПолосе ? s.ledger.cash : freedomIncome(s.ledger, table.market.flow)
+        const need = наПолосе ? Math.max(1, dreamPriceAt(table, s.dreamSpace)) : totalExpenses(s.ledger)
         const pct = Math.max(0, Math.min(100, Math.round((have / Math.max(1, need)) * 100)))
         return (
           <button
@@ -653,6 +655,7 @@ export function Game({
             priceNow={(sym) => stockPriceNow(table, sym)}
             flowMul={table.market.flow}
             cashOf={(id) => table.seats.find((s) => s.id === id)?.ledger.cash}
+            ценаМечты={dreamPriceAt(table, seat.dreamSpace)}
           />
         </div>
 
@@ -1197,6 +1200,7 @@ export function Game({
               flowMul={table.market.flow}
               priceNow={(sym) => stockPriceNow(table, sym)}
               cashOf={(id) => table.seats.find((s) => s.id === id)?.ledger.cash}
+              ценаМечты={dreamPriceAt(table, peeked.dreamSpace)}
               /*
                * 🔴 Кнопки — только в СВОЕЙ карточке. Посмотреть, как идут дела
                * у соседа, можно всегда; трогать его деньги — никогда.

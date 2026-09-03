@@ -1743,6 +1743,11 @@ export function hasConsumerDebt(l: Ledger): boolean {
  */
 export const ПРИБАВКА_ЗА_УВОЛЬНЕНИЕ = 30
 
+/** Взял ли человек рубеж свободы именно в этот месяц. */
+function взялРубеж(до: Seat, после: Seat): boolean {
+  return до.ledger.свободенС == null && после.ledger.свободенС != null
+}
+
 export function рубежПартнёрского(доход: number): number {
   if (доход >= 100_000) return Math.floor(доход / 100_000) * 100_000
   return [50_000, 25_000, 10_000, 5_000].find((р) => доход >= р) ?? 0
@@ -1815,6 +1820,7 @@ function advance(t: Table, seatIdx: number, steps: number) {
      * Снимок общих рассрочек ДО зарплаты: погашение видно только по разнице,
      * а вторая половина живёт в чужом кошельке — кошелёк её не достанет.
      */
+    const до = t.seats[seatIdx]
     const общиеДо = [...t.seats[seatIdx].ledger.realEstate, ...t.seats[seatIdx].ledger.businesses]
       .filter((a) => a.partnerId && a.investorShare)
       .map((a) => ({
@@ -1830,6 +1836,17 @@ function advance(t: Table, seatIdx: number, steps: number) {
       seatLedgerEvent(t, seat.id, { type: 'CASHFLOW_DAY', flowMul: t.market.flow })
     }
     догнатьЗеркалаПослеЗарплаты(t, seatIdx, общиеДо)
+    /*
+     * 🔴 РУБЕЖ СВОБОДЫ ГОВОРИМ ВСЛУХ. Доход перекрыл расходы вдвое — это не
+     * победа (побеждает мечта), но самый важный момент второго круга: с него
+     * деньги начинают копиться всерьёз. Без объявления он проходил бы молча,
+     * ровно как раньше проходил незамеченным выход из Круга.
+     */
+    if (взялРубеж(до, t.seats[seatIdx])) {
+      const текст = `${seat.name} вышел на свободу: доход вдвое перекрыл расходы`
+      log(t, seat.id, текст)
+      плашка(t, seat.id, `🕊 ${текст}. Дальше — мечта`, 'добро')
+    }
     /*
      * 🔴 Объяснения партнёрского бизнеса ПОКАЗЫВАЕМ. Движок писал их и
      * выбрасывал — игра знала, почему изменился доход, и молчала об этом.
