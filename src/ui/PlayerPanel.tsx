@@ -18,7 +18,7 @@ import {
   ribaRisk,
   MANAGER_PCT,
 } from '../engine/ledger'
-import { МИНИМУМ_ВЛОЖЕНИЯ } from '../engine/table'
+import { МИНИМУМ_ВЛОЖЕНИЯ, СКИДКА_ЗА_СКОРОСТЬ, sellOfferQuote } from '../engine/table'
 import type { TableEvent } from '../engine/events'
 import { вКругах } from './срок'
 import { professionName } from '../engine/data'
@@ -482,6 +482,16 @@ function AssetRow({
             Общее дело и партнёрский бизнес сюда не попадают: у первого доли
             зафиксированы договором, у второго свой рост.
           */}
+          {/*
+            🔴 ПРОДАТЬ МОЖНО ВСЕГДА (решение Камиля). Раньше продажа была
+            возможна, только когда выпадет карта рынка: человек мог сидеть с
+            ненужным объектом полпартии и ничего не мочь. Рынок при этом с
+            характером — быстрая продажа идёт со скидкой, а за полной ценой
+            надо ждать карту, где дают больше ста процентов.
+          */}
+          {dispatch && !вторая && !(a as BusinessAsset).gl && (
+            <КнопкаБыстройПродажи актив={a} долг={debt} dispatch={dispatch} />
+          )}
           {kind === 'business' &&
             dispatch &&
             !вторая &&
@@ -512,6 +522,46 @@ function AssetRow({
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Кнопка быстрой продажи: два нажатия, чтобы не продать случайно.
+ *
+ * Цену считает та же функция, что и продажу по карте рынка, — иначе кнопка
+ * пообещает одно, а движок заплатит другое; на этом уже обжигались.
+ */
+function КнопкаБыстройПродажи({
+  актив,
+  долг,
+  dispatch,
+}: {
+  актив: RealEstateAsset | BusinessAsset
+  долг: number
+  dispatch: (e: TableEvent) => void
+}) {
+  const [готов, setГотов] = useState(false)
+  const { price, rebate } = sellOfferQuote(актив, долг, СКИДКА_ЗА_СКОРОСТЬ, 1)
+  const наСчёт = Math.round((price - (долг - rebate)) * (1 - (актив.investorShare ?? 0)))
+  if (price <= 0) return null
+  return (
+    <button
+      onClick={() => (готов ? dispatch({ type: 'SELL_ASSET_NOW', assetId: актив.id }) : setГотов(true))}
+      className={`mt-1.5 w-full rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition ${
+        готов
+          ? 'border-amber-500 bg-amber-500/15'
+          : 'border-[var(--t-line, var(--line))] hover:border-amber-500/60 hover:bg-amber-500/10'
+      }`}
+    >
+      {готов
+        ? `Точно продать за ${money(price)}? На счёт ${money(наСчёт)}`
+        : `Продать быстро — ${СКИДКА_ЗА_СКОРОСТЬ}% стоимости, ${money(наСчёт)} на счёт`}
+      {!готов && (
+        <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+          дороже — только по карте рынка, её надо дождаться
+        </span>
+      )}
+    </button>
   )
 }
 

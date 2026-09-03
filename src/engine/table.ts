@@ -1637,6 +1637,7 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   REPAY_LOAN: 'своё',
   PAYOFF_ASSET: 'своё',
   INVEST_IN_BUSINESS: 'своё',
+  SELL_ASSET_NOW: 'своё',
   PAY_BIZ_TROUBLE: 'карта',
   ENDURE_BIZ_TROUBLE: 'карта',
   PAY_OFF_DEBT: 'своё',
@@ -1754,6 +1755,16 @@ export const ПРИБАВКА_ЗА_УВОЛЬНЕНИЕ = 30
  * ведомости, ничего не решая.
  */
 export const МИНИМУМ_ВЛОЖЕНИЯ = 100_000
+
+/**
+ * Сколько дают за быструю продажу — в процентах от рыночной стоимости.
+ *
+ * 🔴 «Чем ниже цена, тем быстрее купят» (решение Камиля). Продать можно
+ * всегда, но покупатель на сегодня стоит скидки. Карты рынка при этом дают
+ * от 112% до 160% — за полную цену надо ждать, и это честный выбор, а не
+ * наказание.
+ */
+export const СКИДКА_ЗА_СКОРОСТЬ = 85
 
 /** Взял ли человек рубеж свободы именно в этот месяц. */
 function взялРубеж(до: Seat, после: Seat): boolean {
@@ -3894,6 +3905,58 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       }
       for (const з of заметки) log(t, seat.id, з)
       t.pending = { kind: 'market', card, notes: заметки.length ? заметки : undefined }
+      return t
+    }
+
+    /**
+     * Продать свой актив прямо сейчас, не дожидаясь карты рынка.
+     *
+     * 🔴 РЫНОК С ХАРАКТЕРОМ (решение Камиля): чем ниже цена, тем быстрее
+     * купят. Быстрая продажа идёт со скидкой — покупателя находишь сегодня, а
+     * не через полгода. Ждать полную цену по-прежнему можно: за ней приходит
+     * карта рынка, и там дают больше ста процентов.
+     *
+     * Считаем ТОЙ ЖЕ формулой, что и продажа по карте: рыночная стоимость со
+     * скидкой, минус остаток рассрочки, со списанием незаработанной наценки.
+     * Расчёт с партнёром и доля с прибыли за вход — те же, что везде.
+     */
+    case 'SELL_ASSET_NOW': {
+      const re = l.realEstate.find((x) => x.id === event.assetId)
+      const biz = l.businesses.find((x) => x.id === event.assetId)
+      const asset = re ?? biz
+      if (!asset) return prev
+      // Партнёрский бизнес не продаётся: это структура, а не заведение.
+      if (biz?.gl) return prev
+      const debt = re ? re.mortgage : (biz as BusinessAsset).liability
+      const { price, rebate } = sellOfferQuote(
+        asset,
+        debt,
+        СКИДКА_ЗА_СКОРОСТЬ,
+        t.market.price[asset.category ?? ''] ?? 1,
+      )
+      if (price <= 0) return prev
+      const нетто = price - (debt - rebate)
+      const партнёру = settleCoInvestor(t, seat, asset, нетто)
+      if (re) {
+        seatLedgerEvent(t, seat.id, { type: 'SELL_REAL_ESTATE', assetId: asset.id, salePrice: price, rebate })
+      } else {
+        seatLedgerEvent(t, seat.id, { type: 'SELL_BUSINESS', assetId: asset.id, salePrice: price, rebate })
+      }
+      const доля = settleProfitShare(t, seat, asset, нетто)
+      log(t, seat.id, `${seat.name} продал «${asset.name}» без торга за ${money(price)} (${СКИДКА_ЗА_СКОРОСТЬ}% стоимости)`)
+      разбивкаПродажи(t, seat, asset.name, {
+        цена: price,
+        долг: debt,
+        скидка: rebate,
+        партнёр: партнёру,
+        доля,
+      })
+      плашка(
+        t,
+        seat.id,
+        `${seat.name} продал «${asset.name}» быстро — за ${money(price)}, это ${СКИДКА_ЗА_СКОРОСТЬ}% стоимости`,
+        'нейтр',
+      )
       return t
     }
 
