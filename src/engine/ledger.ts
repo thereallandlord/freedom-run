@@ -41,6 +41,8 @@ export interface Rules {
   zakat: { enabled: boolean; pct: number; everyPaydays: number }
   /** Какая доля прироста дохода уходит в расходы. 0 — уровень жизни не растёт. */
   lifestyleCreepPct?: number
+  /** Во сколько раз доход должен перекрыть расходы для победы на Полосе. */
+  freedomMultiple?: number
 }
 
 export const RULES: Rules = {
@@ -62,6 +64,13 @@ export const RULES: Rules = {
   installmentTerm: { realEstate: 180, business: 84 },
   zakat: { enabled: false, pct: 2.5, everyPaydays: 12 },
   lifestyleCreepPct: 33,
+  /*
+   * 🔴 ЦЕЛЬ ВТОРОГО КРУГА: доход с активов вдвое выше расходов. Решение
+   * Камиля: свобода — это не «свожу концы», а «живу с запасом». Число
+   * вынесено в правила, чтобы подбирать замером на длительность круга, а не
+   * править по коду в трёх местах.
+   */
+  freedomMultiple: 2,
 }
 
 export function setRules(patch: Partial<Rules>) {
@@ -295,6 +304,21 @@ export function fastTrackProgress(l: Ledger): number {
   return l.fastTrack ? l.fastTrack.businesses.reduce((s, b) => s + b.cashFlow, 0) : 0
 }
 
+/**
+ * Свобода достигнута: доход с активов перекрыл расходы с запасом.
+ *
+ * 🔴 СЧИТАЕТСЯ ОТ РАСХОДОВ, А НЕ ОТ АБСОЛЮТНОГО ЧИСЛА. Прежняя цель Полосы
+ * была «собрать N рублей нового дохода» — одинаковая и для того, кто вышел с
+ * тремястами тысячами расходов, и для того, у кого их девяносто. Планка от
+ * собственных расходов честна к обоим и не устаревает при правке колоды.
+ */
+export function свободаДостигнута(l: Ledger, m?: FlowMul): boolean {
+  const расходы = totalExpenses(l)
+  if (расходы <= 0) return false
+  const кратность = RULES.freedomMultiple ?? 2
+  return fastTrackIncome(l, m) >= расходы * кратность
+}
+
 export function fastTrackTarget(): number {
   return RULES.fastTrackTarget
 }
@@ -473,8 +497,22 @@ export function installmentMonthly(debt: number, kind: 'realEstate' | 'business'
   return Math.round(debt / RULES.installmentTerm[kind] / 100) * 100
 }
 
-export function fastTrackIncome(l: Ledger): number {
-  return l.fastTrack ? l.fastTrack.beginningIncome + fastTrackProgress(l) : 0
+/**
+ * Месячный доход на Полосе свободы.
+ *
+ * 🔴 РАНЬШЕ ЭТО БЫЛ ВЫКУП, А НЕ ДОХОД: `beginningIncome` — снимок суммы, за
+ * которую человека «выкупили» при выходе, и он же выдавался каждый месяц.
+ * Выкупа больше нет, у новых партий это поле всегда ноль, и доход второго
+ * круга целиком идёт от живых активов — тех же, что работали в Круге, плюс
+ * дела, купленные уже на большом поле.
+ *
+ * Слагаемое `beginningIncome` оставлено ради СТАРЫХ сохранённых партий: они
+ * переигрываются событие за событием, и без него чужая запись показала бы
+ * человеку нулевой доход там, где он был.
+ */
+export function fastTrackIncome(l: Ledger, m?: FlowMul): number {
+  if (!l.fastTrack) return 0
+  return l.fastTrack.beginningIncome + fastTrackProgress(l) + freedomIncome(l, m)
 }
 
 /** Зарплата пришла отрицательной, а наличных не хватает — это банкротство. */

@@ -44,6 +44,7 @@ import {
   MANAGER_PCT,
 } from './ledger'
 import { TICKERS, bigDeals, fastBoard, smallDeals } from './data'
+import { loanOwed } from './trades'
 import {
   GL_PROMOS,
   glPackage,
@@ -526,6 +527,20 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     case 'ftBusiness': {
       const space = fastBoard()[pending.space]
       if (space.type !== 'business') return { type: 'END_TURN' }
+      /*
+       * 🔴 БОТ ЦЕЛИТСЯ В ПОБЕДУ, А НЕ В ДОХОД. Победа на втором круге одна —
+       * купить свою мечту, и она покупается НАЛИЧНЫМИ. Бот же скупал дела
+       * большого поля при первой возможности и спускал на них всё, что успел
+       * накопить: замер показал, что до мечты он идёт двести с лишним ходов,
+       * хотя весь первый круг занимает сто сорок.
+       *
+       * Правило простое и человеческое: пока до мечты далеко — вкладывайся,
+       * дело приблизит её быстрее, чем накопления. Как накопил половину —
+       * больше не трогай кубышку.
+       */
+      const мечта = dreamPriceAt(t, seat.dreamSpace)
+      const хватитПотом = l.cash - space.downPayment
+      if (мечта > 0 && l.cash >= мечта * 0.5 && хватитПотом < мечта) return { type: 'PASS_CARD' }
       if (l.cash >= space.downPayment * p.laneBuyCashMultiple) return { type: 'BUY_FT_BUSINESS' }
       return { type: 'PASS_CARD' }
     }
@@ -544,6 +559,23 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
     case 'ftDream': {
       const price = dreamPriceAt(t, pending.space)
+      /*
+       * 🔴 СНАЧАЛА РАССЧИТАТЬСЯ С ЛЮДЬМИ. Победа с непогашенным долгом перед
+       * игроком не засчитывается — иначе выигрышной стратегией стало бы
+       * «занять у всех и уйти». Человеку об этом говорит сама карточка и
+       * даёт кнопку; бот же молча жал «купить», получал отказ движка и
+       * заканчивал ход — и так до конца партии.
+       */
+      const долг = t.loans.find(
+        (ln) => ln.borrowerId === seat.id && loanOwed(ln) - ln.repaid > 0,
+      )
+      if (долг) {
+        const надо = loanOwed(долг) - долг.repaid
+        if (l.cash >= надо + price) {
+          return { type: 'REPAY_PLAYER_LOAN', loanId: долг.id, amount: надо }
+        }
+        return { type: 'PASS_CARD' }
+      }
       if (l.cash >= price) return { type: 'BUY_DREAM' }
       return { type: 'PASS_CARD' }
     }

@@ -100,7 +100,12 @@ export type LedgerEvent =
    * числом, чтобы журнал и карточка могли сказать, из чего сложилась сумма.
    */
   | { type: 'ENTER_FAST_TRACK'; buyout?: number; stocksValue?: number }
-  | { type: 'CASHFLOW_DAY' }
+  /**
+   * День потока на Полосе. Множитель рынка нужен ровно затем же, зачем
+   * зарплате: доход активов на втором круге считается по живому рынку, а не
+   * по слепому — иначе мировая новость проходила бы мимо второго круга.
+   */
+  | { type: 'CASHFLOW_DAY'; flowMul?: Record<string, number> }
   | { type: 'BUY_FT_BUSINESS'; id: string; name: string; downPayment: number; cashFlow: number }
   | { type: 'FT_STAKE_LOST'; amount: number }
   | { type: 'FT_DOWNSIZED'; amount: number }

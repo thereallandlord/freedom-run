@@ -26,7 +26,8 @@
     "test:biz": "npx tsx src/engine/biztest.ts",
     "test:keys": "npx tsx src/engine/keystest.ts",
     "test:voice": "node scripts/voicetest.mjs",
-    "test:gl": "npx tsx src/engine/gltest.ts"
+    "test:gl": "npx tsx src/engine/gltest.ts",
+    "ft": "npx tsx src/engine/ftmeter.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

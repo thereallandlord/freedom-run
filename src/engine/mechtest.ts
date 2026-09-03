@@ -33,7 +33,11 @@ const check = (name: string, cond: boolean, info = '') => {
 console.log('\n=== Режим ===')
 check('валюта рубли', RULES.currency === 'RUB')
 check('кредиты выключены', RULES.loansEnabled === false)
-check('выкуп ×50', RULES.fastTrackMultiplier === 50)
+/*
+ * Выкупа больше нет: выход из Круга — увольнение, активы остаются. Вместо
+ * множителя проверяем то, что теперь решает второй круг, — планку свободы.
+ */
+check('свобода = доход вдвое выше расходов', (RULES.freedomMultiple ?? 2) === 2, String(RULES.freedomMultiple))
 check('цель Полосы 1 млн', RULES.fastTrackTarget === 1_000_000)
 
 console.log('\n=== Заём есть, но беспроцентный (кард хасан) ===')

@@ -13,7 +13,7 @@ import { netWorth } from './ledger'
 import type { Table, BotDifficulty } from './types'
 
 const ПАРТИЙ = Number(process.env.G || 30)
-const ХОДОВ = 600
+const ХОДОВ = Number((globalThis as { process?: { env?: Record<string,string> } }).process?.env?.H || 600)
 
 function стол(seed: number, уровень: BotDifficulty): Table {
   return createTable({
@@ -23,7 +23,13 @@ function стол(seed: number, уровень: BotDifficulty): Table {
       id: `s${i}`,
       name: `Б${i}`,
       professionId: ['engineer', 'doctor', 'teacher', 'driver'][i],
-      dreamSpace: 3 + i * 4,
+      /*
+       * 🔴 НАСТОЯЩИЕ КЛЕТКИ МЕЧТЫ, а не произвольные индексы. Раньше здесь
+       * стояло `3 + i * 4`, и три места из четырёх целились в клетку, которая
+       * мечтой не является: победить мечтой они не могли в принципе, а замер
+       * молча показывал заниженные выходы и длину партии.
+       */
+      dreamSpace: [2, 13, 24, 39][i],
       isBot: true,
       botDifficulty: уровень,
     })),
