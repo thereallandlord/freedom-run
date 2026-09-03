@@ -2225,7 +2225,7 @@ function CardBody({
       const txt = fastSpaceText(p.space, locale)
       return (
         <S
-          badge="Рисковый проект"
+          badge="Доля в проекте"
           title={txt?.name ?? space.name}
           flavor={txt?.flavor}
           accent="#f97316"
@@ -2233,9 +2233,16 @@ function CardBody({
           photo={artById((space as any).id)}
         >
           <div className="panel-2 rounded-lg p-3">
-            <Stat label="Ставка (невозвратная)" value={money(space.downPayment)} strong />
-            <Stat label="При удаче" value={`${signed(space.cashFlow)}/мес`} strong />
-            <Stat label="Нужно выбросить" value={`${space.threshold} или больше`} />
+            {/*
+              🔴 «СТАВКА НЕВОЗВРАТНАЯ» — СЛОВО ИЗ КАЗИНО, а механика тут другая:
+              деньги идут в реальное дело и превращаются в долю, а не ложатся
+              на стол в ожидании броска. В халяльной игре разница между
+              вложением и пари — не мелочь формулировки, и называть вложение
+              ставкой значит учить неверному.
+            */}
+            <Stat label="Вложение в проект" value={money(space.downPayment)} strong />
+            <Stat label="Если проект пойдёт" value={`${signed(space.cashFlow)}/мес`} strong />
+            <Stat label="Проект пошёл при броске" value={`${space.threshold} и выше`} />
             {/*
               🔴 Говорим шансы ЧИСЛОМ. «Нужно 5 или больше» человек в уме не
               переводит, а «один бросок из трёх» — это уже решение. Механика
@@ -2246,6 +2253,7 @@ function CardBody({
               value={`${7 - space.threshold} из 6 — примерно ${Math.round(((7 - space.threshold) / 6) * 100)}%`}
             />
           </div>
+          <HalalNote topic="venture" />
           {p.rolled == null ? (
             <div className="flex gap-2">
               <button
@@ -2255,7 +2263,7 @@ function CardBody({
                 }
                 className="btn-primary flex-1"
               >
-                🎲 Рискнуть — {money(space.downPayment)}
+                Войти в проект — {money(space.downPayment)}
               </button>
               <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet">
                 Мимо
