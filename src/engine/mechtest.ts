@@ -205,7 +205,12 @@ console.log('\n=== Масштаб доходности ===')
 // 🔴 Доходность НАСТОЯЩАЯ, без урезания: с тройкой аренда однушки в Казани
 // считалась за 1,7% годовых, и ни одна покупка в рассрочку не сходилась.
 check('доходность настоящая, не урезана', RULES.yieldScale === 1, String(RULES.yieldScale))
-check('жильё в рассрочку на 25 лет', RULES.installmentTerm.realEstate === 300, String(RULES.installmentTerm.realEstate))
+/*
+ * Срок 180 месяцев, а не 300: при 300 рассрочка выигрывала у наличных втрое
+ * (39% против 12% годовых на взнос), и выбора «нал или рассрочка» не
+ * существовало. Ниже 120 нельзя — часть объектов уходит в нулевой поток.
+ */
+check('жильё в рассрочку на 15 лет', RULES.installmentTerm.realEstate === 180, String(RULES.installmentTerm.realEstate))
 
 console.log('\n=== Колоды RU ===')
 check('малых сделок', smallDeals('ru').length >= 30, String(smallDeals('ru').length))
