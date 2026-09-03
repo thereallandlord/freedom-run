@@ -4,6 +4,7 @@ import type { LedgerEvent } from './events'
 import {
   glInitialState,
   glOnPayday,
+  glFreedomShareByLevel,
   glRankFor,
   glStructureIncome,
   glTotalIncome,
@@ -138,6 +139,28 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
               `Премия за ранг «${rank.name}»: ${rank.bonus.toLocaleString('ru-RU')} ₽ разово, ` +
                 `и ${rank.pension.toLocaleString('ru-RU')} ₽ в месяц сверх дохода структуры — навсегда.`,
             )
+            /*
+             * 🔴 РАНГ ДВИГАЕТ ДОЛЮ ЗАЧЁТА СВОБОДЫ — И ОБ ЭТОМ НАДО СКАЗАТЬ.
+             * Строка «Из них пассивный (работает без вас)» считается как
+             * доход структуры × glFreedomShare, а доля растёт СТУПЕНЬКОЙ
+             * 0 → 40 → 70 → 100 % вместе с рангом. Замер на 60 партиях: из 573
+             * переходов доли 375 не сопровождались ни одним словом про
+             * свободу, и человек видел скачок «пассивного» на 50–140 тысяч,
+             * которому в игре не соответствовало ни одно объяснение. Живая
+             * жалоба 31.08: «пассивный встал 182 вместо 40, но за счёт чего?
+             * Тоже непонятно. Должно быть написано за счёт чего».
+             */
+            const долиБыло = glFreedomShareByLevel(next.rankPaid)
+            const долиСтало = glFreedomShareByLevel(rank.level)
+            if (долиСтало > долиБыло) {
+              const прибавка =
+                Math.round((glStructureIncome(next) * (долиСтало - долиБыло)) / 100 / 100) * 100
+              l.glNotes.push(
+                `Премия за ранг: в зачёт свободы пошло ${долиСтало}% дохода структуры вместо ` +
+                  `${долиБыло}% — строка «работает без вас» выросла на ` +
+                  `${прибавка.toLocaleString('ru-RU')} ₽/мес без единой новой сделки.`,
+              )
+            }
           }
           continue
         }
@@ -763,8 +786,15 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       }
       l.phase = 'fastTrack'
       l.fastTrack = {
-        beginningIncome: buyout,
-        goalIncome: buyout + RULES.fastTrackTarget,
+        /*
+         * 🔴 ПАКЕТ БУМАГ — ТОЖЕ ЧАСТЬ ВЫКУПА. `buyout` приходит уже без него
+         * (стол вычитает пакет, чтобы не начислить его в наличные дважды), и
+         * доход Полосы молча терял всю стоимость бумаг. Замер: игрок, у
+         * которого вся свобода на сукуке, выходил из Круга с 0 ₽/мес на
+         * Полосе — навсегда.
+         */
+        beginningIncome: buyout + пакет,
+        goalIncome: buyout + пакет + RULES.fastTrackTarget,
         businesses: [],
       }
       return l

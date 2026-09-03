@@ -35,6 +35,7 @@ import {
   RAT_BOARD_SIZE,
   WORLD_EVENTS,
   TOKEN_COLORS,
+  activeTheme,
   bigDeals,
   doodads,
   fastBoard,
@@ -709,18 +710,54 @@ export function applyWorldEvent(prev: Table, index: number): Table {
         payWorldAmount(t, s, e.amount)
       }
       break
+    /*
+     * 🔴 ПРОЦЕНТ — НЕ ЧИСЛО. Новость показывала «Расходы · прочие +12% у всех»
+     * и на этом замолкала. У человека с расходами под 800 000 ₽ это молча
+     * съедает ~96 000 ₽ из строки «Чистый доход в месяц» — и он читает это как
+     * падение ДОХОДА. Живая жалоба 31.08, дословно: «у меня доход просел
+     * почему-то прямо сильно. Мне на сотку доход просел. Что за косяк такой
+     * интересно?» — а доход не падал вовсе. Замер на 60 партиях: 7 просадок
+     * «Чистого дохода» на 53–68 тысяч от одной этой новости, у всех семи лента
+     * пустая. Соседняя ветка `cashAll` рубли называет — эти две не называли.
+     */
     case 'expenseAll':
       t.seats = t.seats.map((s) => {
         if (s.outOfGame) return s
         const x = { ...s.ledger, expenses: { ...s.ledger.expenses } }
-        x.expenses.otherExpenses = Math.round((x.expenses.otherExpenses * mul(e.pct)) / 100) * 100
+        const было = x.expenses.otherExpenses
+        x.expenses.otherExpenses = Math.round((было * mul(e.pct)) / 100) * 100
+        const дельта = x.expenses.otherExpenses - было
+        if (дельта !== 0)
+          плашка(
+            t,
+            s.id,
+            дельта > 0
+              ? `Ваши расходы выросли на ${money(дельта)}/мес — доход не падал, подорожала жизнь`
+              : `Ваши расходы упали на ${money(-дельта)}/мес`,
+            дельта > 0 ? 'худо' : 'добро',
+            [s.id],
+          )
         return { ...s, ledger: x }
       })
       break
     case 'salaryAll':
-      t.seats = t.seats.map((s) =>
-        s.outOfGame ? s : { ...s, ledger: { ...s.ledger, salary: Math.round((s.ledger.salary * mul(e.pct)) / 100) * 100 } },
-      )
+      t.seats = t.seats.map((s) => {
+        if (s.outOfGame) return s
+        const было = s.ledger.salary
+        const стало = Math.round((было * mul(e.pct)) / 100) * 100
+        const дельта = стало - было
+        if (дельта !== 0)
+          плашка(
+            t,
+            s.id,
+            дельта > 0
+              ? `Ваша зарплата выросла на ${money(дельта)}/мес — стало ${money(стало)}`
+              : `Ваша зарплата упала на ${money(-дельта)}/мес — стало ${money(стало)}`,
+            дельта > 0 ? 'добро' : 'худо',
+            [s.id],
+          )
+        return { ...s, ledger: { ...s.ledger, salary: стало } }
+      })
       break
   }
 
@@ -1115,6 +1152,15 @@ export function marketMatches(
     debt: number
     /** Доля соинвестора — без неё окно обещало владельцу всю выручку. */
     investorShare?: number
+    /*
+     * 🔴 ДОЛЯ ЗА ВХОД В ЧУЖУЮ НАХОДКУ ТОЖЕ УМЕНЬШАЕТ ЧИСЛО НА КНОПКЕ.
+     * Без этих полей окно считало выручку ДО удержания, а движок платил
+     * ПОСЛЕ: замер 03.09 — кнопка обещала 1 910 000, приходило 1 668 000.
+     */
+    downPayment?: number
+    paidIn?: number
+    profitShareTo?: string
+    profitSharePct?: number
   }[]
 }[] {
   const out: ReturnType<typeof marketMatches> = []
@@ -1131,6 +1177,10 @@ export function marketMatches(
           value: a.value,
           debt: a.mortgage,
           investorShare: a.investorShare,
+          downPayment: a.downPayment,
+          paidIn: a.paidIn,
+          profitShareTo: a.profitShareTo,
+          profitSharePct: a.profitSharePct,
         })),
       ...seat.ledger.businesses
         .filter((a) => a.category === category && !этоВтораяПоловина(a))
@@ -1142,6 +1192,10 @@ export function marketMatches(
           value: a.value,
           debt: a.liability,
           investorShare: a.investorShare,
+          downPayment: a.downPayment,
+          paidIn: a.paidIn,
+          profitShareTo: a.profitShareTo,
+          profitSharePct: a.profitSharePct,
         })),
     ]
     if (assets.length) out.push({ seat, assets })
@@ -1303,17 +1357,42 @@ export function этоВтораяПоловина(a: { partnerId?: string; inve
 
 /** Что на самом деле придёт с продажи по карточке рынка — одна формула на движок и на окно. */
 export function sellOfferQuote(
-  a: { cost: number; value?: number; investorShare?: number },
+  a: {
+    cost: number
+    value?: number
+    investorShare?: number
+    downPayment?: number
+    paidIn?: number
+    profitShareTo?: string
+    profitSharePct?: number
+  },
   debt: number,
   multiplierPct: number,
   marketMul: number,
-): { price: number; rebate: number; net: number; mine: number; partner: number } {
+): {
+  price: number
+  rebate: number
+  net: number
+  mine: number
+  partner: number
+  share: number
+  toMe: number
+} {
   const price = sellOfferPrice(a.value ?? a.cost, multiplierPct, marketMul)
   const rebate = markupRebate(a, debt)
   const net = price - (debt - rebate)
   const partner = a.investorShare ? Math.round(net * a.investorShare) : 0
   const mine = a.investorShare ? Math.round(net * (1 - a.investorShare)) : net
-  return { price, rebate, net, mine, partner }
+  /*
+   * 🔴 ДОЛЮ ЗА ВХОД В ЧУЖУЮ НАХОДКУ СЧИТАЕМ ТЕМ ЖЕ СПОСОБОМ, ЧТО И
+   * `settleProfitShare`, — иначе кнопка снова начнёт обещать одно, а движок
+   * платить другое. Замер 03.09: разрыв 242 000 ₽ на объекте с долей 20% и
+   * 1 757 950 ₽ на доле 50%, причём молча — человек видит только итог.
+   */
+  const вложено = a.paidIn ?? a.downPayment ?? 0
+  const прибыль = a.profitShareTo && a.profitSharePct ? mine - вложено : 0
+  const share = прибыль > 0 ? Math.round((прибыль * (a.profitSharePct as number)) / 100) : 0
+  return { price, rebate, net, mine, partner, share, toMe: mine - share }
 }
 
 export function markupRebate(a: { cost: number; value?: number }, debt: number): number {
@@ -2297,11 +2376,40 @@ export function бизнесСтадия(l: import('./types').Ledger): 1 | 2 | 3
   return свои.length >= 2 || поток >= 180_000 ? 3 : 2
 }
 
+/**
+ * Ремесло заведения — «барбершоп», «автомойка», «ПВЗ».
+ *
+ * 🔴 Категория — это РЫНОК («услуги»), а не ремесло. Пока их не различали,
+ * новость про пункты выдачи резала доход барбершопу, а мойка с дешёвым
+ * шампунем била по стрижкам. Ремесло берём у карточки-родителя: id актива это
+ * `<id карточки>-<номер>` (и `-part-<номер>` у совладельца) — форма, на которой
+ * уже держится поиск второй половины долевой сделки. Нового поля в кошельке не
+ * заводим нарочно: тогда старые сохранения читались бы без ремесла.
+ */
+export function ремеслоАктива(a: { id: string }): string | undefined {
+  const тема = activeTheme()
+  const дела = [...bigDeals(тема), ...smallDeals(тема)] as { id: string; ремесло?: string }[]
+  return дела.find((c) => a.id.startsWith(`${c.id}-`))?.ремесло
+}
+
+/** Задевает ли карточка это заведение: и по рынку, и по ремеслу. */
+export function делоПодходит(
+  card: { categories?: string[]; ремесло?: string[] },
+  b: { id: string; category?: string },
+): boolean {
+  if (card.categories?.length && !card.categories.includes(b.category ?? '')) return false
+  if (card.ремесло?.length) {
+    const р = ремеслоАктива(b)
+    if (!р || !card.ремесло.includes(р)) return false
+  }
+  return true
+}
+
 /** Подходит ли событие бизнеса этому игроку: и по стадии, и по виду дела. */
 export function событиеБизнесаУместно(t: Table, card: import('./types').BizEventCard): boolean {
   const свои = currentSeat(t).ledger.businesses.filter((b) => !b.gl)
   if (!свои.length) return false
-  if (card.categories?.length && !свои.some((b) => card.categories!.includes(b.category ?? ''))) {
+  if (!свои.some((b) => делоПодходит(card, b))) {
     return false
   }
   if (card.stages?.length && !card.stages.includes(бизнесСтадия(currentSeat(t).ledger))) {
@@ -2324,9 +2432,7 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
      * была бы, а нажать её движок не дал бы. Такие карточки просто ждут.
      */
     if (card.managerPct != null) {
-      const свои = currentSeat(t).ledger.businesses.filter(
-        (b) => !b.gl && (!card.categories?.length || card.categories.includes(b.category ?? '')),
-      )
+      const свои = currentSeat(t).ledger.businesses.filter((b) => !b.gl && делоПодходит(card, b))
       if (!свои.some((b) => !b.managerPct)) return false
     }
   }
@@ -2397,9 +2503,7 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
      * заведения. Так пожар в кофейне не бьёт по типографии за соседним столом.
      */
     const seat = currentSeat(t)
-    const цели = seat.ledger.businesses.filter(
-      (b) => !b.gl && (!card.categories?.length || card.categories.includes(b.category ?? '')),
-    )
+    const цели = seat.ledger.businesses.filter((b) => !b.gl && делоПодходит(card, b))
     if (!цели.length) return []
     const заметки: string[] = []
     /*
@@ -2622,10 +2726,41 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
         объяснения.push(...r.заметки)
       }
 
+      /*
+       * 🔴 СЧИТАЕМ ДО ПОДМЕНЫ: `g` — копия, `biz.gl` пока прежний.
+       * Карточка партнёрского бизнеса — САМЫЙ КРУПНЫЙ движок дохода в игре, и
+       * до этой правки она писала только в журнал. Замер на 60 партиях: из 398
+       * скачков дохода ≥50 000 по этим карточкам 116 не давали НИ ОДНОЙ
+       * плашки; крупнейшее падение −115 100 («Из структуры выбыл лидер»)
+       * уходило в тишину — ровно жалоба Камиля 31.08 «мне на сотку доход
+       * просел, что за косяк такой?». Соседняя ветка обычного бизнеса плашку
+       * пишет — эта просто была забыта.
+       */
+      const былоГЛ = glTotalIncome(biz.gl)
       biz.gl = g
       biz.cashFlow = glTotalIncome(g)
+      const сталоГЛ = glTotalIncome(g)
       if (разово > 0) seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount: разово })
-      log(t, s.id, `${s.name}: ${card.title} — доход по партнёрскому бизнесу теперь ${money(glTotalIncome(g))}/мес`)
+      log(t, s.id, `${s.name}: ${card.title} — доход по партнёрскому бизнесу теперь ${money(сталоГЛ)}/мес`)
+      const дельтаГЛ = сталоГЛ - былоГЛ
+      if (дельтаГЛ !== 0) {
+        const знак = дельтаГЛ > 0 ? '+' : '−'
+        плашка(
+          t,
+          s.id,
+          `${s.name}: ${card.title} — партнёрский бизнес ${знак}${money(Math.abs(дельтаГЛ))}/мес, теперь ${money(сталоГЛ)}/мес`,
+          дельтаГЛ > 0 ? 'добро' : 'худо',
+        )
+        плашка(
+          t,
+          s.id,
+          дельтаГЛ > 0
+            ? `Ваш партнёрский бизнес прибавил ${money(дельтаГЛ)}/мес — это «${card.title}». Стало ${money(сталоГЛ)}/мес`
+            : `Ваш партнёрский бизнес просел на ${money(-дельтаГЛ)}/мес — это «${card.title}». Стало ${money(сталоГЛ)}/мес`,
+          дельтаГЛ > 0 ? 'добро' : 'худо',
+          [s.id],
+        )
+      }
       for (const о of объяснения) log(t, s.id, о)
     }
     return []
@@ -3573,6 +3708,16 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
           ? `Взял кредит ${money(amount)} (+${money(amount / 10)}/мес)`
           : `Беспроцентный заём ${money(amount)} — вернёт ровно столько же, ${money(amount / 10)}/мес`,
       )
+      // Тот же слепой угол, что и у процентного кредита: деньги пришли — след нужен.
+      плашка(
+        t,
+        seat.id,
+        RULES.loansEnabled
+          ? `${seat.name} взял кредит ${money(amount)} — на руках ${money(t.seats[seatIdx].ledger.cash)}`
+          : `${seat.name} взял заём ${money(amount)} — на руках ${money(t.seats[seatIdx].ledger.cash)}`,
+        'нейтр',
+        [seat.id],
+      )
       return t
     }
 
@@ -3830,7 +3975,19 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
        * выглядел так: полоска цели дошла до ста процентов — и всё. Главный
        * момент игры проходил незамеченным.
        */
-      t.pending = { kind: 'freedom', seatId: seat.id, buyout, долги: долгиБыли, бумаги: пакет }
+      t.pending = {
+        kind: 'freedom',
+        seatId: seat.id,
+        buyout,
+        долги: долгиБыли,
+        бумаги: пакет,
+        /*
+         * 🔴 Доли с прибыли карточке тоже нужны: без них она называет сумму
+         * больше той, что ложится на счёт. Замер: кнопка «на счёт 6 515 000»,
+         * карточка «на счёт придёт 6 995 000», в кошелёк легло 6 515 000.
+         */
+        доли: доли.reduce((n, x) => n + x.сумма, 0),
+      }
       /*
        * 🔴 И здесь фаза оставалась «ждём броска». Дальше выходило хуже, чем с
        * зарплатой: игрок бросал поверх карточки «Свобода», попадал на клетку
@@ -4088,6 +4245,29 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
             ? `Добрал кредит ${money(amount)} — тело ${money(былоТело + amount)}, льгота не продлевается`
             : `Добрал кредит ${money(amount)} — платёж вырос до ${money(наПлатёж)}/мес`
           : `Взял кредит ${money(amount)} — первые ${RIBA.gracePaydays} зарплат без платежей`,
+      )
+      /*
+       * 🔴 КРЕДИТ ОБЯЗАН ПОПАСТЬ В ЛЕНТУ. Живая жалоба 31.08: «куда мне
+       * кредитные деньги ушли? Я что-то взял, что ли?» Деньги приходят ровно
+       * как надо (замер: cash +300 000 в ту же секунду), но следа на экране
+       * НЕТ НИ ОДНОГО: лента пуста, всплывашка над доской ловит только
+       * зарплату, а строка журнала спрятана за кнопкой.
+       *
+       * Остаток на руках пишем ПОСЛЕ начисления — это и есть ответ на вопрос
+       * «куда ушли»: они вот тут, на счету.
+       *
+       * 🔴 `кому` — только заёмщику. Аварийный экран прямо обещает: «взять в
+       * банке — быстро и никто не увидит». Хочешь показывать всем — убери
+       * последний аргумент, механика от этого не изменится.
+       */
+      плашка(
+        t,
+        seat.id,
+        былоТело > 0
+          ? `${seat.name} добрал кредит ${money(amount)} — на руках ${money(t.seats[seatIdx].ledger.cash)}`
+          : `${seat.name} взял кредит ${money(amount)} — на руках ${money(t.seats[seatIdx].ledger.cash)}`,
+        'нейтр',
+        [seat.id],
       )
       return t
     }
@@ -4553,7 +4733,42 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
     }
 
     case 'CANCEL_OFFER': {
-      t.offers = t.offers.filter((o) => o.id !== event.offerId)
+      const o = t.offers.find((x) => x.id === event.offerId)
+      if (!o) return prev
+      /*
+       * 🔴 СНЯТЬ РАЗГОВОР МОЖЕТ ТОЛЬКО ЕГО СТОРОНА. Класс действия обещал, что
+       * право проверит сам обработчик, — а проверки тут не было ни одной:
+       * посторонний гасил чужое предложение одной кнопкой, и стол не узнавал
+       * об этом ничего — ни строки в журнале, ни плашки. Автору окно просто
+       * исчезало: «нажал и не понял, сработало или это кто-то нажал за меня».
+       */
+      const автор = o.askedBy ?? o.fromId
+      const спрашивают = o.toId ? (o.toId === автор ? o.fromId : o.toId) : null
+      const стороны = спрашивают
+        ? [автор, спрашивают]
+        : [
+            автор,
+            ...t.seats
+              .filter((x) => x.id !== автор && !x.outOfGame && !x.won && x.track === 'rat')
+              .map((x) => x.id),
+          ]
+      if (event.by && !стороны.includes(event.by)) return prev
+      t.offers = t.offers.filter((x) => x.id !== event.offerId)
+      /*
+       * Говорим, только когда знаем ИМЯ нажавшего. Без подписи это отказ бота
+       * или игра за одним экраном: про бота стол и так рассказывает отдельной
+       * строкой, и вторая плашка про то же самое — лишний шум.
+       */
+      const кто = event.by ? t.seats.find((x) => x.id === event.by) : undefined
+      if (кто) {
+        const текст =
+          кто.id === автор
+            ? `${кто.name} снял своё предложение`
+            : `${кто.name} отказался от предложения`
+        log(t, кто.id, текст)
+        // Плашка — ТОЛЬКО сторонам: чужие переговоры о деньгах не наше дело.
+        плашка(t, кто.id, текст, 'нейтр', стороны)
+      }
       return t
     }
 

@@ -23,6 +23,8 @@ export const CAT_SHORT: Record<string, string> = {
   hotelRF: 'гостевые дома',
   bizFood: 'общепит',
   bizService: 'услуги',
+  bizPVZ: 'пункты выдачи',
+  bizRental: 'прокат',
   bizDigital: 'цифровой бизнес',
   partnership: 'партнёрские доли',
 }
@@ -43,6 +45,8 @@ export const CAT_FULL: Record<string, string> = {
   hotelRF: 'гостевые дома в России',
   bizFood: 'общепит',
   bizService: 'услуги',
+  bizPVZ: 'пункты выдачи заказов',
+  bizRental: 'прокат и шеринг',
   bizDigital: 'цифровой бизнес',
   partnership: 'партнёрские доли',
 }

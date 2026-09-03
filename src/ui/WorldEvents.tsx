@@ -589,7 +589,7 @@ function personalImpact(
   if (e.kind === 'assetPrice') {
     for (const a of [...l.realEstate, ...l.businesses]) {
       if (!a.category || !e.categories.includes(a.category)) continue
-      out.push({ text: a.name, delta: Math.round(a.cost * (e.pct / 100)) })
+      out.push({ text: `${a.name} · цена при продаже`, delta: Math.round(a.cost * (e.pct / 100)) })
     }
   }
   if (e.kind === 'assetFlow') {

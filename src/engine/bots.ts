@@ -250,12 +250,23 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
         : null
     const подходит = (b: { category?: string }) =>
       !предложение?.виды?.length || предложение.виды.includes(b.category ?? '')
+    /*
+     * 🔴 ЗЕРКАЛО ОБЩЕГО ДЕЛА БОТ НЕ БЕРЁТ, а цену считает от ПОЛНОГО потока.
+     * Формула ниже осталась старой (`ownShare` — доля нанимающего), тогда как
+     * движок берёт дело целиком: на кофейне 300 000 ₽ бот думал 158 000, а
+     * движок просил 315 000. При наличных 250–314 тыс. бот присылал найм,
+     * движок отклонял, и useGame вместо хода слал END_TURN — ход сгорал молча.
+     */
     const hireable = seat.ledger.businesses.find(
-      (b) => !b.gl && !b.managerPct && (!предложение || подходит(b)),
+      (b) =>
+        !b.gl &&
+        !b.managerPct &&
+        !(b.partnerId && !b.investorShare) &&
+        (!предложение || подходит(b)),
     )
     if (hireable && seat.track === 'rat') {
       const pct = предложение?.pct ?? MANAGER_PCT
-      const cost = Math.max(30_000, Math.round((ownShare(hireable) * pct * 3) / 100 / 1000) * 1000)
+      const cost = Math.max(30_000, Math.round((hireable.cashFlow * pct * 3) / 100 / 1000) * 1000)
       if (seat.ledger.cash - cost >= cashBuffer(seat, p)) {
         return { type: 'HIRE_MANAGER', assetId: hireable.id, pct }
       }

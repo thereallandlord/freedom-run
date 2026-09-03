@@ -29,6 +29,7 @@ export function OfferInbox({
   dispatch,
   onHide,
   meId,
+  queued,
 }: {
   table: Table
   offer: Offer
@@ -43,6 +44,12 @@ export function OfferInbox({
    * себе», и «мне показывают, кому он предлагает долю».
    */
   meId?: string
+  /**
+   * Сколько ЕЩЁ вопросов ждёт лично меня. Без этого числа окна выглядят
+   * бесконечным потоком: ответил — выскочило следующее, и непонятно, сколько
+   * их всего и от кого они.
+   */
+  queued?: number
 }) {
   const [bidFor, setBidFor] = useState<string | null>(null)
   const [bid, setBid] = useState(0)
@@ -100,9 +107,18 @@ export function OfferInbox({
     dispatch({ type: 'ACCEPT_OFFER_TRADE', offerId: offer.id, seatId: offerBuyerId(offer, responder) })
   const cancel = () => dispatch({ type: 'CANCEL_OFFER', offerId: offer.id })
 
+  /*
+   * 🔴 Заголовок читает АВТОРА, а не сторону сделки. У займа кредитор всегда
+   * лежит в `fromId`, а должник в `toId` — кто бы из двоих ни начал разговор.
+   * Поэтому «Ислам просит в долг» писалось и тогда, когда Ислама никто не
+   * спрашивал: деньги предлагал Камиль. Отсюда «непонятно, от кого
+   * предложение» — и у адресата, и у самого автора.
+   */
   const title =
     offer.kind === 'loan'
-      ? `${borrower?.name ?? 'Игрок'} просит в долг`
+      ? автор === offer.toId
+        ? `${borrower?.name ?? 'Игрок'} просит в долг`
+        : `${from.name} предлагает в долг`
       : `${from.name} предлагает`
 
   const canBid = offerBiddable(offer) && !offer.bids.length
@@ -115,9 +131,13 @@ export function OfferInbox({
       layer="z-[62]"
     >
       <div className="flex flex-wrap items-center gap-2 text-[12px]">
-        {/* Слева тот, кто просит: по займу это заёмщик, по остальному — автор. */}
+        {/*
+          🔴 Слева ВСЕГДА тот, кто начал разговор, справа — кого спрашивают.
+          По займу здесь стоял заёмщик независимо от автора, и когда деньги
+          предлагали, строка читалась «Ислам → Ислам».
+        */}
         <span className="chip">
-          <SeatTag seat={offer.kind === 'loan' ? (borrower ?? from) : from} />
+          <SeatTag seat={seatOf(table, автор) ?? from} />
         </span>
         <span className="text-[var(--muted)]">→</span>
         <span className="chip">
@@ -187,7 +207,15 @@ export function OfferInbox({
       {offer.kind === 'loan' && (
         <TradeBlock title="Беспроцентный заём — кард хасан">
           <TradeLine
-            label={яАвтор && автор === offer.toId ? 'Вы просите' : 'Просят'}
+            label={
+              автор === offer.toId
+                ? яАвтор
+                  ? 'Вы просите'
+                  : 'Просят'
+                : яАвтор
+                  ? 'Вы даёте'
+                  : 'Вам предлагают'
+            }
             value={money(offer.amount)}
             strong
           />
@@ -374,11 +402,23 @@ export function OfferInbox({
         </p>
       )}
 
+      {!!queued && (
+        <p className="text-center text-[12px] text-[var(--muted)]">
+          Ответите — и откроется следующее: ждёт ещё {queued}.
+        </p>
+      )}
+
       <div className="flex gap-2">
         <button onClick={onHide} className="btn-ghost flex-1">
           Позже
         </button>
-        {(яАвтор || humans.length > 1) && !offer.bids.length && (
+        {/*
+          🔴 Снять предложение может только ТОТ, КТО ЕГО СДЕЛАЛ. Условие
+          «humans.length > 1» показывало эту кнопку каждому покупателю, и один
+          из них гасил чужой разговор для всего стола. Пустой meId — игра за
+          одним экраном, там жмёт хозяин стола за всех.
+        */}
+        {(!meId || яАвтор) && !offer.bids.length && (
           <button onClick={cancel} className="btn-ghost flex-1">
             Снять предложение
           </button>

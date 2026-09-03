@@ -390,10 +390,26 @@ export function Game({
     !!pendingAccess &&
     (pendingAccess.mode === 'open' ||
       (pendingAccess.mode === 'chosen' && pendingAccess.allow.includes(seat.id)))
-  // Сначала показываем то, где ответ за человеком; предложения ботам — фоном.
+  /*
+   * 🔴 ОКНО ВЫБИРАЕТСЯ ПОД ЗРИТЕЛЯ, а не одно на весь стол. Раньше брали
+   * ПЕРВОЕ живое предложение и показывали его ВСЕМ: когда Камиль попросил
+   * денег у троих, второй и третий кредитор своего вопроса не видели вовсе —
+   * им писали «за столом идёт разговор о сделке», пока не ответит первый.
+   * Отсюда и «не знаю, сработало ли», и окна, приходящие вереницей.
+   * Сначала то, где ответ за МНОЙ; если такого нет — моё исходящее, чтобы
+   * автор видел, чьего ответа ждёт.
+   */
   const openOffers = liveOffers(table).filter((o) => !hiddenOffers.includes(o.id))
+  const мнеОтвечать = openOffers.filter((o) =>
+    meId
+      ? offerResponders(table, o).some((s) => s.id === meId)
+      : offerResponders(table, o).some((s) => !s.isBot),
+  )
   const inbox =
-    openOffers.find((o) => offerResponders(table, o).some((s) => !s.isBot)) ?? openOffers[0] ?? null
+    мнеОтвечать[0] ??
+    (meId ? (openOffers.find((o) => (o.askedBy ?? o.fromId) === meId) ?? null) : (openOffers[0] ?? null))
+  /** Сколько вопросов ждёт лично меня, кроме открытого: очередь, а не поток. */
+  const inboxQueue = Math.max(0, мнеОтвечать.length - 1)
 
   const theme = useBoardTheme()
   const { isDark } = useTheme()
@@ -477,8 +493,23 @@ export function Game({
   }, [table.phase, theme])
   const diceOptions = diceCountFor(actor)
   const canRoll = table.phase === 'awaitingRoll' && myTurn && !seat.isBot && !rolling && !rolled
+  /*
+   * 🔴 ТОТ ЖЕ ЗАМОК, ЧТО У КНОПКИ БРОСКА. Блок выхода из Круга стоит в
+   * цепочке ВЫШЕ броска и про летящий кубик ничего не знал: пока шла
+   * анимация, у игрока висели обе кнопки — «Вырваться» и «или остаться и
+   * бросить». Нажатие «Вырваться» поверх начатого броска перекидывало на
+   * Полосу свободы, а сам бросок движок потом молча отбрасывал — это и есть
+   * живая жалоба «ход хотел сделать, меня перекинуло». Заодно такой игрок
+   * вообще не видел кубика: и спиннер, и выпавшее число живут в следующих
+   * ветках этой же цепочки, до них дело не доходило.
+   */
   const canEscape =
-    table.phase === 'awaitingRoll' && myTurn && можноВыйтиИзКруга(table, seat) && !seat.isBot
+    table.phase === 'awaitingRoll' &&
+    myTurn &&
+    можноВыйтиИзКруга(table, seat) &&
+    !seat.isBot &&
+    !rolling &&
+    !rolled
   /*
    * 🔴 КНОПКА ОБЯЗАНА НАЗЫВАТЬ ТО, ЧТО ЛЯЖЕТ НА СЧЁТ. Выкуп — честная цена
    * нажитого, но из него ещё гасится вся ведомость долгов Круга и
@@ -873,7 +904,7 @@ export function Game({
                       {/* 🔴 Кнопка обещает РОВНО то, что придёт: выкуп минус долги и доля за вход. */}
                       выкуп {money(выкупСейчас)}
                       {долгиСейчас + долиСейчас > 0 &&
-                        ` · на счёт ${money(Math.max(0, выкупСейчас - долгиСейчас - долиСейчас))}`}
+                        ` · на счёт ${money(выкупСейчас - долгиСейчас - долиСейчас)}`}
                     </span>
                   </button>
                   <button
@@ -1226,6 +1257,7 @@ export function Game({
           dispatch={dispatch}
           onHide={() => setHiddenOffers((h) => [...h, inbox.id])}
           meId={meId}
+          queued={inboxQueue}
         />
       )}
       {table.phase === 'finished' && (

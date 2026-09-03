@@ -55,6 +55,12 @@ export function TradesModal({
   )
   const [loanAmount, setLoanAmount] = useState(step)
   /*
+   * 🔴 Сумма кредита, которую человек наметил, но ещё НЕ подтвердил. Живая
+   * игра 31.08: «Ой, блин, я кредит взял. Случайно» — три кнопки-пресета
+   * выдавали деньги с одного касания, отката нет. Второе нажатие берёт.
+   */
+  const [ribaArm, setRibaArm] = useState<number | null>(null)
+  /*
    * 🔴 Сумма займа, который ДАЮ. Раньше её не было вовсе — кнопки предлагали
    * `min(наличные, 200 000)`, то есть дать 10 миллионов было физически нечем,
    * а на экране висело загадочное «10 700». Теперь сумму выбирает человек,
@@ -279,12 +285,22 @@ export function TradesModal({
                 return (
                   <button
                     key={k}
-                    onClick={() => dispatch({ type: 'TAKE_RIBA', amount: amt })}
-                    className="rounded-xl border border-[var(--line)] p-2 text-center transition hover:border-rose-500/60 hover:bg-rose-500/10"
+                    onClick={() =>
+                      ribaArm === amt
+                        ? (dispatch({ type: 'TAKE_RIBA', amount: amt }), setRibaArm(null))
+                        : setRibaArm(amt)
+                    }
+                    className={`rounded-xl border p-2 text-center transition ${
+                      ribaArm === amt
+                        ? 'border-rose-500 bg-rose-500/15'
+                        : 'border-[var(--line)] hover:border-rose-500/60 hover:bg-rose-500/10'
+                    }`}
                   >
                     <div className="tabnum text-[13px] font-black">{money(amt)}</div>
                     <div className="text-[10px] text-[var(--muted)]">
-                      потом {money(Math.round((amt * RIBA.ratePctMonthly) / 100 / 100) * 100)}/мес
+                      {ribaArm === amt
+                        ? `точно? станет ${money(seat.ledger.cash + amt)}`
+                        : `потом ${money(Math.round((amt * RIBA.ratePctMonthly) / 100 / 100) * 100)}/мес`}
                     </div>
                   </button>
                 )

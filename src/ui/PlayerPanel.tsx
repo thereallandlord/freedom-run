@@ -7,6 +7,7 @@ import {
   isOutOfRatRace,
   freedomIncome,
   monthlyCashFlow,
+  ownShare,
   ownShareAt,
   passiveIncome,
   childExpenses,
@@ -206,6 +207,21 @@ function AssetRow({
               {Math.round(a.investorShare * 100)}% партнёру
             </span>
           ) : null}
+          {/*
+            🔴 ВОЗМОЖНОСТЬ ОБЯЗАНА БЫТЬ ВИДНА БЕЗ КЛИКА. Найм жил ВНУТРИ
+            свёрнутой строки актива: в панели человека с кафе на 103 000 ₽
+            слово «управляющий» не встречалось НИ РАЗУ, а шкала свободы честно
+            показывала 0%. Теперь прямо в строке видно, что дело держится на
+            тебе, — и понятно, что с этим есть что делать.
+          */}
+          {kind === 'business' &&
+          !(a as BusinessAsset).gl &&
+          !(a as BusinessAsset).managerPct &&
+          !вторая ? (
+            <span className="block text-[10.5px] text-amber-500">
+              работаете сами — в зачёт свободы не идёт
+            </span>
+          ) : null}
         </span>
         <span className="tabnum shrink-0">{signed(mine)}</span>
       </button>
@@ -276,6 +292,56 @@ function AssetRow({
               })()}
             </>
           ) : null}
+          {/*
+            🔴 ОТКУДА ЭТО ЧИСЛО. «Приносит в месяц» — уже ИТОГ: из полного
+            дохода объекта вычтены доля партнёра, управляющий, временная
+            просадка после события и текущий рынок. Показывали только итог —
+            и он не сходился с цифрой на карточке находки. Живая жалоба
+            31.08: «приносит 115, а по карте было 148… это из-за того, что
+            услуги на 20% просели? Ну, не факт». Пока вычеты не названы, это
+            и правда «не факт». Партнёрский бизнес сюда не лезет: у него свой
+            разбор ниже, и доход ему считает не cashFlow.
+          */}
+          {(() => {
+            if ((a as BusinessAsset).gl) return null
+            const полный = a.cashFlow
+            const своя = ownShare(a)
+            const b = a as BusinessAsset
+            const просадкаЖива = (b.dipLeft ?? 0) > 0
+            const послеПросадки = просадкаЖива ? Math.round(своя * (b.dipMul ?? 1)) : своя
+            const послеУпр = b.managerPct
+              ? Math.round((послеПросадки * (100 - b.managerPct)) / 100)
+              : послеПросадки
+            const строки: { имя: string; знач: number }[] = []
+            if (своя !== полный) строки.push({ имя: `Доля партнёра ${Math.round((a.investorShare ?? 0) * 100)}%`, знач: своя - полный })
+            if (послеПросадки !== своя)
+              строки.push({
+                имя: `Просадка после события ${Math.round((1 - (b.dipMul ?? 1)) * 100)}% · ещё ${b.dipLeft} ${склонение(b.dipLeft ?? 0, 'зарплата', 'зарплаты', 'зарплат')}`,
+                знач: послеПросадки - своя,
+              })
+            if (послеУпр !== послеПросадки)
+              строки.push({ имя: `Управляющий ${b.managerPct}%`, знач: послеУпр - послеПросадки })
+            {
+              const рынок = Math.round(((((flowMul ?? {})[a.category ?? ''] ?? 1) - 1) * 100))
+              if (mine !== послеУпр)
+                строки.push({ имя: `Рынок сейчас ${рынок > 0 ? '+' : '−'}${Math.abs(рынок)}%`, знач: mine - послеУпр })
+            }
+            if (!строки.length) return null
+            return (
+              <>
+                <div className="flex justify-between">
+                  <span>Полный доход объекта</span>
+                  <span className="tabnum">{money(полный)}</span>
+                </div>
+                {строки.map((р) => (
+                  <div key={р.имя} className="flex justify-between">
+                    <span>{р.имя}</span>
+                    <span className="tabnum">{signed(р.знач)}</span>
+                  </div>
+                ))}
+              </>
+            )
+          })()}
           <div className="flex justify-between">
             <span>Приносит в месяц</span>
             <span className="tabnum">{signed(mine)}</span>
@@ -292,13 +358,20 @@ function AssetRow({
             бизнес приносит деньги, но не приближает свободу: перестал ходить —
             перестало платить. Нанял — отдал долю, зато остаток пошёл в зачёт.
           */}
-          {kind === 'business' && !(a as BusinessAsset).gl && dispatch && !вторая && (
+          {/*
+            🔴 ПРО УПРАВЛЯЮЩЕГО ЗНАЮТ ОБА. Строка была спрятана за
+            `dispatch && !вторая`: партнёр по общему делу видел, как его доход
+            падает с 50 000 до 32 500, а свобода растёт с нуля до 32 500, — и
+            ни слова о том, почему. Нанимать по-прежнему может только ведущий,
+            а знать обязаны оба — и в чужой карточке тоже.
+          */}
+          {kind === 'business' && !(a as BusinessAsset).gl && (
             (a as BusinessAsset).managerPct ? (
               <div className="mt-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[11px] leading-snug">
                 Управляющий забирает {(a as BusinessAsset).managerPct}% — остальное работает без вас
                 и идёт в зачёт свободы
               </div>
-            ) : (
+            ) : dispatch && !вторая ? (
               <button
                 disabled={(cash ?? 0) < наймCost}
                 onClick={() => dispatch({ type: 'HIRE_MANAGER', assetId: a.id, pct: MANAGER_PCT })}
@@ -310,7 +383,7 @@ function AssetRow({
                   пойдут в зачёт свободы
                 </span>
               </button>
-            )
+            ) : null
           )}
           {/*
             🔴 ЧАСТЬ РАССРОЧКИ — ОТДЕЛЬНОЙ КНОПКОЙ (просьба Камиля: «давай
@@ -495,6 +568,25 @@ function GoalCard({ seat, flowMul }: { seat: Seat; flowMul?: Record<string, numb
         />
       </div>
 
+      {/*
+        🔴 «ПОЧЕМУ НОЛЬ» — САМЫЙ ЧАСТЫЙ ВОПРОС ЗА СТОЛОМ. Человек с кафе на
+        103 000 ₽ видит «0 ₽ из 106 500 ₽» и решает, что игра сломана. Называем
+        сумму, запертую в делах без управляющего, и куда за ней идти.
+        Партнёрский бизнес сюда не берём: у него своя лестница.
+      */}
+      {!onFast &&
+        (() => {
+          const заперто = l.businesses.reduce(
+            (s, b) => (!b.gl && !b.managerPct ? s + ownShareAt(b, flowMul ?? {}) : s),
+            0,
+          )
+          return заперто > 0 ? (
+            <p className="mt-2 rounded-md bg-amber-500/15 px-2 py-1 text-[11px] leading-snug text-amber-600">
+              {money(заперто)}/мес приносят дела, но в зачёт не идут — вы в них работаете сами.
+              Нанять управляющего можно в разделе «Доходы»: откройте строку дела.
+            </p>
+          ) : null
+        })()}
       <p className="mt-2 text-[11px] leading-snug text-[var(--t-muted, var(--muted))]">
         {won
           ? onFast

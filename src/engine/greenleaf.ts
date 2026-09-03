@@ -484,8 +484,8 @@ export function glStructureIncome(g: GlState): number {
  * зависит от тебя лично. Поэтому доля растёт вместе с рангом, а не даётся
  * сразу.
  */
-export function glFreedomShare(g: GlState): number {
-  switch (glRankFor(g.volume).level) {
+export function glFreedomShareByLevel(level: number): number {
+  switch (level) {
     case 0:
       return 0 // сам бегаешь, сам приводишь — это работа
     case 1:
@@ -495,6 +495,10 @@ export function glFreedomShare(g: GlState): number {
     default:
       return 100 // структура живёт без тебя
   }
+}
+
+export function glFreedomShare(g: GlState): number {
+  return glFreedomShareByLevel(glRankFor(g.volume).level)
 }
 
 /** Всё, что партнёрский бизнес приносит в месяц: структура плюс пенсия за ранг. */

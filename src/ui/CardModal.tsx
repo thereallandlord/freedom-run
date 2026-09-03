@@ -294,7 +294,14 @@ function SellLotRow({
   onSell,
 }: {
   holder: Seat
-  lot: { id: string; shares: number; costPerShare: number }
+  lot: {
+    id: string
+    shares: number
+    costPerShare: number
+    /** Доля владельцу находки за вход — движок удержит её при продаже. */
+    profitShareTo?: string
+    profitSharePct?: number
+  }
   price: number
   onSell: (shares: number) => void
 }) {
@@ -302,6 +309,17 @@ function SellLotRow({
   const [armed, setArmed] = useState(false)
   const take = Math.min(n, lot.shares)
   const profit = (price - lot.costPerShare) * take
+  /*
+   * 🔴 ТА ЖЕ АРИФМЕТИКА, ЧТО В ДВИЖКЕ (`SELL_STOCK_LOT` → доля с прибыли).
+   * Кнопка печатала ВАЛОВУЮ выручку, а на счёт приходило за вычетом доли:
+   * замер 03.09 — обещано 2 600 000, пришло 2 280 000, и ни слова об этом.
+   */
+  const пктДоли = Math.min(100, Math.max(0, Math.round(lot.profitSharePct ?? 0)))
+  const доля =
+    lot.profitShareTo && пктДоли > 0 && profit > 0
+      ? Math.round((Math.round(profit) * пктДоли) / 100)
+      : 0
+  const наСчёт = take * price - доля
   return (
     <div className="panel-2 rounded-lg px-3 py-2 text-[13px]">
       <div className="flex items-center justify-between gap-2">
@@ -336,8 +354,13 @@ function SellLotRow({
         }`}
       >
         {armed
-          ? `Точно продать ${take} шт за ${money(take * price)}?`
-          : `Продать ${take} шт · ${money(take * price)}`}
+          ? `Точно продать ${take} шт за ${money(наСчёт)}?`
+          : `Продать ${take} шт · ${money(наСчёт)}`}
+        {доля > 0 ? (
+          <span className="mt-0.5 block text-[10.5px] font-normal text-[var(--muted)]">
+            выручка {money(take * price)} − доля за вход {money(доля)}
+          </span>
+        ) : null}
       </button>
     </div>
   )
@@ -353,29 +376,109 @@ function SellAssetRow({
   name,
   color,
   net,
+  price,
+  debt,
+  partner,
+  share,
   onSell,
 }: {
   name: string
   color: string
+  /** Столько ляжет на счёт — ровно это число платит движок. */
   net: number
+  /** Что даёт покупатель за объект целиком. */
+  price: number
+  /** Сколько уйдёт на досрочное закрытие рассрочки — уже со списанием наценки. */
+  debt: number
+  /** Доля соинвестора. */
+  partner: number
+  /** Доля владельцу находки за вход. */
+  share: number
   onSell: () => void
 }) {
   const [armed, setArmed] = useState(false)
   return (
     <button
       onClick={() => (armed ? onSell() : setArmed(true))}
-      className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-[13px] transition ${
+      className={`w-full rounded-lg px-3 py-2 text-left text-[13px] transition ${
         armed
           ? 'border border-emerald-500 bg-emerald-500/15'
           : 'panel-2 hover:border-emerald-500/60'
       }`}
     >
-      <span className="min-w-0 flex-1 truncate">
-        <span style={{ color }}>●</span> {name}
+      <span className="flex items-center justify-between gap-2">
+        <span className="min-w-0 flex-1 truncate">
+          <span style={{ color }}>●</span> {name}
+        </span>
+        <span className="tabnum shrink-0 font-semibold text-emerald-600 dark:text-emerald-400">
+          {armed ? `Точно продать за ${money(net)}?` : `${money(net)} чистыми`}
+        </span>
       </span>
-      <span className="tabnum shrink-0 font-semibold text-emerald-600 dark:text-emerald-400">
-        {armed ? `Точно продать за ${money(net)}?` : `${money(net)} чистыми`}
+      {/*
+        🔴 РАСШИФРОВКА ПРЯМО В СТРОКЕ. Игра 31.08: «мне предлагают продать её
+        за 2457, а стоимость самой двушки 11 250 — в чём прикол». Прикол в том,
+        что в панели стоит цена С НАЦЕНКОЙ за рассрочку, покупатель даёт
+        процент от РЫНОЧНОЙ, а из выручки ещё уходит остаток рассрочки. Пока
+        это не написано словами, каждая продажа выглядит обманом.
+      */}
+      <span className="mt-0.5 block text-[11px] leading-snug text-[var(--muted)]">
+        покупатель даёт {money(price)}
+        {debt > 0 ? ` − рассрочка ${money(debt)}` : ''}
+        {partner > 0 ? ` − партнёру ${money(partner)}` : ''}
+        {share > 0 ? ` − доля за вход ${money(share)}` : ''}
       </span>
+    </button>
+  )
+}
+
+/**
+ * Кнопка «взять кредит» — в ДВА нажатия и с честным итогом.
+ *
+ * 🔴 Живая игра 31.08, две жалобы одним куском. «Ой, блин, я кредит взял.
+ * Случайно» — одно касание выдавало деньги без единого вопроса и без отката.
+ * И «куда мне кредитные деньги ушли? Я что-то взял, что ли?» — потому что
+ * после нажатия на экране не менялось НИЧЕГО: на 98% крупных сделок даже
+ * полный лимит не покрывает взнос (замер по колоде: 44 карты из 45), надпись
+ * «не хватает» оставалась прежней, а сама кнопка исчезала — лимит-то выбран.
+ *
+ * Первое нажатие показывает сумму, будущий остаток и нехватку; второе берёт.
+ * Тот же приём, что у продажи объекта выше: отменить кредит нечем, поэтому
+ * спрашиваем.
+ */
+function КнопкаКредита({
+  сумма,
+  наРуках,
+  нехватка,
+  onTake,
+}: {
+  сумма: number
+  наРуках: number
+  /** Сколько не хватит на взнос ДАЖЕ с этим кредитом. 0 — хватит. */
+  нехватка: number
+  onTake: () => void
+}) {
+  const [armed, setArmed] = useState(false)
+  return (
+    <button
+      onClick={() => (armed ? onTake() : setArmed(true))}
+      className={`w-full rounded-xl px-3 py-2 text-center text-[13px] transition ${
+        armed
+          ? 'border border-rose-500 bg-rose-500/15'
+          : 'btn-ghost border-rose-500/40 hover:border-rose-500/70'
+      }`}
+    >
+      {armed ? (
+        <>
+          <span className="block font-bold">Точно взять {money(сумма)}?</span>
+          <span className="mt-0.5 block text-[11px] font-normal leading-snug opacity-90">
+            на руках станет {money(наРуках + сумма)} · первые {RIBA.gracePaydays} зарплат без
+            платежей, потом {RIBA.ratePctMonthly}% в месяц
+            {нехватка > 0 && <> · на взнос всё равно не хватит {money(нехватка)}</>}
+          </span>
+        </>
+      ) : (
+        <>🏦 Кредит {money(сумма)}</>
+      )}
     </button>
   )
 }
@@ -1212,13 +1315,12 @@ function CardBody({
                   </button>
                 )}
                 {ribaFree > 0 && (
-                  <button
-                    onClick={() => dispatch({ type: 'TAKE_RIBA', amount: ribaWant })}
-                    className="btn-ghost w-full border-rose-500/40 hover:border-rose-500/70"
-                    title={`Дадут до ${money(ribaFree)}. Первые ${RIBA.gracePaydays} зарплат без платежей, потом ${RIBA.ratePctMonthly}% в месяц`}
-                  >
-                    🏦 Кредит {money(ribaWant)}
-                  </button>
+                  <КнопкаКредита
+                    сумма={ribaWant}
+                    наРуках={l.cash}
+                    нехватка={Math.max(0, card.downPayment - l.cash - ribaWant)}
+                    onTake={() => dispatch({ type: 'TAKE_RIBA', amount: ribaWant })}
+                  />
                 )}
               </div>
               {ribaFree > 0 && (
@@ -1279,7 +1381,7 @@ function CardBody({
                     20 000 000 ₽, ведомость 5 000 000 ₽ — обещали 20 000 000 ₽,
                     пришло 16 000 000 ₽. Долги гасятся из ВСЕГО выкупа сразу.
                   */}
-                  {money(Math.max(0, p.buyout + (p.бумаги ?? 0) - p.долги))}
+                  {money(p.buyout + (p.бумаги ?? 0) - (p.долги ?? 0) - (p.доли ?? 0))}
                 </span>
               </div>
             )}
@@ -1401,7 +1503,14 @@ function CardBody({
             photo={artById(card.id) ?? artBySpace('market')}
           >
             <div className="panel-2 rounded-lg p-3">
-              <Stat label="Покупатель даёт" value={`${card.multiplierPct}% от стоимости`} strong />
+              <Stat
+                label="Покупатель даёт"
+                /* 🔴 С учётом живого мирового события: строка с деньгами ниже
+                   уже считает по нему, а шапка показывала голые 130% при
+                   реальных 162,5% — третье число на той же карточке. */
+                value={`${Math.round(card.multiplierPct * (table.market.price[card.category] ?? 1))}% от стоимости`}
+                strong
+              />
             </div>
             {/*
               🔴 «Ни у кого нет» — утверждение ПРО ВЕСЬ СТОЛ, а считалось по
@@ -1426,7 +1535,7 @@ function CardBody({
                      * наценки — обещало одно, приходило другое (на «двушке»
                      * расхождение 330 000 ₽ за одну продажу).
                      */
-                    const { mine } = sellOfferQuote(
+                    const q = sellOfferQuote(
                       a,
                       a.debt,
                       card.multiplierPct,
@@ -1437,7 +1546,11 @@ function CardBody({
                         key={a.id}
                         name={m.seat.id === seat.id ? a.name : `${m.seat.name}: ${a.name}`}
                         color={m.seat.color}
-                        net={mine}
+                        net={q.toMe}
+                        price={q.price}
+                        debt={Math.max(0, a.debt - q.rebate)}
+                        partner={q.partner}
+                        share={q.share}
                         onSell={() =>
                           dispatch({ type: 'ACCEPT_OFFER', seatId: m.seat.id, assetId: a.id })
                         }
@@ -1544,7 +1657,15 @@ function CardBody({
             {card.managerPct != null &&
               мойХод &&
               мои
-                .filter((b) => !b.managerPct)
+                /*
+                 * 🔴 ВТОРАЯ ПОЛОВИНА ОБЩЕГО ДЕЛА — НЕ ТОЧКА НАЙМА. Цена ниже
+                 * считается от `b.cashFlow`, а у зеркала это ПОЛОВИНА потока;
+                 * движок берёт полный. Кнопка обещала 30 000 и либо молча
+                 * не делала ничего (денег ровно по кнопке — движок отклоняет),
+                 * либо списывала 60 000. Нанимает ведущий: у него в панели
+                 * кнопка есть, а доля партнёру проставится сама.
+                 */
+                .filter((b) => !b.managerPct && !(b.partnerId && !b.investorShare))
                 .map((b) => {
                   // Та же цена, что и в панели игрока: три месяца его доли.
                   const цена = Math.max(
@@ -2208,12 +2329,29 @@ function CardBody({
                     <span style={{ color: x.color }}>●</span> {x.name} — без надбавки
                   </button>
                 ))}
-              <button
-                onClick={() => dispatch({ type: 'TAKE_RIBA', amount: Math.max(100_000, -flow * 12) })}
-                className="btn-ghost w-full"
-              >
-                Взять кредит в банке — дают сразу, первые {RIBA.gracePaydays} зарплат без платежей
-              </button>
+              {/*
+                🔴 ГЕЙТ ПО ОСТАТКУ ЛИМИТА. Кнопка висела всегда, а движок молча
+                отклоняет заявку, когда лимит выбран (замер: стол возвращается
+                той же ссылкой, в журнале ноль новых строк) — нажатие не делало
+                РОВНО НИЧЕГО и ничего об этом не говорило.
+              */}
+              {ribaFree > 0 ? (
+                <КнопкаКредита
+                  сумма={Math.min(ribaFree, Math.max(100_000, -flow * 12))}
+                  наРуках={l.cash}
+                  нехватка={0}
+                  onTake={() =>
+                    dispatch({
+                      type: 'TAKE_RIBA',
+                      amount: Math.min(ribaFree, Math.max(100_000, -flow * 12)),
+                    })
+                  }
+                />
+              ) : (
+                <p className="text-center text-[11px] leading-snug text-[var(--muted)]">
+                  Кредитный лимит выбран целиком — банк больше не даст.
+                </p>
+              )}
 
             </div>
           )}
