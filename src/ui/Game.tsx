@@ -30,6 +30,7 @@ import { BankModal } from './BankModal'
 import { PortfolioModal } from './PortfolioModal'
 import { DebriefModal } from './DebriefModal'
 import { TradesModal } from './TradesModal'
+import { ЧтоЗдесьПроисходит } from './ЧтоЗдесьПроисходит'
 import { OfferInbox } from './OfferInbox'
 import { Wordmark } from './Wordmark'
 import { liveOffers, offerResponders, playerDebt } from './tradeHelpers'
@@ -1099,6 +1100,12 @@ export function Game({
         слою и не ловят клики — карточке они не мешают.
       */}
       <Лента table={table} meId={meId ?? seat.id} />
+      {/*
+        Объяснение правил в двух точках, где человек их и спрашивает: в начале
+        партии и при переходе на второй круг. Живёт в интерфейсе, не в столе —
+        «я прочитал» это личное дело игрока, а не правда о партии.
+      */}
+      <ЧтоЗдесьПроисходит table={table} meId={meId ?? seat.id} комната={голосКомната} />
 
       {table.pending && table.pending.kind !== 'gameOver' && (
         <CardModal
