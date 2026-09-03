@@ -4526,20 +4526,27 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
 
       if (event.go && promo.id === 'travel') {
         const r = () => rng(t, 3771)
-        const gainPct = Math.round(r() * 20)
+        /*
+         * 🔴 ПОЕЗДКА НЕ МОЖЕТ ДАТЬ РОВНО НОЛЬ. Раньше прибавка бралась от нуля
+         * до двадцати процентов, и примерно раз на двадцать поездок человек
+         * отказывался от 200 000 ₽ живыми и не получал взамен НИЧЕГО. Живая
+         * жалоба с игры звучала как «поехал и потерял бизнес»: поломки не
+         * было, но с точки зрения игрока разницы никакой — он отдал деньги и
+         * ничего не увидел. Нижний край поднят: съездил — значит с кем-то
+         * познакомился.
+         */
+        const gainPct = 5 + Math.round(r() * 15)
         const forPaydays = 4 + Math.floor(r() * 9)
         const after = t.seats[seatIdx].ledger.businesses.find((b) => b.id === biz.id)
         if (after?.gl) {
           const g = mark(after.gl)
-          after.gl = gainPct > 0 ? { ...g, dipMul: 1 + gainPct / 100, dipLeft: forPaydays } : g
+          after.gl = { ...g, dipMul: 1 + gainPct / 100, dipLeft: forPaydays }
           after.cashFlow = glTotalIncome(after.gl)
         }
         log(
           t,
           seat.id,
-          gainPct > 0
-            ? `Съездил по промоушену. Познакомился с людьми — доход по структуре вырос на ${gainPct}% на ${forPaydays} зарплат`
-            : 'Съездил по промоушену. Отдохнул, но полезных знакомств не завёл',
+          `Съездил по промоушену. Познакомился с людьми — доход по структуре вырос на ${gainPct}% на ${forPaydays} ${склонениеЗарплат(forPaydays)}`,
         )
       } else {
         seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: promo.amount })
