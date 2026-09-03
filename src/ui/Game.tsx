@@ -831,17 +831,24 @@ export function Game({
             */}
             <div className="board-slot grid aspect-square min-h-0 w-full flex-1 place-items-center lg:aspect-auto lg:h-full">
               <Board table={table}>
+                {/*
+                  🔴 «НЕТ СИГНАЛА, ЧТО ОТ ТЕБЯ ЖДУТ ДЕЙСТВИЯ» — жалоба с игры:
+                  ход приходилось передавать голосом. Раньше в центре доски
+                  стояло «Ходит Камиль» и когда ходил сам Камиль тоже — своё
+                  имя среди чужих взгляд не выделяет. Теперь свой ход назван
+                  своими словами и цветом, а чужой честно говорит, кого ждём.
+                */}
                 <span
                   className="text-[10px] font-semibold uppercase tracking-[0.16em]"
                   style={{ color: 'var(--t-muted)' }}
                 >
-                  Ходит
+                  {actor.id === seat.id ? 'Сейчас' : 'Ждём'}
                 </span>
                 <span
                   className="font-display text-lg font-bold leading-tight sm:text-xl"
-                  style={{ color: actor.color }}
+                  style={{ color: actor.id === seat.id ? 'var(--t-accent)' : actor.color }}
                 >
-                  {actor.name}
+                  {actor.id === seat.id ? 'ваш ход' : actor.name}
                 </span>
                 {!seat.isBot && canRoll && (
                   /*
@@ -858,7 +865,14 @@ export function Game({
                       style={{ background: 'var(--t-accent)', color: 'var(--t-on-accent)' }}
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" /><circle cx="12" cy="12" r="1.1" fill="currentColor" /></svg>
-                      {diceOptions.length > 1 ? 'Бросок · 2 кубика' : 'Бросок'}
+                      {/*
+                        🔴 Подпись отвалилась вместе с правкой «пожертвование
+                        всегда даёт два кубика»: выбора больше нет, значит и
+                        список вариантов всегда из одного числа — условие
+                        `length > 1` не выполнялось никогда, и оплаченная
+                        механика снова стала невидимой.
+                      */}
+                      {diceOptions[diceOptions.length - 1] > 1 ? 'Бросок · 2 кубика' : 'Бросок'}
                     </button>
                     {diceOptions.length > 1 && (
                       <button
