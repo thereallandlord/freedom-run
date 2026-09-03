@@ -30,6 +30,7 @@ import { PortfolioModal } from './PortfolioModal'
 import { DebriefModal } from './DebriefModal'
 import { TradesModal } from './TradesModal'
 import { ЧтоЗдесьПроисходит } from './ЧтоЗдесьПроисходит'
+import { подписатьсяНаЧасыХода, срокХода, полныйСрокХода } from './ходЧасы'
 import { OfferInbox } from './OfferInbox'
 import { Wordmark } from './Wordmark'
 import { liveOffers, offerResponders, playerDebt } from './tradeHelpers'
@@ -135,6 +136,51 @@ function Scoreboard({
 }
 
 /** Всплывашка над доской: откуда пришли деньги. Жалоба с созвона — «бабки растут, непонятно». */
+/**
+ * Часы хода: полоска и секунды над доской.
+ *
+ * 🔴 Показываем ВРЕМЯ, а не «поторопитесь». Три просьбы с игры об одном:
+ * добавить таймер, потому что «слишком много времени на подумать», а те, чей
+ * ход не идёт, скучают. Красным полоска становится на последних секундах —
+ * раньше этого дёргать человека незачем.
+ */
+function ЧасыХода() {
+  const [, тик] = useState(0)
+  useEffect(() => подписатьсяНаЧасыХода(() => тик((n) => n + 1)), [])
+  useEffect(() => {
+    const id = window.setInterval(() => тик((n) => n + 1), 250)
+    return () => window.clearInterval(id)
+  }, [])
+  const срок = срокХода()
+  const полный = полныйСрокХода()
+  if (!срок || !полный) return null
+  const осталось = Math.max(0, Math.ceil((срок - Date.now()) / 1000))
+  const доля = Math.max(0, Math.min(1, осталось / полный))
+  const тревога = осталось <= 7
+  return (
+    <div className="mt-1.5 flex w-[132px] flex-col items-center gap-1">
+      <div
+        className="h-[5px] w-full overflow-hidden rounded-full"
+        style={{ background: 'color-mix(in srgb, var(--t-ink, #000) 14%, transparent)' }}
+      >
+        <div
+          className="h-full rounded-full transition-[width] duration-200"
+          style={{
+            width: `${доля * 100}%`,
+            background: тревога ? '#f43f5e' : 'var(--t-accent, rgb(var(--c-accent)))',
+          }}
+        />
+      </div>
+      <span
+        className="tabnum text-[10.5px] font-semibold"
+        style={{ color: тревога ? '#f43f5e' : 'var(--t-muted)' }}
+      >
+        {осталось} с
+      </span>
+    </div>
+  )
+}
+
 function MoneyToast({ table }: { table: Table }) {
   const [note, setNote] = useState<{ text: string; key: number } | null>(null)
   const lastLen = useRef(table.log.length)
@@ -248,9 +294,26 @@ function WinScreen({
             {money(winner.ledger.fastTrack.dream.pricePaid)}
           </p>
         )}
+        {/*
+          🔴 ПРИЧИНА ПОБЕДЫ ПО ДОХОДУ ОСТАЛАСЬ ОТ ОТМЕНЁННОГО ПРАВИЛА. «Собрал
+          цель по доходу на Полосе свободы» — такой цели больше нет: победа
+          одна, купить свою мечту. Старые сохранённые партии сюда всё ещё
+          попадают, поэтому строку не удаляем, а говорим честно.
+        */}
         {winner?.ledger.winReason === 'cashflowGoal' && (
           <p className="mt-1 text-sm text-[var(--t-muted, var(--muted))]">
-            Собрал цель по доходу на Полосе свободы
+            Довёл доход до цели второго круга (правило прежней версии игры)
+          </p>
+        )}
+        {/*
+          🔴 «НЕПОНЯТНО, КТО В ИТОГЕ ВЫИГРАЛ» — жалоба с игры. Заголовок
+          называл имя, но рядом стоял список «цели достигли: …», и за столом
+          спорили, кто из них победитель. Побеждает тот, кто пришёл ПЕРВЫМ, —
+          говорим это прямо.
+        */}
+        {winner && table.seats.filter((s) => s.won).length > 1 && (
+          <p className="mt-1 text-[12px] text-[var(--t-muted, var(--muted))]">
+            Побеждает тот, кто дошёл первым, — остальные доигрывали.
           </p>
         )}
 
@@ -850,6 +913,7 @@ export function Game({
                 >
                   {actor.id === seat.id ? 'ваш ход' : actor.name}
                 </span>
+                <ЧасыХода />
                 {!seat.isBot && canRoll && (
                   /*
                    * 🔴 Благотворительность даёт ПРАВО ВЫБОРА: один кубик или

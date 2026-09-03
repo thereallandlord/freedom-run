@@ -26,6 +26,8 @@ import { botOfferReply } from './tradeHelpers'
 import { saveGame } from '../net/gamesApi'
 import { currentUser } from '../net/auth'
 import { scheduleWorldEvent } from './worldClock'
+import { завестиЧасыХода, срокНаХод } from './ходЧасы'
+import { diceCountFor } from '../engine/table'
 
 const STORAGE_KEY = 'freedom-run:save:v2'
 
@@ -328,6 +330,13 @@ export function useGame(net?: {
     [applyLocal, meId, netSend],
   )
 
+  /*
+   * Ссылка на диспетчер для таймеров: часы хода срабатывают из setTimeout, где
+   * замыкание помнит старую функцию, и ход уходил бы в устаревший стол.
+   */
+  const dispatchRef = useRef(dispatch)
+  dispatchRef.current = dispatch
+
   /**
    * Откат = проигрывание журнала без последнего хода. Даром достаётся от
    * event sourcing.
@@ -462,6 +471,63 @@ export function useGame(net?: {
    * индикатор рынка.
    */
   const drivesTable = !net || net.isHost
+
+  /*
+   * ЧАСЫ ХОДА. Ход идёт под секундомер: 45 секунд в начале партии, на пять
+   * меньше с каждым пройденным кругом, но не быстрее двадцати.
+   *
+   * 🔴 ЧТО ПРОИСХОДИТ, КОГДА ВРЕМЯ ВЫШЛО. Игра делает БЕЗОПАСНОЕ по умолчанию,
+   * а не то, что человек, может быть, хотел: если он ещё не бросил — бросает
+   * за него (бросок всё равно неизбежен), если на столе карточка — отказывается
+   * от неё. Отказ не тратит его денег: он теряет возможность, а не имущество.
+   * Купить за человека молча нельзя — это его деньги.
+   *
+   * Тикает только у хозяина стола, как и часы мира: у остальных экран покажет
+   * ту же цифру, потому что срок один и тот же приходит вместе с ходом.
+   */
+  const часыХодаИдут =
+    !!table && table.phase !== 'finished' && drivesTable && !!table.seats[table.turnIndex] && !table.seats[table.turnIndex].isBot
+  const ходЧей = table ? table.seats[table.turnIndex]?.id : undefined
+  const фазаХода = table?.phase
+  const естьКарта = !!table?.pending
+  useEffect(() => {
+    if (!часыХодаИдут) {
+      завестиЧасыХода(0)
+      return
+    }
+    const кругов = Math.floor((tableRef.current?.seats[tableRef.current.turnIndex]?.turnsTaken ?? 0) / 8)
+    const сек = срокНаХод(кругов)
+    завестиЧасыХода(сек)
+    const id = window.setTimeout(() => {
+      const now = tableRef.current
+      if (!now || now.phase === 'finished') return
+      const кресло = now.seats[now.turnIndex]
+      if (!кресло || кресло.isBot) return
+      /*
+       * Безопасное действие по истечении времени. Порядок важен: сначала
+       * закрываем карточку (она держит ход), потом бросаем.
+       */
+      if (now.pending) {
+        dispatchRef.current({ type: 'PASS_CARD', seatId: кресло.id, by: кресло.id } as TableEvent)
+        return
+      }
+      if (now.phase === 'awaitingRoll' && !now.lastRoll) {
+        const кубики = diceCountFor(кресло)
+        const n = кубики[кубики.length - 1]
+        dispatchRef.current({
+          type: 'ROLL',
+          seatId: кресло.id,
+          by: кресло.id,
+          dice: Array.from({ length: n }, () => 1 + Math.floor(Math.random() * 6)),
+        } as TableEvent)
+        return
+      }
+      dispatchRef.current({ type: 'END_TURN', seatId: кресло.id, by: кресло.id } as TableEvent)
+    }, сек * 1000)
+    return () => window.clearTimeout(id)
+    // Часы перезаводятся на каждый новый ход и на каждую новую карточку.
+  }, [часыХодаИдут, ходЧей, фазаХода, естьКарта])
+
   const worldClockOn = !!table && table.phase !== 'finished' && drivesTable
   useEffect(() => {
     if (!worldClockOn) return
