@@ -9,7 +9,7 @@ import {
   setActiveTheme,
   setFastBoardTheme,
 } from '../engine/data'
-import { RULES, setRules } from '../engine/ledger'
+import { RULES, setRules, professionMonthlyCashFlow } from '../engine/ledger'
 import { randomSeed } from '../engine/rng'
 import type { SeatSetup, TableSetup } from '../engine/table'
 import { THEME_RULES } from '../engine/table'
@@ -83,7 +83,20 @@ export function Setup({ onStart, onBack }: { onStart: (s: TableSetup) => void; o
          * стояла разница «зарплата минус все расходы», и «Врач · 76 800 ₽»
          * читалось как заработок врача, хотя получает он 260 000.
          */
-        hint: money(p.salary, isRub) + '/мес',
+        /*
+         * 🔴 ЗАРПЛАТА — ЭТО СЛОЖНОСТЬ ПАРТИИ, и сказать об этом надо ДО выбора.
+         * Живая жалоба: «при выборе профессии не сказано, что низкая зарплата
+         * = сложная игра». Разница огромная: у учителя свободных 50 500 ₽/мес,
+         * у врача 124 000 — вдвое с лишним, и первый выбирается «по душе», не
+         * зная, что подписался на длинную партию.
+         */
+        hint: `${money(p.salary, isRub)}/мес · свободно ${money(professionMonthlyCashFlow(p), isRub)} — ${
+          professionMonthlyCashFlow(p) >= 100_000
+            ? 'полегче'
+            : professionMonthlyCashFlow(p) >= 70_000
+              ? 'средне'
+              : 'сложнее'
+        }`,
       })),
     [professions, isRub],
   )

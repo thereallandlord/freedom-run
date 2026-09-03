@@ -1096,53 +1096,14 @@ export function PlayerPanel({
             </div>
           )}
 
-          <Section title="Расходы" tone="expense" end={money(expenses)}>
-            <Row label="Налоги" value={money(l.expenses.taxes)} dim />
-            {l.expenses.homeMortgagePayment > 0 && (
-              <Row label={RULES.loansEnabled ? "Ипотека" : "Рассрочка за жильё"} value={money(l.expenses.homeMortgagePayment)} dim />
-            )}
-            {l.expenses.schoolLoanPayment > 0 && (
-              <Row label={RULES.loansEnabled ? "Учебный кредит" : "Оплата обучения"} value={money(l.expenses.schoolLoanPayment)} dim />
-            )}
-            {l.expenses.carPayment > 0 && (
-              <Row label={RULES.loansEnabled ? "Автокредит" : "Рассрочка за машину"} value={money(l.expenses.carPayment)} dim />
-            )}
-            {l.expenses.creditCardPayment > 0 && (
-              <Row label={RULES.loansEnabled ? "Кредитки" : "Долг за технику"} value={money(l.expenses.creditCardPayment)} dim />
-            )}
-            {l.expenses.retailPayment > 0 && (
-              <Row label="Рассрочка" value={money(l.expenses.retailPayment)} dim />
-            )}
-            {/* 🔴 Без этой строки сумма раздела не сходилась с итогом. */}
-            {l.expenses.ribaPayment > 0 && (
-              <Row label="Платёж по кредиту" value={money(l.expenses.ribaPayment)} dim />
-            )}
-            {/*
-              🔴 Было просто «Прочее» — самая крупная строка расходов и при
-              этом непонятно за что. Называем вещи своими именами: это
-              повседневная жизнь, и она у всех есть.
-            */}
-            <Row
-              label="Жизнь: еда, ЖКХ, транспорт, связь"
-              value={money(l.expenses.otherExpenses)}
-              dim
-            />
-            {l.children > 0 && (
-              <Row label={`Дети (${l.children})`} value={money(childExpenses(l))} dim />
-            )}
-            {l.expenses.bankLoanPayment > 0 && (
-              <Row label="Банковский кредит" value={money(l.expenses.bankLoanPayment)} dim />
-            )}
-            <div className="mt-1 border-t border-[var(--t-line, var(--line))] pt-1">
-              <Row label="Всего расходов" value={money(expenses)} />
-            </div>
-          </Section>
-
-        </>
-      )}
-
+          {/*
+            🔴 ПОРТФЕЛЬ ВЫШЕ РАСХОДОВ — прямая просьба Камиля. Бумаги это то,
+            чем человек РАСПОРЯЖАЕТСЯ каждый ход, а расходы он только читает;
+            за расходами портфель уезжал под сгиб, и продать золото никто не
+            находил — «спрятано в портфеле».
+          */}
       {l.stocks.length > 0 && (
-        <Section title="Портфель" tone="asset">
+          <Section title="Портфель" tone="asset">
           {/*
             🔴 Показываем ЦЕНУ СЕГОДНЯ и то, сколько бумага уже принесла или
             отняла. Раньше стояла цена покупки — и обвал крипты на 60% никак не
@@ -1221,6 +1182,51 @@ export function PlayerPanel({
               )
             })}
         </Section>
+      )}
+
+          <Section title="Расходы" tone="expense" end={money(expenses)}>
+            <Row label="Налоги" value={money(l.expenses.taxes)} dim />
+            {l.expenses.homeMortgagePayment > 0 && (
+              <Row label={RULES.loansEnabled ? "Ипотека" : "Рассрочка за жильё"} value={money(l.expenses.homeMortgagePayment)} dim />
+            )}
+            {l.expenses.schoolLoanPayment > 0 && (
+              <Row label={RULES.loansEnabled ? "Учебный кредит" : "Оплата обучения"} value={money(l.expenses.schoolLoanPayment)} dim />
+            )}
+            {l.expenses.carPayment > 0 && (
+              <Row label={RULES.loansEnabled ? "Автокредит" : "Рассрочка за машину"} value={money(l.expenses.carPayment)} dim />
+            )}
+            {l.expenses.creditCardPayment > 0 && (
+              <Row label={RULES.loansEnabled ? "Кредитки" : "Долг за технику"} value={money(l.expenses.creditCardPayment)} dim />
+            )}
+            {l.expenses.retailPayment > 0 && (
+              <Row label="Рассрочка" value={money(l.expenses.retailPayment)} dim />
+            )}
+            {/* 🔴 Без этой строки сумма раздела не сходилась с итогом. */}
+            {l.expenses.ribaPayment > 0 && (
+              <Row label="Платёж по кредиту" value={money(l.expenses.ribaPayment)} dim />
+            )}
+            {/*
+              🔴 Было просто «Прочее» — самая крупная строка расходов и при
+              этом непонятно за что. Называем вещи своими именами: это
+              повседневная жизнь, и она у всех есть.
+            */}
+            <Row
+              label="Жизнь: еда, ЖКХ, транспорт, связь"
+              value={money(l.expenses.otherExpenses)}
+              dim
+            />
+            {l.children > 0 && (
+              <Row label={`Дети (${l.children})`} value={money(childExpenses(l))} dim />
+            )}
+            {l.expenses.bankLoanPayment > 0 && (
+              <Row label="Банковский кредит" value={money(l.expenses.bankLoanPayment)} dim />
+            )}
+            <div className="mt-1 border-t border-[var(--t-line, var(--line))] pt-1">
+              <Row label="Всего расходов" value={money(expenses)} />
+            </div>
+          </Section>
+
+        </>
       )}
 
       <Section title="Обязательства" tone="debt">

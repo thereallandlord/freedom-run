@@ -265,6 +265,35 @@ export function DealTradeActions({
             </p>
           )}
 
+          {/*
+            🔴 ХВАТИТ ЛИ ДЕНЕГ ТОМУ, КОГО ЗОВЁШЬ. Живая жалоба: «предложение
+            доли не проверяет, хватит ли партнёру денег» — человек звал,
+            предложение уходило, партнёр не мог принять, и оба не понимали, что
+            произошло. Запрещать не надо (можно позвать и того, кто накопит к
+            своему ходу), но сказать об этом обязаны заранее.
+          */}
+          {(() => {
+            if (partnerId === 'all') {
+              const никтоНеТянет = table.seats.every(
+                (s) => s.id === seat.id || s.outOfGame || s.ledger.cash < partnerMoney,
+              )
+              return никтоНеТянет ? (
+                <p className="mt-2 text-center text-[12px] text-amber-400">
+                  Столько сейчас нет ни у кого за столом — предложение уйдёт, но принять его будет
+                  некому.
+                </p>
+              ) : null
+            }
+            const кого = table.seats.find((s) => s.id === partnerId)
+            if (!кого || кого.ledger.cash >= partnerMoney) return null
+            return (
+              <p className="mt-2 text-center text-[12px] text-amber-400">
+                У {кого.name} сейчас {money(кого.ledger.cash)} — на свою часть не хватает{' '}
+                {money(partnerMoney - кого.ledger.cash)}.
+              </p>
+            )
+          })()}
+
           <button
             disabled={notEnoughForMyPart}
             onClick={() => {
