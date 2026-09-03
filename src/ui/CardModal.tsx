@@ -2086,6 +2086,27 @@ function CardBody({
       // Сплит и разовая выплата применились автоматически.
       return (
         <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
+          {/*
+            🔴 КОМУ ЭТО — САМЫЙ ЧАСТЫЙ ВОПРОС ПО ТАКИМ КАРТОЧКАМ. Живая
+            путаница: «8 000 кэшбэк» приняли за свои, хотя карта была личной и
+            деньги ушли ходящему. Карточку видит весь стол, поэтому адресат
+            обязан быть назван прямо на ней, а не выясняться по ведомости.
+          */}
+          {card.kind === 'windfall' && (
+            <p className="text-center text-[13px] leading-snug text-[var(--muted)]">
+              {card.scope === 'self' ? (
+                <>
+                  Это личные деньги — их получает{' '}
+                  <b style={{ color: table.seats[table.turnIndex].color }}>
+                    {table.seats[table.turnIndex].name}
+                  </b>
+                  , остальных карточка не касается.
+                </>
+              ) : (
+                <>Деньги получают все за столом — каждый по своей строке в журнале.</>
+              )}
+            </p>
+          )}
           <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
             Понятно
           </button>
