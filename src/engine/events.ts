@@ -156,6 +156,10 @@ export type TableEventBody =
    * по удаче. Вложение делает рост решением игрока.
    */
   | { type: 'INVEST_IN_BUSINESS'; assetId: string; amount: number }
+  /** Беда по своему делу: заплатить сейчас. */
+  | { type: 'PAY_BIZ_TROUBLE' }
+  /** Беда по своему делу: не платить, а жить с просадкой дохода. */
+  | { type: 'ENDURE_BIZ_TROUBLE' }
   | { type: 'ROLL'; dice: number[] }
   | { type: 'CHOOSE_DEAL'; size: 'small' | 'big' }
   /** glPackage — выбранный пакет GreenLeaf, если карта партнёрская. */

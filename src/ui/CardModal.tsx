@@ -9,6 +9,7 @@ import {
   pendingUndecided,
   sellOfferPrice,
   sellOfferQuote,
+  ценаТерпения,
   stockHolders,
   canRecover,
   hasConsumerDebt,
@@ -1697,7 +1698,7 @@ function CardBody({
                 этом не сказано словами, молчаливое «ничего не изменилось»
                 читается как поломка движка.
               */}
-              {card.cash != null && card.flowPct == null && card.dipPct == null && (
+              {card.cash != null && card.flowPct == null && card.dipPct == null && p.выбор !== 'беда' && (
                 <p className="text-[12.5px] leading-snug text-[var(--muted)]">
                   Это разовые деньги. Ежемесячная прибыль дела не меняется.
                 </p>
@@ -1737,9 +1738,55 @@ function CardBody({
                     </div>
                   )
                 })}
-            <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
-              {card.managerPct != null && мойХод ? 'Пока справлюсь сам' : 'Дальше'}
-            </button>
+            {/*
+              🔴 БЕДА С ВЫБОРОМ. Раньше карточка списывала деньги ещё до того,
+              как человек её прочитал. Теперь у разовой беды два выхода:
+              починить сразу или жить с поломкой — и второе чуть дороже, иначе
+              выбор был бы фальшивым.
+            */}
+            {p.выбор === 'беда' && мойХод ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(() => {
+                  const поток = мои.reduce((n, b) => n + b.cashFlow, 0)
+                  const { pct, месяцев } = ценаТерпения(card, поток)
+                  const надо = Math.abs(card.cash ?? 0)
+                  const хватает = хозяин.ledger.cash >= надо
+                  return (
+                    <>
+                      <button
+                        disabled={!хватает}
+                        onClick={() => dispatch({ type: 'PAY_BIZ_TROUBLE' })}
+                        className="rounded-xl border border-emerald-500/60 bg-emerald-500/10 p-3 text-left transition hover:bg-emerald-500/15 disabled:opacity-40"
+                      >
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                          Починить сразу
+                        </div>
+                        <div className="tabnum mt-0.5 text-lg font-black">{money(надо)}</div>
+                        <div className="mt-1 text-[11px] text-[var(--muted)]">
+                          {хватает ? 'дело работает как работало' : 'столько наличными сейчас нет'}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => dispatch({ type: 'ENDURE_BIZ_TROUBLE' })}
+                        className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] p-3 text-left transition hover:border-amber-500/60"
+                      >
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                          Перетерпеть
+                        </div>
+                        <div className="tabnum mt-0.5 text-lg font-black">−{pct}%</div>
+                        <div className="mt-1 text-[11px] text-[var(--muted)]">
+                          доход дела на {месяцев} {месяцев === 1 ? 'месяц' : 'месяца'}, платить не надо
+                        </div>
+                      </button>
+                    </>
+                  )
+                })()}
+              </div>
+            ) : (
+              <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
+                {card.managerPct != null && мойХод ? 'Пока справлюсь сам' : 'Дальше'}
+              </button>
+            )}
           </S>
         )
       }

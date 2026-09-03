@@ -398,6 +398,15 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
 
     case 'market': {
       const card = pending.card
+      /*
+       * Беда с выбором: чинить сразу или терпеть просадку. Бот чинит, когда
+       * деньги есть с запасом — как поступил бы человек, у которого сейчас
+       * не решается судьба партии; иначе живёт с поломкой.
+       */
+      if (pending.выбор === 'беда') {
+        const надо = Math.abs((card as { cash?: number }).cash ?? 0)
+        return l.cash >= надо * 3 ? { type: 'PAY_BIZ_TROUBLE' } : { type: 'ENDURE_BIZ_TROUBLE' }
+      }
       if (card.kind === 'sellOffer') {
         const mult = inf(p.marketSellMultiple)
         for (const m of marketMatches(t, card.category)) {

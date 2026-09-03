@@ -1637,6 +1637,8 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   REPAY_LOAN: 'своё',
   PAYOFF_ASSET: 'своё',
   INVEST_IN_BUSINESS: 'своё',
+  PAY_BIZ_TROUBLE: 'карта',
+  ENDURE_BIZ_TROUBLE: 'карта',
   PAY_OFF_DEBT: 'своё',
   OFFER_ASSET: 'своё',
   OFFER_LOAN: 'своё',
@@ -2131,6 +2133,23 @@ function resolveLanding(t: Table, seatIdx: number) {
           t.phase = 'resolving'
           return
         }
+        /*
+         * 🔴 БЕДА — С ВЫБОРОМ (решение Камиля). Раньше карточка списывала
+         * деньги молча, ещё до того как человек её прочитал: «событие
+         * Полосы — деньги уже списаны». Теперь у разовой беды два выхода —
+         * заплатить сейчас или перетерпеть просадкой дохода. Это и есть
+         * настоящее решение: есть наличные — чинишь сразу; нет — живёшь с
+         * поломкой и платишь дольше.
+         *
+         * Выбор даём только там, где он честный: разовая трата по СВОЕМУ делу
+         * без вечного изменения дохода. Подарки, проценты навсегда и события
+         * рынка применяются как раньше.
+         */
+        if (нуженВыборПоБеде(t, card)) {
+          t.pending = { kind: 'market', card, выбор: 'беда' }
+          t.phase = 'resolving'
+          return
+        }
         const объяснение = applyMarketAuto(t, card)
         t.pending = { kind: 'market', card, notes: объяснение.length ? объяснение : undefined }
         t.phase = 'resolving'
@@ -2471,6 +2490,31 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
  * Сплиты, выплаты и повышения применяются сразу — решать нечего.
  * Возвращает объяснение: что именно произошло, словами для человека.
  */
+/** Разовая беда по своему делу, у которой есть честная альтернатива. */
+function нуженВыборПоБеде(t: Table, card: MarketCard): boolean {
+  if (card.kind !== 'bizEvent') return false
+  if (card.cash == null || card.cash >= 0) return false
+  if (card.flowPct != null || card.dipPct != null || card.managerPct != null) return false
+  const seat = currentSeat(t)
+  return seat.ledger.businesses.some((b) => !b.gl && делоПодходит(card, b))
+}
+
+/**
+ * Во что обходится «перетерпеть»: просадка дохода дела на три месяца.
+ *
+ * 🔴 ТЕРПЕТЬ ЧУТЬ ДОРОЖЕ, ЧЕМ ПОЧИНИТЬ — иначе выбор был бы фальшивым: платить
+ * сразу не стал бы никто. Берём треть суммы в месяц с надбавкой и переводим в
+ * процент от потока самого дела; глубже 60% не режем, чтобы дело не уходило
+ * в ноль на ровном месте.
+ */
+export function ценаТерпения(card: { cash?: number }, поток: number): { pct: number; месяцев: number } {
+  const месяцев = 3
+  const надо = Math.abs(card.cash ?? 0) * 1.3
+  if (поток <= 0) return { pct: 0, месяцев }
+  const pct = Math.min(60, Math.max(5, Math.round((надо / месяцев / поток) * 100)))
+  return { pct, месяцев }
+}
+
 function applyMarketAuto(t: Table, card: MarketCard): string[] {
   if (card.kind === 'bizEvent') {
     /*
@@ -3805,6 +3849,54 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
      * потратит один — это тихий подарок соседу за твой счёт. Партнёрское
      * дело GreenLeaf тоже не трогаем: у него своя структура и свой рост.
      */
+    /*
+     * Беда по своему делу — выбор из двух. Заплатил: карточка отрабатывает
+     * ровно как раньше. Перетерпел: денег не отдаёшь, но дело три месяца
+     * приносит меньше — и в сумме чуть дороже, чем починить сразу.
+     */
+    case 'PAY_BIZ_TROUBLE': {
+      if (t.pending?.kind !== 'market' || t.pending.выбор !== 'беда') return prev
+      const card = t.pending.card
+      const объяснение = applyMarketAuto(t, card)
+      t.pending = { kind: 'market', card, notes: объяснение.length ? объяснение : undefined }
+      return t
+    }
+
+    case 'ENDURE_BIZ_TROUBLE': {
+      if (t.pending?.kind !== 'market' || t.pending.выбор !== 'беда') return prev
+      const card = t.pending.card
+      if (card.kind !== 'bizEvent') return prev
+      const цели = l.businesses.filter((b) => !b.gl && делоПодходит(card, b))
+      if (!цели.length) return prev
+      const заметки: string[] = []
+      for (const b of цели) {
+        const { pct, месяцев } = ценаТерпения(card, b.cashFlow)
+        if (pct <= 0) continue
+        seatLedgerEvent(t, seat.id, {
+          type: 'SET_ASSET_DIP',
+          assetId: b.id,
+          dipMul: 1 - pct / 100,
+          dipLeft: месяцев,
+        })
+        // Общее дело просаживается у обоих: заведение одно, и беда у него одна.
+        const п = втораяПоловина(t, seat, b)
+        if (п && 'liability' in п.asset) {
+          seatLedgerEvent(t, п.seat.id, {
+            type: 'SET_ASSET_DIP',
+            assetId: п.asset.id,
+            dipMul: 1 - pct / 100,
+            dipLeft: месяцев,
+          })
+        }
+        заметки.push(
+          `${b.name}: чинить не стали — доход просел на ${pct}% на ${месяцев} ${склонениеЗарплат(месяцев)}`,
+        )
+      }
+      for (const з of заметки) log(t, seat.id, з)
+      t.pending = { kind: 'market', card, notes: заметки.length ? заметки : undefined }
+      return t
+    }
+
     case 'INVEST_IN_BUSINESS': {
       const b = l.businesses.find((x) => x.id === event.assetId)
       if (!b || b.gl || b.partnerId) return prev
