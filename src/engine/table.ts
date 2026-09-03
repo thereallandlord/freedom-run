@@ -2822,6 +2822,7 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
   } else if (card.kind === 'windfall') {
     // Личная выплата — только вытянувшему; общая — всем в Рутине.
     const only = card.scope === 'self' ? currentSeat(t).id : null
+    const получили: string[] = []
     for (const s of t.seats) {
       if (s.outOfGame || s.track === 'fast') continue
       if (only && s.id !== only) continue
@@ -2832,7 +2833,25 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
       if (amount > 0) {
         seatLedgerEvent(t, s.id, { type: 'ADJUST_CASH', amount })
         log(t, s.id, `${card.title}: +${money(amount)}`)
+        получили.push(`${s.name} ${money(amount)}`)
       }
+    }
+    /*
+     * 🔴 ДЕНЬГИ ПРИШЛИ — СКАЖИ ОБ ЭТОМ. Живая жалоба: «налоговый вычет
+     * 15 тысяч всем — событие прошло незаметно». Выплата писалась только в
+     * журнал, а он за ход набирает два десятка строк: подарок стола никто
+     * не заметил. Одна общая плашка, а не по одной на каждого: иначе на
+     * четверых экран заливает.
+     */
+    if (получили.length) {
+      плашка(
+        t,
+        null,
+        получили.length > 1
+          ? `${card.title} — деньги пришли всем: ${получили.join(', ')}`
+          : `${card.title} — ${получили[0]}`,
+        'добро',
+      )
     }
   } else if (card.kind === 'payRaise') {
     const seat = currentSeat(t)
