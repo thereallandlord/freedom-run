@@ -108,6 +108,8 @@ export function useGame(net?: {
   isHost: boolean
   /** Моё место за столом: им подписывается каждое моё действие. */
   meId?: string
+  /** Моё НАСТОЯЩЕЕ место, когда `meId` подменён на чужое (хозяин ходит за другого). */
+  моёМесто?: string
 }) {
   const [setup, setSetup] = useState<TableSetup | null>(null)
   const [events, setEvents] = useState<TableEvent[]>([])
@@ -258,6 +260,7 @@ export function useGame(net?: {
   const местнаяПартия = !!setup && setup.seats.every((s) => !(s as { id?: string }).id)
   const netSend = местнаяПартия ? undefined : net?.send
   const meId = местнаяПартия ? undefined : net?.meId
+  const меняРеально = местнаяПартия ? undefined : net?.моёМесто
 
   const dispatch = useCallback(
     (e: TableEvent) => {
@@ -283,7 +286,18 @@ export function useGame(net?: {
        *
        * Поэтому подпись ставим, только когда она что-то значит за ЭТИМ столом.
        */
-      const signed = meId ? ({ ...e, by: meId } as TableEvent) : e
+      /*
+       * Когда хозяин ходит за другого, кладём в ход и своё настоящее место:
+       * стол обязан видеть подмену, иначе чужими активами можно распорядиться
+       * втихую. Своим местом ходим как раньше — поля просто нет.
+       */
+      const signed = meId
+        ? ({
+            ...e,
+            by: meId,
+            ...(меняРеально && меняРеально !== meId ? { подменил: меняРеально } : {}),
+          } as TableEvent)
+        : e
       if (netSend) {
         /*
          * 🔴 Свой клик применяем СРАЗУ, не дожидаясь эха. Ожидание круга по
