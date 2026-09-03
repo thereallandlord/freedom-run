@@ -814,7 +814,13 @@ export function PlayerPanel({
         )}
         {l.charityTurnsLeft > 0 && (
           <div className="mt-2 rounded-md bg-emerald-500/15 px-2 py-1 text-[11px] text-emerald-300">
-            Благотворительность: 2 кубика ещё {l.charityTurnsLeft} хода
+            {/*
+              🔴 «2 КУБИКА НА 2 ХОДА» ПОНЯЛИ КАК ДВА БРОСКА ПОДРЯД. Живая
+              путаница за столом. Пишем действие, а не сокращение: бросаешь
+              ОДИН раз, но двумя кубиками сразу, и идёшь дальше.
+            */}
+            Бросаете сразу двумя кубиками — ещё {l.charityTurnsLeft}{' '}
+            {l.charityTurnsLeft === 1 ? 'ход' : l.charityTurnsLeft < 5 ? 'хода' : 'ходов'}
           </div>
         )}
       </div>
