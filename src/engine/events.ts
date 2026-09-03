@@ -33,6 +33,8 @@ export type LedgerEvent =
     }
   | { type: 'SELL_STOCK'; lotId: string; shares: number; pricePerShare: number }
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse'; ratio?: number }
+  /** Монета обнулилась: позиция сгорает целиком, продавать нечего. */
+  | { type: 'WIPE_STOCK'; symbol: string }
   | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; value?: number; profitShareTo?: string; profitSharePct?: number }
   | {
       type: 'SELL_REAL_ESTATE'

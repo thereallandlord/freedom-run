@@ -309,6 +309,15 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       return l
     }
 
+    /*
+     * Монета обнулилась. Позиция уходит целиком: продавать нечего, вернуть
+     * нечего. Наличные не трогаем — деньги были потрачены при покупке.
+     */
+    case 'WIPE_STOCK': {
+      const sym = e.symbol.toUpperCase()
+      l.stocks = l.stocks.filter((lot) => lot.symbol.toUpperCase() !== sym)
+      return l
+    }
     case 'STOCK_SPLIT': {
       const sym = e.symbol.toUpperCase()
       for (const lot of l.stocks) {

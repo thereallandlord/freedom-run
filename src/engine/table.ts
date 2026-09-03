@@ -1158,8 +1158,15 @@ export function dealCardAt(t: Table, deck: 'small' | 'big', index: number): Deal
 }
 
 export function diceCountFor(seat: Seat): number[] {
+  /*
+   * 🔴 ЗАПЛАТИЛ ЗА ДВА КУБИКА — КИДАЕШЬ ДВА, БЕЗ ВОПРОСОВ. Раньше право,
+   * купленное пожертвованием, приходило как ВЫБОР «один или два», и игра
+   * каждый ход спрашивала. Камиль на игре: «убери возможность бросать один
+   * кубик, какая разница». Разницы и правда нет: смысл пожертвования — идти
+   * быстрее и чаще получать зарплату, один кубик его просто отменяет.
+   */
   if (seat.track === 'fast') return seat.ftCharity ? [3] : [2]
-  return seat.ledger.charityTurnsLeft > 0 ? [1, 2] : [1]
+  return seat.ledger.charityTurnsLeft > 0 ? [2] : [1]
 }
 
 /** Игроки Круга, у которых есть актив нужной категории — им адресовано предложение. */
@@ -2788,6 +2795,30 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
         )
       }
       for (const о of объяснения) log(t, s.id, о)
+    }
+    return []
+  }
+  /*
+   * 🔴 МЕМКОИН ОБЯЗАН УМЕТЬ УМИРАТЬ. Карточка цены — это разовое предложение
+   * продать, поэтому держатель просто ЖДЁТ памп и не теряет ничего: замер по
+   * колоде показал, что у PEPE вообще одна карточка цены и та на верху вилки,
+   * то есть прибыль была гарантирована. При таком устройстве «низкий шанс
+   * выстрелить» неосуществим в принципе — нижней стороны не существует.
+   *
+   * Обнуление даёт ту самую нижнюю сторону и повторяет жизнь: разработчики
+   * выводят ликвидность, монета остаётся в кошельке и не стоит ничего.
+   * Пометка на карточке объясняет, почему это и есть майсир.
+   */
+  if (card.kind === 'stockPrice' && (card as { wipe?: boolean }).wipe) {
+    const sym = card.symbol.toUpperCase()
+    for (const s of t.seats) {
+      if (s.outOfGame || s.track === 'fast') continue
+      const свои = s.ledger.stocks.filter((l) => l.symbol.toUpperCase() === sym)
+      if (!свои.length) continue
+      const вложено = свои.reduce((a, l) => a + l.shares * l.costPerShare, 0)
+      seatLedgerEvent(t, s.id, { type: 'WIPE_STOCK', symbol: sym })
+      log(t, s.id, `${card.title}: ${sym} обнулилась, сгорело ${money(вложено)}`)
+      плашка(t, s.id, `${s.name}: ${sym} обнулилась — сгорело ${money(вложено)}`, 'худо')
     }
     return []
   }
