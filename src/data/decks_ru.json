@@ -2577,6 +2577,147 @@
       "wipe": true,
       "title": "MOONX признали пирамидой",
       "text": "Проект попал под запрет, биржи сняли монету отовсюду. Позиция сгорела целиком."
+    },
+    {
+      "id": "re-arendator-sehal",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "aptMSK",
+        "aptSPB",
+        "aptKZN",
+        "aptTUR",
+        "aptDXB",
+        "aptBALI",
+        "aptSAU",
+        "aptCIS",
+        "roomUFA"
+      ],
+      "cash": -30000,
+      "title": "Арендатор съехал посреди месяца",
+      "text": "Съехал в выходные, ключи бросил в почтовый ящик. Пока найдёте нового — квартира стоит пустая, а платить за неё всё равно надо."
+    },
+    {
+      "id": "re-remont-posle-zhiltsov",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "aptMSK",
+        "aptSPB",
+        "aptKZN",
+        "aptTUR",
+        "aptDXB",
+        "aptBALI",
+        "aptSAU",
+        "aptCIS",
+        "roomUFA"
+      ],
+      "cash": -45000,
+      "title": "После жильцов пришлось делать ремонт",
+      "text": "Обои в детской, дверца шкафа, плита в жиру. Залога не хватило — разницу доплачиваете вы."
+    },
+    {
+      "id": "re-dolgosrochnyy-arendator",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "aptMSK",
+        "aptSPB",
+        "aptKZN",
+        "aptTUR",
+        "aptDXB",
+        "aptBALI",
+        "aptSAU",
+        "aptCIS",
+        "roomUFA"
+      ],
+      "flowPct": 8,
+      "title": "Нашёлся арендатор на два года",
+      "text": "Семья с ребёнком, работа рядом, съезжать не собираются. Согласились на цену чуть выше рынка за то, что въезжают сразу."
+    },
+    {
+      "id": "re-sosedi-zalili",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "aptMSK",
+        "aptSPB",
+        "aptKZN",
+        "aptTUR",
+        "aptDXB",
+        "aptBALI",
+        "aptSAU",
+        "aptCIS",
+        "roomUFA",
+        "roomUFA"
+      ],
+      "cash": -25000,
+      "title": "Соседи сверху залили",
+      "text": "Потолок в спальне и коридоре. Соседи божатся, что вернут, но пока ремонт делаете вы."
+    },
+    {
+      "id": "re-schetchiki",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "aptMSK",
+        "aptSPB",
+        "aptKZN",
+        "aptTUR",
+        "aptDXB",
+        "aptBALI",
+        "aptSAU",
+        "aptCIS",
+        "roomUFA",
+        "houseRF",
+        "parking",
+        "land"
+      ],
+      "cash": -12000,
+      "title": "Поверка счётчиков и долг по ЖКХ от прошлых жильцов",
+      "text": "Управляющая компания прислала счёт: поверка, пени и хвост от прежнего арендатора."
+    },
+    {
+      "id": "re-remont-podyezda",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "aptMSK",
+        "aptSPB",
+        "aptKZN",
+        "aptTUR",
+        "aptDXB",
+        "aptBALI",
+        "aptSAU",
+        "aptCIS",
+        "roomUFA"
+      ],
+      "flowPct": 6,
+      "title": "Дом отремонтировали, двор привели в порядок",
+      "text": "Новые лифты, шлагбаум, детская площадка. Район стал приятнее, и арендаторы согласились на прибавку."
+    },
+    {
+      "id": "re-parkovka-platnaya",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "parking"
+      ],
+      "flowPct": 12,
+      "title": "Во дворе ввели пропуска",
+      "text": "Гостям встать негде, и место в паркинге подорожало само собой."
+    },
+    {
+      "id": "re-uchastok-kommunikacii",
+      "deck": "market",
+      "kind": "bizEvent",
+      "categories": [
+        "land",
+        "houseRF"
+      ],
+      "cash": -40000,
+      "title": "Подводили воду — вышло дороже сметы",
+      "text": "Труба, врезка, бумаги. Дороже, чем обещали, но без воды участок никому не нужен."
     }
   ],
   "DOODADS_RU": [

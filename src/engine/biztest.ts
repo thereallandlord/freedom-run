@@ -15,7 +15,9 @@ import { createTable, бизнесСтадия, событиеБизнесаУм
 import type { BizEventCard, BusinessAsset, Table } from './types'
 
 const карты = marketCards('ru').filter((c): c is BizEventCard => c.kind === 'bizEvent')
-const дела = [...bigDeals('ru'), ...smallDeals('ru')].filter((c) => c.kind === 'business')
+const всеСделки = [...bigDeals('ru'), ...smallDeals('ru')]
+const дела = всеСделки.filter((c) => c.kind === 'business')
+const объекты = всеСделки.filter((c) => c.kind === 'realEstate')
 const обычные = дела.filter((c) => (c as { category?: string }).category !== 'partnership')
 
 console.log(`обычных бизнесов в колодах: ${обычные.length}`)
@@ -71,7 +73,14 @@ for (const c of карты) {
 }
 
 /* 4. Карточка, названная по виду дела, обязана иметь адресата в колодах. */
-const виды = new Set(обычные.map((b) => (b as { category?: string }).category ?? ''))
+/*
+ * 🔴 НЕДВИЖИМОСТЬ ТОЖЕ АДРЕСАТ. События перестали быть только про дела:
+ * у квартир и машиномест до этого не было НИ ОДНОЙ карточки, и проверка,
+ * собиравшая виды только из бизнесов, объявляла новые карточки безадресными.
+ */
+const виды = new Set(
+  [...обычные, ...объекты].map((b) => (b as { category?: string }).category ?? ''),
+)
 for (const c of карты)
   if (c.categories?.length && !c.categories.some((k) => виды.has(k)))
     беды.push(`${c.id}: некому прийти — вида ${c.categories} в колодах нет`)

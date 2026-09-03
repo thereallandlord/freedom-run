@@ -2413,7 +2413,8 @@ export function делоПодходит(
 
 /** Подходит ли событие бизнеса этому игроку: и по стадии, и по виду дела. */
 export function событиеБизнесаУместно(t: Table, card: import('./types').BizEventCard): boolean {
-  const свои = currentSeat(t).ledger.businesses.filter((b) => !b.gl)
+  const l = currentSeat(t).ledger
+  const свои = [...l.businesses.filter((b) => !b.gl), ...l.realEstate]
   if (!свои.length) return false
   if (!свои.some((b) => делоПодходит(card, b))) {
     return false
@@ -2534,7 +2535,22 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
      * заведения. Так пожар в кофейне не бьёт по типографии за соседним столом.
      */
     const seat = currentSeat(t)
-    const цели = seat.ledger.businesses.filter((b) => !b.gl && делоПодходит(card, b))
+    /*
+     * 🔴 СОБЫТИЯ БЫВАЮТ И У НЕДВИЖИМОСТИ. Замер по колоде: карточек, задевающих
+     * квартиры, машиноместа или дома, было РОВНО НОЛЬ — человек с двумя
+     * квартирами за всю партию не видел про них ни одного события, кроме
+     * мировых новостей. Отсюда просьба «добавить карточки на потерю дохода,
+     * например съехал арендатор».
+     *
+     * Механика та же, что у дел: постоянное изменение потока или разовые
+     * деньги. Просадку на срок к недвижимости не прикладываем — этих полей у
+     * неё нет, и заводить их ради трёх карточек значило бы тащить в кошелёк
+     * лишний срок жизни.
+     */
+    const цели = [
+      ...seat.ledger.businesses.filter((b) => !b.gl && делоПодходит(card, b)),
+      ...seat.ledger.realEstate.filter((a) => делоПодходит(card, a)),
+    ] as BusinessAsset[]
     if (!цели.length) return []
     const заметки: string[] = []
     /*
@@ -2565,7 +2581,8 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
           `${b.name}: доход ${card.flowPct > 0 ? 'вырос' : 'упал'} с ${money(было)} до ${money(b.cashFlow)} в месяц`,
         )
       }
-      if (card.dipPct) {
+      // Просадка на срок — только у дел: у недвижимости этих полей нет.
+      if (card.dipPct && 'liability' in b) {
         b.dipMul = 1 - card.dipPct / 100
         b.dipLeft = card.dipPaydays ?? 3
         пиши(`${b.name}: доход просел на ${card.dipPct}% на ${b.dipLeft} ${склонениеЗарплат(b.dipLeft)}`)
