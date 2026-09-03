@@ -705,6 +705,51 @@ function GoalCard({
             </p>
           ) : null
         })()}
+      {/*
+        🔴 «ИГРА НЕ ПОДСКАЗЫВАЕТ, ЧТО РАССРОЧКИ ПОРА ЗАКРЫВАТЬ — И ЧТО ЭТО
+        ДАЁТ ВЫХОД В ТОТ ЖЕ ХОД». Живая просьба. Погашение освобождает платёж,
+        платёж возвращается в доход, и иногда этого ровно хватает до свободы —
+        но узнать об этом можно было только попробовав. Ищем ту рассрочку,
+        которая закрывает разрыв, и называем её по имени вместе с ценой.
+      */}
+      {!onFast &&
+        !won &&
+        (() => {
+          const разрыв = need - done
+          if (разрыв <= 0) return null
+          const кандидаты = [...l.realEstate, ...l.businesses]
+            .filter((a) => {
+              const b = a as BusinessAsset
+              if (b.gl) return false
+              // Дело без управляющего в зачёт свободы не идёт даже без долга.
+              if ('liability' in a && !b.managerPct) return false
+              return (a.installmentMonthly ?? 0) * (1 - (a.investorShare ?? 0)) >= разрыв
+            })
+            .map((a) => ({
+              имя: a.name,
+              цена: Math.round(
+                (('liability' in a ? (a as BusinessAsset).liability : (a as RealEstateAsset).mortgage) ?? 0) *
+                  (1 - (a.investorShare ?? 0)),
+              ),
+            }))
+            .filter((x) => x.цена > 0)
+            .sort((a, b) => a.цена - b.цена)
+          const лучший = кандидаты[0]
+          if (!лучший) return null
+          const хватает = l.cash >= лучший.цена
+          return (
+            <p
+              className={`mt-2 rounded-md px-2 py-1 text-[11px] leading-snug ${
+                хватает ? 'bg-emerald-500/15 text-emerald-600' : 'bg-[var(--t-glass,var(--panel-2))] text-[var(--t-muted, var(--muted))]'
+              }`}
+            >
+              {хватает ? 'Можно выйти прямо сейчас: ' : 'До свободы не хватает — '}
+              закройте рассрочку по «{лучший.имя}» за {money(лучший.цена)}, освободившийся платёж
+              перекроет разрыв.
+              {!хватает && ` Сейчас на руках ${money(l.cash)}.`}
+            </p>
+          )
+        })()}
       <p className="mt-2 text-[11px] leading-snug text-[var(--t-muted, var(--muted))]">
         {won
           ? onFast
