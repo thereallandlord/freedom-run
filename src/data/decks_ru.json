@@ -228,7 +228,8 @@
       "cost": 1500000,
       "downPayment": 1500000,
       "liability": 0,
-      "cashFlow": 33000
+      "cashFlow": 33000,
+      "ремесло": "барбершоп"
     },
     {
       "id": "big-biz-kids-center-ufa",
@@ -239,7 +240,8 @@
       "cost": 2500000,
       "downPayment": 2500000,
       "liability": 0,
-      "cashFlow": 55000
+      "cashFlow": 55000,
+      "ремесло": "детский центр"
     },
     {
       "id": "big-biz-online-store",
@@ -505,7 +507,8 @@
       "cost": 3000000,
       "downPayment": 1500000,
       "liability": 1500000,
-      "cashFlow": 66000
+      "cashFlow": 66000,
+      "ремесло": "типография"
     },
     {
       "id": "big-biz-scooters-kzn",
@@ -516,7 +519,8 @@
       "cost": 2200000,
       "downPayment": 2200000,
       "liability": 0,
-      "cashFlow": 48400
+      "cashFlow": 48400,
+      "ремесло": "самокаты"
     },
     {
       "id": "big-re-dag-hotel",
@@ -538,7 +542,8 @@
       "cost": 4000000,
       "downPayment": 2000000,
       "liability": 2000000,
-      "cashFlow": 88000
+      "cashFlow": 88000,
+      "ремесло": "автомойка"
     },
     {
       "id": "sd-re-tur-mersin2",
@@ -1719,7 +1724,10 @@
         "bizService"
       ],
       "dipPct": 30,
-      "dipPaydays": 2
+      "dipPaydays": 2,
+      "ремесло": [
+        "автомойка"
+      ]
     },
     {
       "kind": "bizEvent",
@@ -1979,7 +1987,10 @@
       "categories": [
         "bizService"
       ],
-      "flowPct": -15
+      "flowPct": -15,
+      "ремесло": [
+        "самокаты"
+      ]
     },
     {
       "kind": "bizEvent",
@@ -1993,7 +2004,10 @@
       "categories": [
         "bizService"
       ],
-      "cash": -22000
+      "cash": -22000,
+      "ремесло": [
+        "типография"
+      ]
     },
     {
       "kind": "bizEvent",
@@ -2008,7 +2022,10 @@
         "bizService"
       ],
       "dipPct": 25,
-      "dipPaydays": 3
+      "dipPaydays": 3,
+      "ремесло": [
+        "барбершоп"
+      ]
     },
     {
       "kind": "bizEvent",
@@ -2321,7 +2338,10 @@
         "bizService"
       ],
       "dipPct": 35,
-      "dipPaydays": 3
+      "dipPaydays": 3,
+      "ремесло": [
+        "детский центр"
+      ]
     },
     {
       "kind": "bizEvent",

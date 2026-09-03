@@ -370,8 +370,8 @@ function AssetRow({
           {kind === 'business' && !(a as BusinessAsset).gl && (
             (a as BusinessAsset).managerPct ? (
               <div className="mt-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[11px] leading-snug">
-                Управляющий забирает {(a as BusinessAsset).managerPct}% — остальное работает без вас
-                и идёт в зачёт свободы
+                Управляющий забирает {(a as BusinessAsset).managerPct}% чистой прибыли (не выручки)
+                — остальное работает без вас и идёт в зачёт свободы
               </div>
             ) : dispatch && !вторая ? (
               <button
@@ -379,7 +379,7 @@ function AssetRow({
                 onClick={() => dispatch({ type: 'HIRE_MANAGER', assetId: a.id, pct: MANAGER_PCT })}
                 className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold leading-snug transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
               >
-                Нанять управляющего за {money(наймCost)}
+                Нанять управляющего за {money(наймCost)} — заберёт {MANAGER_PCT}% чистой прибыли
                 <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
                   заберёт {MANAGER_PCT}%, зато {money(Math.round((mine * (100 - MANAGER_PCT)) / 100))}/мес
                   пойдут в зачёт свободы

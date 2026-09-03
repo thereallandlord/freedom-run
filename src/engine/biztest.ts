@@ -86,9 +86,29 @@ const стол: Table = createTable({
   ],
 } as never)
 
-const бизнес = (category: string, managerPct?: number): BusinessAsset =>
-  ({ id: `x${category}${managerPct ?? 0}`, name: category, cost: 1, downPayment: 1,
-     liability: 0, cashFlow: 50_000, category, managerPct }) as BusinessAsset
+/*
+ * 🔴 ИДЕНТИФИКАТОР БЕРЁМ ОТ НАСТОЯЩЕЙ КАРТОЧКИ, а не выдуманный. Ремесло дела
+ * (барбершоп, автомойка, типография) движок узнаёт по началу его id — по нему
+ * же отбираются карточки, названные по ремеслу. С выдуманным `xbizService0`
+ * ремесла нет вовсе, и проверка считала доступными только те карточки, что
+ * бьют по всему рынку разом: получалось, будто владельцу одной точки нечего
+ * вытянуть, хотя у настоящего барбершопа выбор шире.
+ */
+const бизнес = (category: string, managerPct?: number): BusinessAsset => {
+  const образец = [...bigDeals('ru'), ...smallDeals('ru')].find(
+    (c) => c.kind === 'business' && (c as { category?: string }).category === category,
+  )
+  return {
+    id: `${образец?.id ?? `x${category}`}-1`,
+    name: образец?.title ?? category,
+    cost: 1,
+    downPayment: 1,
+    liability: 0,
+    cashFlow: 50_000,
+    category,
+    managerPct,
+  } as BusinessAsset
+}
 
 const с = стол.seats[0].ledger
 с.businesses = []
