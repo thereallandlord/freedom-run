@@ -1636,6 +1636,7 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   TAKE_LOAN: 'своё',
   REPAY_LOAN: 'своё',
   PAYOFF_ASSET: 'своё',
+  INVEST_IN_BUSINESS: 'своё',
   PAY_OFF_DEBT: 'своё',
   OFFER_ASSET: 'своё',
   OFFER_LOAN: 'своё',
@@ -1742,6 +1743,15 @@ export function hasConsumerDebt(l: Ledger): boolean {
  * целый день. Тем, у кого дела есть, она заметна.
  */
 export const ПРИБАВКА_ЗА_УВОЛЬНЕНИЕ = 30
+
+/**
+ * Меньше этого вкладывать в дело нельзя.
+ *
+ * Не из вредности: при доходности около двух процентов вложение в десять
+ * тысяч даёт двести рублей в месяц, и такие суммы плодят копеечные строки в
+ * ведомости, ничего не решая.
+ */
+export const МИНИМУМ_ВЛОЖЕНИЯ = 100_000
 
 /** Взял ли человек рубеж свободы именно в этот месяц. */
 function взялРубеж(до: Seat, после: Seat): boolean {
@@ -3786,6 +3796,37 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
     }
 
     /** Закрыть рассрочку досрочно. Скидка — жест продавца, заранее не обещана. */
+    /**
+     * Вложиться в своё дело: доход растёт на ту же доходность, с какой дело
+     * работает. Вложил столько же, сколько оно стоило, — доход удвоился.
+     *
+     * 🔴 ТОЛЬКО В СВОЁ И ТОЛЬКО В НЕОБЩЕЕ. У общего дела доли зафиксированы
+     * договором: если один вложится, доход вырастет у обоих, а деньги
+     * потратит один — это тихий подарок соседу за твой счёт. Партнёрское
+     * дело GreenLeaf тоже не трогаем: у него своя структура и свой рост.
+     */
+    case 'INVEST_IN_BUSINESS': {
+      const b = l.businesses.find((x) => x.id === event.assetId)
+      if (!b || b.gl || b.partnerId) return prev
+      const сумма = Math.max(0, Math.round(event.amount))
+      if (сумма < МИНИМУМ_ВЛОЖЕНИЯ || l.cash < сумма) return prev
+      const база = b.cost > 0 ? b.cashFlow / b.cost : 0
+      const прибавка = Math.round((сумма * база) / 100) * 100
+      if (прибавка <= 0) return prev
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -сумма })
+      seatLedgerEvent(t, seat.id, { type: 'SET_ASSET_FLOW', assetId: b.id, cashFlow: b.cashFlow + прибавка })
+      /*
+       * 🔴 ВЛОЖЕННОЕ — ЭТО СВОИ ДЕНЬГИ В ДЕЛЕ. Без этого при продаже вся
+       * прибавка считалась бы прибылью: с неё отщипывалась бы доля владельцу
+       * находки, а банк при банкротстве вернул бы меньше внесённого.
+       */
+      seatLedgerEvent(t, seat.id, { type: 'ADD_ASSET_PAID_IN', assetId: b.id, amount: сумма })
+      const текст = `${seat.name} вложил ${money(сумма)} в «${b.name}» — доход вырос на ${money(прибавка)}/мес`
+      log(t, seat.id, текст)
+      плашка(t, seat.id, текст, 'добро')
+      return t
+    }
+
     case 'PAYOFF_ASSET': {
       const re = l.realEstate.find((x) => x.id === event.assetId)
       const biz = l.businesses.find((x) => x.id === event.assetId)

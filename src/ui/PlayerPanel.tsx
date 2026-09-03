@@ -18,6 +18,7 @@ import {
   ribaRisk,
   MANAGER_PCT,
 } from '../engine/ledger'
+import { МИНИМУМ_ВЛОЖЕНИЯ } from '../engine/table'
 import type { TableEvent } from '../engine/events'
 import { вКругах } from './срок'
 import { professionName } from '../engine/data'
@@ -471,6 +472,43 @@ function AssetRow({
               )}
             </button>
           )}
+          {/*
+            🔴 «ВЛОЖИТЬСЯ В ДЕЛО» — БАЗОВОЕ ДЕЙСТВИЕ НА ОБОИХ КРУГАХ (решение
+            Камиля). До этого дело можно было только купить и продать: расти
+            оно могло лишь по карточке, то есть по удаче. Теперь рост — это
+            решение. Доход прибавляется по той же доходности, с какой дело и
+            работает: вложил столько, сколько оно стоило, — доход удвоился.
+
+            Общее дело и партнёрский бизнес сюда не попадают: у первого доли
+            зафиксированы договором, у второго свой рост.
+          */}
+          {kind === 'business' &&
+            dispatch &&
+            !вторая &&
+            !(a as BusinessAsset).gl &&
+            !a.partnerId &&
+            (() => {
+              const b = a as BusinessAsset
+              const шаг = Math.max(МИНИМУМ_ВЛОЖЕНИЯ, Math.round(b.cost / 4 / 100_000) * 100_000)
+              const прибавка = b.cost > 0 ? Math.round((шаг * (b.cashFlow / b.cost)) / 100) * 100 : 0
+              const хватает = (cash ?? 0) >= шаг
+              return (
+                <button
+                  disabled={!хватает || прибавка <= 0}
+                  onClick={() =>
+                    dispatch({ type: 'INVEST_IN_BUSINESS', assetId: a.id, amount: шаг })
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+                >
+                  Вложить {money(шаг)} — доход вырастет на {money(прибавка)}/мес
+                  {!хватает && (
+                    <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+                      столько наличными сейчас нет
+                    </span>
+                  )}
+                </button>
+              )
+            })()}
         </div>
       )}
     </div>

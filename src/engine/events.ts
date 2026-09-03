@@ -148,6 +148,14 @@ export type TableEventBody =
    * класс действия у него служебный.
    */
   | { type: 'SET_OUT_OF_RACE'; seatId: string; value: boolean }
+  /**
+   * Вложить свои деньги в СВОЁ дело: доход растёт.
+   *
+   * 🔴 Базовое действие на ОБОИХ кругах (решение Камиля). До этого дело можно
+   * было только купить и продать — расти оно могло лишь по карточке, то есть
+   * по удаче. Вложение делает рост решением игрока.
+   */
+  | { type: 'INVEST_IN_BUSINESS'; assetId: string; amount: number }
   | { type: 'ROLL'; dice: number[] }
   | { type: 'CHOOSE_DEAL'; size: 'small' | 'big' }
   /** glPackage — выбранный пакет GreenLeaf, если карта партнёрская. */
