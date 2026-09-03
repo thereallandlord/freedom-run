@@ -504,15 +504,39 @@ function снятьДолюСАктива(t: Table, п: Половина) {
   }
 }
 
+/**
+ * Одна честная строка «откуда взялась сумма на счету» после продажи.
+ *
+ * 🔴 ЗАЧЕМ. Живая жалоба с игры: «продал за 1 600 000, а пришло два миллиона,
+ * походу доля всё-таки ушла» — человек ГАДАЛ, что случилось с его деньгами.
+ * Итог приходит одним числом, а слагаемых у него до пяти: цена, списанная
+ * наценка за рассрочку, остаток долга, доля партнёра и доля с прибыли за вход.
+ * Пока их не видно, любая продажа выглядит как ошибка движка.
+ */
+function разбивкаПродажи(
+  t: Table,
+  seat: Seat,
+  имяАктива: string,
+  ч: { цена: number; долг: number; скидка: number; партнёр: number; доля: number },
+) {
+  const части: string[] = [`цена ${money(ч.цена)}`]
+  if (ч.скидка > 0) части.push(`+ списана наценка ${money(ч.скидка)}`)
+  if (ч.долг > 0) части.push(`− остаток рассрочки ${money(ч.долг)}`)
+  if (ч.партнёр > 0) части.push(`− доля партнёра ${money(ч.партнёр)}`)
+  if (ч.доля > 0) части.push(`− доля с прибыли за вход ${money(ч.доля)}`)
+  const итог = ч.цена + ч.скидка - ч.долг - ч.партнёр - ч.доля
+  log(t, seat.id, `«${имяАктива}»: ${части.join(' ')} = ${money(итог)} на счёт`)
+}
+
 function settleCoInvestor(
   t: Table,
   owner: Seat,
   asset: { id: string; investorShare?: number; partnerId?: string },
   net: number,
-) {
-  if (!asset.partnerId || !asset.investorShare) return
+): number {
+  if (!asset.partnerId || !asset.investorShare) return 0
   const partner = t.seats.find((x) => x.id === asset.partnerId)
-  if (!partner) return
+  if (!partner) return 0
   const половина = втораяПоловина(t, owner, asset)
   const cut = Math.round(net * asset.investorShare)
   if (cut !== 0) {
@@ -527,6 +551,7 @@ function settleCoInvestor(
   }
   // Зеркальная доля партнёра снимается вместе с объектом — иначе она платила бы вечно.
   if (половина) убратьПоловину(t, половина)
+  return cut
 }
 
 /**
@@ -552,8 +577,8 @@ function settleProfitShare(
     profitSharePct?: number
   },
   net: number,
-) {
-  if (!asset.profitShareTo || !asset.profitSharePct) return
+): number {
+  if (!asset.profitShareTo || !asset.profitSharePct) return 0
   /*
    * 🔴 ДОЛЯ С ПРИБЫЛИ — С ПРИБЫЛИ ПРОДАВЦА, а не всей сделки. У объекта,
    * купленного в долях, на счёт продавцу приходит только его часть нетто
@@ -564,10 +589,10 @@ function settleProfitShare(
   const своё = Math.round(net * (1 - (asset.investorShare ?? 0)))
   const вложено = asset.paidIn ?? asset.downPayment
   const profit = Math.round(своё - вложено)
-  if (profit <= 0) return
+  if (profit <= 0) return 0
   const cut = Math.round((profit * asset.profitSharePct) / 100)
   const owner = t.seats.find((x) => x.id === asset.profitShareTo)
-  if (!owner || cut <= 0) return
+  if (!owner || cut <= 0) return 0
   seatLedgerEvent(t, seller.id, { type: 'ADJUST_CASH', amount: -cut })
   seatLedgerEvent(t, owner.id, { type: 'ADJUST_CASH', amount: cut })
   const текст =
@@ -576,6 +601,7 @@ function settleProfitShare(
   log(t, owner.id, текст)
   // Видит только тот, кому пришли деньги: чужая доля — не новость стола.
   плашка(t, owner.id, `${owner.name}: ${текст}`, 'добро', [owner.id])
+  return cut
 }
 
 /**
@@ -3570,7 +3596,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
         t.market.price[asset.category] ?? 1,
       )
       // Расчёт с партнёром — до снятия актива, пока его доля ещё видна.
-      settleCoInvestor(t, holder, asset, price - (debtOnSale - rebate))
+      const партнёруЗаПродажу = settleCoInvestor(t, holder, asset, price - (debtOnSale - rebate))
       if (re) {
         seatLedgerEvent(t, event.seatId, { type: 'SELL_REAL_ESTATE', assetId: event.assetId, salePrice: price, rebate })
       } else {
@@ -3580,8 +3606,15 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
        * Долю отщипываем ПОСЛЕ зачисления выручки — как у бумаг: иначе платёж
        * уходит раньше денег и наличные ныряют в минус на ровном месте.
        */
-      settleProfitShare(t, holder, asset, price - (debtOnSale - rebate))
+      const долязаВход = settleProfitShare(t, holder, asset, price - (debtOnSale - rebate))
       log(t, event.seatId, `${holder.name} продал «${asset.name}» за ${money(price)} (${card.multiplierPct}%)`)
+      разбивкаПродажи(t, holder, asset.name, {
+        цена: price,
+        долг: debtOnSale,
+        скидка: rebate,
+        партнёр: партнёруЗаПродажу,
+        доля: долязаВход,
+      })
       плашка(
         t,
         holder.id,
@@ -4551,6 +4584,15 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
     }
 
     case 'WORLD_EVENT': {
+      /*
+       * 🔴 ДОХОД ДО НОВОСТИ — чтобы сказать человеку, ЧТО с ним произошло.
+       * Живая жалоба с игры 31.08: «у меня доход просел прямо сильно, мне на
+       * сотку доход просел, что за косяк такой интересно». Косяка не было:
+       * сработало мировое событие по его отрасли. Но узнать об этом было
+       * неоткуда — новость меняет множитель рынка молча, а панель показывает
+       * уже новое число. Любая необъяснённая просадка читается как поломка.
+       */
+      const доходДо = t.seats.map((s) => monthlyCashFlow(s.ledger, t.market.flow))
       const t2 = applyWorldEvent(t, event.index)
       /*
        * 🔴 Съедаем ИМЕННО ту новость, что вышла, а не «следующую по счёту».
@@ -4578,6 +4620,19 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       order[где] = order[t2.worldDeck.next]
       order[t2.worldDeck.next] = event.index
       t2.worldDeck = { order, next: t2.worldDeck.next + 1 }
+      // Кому новость изменила месячный доход — говорим вслух, с причиной и цифрой.
+      const новость = WORLD_EVENTS[event.index]
+      t2.seats.forEach((s, i) => {
+        if (s.outOfGame) return
+        const стало = monthlyCashFlow(s.ledger, t2.market.flow)
+        const сдвиг = стало - (доходДо[i] ?? стало)
+        if (Math.abs(сдвиг) < 1000) return
+        const текст = `${s.name}: «${новость?.title ?? 'новость'}» — доход ${
+          сдвиг > 0 ? 'вырос' : 'просел'
+        } на ${money(Math.abs(сдвиг))}/мес, теперь ${money(стало)}`
+        log(t2, s.id, текст)
+        плашка(t2, s.id, текст, сдвиг > 0 ? 'добро' : 'худо')
+      })
       return t2
     }
 
@@ -4902,7 +4957,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
            * никому, а его зеркало продолжало платить с чужого объекта. Ровно
            * это окно продажи и обещает строкой «Партнёру — его N%».
            */
-          settleCoInvestor(t, from, asset, price)
+          const партнёруЗаСделку = settleCoInvestor(t, from, asset, price)
           // Продавец получает цену за вычетом долга, который уходит вместе с активом.
           if (re)
             seatLedgerEvent(t, from.id, {
@@ -4930,7 +4985,18 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
            * владелец находки не получал ничего и даже не узнавал об этом.
            * Ср. table.ts:2826 — там долг гасится при продаже, и вычет уместен.
            */
-          settleProfitShare(t, from, asset, price)
+          const долязаВходСделки = settleProfitShare(t, from, asset, price)
+          /*
+           * Продажа соседу — тот же вопрос «почему пришло не столько»: долг
+           * уезжает к покупателю, поэтому в разбивке его нет, а доли есть.
+           */
+          разбивкаПродажи(t, from, asset.name, {
+            цена: price,
+            долг: 0,
+            скидка: 0,
+            партнёр: партнёруЗаСделку,
+            доля: долязаВходСделки,
+          })
           const common = {
             id: `${o.assetId}-${nextId(t)}`,
             name: asset.name,
