@@ -190,10 +190,10 @@
       "category": "bizFood",
       "title": "Пекарня в Уфе",
       "text": "Запах свежего хлеба продаёт сам. Печи, тандыр и обученная смена — хозяин уходит на покой, остаток в рассрочку.",
-      "cost": 3500000,
-      "downPayment": 700000,
-      "liability": 2800000,
-      "cashFlow": 80500
+      "cost": 2000000,
+      "downPayment": 2000000,
+      "liability": 0,
+      "cashFlow": 46000
     },
     {
       "id": "big-greenleaf",
@@ -214,10 +214,10 @@
       "ремесло": "ПВЗ",
       "title": "Пункт выдачи заказов (Уфа)",
       "text": "Люди заказывают всё подряд — выдавать кому-то надо. Аренда копеечная, район растёт. Рассрочка от владельца.",
-      "cost": 1500000,
-      "downPayment": 300000,
-      "liability": 1200000,
-      "cashFlow": 36000
+      "cost": 800000,
+      "downPayment": 800000,
+      "liability": 0,
+      "cashFlow": 19200
     },
     {
       "id": "big-biz-barbershop-kzn",
@@ -225,10 +225,10 @@
       "category": "bizService",
       "title": "Барбершоп в Казани",
       "text": "Кресла заняты, борода в моде десять лет и сдаваться не собирается. Мастера остаются, остаток — в рассрочку.",
-      "cost": 2500000,
-      "downPayment": 500000,
-      "liability": 2000000,
-      "cashFlow": 55000
+      "cost": 1500000,
+      "downPayment": 1500000,
+      "liability": 0,
+      "cashFlow": 33000
     },
     {
       "id": "big-biz-kids-center-ufa",
@@ -236,10 +236,10 @@
       "category": "bizService",
       "title": "Детский центр в Уфе",
       "text": "Родители готовы платить за час тишины. Группы набраны до лета, лицензия есть, владелица даёт рассрочку.",
-      "cost": 4000000,
-      "downPayment": 800000,
-      "liability": 3200000,
-      "cashFlow": 88000
+      "cost": 2500000,
+      "downPayment": 2500000,
+      "liability": 0,
+      "cashFlow": 55000
     },
     {
       "id": "big-biz-online-store",
@@ -247,10 +247,10 @@
       "category": "bizDigital",
       "title": "Интернет-магазин подарков",
       "text": "Сайт, склад у поставщика и постоянные покупатели. Работает из любой точки, где ловит интернет. Остаток — в рассрочку.",
-      "cost": 3000000,
-      "downPayment": 600000,
-      "liability": 2400000,
-      "cashFlow": 75000
+      "cost": 1500000,
+      "downPayment": 1500000,
+      "liability": 0,
+      "cashFlow": 37500
     },
     {
       "id": "sd-store-ufa-small",
@@ -469,10 +469,10 @@
       "category": "bizFood",
       "title": "Халяль-кафе в Казани",
       "text": "Место у мечети, обеды разлетаются к часу дня. Повар остаётся, рецепты в подарок, остаток — в рассрочку.",
-      "cost": 6000000,
-      "downPayment": 1200000,
-      "liability": 4800000,
-      "cashFlow": 138000
+      "cost": 3200000,
+      "downPayment": 1600000,
+      "liability": 1600000,
+      "cashFlow": 73600
     },
     {
       "id": "big-biz-darkstore-msk",
@@ -480,21 +480,21 @@
       "category": "bizFood",
       "title": "Дарк-стор в Москве",
       "text": "Склад, курьеры и город, который хочет есть ночью. Заказы растут каждый месяц, остаток — в рассрочку.",
-      "cost": 12000000,
-      "downPayment": 2400000,
-      "liability": 9600000,
-      "cashFlow": 276000
+      "cost": 5000000,
+      "downPayment": 2500000,
+      "liability": 2500000,
+      "cashFlow": 115000
     },
     {
       "id": "big-biz-shaurma-spb",
       "kind": "business",
       "category": "bizFood",
-      "title": "Сеть шаурмы в Питере (3 точки)",
+      "title": "Шаурма у метро в Питере",
       "text": "Шаурма в Питере — твёрдая валюта. Три точки у метро, очередь и после полуночи. Владелец уходит в стройку, остаток — в рассрочку.",
-      "cost": 9000000,
-      "downPayment": 1800000,
-      "liability": 7200000,
-      "cashFlow": 207000
+      "cost": 2600000,
+      "downPayment": 2600000,
+      "liability": 0,
+      "cashFlow": 59800
     },
     {
       "id": "big-biz-print-kzn",
@@ -502,10 +502,10 @@
       "category": "bizService",
       "title": "Типография в Казани",
       "text": "Печатает меню, коробки и свадебные приглашения — а свадьбы в Казани не кончаются никогда. Остаток в рассрочку.",
-      "cost": 5000000,
-      "downPayment": 1000000,
-      "liability": 4000000,
-      "cashFlow": 110000
+      "cost": 3000000,
+      "downPayment": 1500000,
+      "liability": 1500000,
+      "cashFlow": 66000
     },
     {
       "id": "big-biz-scooters-kzn",
@@ -513,10 +513,10 @@
       "category": "bizService",
       "title": "Прокат самокатов (Казань)",
       "text": "Сто самокатов, приложение и набережная. Летом — золотая жила, зимой — склад, но в среднем по году поток уверенный. Остаток — в рассрочку.",
-      "cost": 7000000,
-      "downPayment": 1400000,
-      "liability": 5600000,
-      "cashFlow": 154000
+      "cost": 2200000,
+      "downPayment": 2200000,
+      "liability": 0,
+      "cashFlow": 48400
     },
     {
       "id": "big-re-dag-hotel",
@@ -524,10 +524,10 @@
       "category": "hotelRF",
       "title": "Гостевой дом в Гунибе (Дагестан)",
       "text": "Восемь номеров в горах, вид на плато. Сезон с мая по октябрь, зимой почти пусто — доход в карточке средний за год. Держится на управляющем: уйдёт он — встанет всё.",
-      "cost": 11000000,
-      "downPayment": 2200000,
-      "liability": 8800000,
-      "cashFlow": 176000
+      "cost": 5500000,
+      "downPayment": 5500000,
+      "liability": 0,
+      "cashFlow": 88000
     },
     {
       "id": "big-biz-carwash-kzn",
@@ -535,10 +535,10 @@
       "category": "bizService",
       "title": "Автомойка самообслуживания в Казани",
       "text": "Шесть постов у выезда на трассу М-7. Работает без людей: платёж картой, вода, пена. Ломается редко, но дорого.",
-      "cost": 9000000,
-      "downPayment": 1800000,
-      "liability": 7200000,
-      "cashFlow": 198000
+      "cost": 4000000,
+      "downPayment": 2000000,
+      "liability": 2000000,
+      "cashFlow": 88000
     },
     {
       "id": "sd-re-tur-mersin2",
@@ -1573,7 +1573,7 @@
       "categories": [
         "bizFood"
       ],
-      "cash": -40000
+      "cash": -22000
     },
     {
       "kind": "bizEvent",
@@ -1587,7 +1587,7 @@
       "categories": [
         "bizFood"
       ],
-      "cash": -60000
+      "cash": -33000
     },
     {
       "kind": "bizEvent",
@@ -1633,7 +1633,7 @@
       ],
       "dipPct": 40,
       "dipPaydays": 2,
-      "cash": -30000
+      "cash": -16000
     },
     {
       "kind": "bizEvent",
@@ -1647,7 +1647,7 @@
       "categories": [
         "bizFood"
       ],
-      "cash": 30000
+      "cash": 16000
     },
     {
       "kind": "bizEvent",
@@ -1675,7 +1675,7 @@
       "categories": [
         "bizService"
       ],
-      "cash": -22000
+      "cash": -12000
     },
     {
       "kind": "bizEvent",
@@ -1690,7 +1690,7 @@
         "bizService"
       ],
       "flowPct": 12,
-      "cash": -35000
+      "cash": -19000
     },
     {
       "kind": "bizEvent",
@@ -1761,7 +1761,7 @@
       "categories": [
         "hotelRF"
       ],
-      "cash": -45000
+      "cash": -25000
     },
     {
       "kind": "bizEvent",
@@ -1775,7 +1775,7 @@
       "categories": [
         "hotelRF"
       ],
-      "cash": 50000
+      "cash": 28000
     },
     {
       "kind": "bizEvent",
@@ -1790,7 +1790,7 @@
         "bizFood",
         "bizService"
       ],
-      "cash": -40000
+      "cash": -22000
     },
     {
       "kind": "bizEvent",
@@ -1878,7 +1878,7 @@
         "bizFood",
         "bizService"
       ],
-      "cash": -40000
+      "cash": -22000
     },
     {
       "kind": "bizEvent",
@@ -1965,7 +1965,7 @@
       "categories": [
         "bizFood"
       ],
-      "cash": -70000
+      "cash": -38000
     },
     {
       "kind": "bizEvent",
@@ -1993,7 +1993,7 @@
       "categories": [
         "bizService"
       ],
-      "cash": -40000
+      "cash": -22000
     },
     {
       "kind": "bizEvent",
@@ -2201,7 +2201,7 @@
       ],
       "dipPct": 20,
       "dipPaydays": 2,
-      "cash": -40000
+      "cash": -22000
     },
     {
       "kind": "bizEvent",
@@ -2215,7 +2215,7 @@
       "categories": [
         "bizService"
       ],
-      "cash": -40000
+      "cash": -22000
     },
     {
       "kind": "bizEvent",
@@ -2230,7 +2230,7 @@
         "bizFood",
         "bizService"
       ],
-      "cash": -35000
+      "cash": -19000
     },
     {
       "kind": "bizEvent",
@@ -2244,7 +2244,7 @@
       "categories": [
         "bizFood"
       ],
-      "cash": 90000
+      "cash": 50000
     },
     {
       "kind": "bizEvent",
@@ -2286,7 +2286,7 @@
       "categories": [
         "bizDigital"
       ],
-      "cash": 35000
+      "cash": 19000
     },
     {
       "kind": "bizEvent",
@@ -2297,7 +2297,7 @@
       "categories": [
         "bizFood"
       ],
-      "cash": 80000
+      "cash": 44000
     },
     {
       "kind": "bizEvent",
