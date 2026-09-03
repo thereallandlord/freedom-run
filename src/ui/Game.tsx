@@ -1027,6 +1027,46 @@ export function Game({
                         )
                       })}
                   </div>
+                  {/*
+                    🔴 ВТОРОЙ РЫЧАГ ХОЗЯИНА. Подхватить чужой ход можно было и
+                    раньше, а вот убрать ушедшего из гонки за победу — нечем.
+                    Живая жалоба: «сейчас Анвар выиграет, хотя его тут вообще
+                    нет». Активы и деньги при этом остаются на доске: вернётся
+                    — продолжит своим, и та же кнопка вернёт его в гонку.
+                  */}
+                  <div className="caps mb-1 mt-2 px-0.5 text-[9.5px] font-bold text-[var(--t-muted, var(--muted))]">
+                    Участие в гонке за победу
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {table.seats
+                      .filter((s) => !s.isBot && !s.outOfGame && !s.won && s.id !== моёМесто)
+                      .map((s) => {
+                        const вне = !!s.внеГонки
+                        return (
+                          <button
+                            key={`race-${s.id}`}
+                            onClick={() =>
+                              dispatch({ type: 'SET_OUT_OF_RACE', seatId: s.id, value: !вне })
+                            }
+                            className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[11.5px] leading-snug transition ${
+                              вне
+                                ? 'border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] opacity-60'
+                                : 'border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] hover:border-accent/60'
+                            }`}
+                          >
+                            <span
+                              className="size-2 shrink-0 rounded-full"
+                              style={{ background: s.color }}
+                              aria-hidden
+                            />
+                            <span className="min-w-0 truncate">{s.name}</span>
+                            <span className="ml-auto shrink-0 text-[10.5px] text-[var(--t-muted, var(--muted))]">
+                              {вне ? 'вернуть в гонку' : 'вывести'}
+                            </span>
+                          </button>
+                        )
+                      })}
+                  </div>
                 </div>
               )}
 

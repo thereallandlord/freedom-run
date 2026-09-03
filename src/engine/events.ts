@@ -135,6 +135,14 @@ export type LedgerEvent =
 export type TableEvent = { by?: string; подменил?: string } & TableEventBody
 
 export type TableEventBody =
+  /**
+   * Хозяин выводит ушедшего из гонки за победу (или возвращает обратно).
+   *
+   * Активы, деньги и место остаются: это про право на титул, а не про
+   * выбывание. Подписывается местом хозяина, применяется к чужому — поэтому
+   * класс действия у него служебный.
+   */
+  | { type: 'SET_OUT_OF_RACE'; seatId: string; value: boolean }
   | { type: 'ROLL'; dice: number[] }
   | { type: 'CHOOSE_DEAL'; size: 'small' | 'big' }
   /** glPackage — выбранный пакет GreenLeaf, если карта партнёрская. */
