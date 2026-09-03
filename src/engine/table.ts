@@ -1281,12 +1281,37 @@ export function выкупЗаВыход(t: Table, seat: Seat, m?: Record<string
    * множителя ведущий получал бы за половину дома цену целого дома.
    */
   const заОбъект = (
-    a: { cost: number; value?: number; investorShare?: number },
+    a: { id: string; cost: number; value?: number; investorShare?: number; partnerId?: string },
     долг: number,
     поток: number,
   ) => {
     const моё = 1 - (a.investorShare ?? 0)
     const рынок = Math.round((a.value ?? a.cost) * моё)
+    /*
+     * 🔴 У ВТОРОЙ ПОЛОВИНЫ ДОЛГА НЕТ — ОН ВЕСЬ ЧИСЛИТСЯ НА ВЕДУЩЕМ.
+     *
+     * Зеркало соинвестора несёт свою долю рыночной цены и НОЛЬ долга, поэтому
+     * без этой поправки оно выкупалось как чистый, ничем не обременённый
+     * объект: вложил 600 000 — получил 7 000 000, а объект и его рассрочка
+     * остались на ведущем. Деньги брались из воздуха.
+     *
+     * Долю чужого долга ищем через ту же единственную точку, что и все
+     * остальные операции над общим делом.
+     */
+    let свойДолг = долг
+    if (этоВтораяПоловина(a)) {
+      const ведущий = втораяПоловина(t, seat, a)
+      const чужойДолг = ведущий
+        ? ((ведущий.asset as { mortgage?: number; liability?: number }).mortgage ??
+            (ведущий.asset as { liability?: number }).liability ??
+            0)
+        : 0
+      const доля = ведущий?.asset.investorShare ?? 0
+      свойДолг = Math.round(
+        доля * Math.max(0, чужойДолг - markupRebate(ведущий?.asset ?? a, чужойДолг)),
+      )
+      return Math.max(0, Math.max(K * поток, рынок) - свойДолг)
+    }
     return Math.max(K * поток, рынок) - Math.max(0, долг - markupRebate(a, долг))
   }
   const объекты =
