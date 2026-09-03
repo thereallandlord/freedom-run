@@ -15,6 +15,7 @@ import { useState } from 'react'
 import type { DealAccess, Seat, Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { money } from './PlayerPanel'
+import { HalalNote } from './HalalNote'
 
 const CLOSED: DealAccess = { mode: 'closed', allow: [], terms: { kind: 'free' } }
 
@@ -179,6 +180,16 @@ export function AccessPicker({
                   Отдаст {pct}% СВОЕЙ прибыли, когда будет продавать. Продаст в минус — не
                   отдаст ничего.
                 </p>
+                {/*
+                  🔴 ЧЕСТНАЯ ПОМЕТКА, А НЕ ЗАПРЕТ. Разбор шести правовых
+                  оснований показал: вопрос спорный, и большинство учёных
+                  против — не из-за процента, а из-за того, что за платой нет
+                  ни денег, ни труда, ни принятого убытка. Механику пока
+                  оставляем; человек должен решать, зная это.
+                */}
+                <div className="mt-2">
+                  <HalalNote topic="dolyaZaVhod" />
+                </div>
               </div>
             )}
 
