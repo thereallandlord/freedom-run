@@ -193,7 +193,9 @@
       "cost": 2000000,
       "downPayment": 2000000,
       "liability": 0,
-      "cashFlow": 46000
+      "cashFlow": 46000,
+      "growthPerPayday": 200,
+      "growthCap": 73600
     },
     {
       "id": "big-greenleaf",
@@ -217,7 +219,9 @@
       "cost": 800000,
       "downPayment": 800000,
       "liability": 0,
-      "cashFlow": 19200
+      "cashFlow": 19200,
+      "growthPerPayday": 100,
+      "growthCap": 30700
     },
     {
       "id": "big-biz-barbershop-kzn",
@@ -229,7 +233,9 @@
       "downPayment": 1500000,
       "liability": 0,
       "cashFlow": 33000,
-      "ремесло": "барбершоп"
+      "ремесло": "барбершоп",
+      "growthPerPayday": 100,
+      "growthCap": 52800
     },
     {
       "id": "big-biz-kids-center-ufa",
@@ -241,7 +247,9 @@
       "downPayment": 2500000,
       "liability": 0,
       "cashFlow": 55000,
-      "ремесло": "детский центр"
+      "ремесло": "детский центр",
+      "growthPerPayday": 200,
+      "growthCap": 88000
     },
     {
       "id": "big-biz-online-store",
@@ -252,7 +260,9 @@
       "cost": 1500000,
       "downPayment": 1500000,
       "liability": 0,
-      "cashFlow": 37500
+      "cashFlow": 37500,
+      "growthPerPayday": 200,
+      "growthCap": 60000
     },
     {
       "id": "sd-store-ufa-small",
@@ -474,7 +484,9 @@
       "cost": 3200000,
       "downPayment": 1600000,
       "liability": 1600000,
-      "cashFlow": 73600
+      "cashFlow": 73600,
+      "growthPerPayday": 300,
+      "growthCap": 117800
     },
     {
       "id": "big-biz-darkstore-msk",
@@ -485,7 +497,9 @@
       "cost": 5000000,
       "downPayment": 2500000,
       "liability": 2500000,
-      "cashFlow": 115000
+      "cashFlow": 115000,
+      "growthPerPayday": 500,
+      "growthCap": 184000
     },
     {
       "id": "big-biz-shaurma-spb",
@@ -496,7 +510,9 @@
       "cost": 2600000,
       "downPayment": 2600000,
       "liability": 0,
-      "cashFlow": 59800
+      "cashFlow": 59800,
+      "growthPerPayday": 200,
+      "growthCap": 95700
     },
     {
       "id": "big-biz-print-kzn",
@@ -508,7 +524,9 @@
       "downPayment": 1500000,
       "liability": 1500000,
       "cashFlow": 66000,
-      "ремесло": "типография"
+      "ремесло": "типография",
+      "growthPerPayday": 300,
+      "growthCap": 105600
     },
     {
       "id": "big-biz-scooters-kzn",
@@ -520,7 +538,9 @@
       "downPayment": 2200000,
       "liability": 0,
       "cashFlow": 48400,
-      "ремесло": "самокаты"
+      "ремесло": "самокаты",
+      "growthPerPayday": 200,
+      "growthCap": 77400
     },
     {
       "id": "big-re-dag-hotel",
@@ -531,7 +551,9 @@
       "cost": 5500000,
       "downPayment": 5500000,
       "liability": 0,
-      "cashFlow": 88000
+      "cashFlow": 88000,
+      "growthPerPayday": 400,
+      "growthCap": 140800
     },
     {
       "id": "big-biz-carwash-kzn",
@@ -543,7 +565,9 @@
       "downPayment": 2000000,
       "liability": 2000000,
       "cashFlow": 88000,
-      "ремесло": "автомойка"
+      "ремесло": "автомойка",
+      "growthPerPayday": 400,
+      "growthCap": 140800
     },
     {
       "id": "sd-re-tur-mersin2",
