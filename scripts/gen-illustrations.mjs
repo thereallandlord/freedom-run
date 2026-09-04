@@ -64,11 +64,18 @@ const RPM_DEFAULT = 5
 // Стиль. Утверждён владельцем: «чуть больше реализма», без символов и текста.
 // ─────────────────────────────────────────────────────────────────────────────
 const STYLE = [
-  'Semi-realistic illustration, leaning realistic: accurate real-world architecture,',
-  'materials and proportions, photographic composition and lighting, but rendered with',
-  'clean painterly shading and slightly simplified detail — like a high-end travel',
-  'magazine illustration. Warm natural daylight, soft shadows, airy light background,',
-  'muted natural palette with fresh green accents. Premium and calm.',
+  // 🔴 Камиль 04.09: «сделай стиль карточек ещё более реалистичным». Было
+  // «живописная иллюстрация с упрощённой деталью» — узнаваемый рисованный
+  // слой поверх сцены. Теперь просим ФОТОГРАФИЮ: репортажный кадр, реальная
+  // оптика, честные материалы и свет. Всё, что держало карточки в одном
+  // семействе (тёплый дневной свет, спокойная палитра, горизонталь, запрет
+  // текста), остаётся — иначе колода рассыплется на разные миры.
+  'Photorealistic editorial photograph, shot on a full-frame camera with a 35mm lens',
+  'at f/2.8: true-to-life architecture, materials and proportions, real skin and fabric',
+  'texture, natural depth of field with a softly defocused background.',
+  'Warm natural daylight, soft directional shadows, airy bright scene,',
+  'muted natural palette with fresh green accents. Documentary framing, unposed,',
+  'candid moment. Premium and calm, no drama, no HDR, no heavy vignette.',
   'Wide horizontal 3:2 composition with room to breathe.',
   'No text, no letters, no numbers, no signage, no logos, no watermarks.',
 ].join(' ')
@@ -999,6 +1006,92 @@ const SCENES_NEW = {
     "Weekend queue curls outside a small bakery door in a residential block, cars double-parked along the curb; inside, a baker peels samsa off the glowing tandoor wall.",
 }
 
+/* Карточки, дописанные 3-4 сентября: новая география, мемкоины, события
+   недвижимости, масштабирование дела и партнёрский бизнес. */
+const SCENES_SEP = {
+  // ─── Новая география малых сделок ───
+  "sd-re-mahachkala":
+    "Half of a two-storey stone house two blocks from a southern sea, laundry on a first-floor line, grapevine over the yard gate, a scooter parked by the wall, bright midday haze.",
+  "sd-re-derbent":
+    "A small stone house in an old walled quarter, fig tree in the courtyard, worn steps, ancient fortress wall visible on the hill above, low golden afternoon light.",
+  "sd-re-sochi-studio":
+    "A compact modern seaside house on a green hillside, wide balcony with two chairs facing the water, palms below, hazy blue sea horizon behind.",
+  "sd-re-tashkent":
+    "A new mid-rise residential block in a green Central Asian district, wide shaded courtyard with poplars, a mother walking a child past a playground, dry warm light.",
+  "sd-re-almaty":
+    "A top-floor apartment terrace with snow-capped mountains filling the background, low modern furniture, a bicycle by the railing, crisp clear morning air.",
+  "sd-re-batumi-studio":
+    "A small studio balcony on a seafront building, harbour cranes and moored boats in the distance, drying towel on the rail, warm evening sun on the concrete.",
+
+  // ─── Рынок ───
+  "mkt-sell-cis":
+    "A busy relocation scene outside a new residential tower: a loaded van with its rear doors open, boxes and suitcases on the pavement, several families waiting, agent with keys.",
+
+  // ─── Мемкоины ───
+  "mkt-price-shib-rug":
+    "An empty desk at night lit only by a phone screen showing a flat line, unplugged monitor cable coiled on the tabletop, cold blue light, no one in the chair.",
+  "mkt-price-shib-fade":
+    "A quiet trading desk mid-afternoon, one screen dimmed to standby, a cold half-finished tea, chair pushed back, dust motes in a shaft of sunlight.",
+  "mkt-price-shib-ban":
+    "A phone lying face-up on a wooden table showing a blocked padlock symbol shape, hands withdrawn to the table edge, harsh window light, tense stillness.",
+  "mkt-price-pepe-rug":
+    "An abandoned co-working corner at dawn: two empty chairs, a single cable dangling where a laptop stood, an overturned paper cup, grey light through blinds.",
+  "mkt-price-pepe-dump":
+    "A young man on a stairwell landing staring down at his phone, shoulders dropped, backpack still on, harsh overhead corridor light.",
+  "mkt-price-pepe-quiet":
+    "A silent phone face-down on a windowsill beside a dead plant, rain on the glass, grey flat daylight, nothing happening.",
+  "mkt-price-pepe-dead":
+    "An unplugged computer tower on the floor beside a bare desk, cable ends loose, an empty room with boxes stacked by the door.",
+  "mkt-price-moonx-flat":
+    "A phone propped against a coffee cup showing an unchanging flat line, a man reading a book instead, warm quiet cafe afternoon.",
+  "mkt-price-moonx-ban":
+    "A courthouse corridor with two people waiting on a bench, a closed office door with a lock plate, cold institutional daylight from tall windows.",
+
+  // ─── События недвижимости ───
+  "re-arendator-sehal":
+    "An empty rented flat mid-morning: bare mattress on the floor, keys left on the kitchen counter, an open window, a single cardboard box by the door.",
+  "re-remont-posle-zhiltsov":
+    "A painter on a stepladder rolling fresh paint over a scuffed wall, torn wallpaper strips on the floor, a cabinet door off its hinge leaning nearby.",
+  "re-dolgosrochnyy-arendator":
+    "A young family signing papers at a kitchen table in a bright rented flat, a child drawing at the far end, moving boxes half unpacked behind them.",
+  "re-sosedi-zalili":
+    "A ceiling with a brown water stain spreading over a bedroom corner, a bucket on the floor catching a slow drip, a man looking up with a phone in hand.",
+  "re-schetchiki":
+    "A utility technician kneeling at an opened meter cupboard in a hallway, clipboard and sealed tags in hand, the flat owner watching from the doorway.",
+  "re-remont-podyezda":
+    "A freshly renovated apartment courtyard: new benches, planted saplings, clean paving, a lift lobby with new glass doors, residents walking through in soft evening light.",
+  "re-parkovka-platnaya":
+    "A residential courtyard barrier arm lowered across the entrance, marked resident bays beyond it, a car waiting outside with its indicator on, cool morning light.",
+  "re-uchastok-kommunikacii":
+    "An open trench across a bare plot with a blue water pipe laid in it, an excavator idle nearby, two workers with a level, dry grass and a distant treeline.",
+
+  // ─── Масштабирование дела ───
+  "biz-vtoraya-tochka":
+    "A shop owner unlocking a second identical storefront at dawn, the same fittings inside as the first, a delivery crate on the pavement, empty quiet street.",
+  "biz-novaya-strana":
+    "A small team packing labelled export cartons in a bright warehouse bay, a loaded pallet by the open shutter, a truck backing in, harsh clean daylight.",
+  "biz-komanda":
+    "Four staff running a busy service counter on their own, coordinating without the owner, who watches from a distance near the door with a coffee.",
+  "biz-postavshchik-eksklyuziv":
+    "A grocer receiving a pallet of a single distinctive product line, shelves already stacked with it, customers reaching for it behind him, warm shop light.",
+  "biz-kapremont":
+    "A closed cafe mid-renovation: ceiling panels down, new ventilation duct being lifted into place, exposed wiring, chairs stacked under plastic sheeting.",
+  "biz-arendodatel-podnyal":
+    "A shop owner and a landlord standing in an empty retail unit with a contract between them, the owner looking at the paper, cool flat daylight.",
+
+  // ─── Партнёрский бизнес ───
+  "gl-marafon":
+    "A living-room video call in progress: a laptop on a low table showing a grid of faces, notebooks and tea around it, two people leaning in, warm lamp light.",
+  "gl-sklad-v-gorode":
+    "A small city distribution point: shelves of neat identical boxes, a woman handing a parcel across a counter to a customer, roller door open to the street.",
+  "gl-semya-podklyuchilas":
+    "A large family gathered around a long table after a meal, several phones out, an older woman showing something to the others, laughter, warm evening light.",
+  "gl-konkurent-zakrylsya":
+    "A closed-up shop unit with an empty window opposite a busy one, people walking past the dark one toward the lit one, overcast afternoon.",
+  "gl-lider-ustal":
+    "An empty office corner in summer: three vacant desks, chairs pushed in, a wilting plant, bright light through half-closed blinds, no one there.",
+}
+
 const SCENES_EVENTS_NEW = {
   "tur-vnzh-porog":
     EVENT_RULE + " " + "Rows of new white apartment blocks on a dry Turkish hillside, balconies bare and empty, a lone agent in a shirt unlocking a ground-floor show flat under harsh midday sun.",
@@ -1540,7 +1633,7 @@ function buildJobs() {
       /* 🔴 Часть бизнесов живёт в колоде МАЛЫХ сделок (их перенесли туда,
          чтобы бизнес попадался раньше) — сцены им искать надо и в бизнес-таблице,
          иначе у них не будет картинки вовсе. */
-      const scene = SCENES_SMALL_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_BIG_RE[c.id] || SCENES_NEW[c.id]
+      const scene = SCENES_SMALL_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_BIG_RE[c.id] || SCENES_NEW[c.id] || SCENES_SEP[c.id]
       push(c.id, c.id, scene, 'small-deal', () => {
         manifest.byId[c.id] = `/cards/${c.id}.webp`
       })
@@ -1549,7 +1642,7 @@ function buildJobs() {
 
   // Большие сделки
   for (const c of decks.BIG_DEALS_RU) {
-    const scene = SCENES_BIG_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_NEW[c.id]
+    const scene = SCENES_BIG_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_NEW[c.id] || SCENES_SEP[c.id]
     push(c.id, c.id, scene, 'big-deal', () => {
       manifest.byId[c.id] = `/cards/${c.id}.webp`
     })
@@ -1564,7 +1657,7 @@ function buildJobs() {
 
   // Карточки рынка
   for (const c of decks.MARKET_CARDS_RU) {
-    push(c.id, c.id, SCENES_MARKET[c.id] || SCENES_NEW[c.id], 'market', () => {
+    push(c.id, c.id, SCENES_MARKET[c.id] || SCENES_NEW[c.id] || SCENES_SEP[c.id], 'market', () => {
       manifest.byId[c.id] = `/cards/${c.id}.webp`
     })
   }
@@ -1894,6 +1987,18 @@ async function main() {
 
   let todo = jobs
   if (only) todo = todo.filter((j) => j.file.includes(only) || j.key.includes(only))
+  /*
+   * 🔴 Фильтр по группам нужен для перерисовки стиля. Карточки и полотно доски
+   * рисуются РАЗНЫМИ стилями: сменив стиль карточек, нельзя гнать `--force` по
+   * всему — вместе с ними перерисуются доска, плашки и обложки колод, которые
+   * калибровались отдельно и от смены стиля только сломаются.
+   *   --groups=market,event,doodad,big-deal,small-deal,stock,dream,space
+   */
+  const groups = arg('groups', '')
+  if (groups) {
+    const набор = new Set(groups.split(',').map((g) => g.trim()).filter(Boolean))
+    todo = todo.filter((j) => набор.has(j.group))
+  }
   if (!force) todo = todo.filter((j) => !fs.existsSync(path.join(OUT_DIR, j.file + '.webp')))
   if (limit) todo = todo.slice(0, limit)
 
