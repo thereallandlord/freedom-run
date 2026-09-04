@@ -152,6 +152,26 @@ const свои = карты.filter((c) => событиеБизнесаУмест
 console.log(`владельцу ПВЗ на первом году доступно: ${свои.length} карточек`)
 if (свои.length < 8) беды.push('владельцу одной точки почти нечего вытянуть')
 
+/*
+ * 6. 🔴 ЧИСЛО В ТЕКСТЕ = ЧИСЛО В КОДЕ.
+ *
+ * Все одиннадцать карточек выкупа обещали в тексте больше, чем платил код:
+ * «дают 130%» при множителе 112, «дают 400%» при 160. Игрок читает текст, а
+ * получает по коду — и это единственная ошибка, которую видно за столом сразу,
+ * без всякой ведомости. Нашлось только сверкой с рынком, то есть случайно;
+ * значит, нужна проверка.
+ */
+const выкупы = (marketCards('ru') as unknown as { id: string; kind: string; text?: string; multiplierPct?: number }[]).filter(
+  (c) => c.kind === 'sellOffer',
+)
+for (const c of выкупы) {
+  const числа = [...(c.text ?? '').matchAll(/(\d{2,3})\s*%/g)].map((m) => Number(m[1]))
+  const врёт = числа.filter((n) => Math.abs(n - (c.multiplierPct ?? 0)) > 2)
+  if (врёт.length)
+    беды.push(`${c.id}: в тексте ${врёт.join(', ')}%, а платит ${c.multiplierPct}% — карточка обещает не то`)
+}
+console.log(`карточек выкупа проверено: ${выкупы.length}`)
+
 for (const б of беды) console.log('  ❌', б)
 console.log(беды.length ? '\n❌ ЕСТЬ ПРОБЛЕМЫ' : '\n✅ У ОБЫЧНОГО БИЗНЕСА ЕСТЬ ЖИЗНЬ')
 if (беды.length) (globalThis as { process?: { exitCode?: number } }).process!.exitCode = 1
