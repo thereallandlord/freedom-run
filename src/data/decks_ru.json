@@ -366,7 +366,7 @@
     {
       "id": "sd-studio-mersin-teje",
       "category": "aptTUR",
-      "title": "Студия 18 м², Мерсин, Тедже",
+      "title": "Студия 28 м², Мерсин, Тедже",
       "text": "Самая дешёвая дверь в турецкую недвижимость: этаж высокий, лифта нет, зато до моря десять минут пешком. Снимают студенты местного университета.",
       "cost": 1500000,
       "downPayment": 300000,
@@ -470,7 +470,7 @@
       "cost": 2100000,
       "downPayment": 420000,
       "mortgage": 1680000,
-      "cashFlow": 20000,
+      "cashFlow": 21000,
       "kind": "realEstate"
     }
   ],
@@ -694,7 +694,7 @@
       "id": "sd-re-bali-canggu",
       "kind": "realEstate",
       "category": "aptBALI",
-      "title": "Студия в Чангу, Бали",
+      "title": "Студия 45 м² с террасой, Чангу, Бали",
       "text": "Пять минут до сёрф-спота, кофейни на каждом углу. Сдаётся посуточно круглый год: сезон здесь не кончается, меняется только цена.",
       "cost": 7200000,
       "downPayment": 1440000,
@@ -764,7 +764,7 @@
       "cost": 13300000,
       "downPayment": 2660000,
       "mortgage": 10640000,
-      "cashFlow": 113100,
+      "cashFlow": 126400,
       "kind": "realEstate"
     },
     {
@@ -775,7 +775,7 @@
       "cost": 9300000,
       "downPayment": 1860000,
       "mortgage": 7440000,
-      "cashFlow": 88400,
+      "cashFlow": 79000,
       "kind": "realEstate"
     },
     {
@@ -831,7 +831,7 @@
       "cost": 11800000,
       "downPayment": 2360000,
       "mortgage": 9440000,
-      "cashFlow": 112100
+      "cashFlow": 118000
     },
     {
       "id": "sd-dxb-south",
@@ -853,7 +853,7 @@
       "cost": 12500000,
       "downPayment": 2500000,
       "mortgage": 10000000,
-      "cashFlow": 106300
+      "cashFlow": 106200
     },
     {
       "id": "sd-tur-konyaalti",
@@ -974,7 +974,7 @@
       "cost": 26000000,
       "downPayment": 5200000,
       "mortgage": 20800000,
-      "cashFlow": 221000
+      "cashFlow": 260000
     },
     {
       "id": "big-re-dxb-hills",
