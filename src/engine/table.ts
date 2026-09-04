@@ -4789,6 +4789,19 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
        * уже новое число. Любая необъяснённая просадка читается как поломка.
        */
       const доходДо = t.seats.map((s) => monthlyCashFlow(s.ledger, t.market.flow))
+      /*
+       * 🔴 НОВОСТЬ ПО БУМАГАМ МЕНЯЕТ НЕ ДОХОД, А КАПИТАЛ — и объяснения по ней
+       * не было вовсе. Живая жалоба: «непонятно, при чём тут золото, почему
+       * упал капитал». Доход у держателя золота не двигается ни на рубль
+       * (дивидендов у него нет), поэтому проверка по доходу такие новости
+       * пропускала молча, а цифра в панели менялась.
+       */
+      const пакетДо = t.seats.map((s) =>
+        s.ledger.stocks.reduce(
+          (n, l2) => n + l2.shares * marketStockPrice(l2.costPerShare, t.market.stock[l2.symbol]),
+          0,
+        ),
+      )
       const t2 = applyWorldEvent(t, event.index)
       /*
        * 🔴 Съедаем ИМЕННО ту новость, что вышла, а не «следующую по счёту».
@@ -4826,6 +4839,21 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
         const текст = `${s.name}: «${новость?.title ?? 'новость'}» — доход ${
           сдвиг > 0 ? 'вырос' : 'просел'
         } на ${money(Math.abs(сдвиг))}/мес, теперь ${money(стало)}`
+        log(t2, s.id, текст)
+        плашка(t2, s.id, текст, сдвиг > 0 ? 'добро' : 'худо')
+      })
+      // И то же самое про бумаги: у них меняется не доход, а стоимость пакета.
+      t2.seats.forEach((s, i) => {
+        if (s.outOfGame || !s.ledger.stocks.length) return
+        const сталоПакет = s.ledger.stocks.reduce(
+          (n, l2) => n + l2.shares * marketStockPrice(l2.costPerShare, t2.market.stock[l2.symbol]),
+          0,
+        )
+        const сдвиг = сталоПакет - (пакетДо[i] ?? сталоПакет)
+        if (Math.abs(сдвиг) < 1000) return
+        const текст = `${s.name}: «${новость?.title ?? 'новость'}» — бумаги ${
+          сдвиг > 0 ? 'подорожали' : 'подешевели'
+        } на ${money(Math.abs(сдвиг))}, пакет теперь ${money(сталоПакет)}`
         log(t2, s.id, текст)
         плашка(t2, s.id, текст, сдвиг > 0 ? 'добро' : 'худо')
       })
