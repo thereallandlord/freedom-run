@@ -35,6 +35,14 @@ export type LedgerEvent =
   | { type: 'STOCK_SPLIT'; symbol: string; direction: 'split' | 'reverse'; ratio?: number }
   /** Монета обнулилась: позиция сгорает целиком, продавать нечего. */
   | { type: 'WIPE_STOCK'; symbol: string }
+  /**
+   * Просадка дохода на Полосе на срок — цена решения «тянуть беду».
+   *
+   * Отдельным полем в кошельке, потому что доход второго круга собирается из
+   * тех же активов, что и на первом: писать просадку в каждый актив значило бы
+   * трогать чужие половины общих объектов.
+   */
+  | { type: 'SET_FT_DIP'; pct: number; paydays: number }
   | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; value?: number; profitShareTo?: string; profitSharePct?: number }
   | {
       type: 'SELL_REAL_ESTATE'
@@ -157,6 +165,16 @@ export type TableEventBody =
    * причиной: тихо менять чужой счёт нельзя даже хозяину.
    */
   | { type: 'HOST_ADJUST_CASH'; seatId: string; amount: number; reason: string }
+  /**
+   * Беда большого круга: тянуть вместо того, чтобы платить сразу.
+   *
+   * 🔴 Решение Камиля по второму кругу: «беды — с выбором: заплатить сейчас
+   * или терпеть просадку». На первом круге выбор уже есть у бед по своему
+   * делу; на большом его не было вовсе — иск и проверка молча забирали
+   * половину наличных, и человеку оставалось нажать «понятно».
+   */
+  | { type: 'ENDURE_FT_TROUBLE' }
+  | { type: 'PAY_FT_TROUBLE' }
   /**
    * Вложить свои деньги в СВОЁ дело: доход растёт.
    *

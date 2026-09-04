@@ -532,7 +532,13 @@ export function installmentMonthly(debt: number, kind: 'realEstate' | 'business'
  */
 export function fastTrackIncome(l: Ledger, m?: FlowMul): number {
   if (!l.fastTrack) return 0
-  return l.fastTrack.beginningIncome + fastTrackProgress(l) + freedomIncome(l, m)
+  const база = l.fastTrack.beginningIncome + fastTrackProgress(l) + freedomIncome(l, m)
+  /*
+   * Просадка от беды, которую решили тянуть, а не платить. Живёт на сроке и
+   * тает сама — счёт ведёт день потока.
+   */
+  const ф = l.fastTrack
+  return (ф.dipLeft ?? 0) > 0 ? Math.round(база * (ф.dipMul ?? 1)) : база
 }
 
 /** Зарплата пришла отрицательной, а наличных не хватает — это банкротство. */

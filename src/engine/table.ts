@@ -1660,6 +1660,9 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   // Хозяин распоряжается ЧУЖИМ местом — обычные проверки «только за себя» тут не годятся.
   SET_OUT_OF_RACE: 'служебное',
   HOST_ADJUST_CASH: 'служебное',
+  // Решение по своей беде — только тот, чей ход: это его деньги и его доход.
+  ENDURE_FT_TROUBLE: 'ход',
+  PAY_FT_TROUBLE: 'ход',
 }
 
 /**
@@ -2258,19 +2261,33 @@ function resolveLanding(t: Table, seatIdx: number) {
      */
     case 'taxAudit':
     case 'lawsuit': {
-      const before = l.cash
-      seatLedgerEvent(t, seat.id, { type: space.type === 'taxAudit' ? 'TAX_AUDIT' : 'LAWSUIT' })
-      const after = t.seats[seatIdx].ledger.cash
+      /*
+       * 🔴 БЕДА С ВЫБОРОМ, а не молчаливое списание. Решение Камиля по второму
+       * кругу: «беды — с выбором: заплатить сейчас или терпеть просадку». На
+       * первом круге такой выбор уже есть у бед по своему делу; здесь иск и
+       * проверка просто забирали половину наличных, и человеку оставалось
+       * нажать «понятно» — то есть решения не было вовсе.
+       *
+       * Тянуть чуть дороже, чем заплатить: иначе выбор фальшивый и платить
+       * никогда не имеет смысла. Просадка считается от того же половинного
+       * счёта, но растянута на полгода и берёт на четверть больше.
+       */
       const проверка = space.type === 'taxAudit'
-      log(t, seat.id, `${проверка ? 'Налоговая проверка' : 'Иск'}: минус ${money(before - after)}`)
+      const сумма = Math.ceil(l.cash / 2)
+      const месяцев = 6
+      const доход = fastTrackIncome(l, t.market.flow)
+      // Во что обойдётся «тянуть»: столько процентов дохода на полгода.
+      const просадкаПкт =
+        доход > 0 ? Math.min(60, Math.max(5, Math.round(((сумма * 1.25) / месяцев / доход) * 100))) : 25
       t.pending = {
         kind: 'ftEvent',
         title: проверка ? 'Налоговая проверка' : 'Иск в суде',
         text: проверка
-          ? 'Проверка подняла отчётность за прошлые годы. Доначислили и списали со счёта.'
-          : 'На вас подали в суд. Разбирательство закончилось выплатой.',
-        before,
-        after,
+          ? 'Проверка подняла отчётность за прошлые годы. Можно закрыть всё сразу или пойти в спор — тогда платить будете дольше и в сумме больше.'
+          : 'На вас подали в суд. Можно рассчитаться сразу или тянуть разбирательство — выйдет дольше и дороже.',
+        before: l.cash,
+        after: l.cash,
+        выбор: { сумма, просадкаПкт, месяцев },
       }
       t.phase = 'resolving'
       return
@@ -3889,6 +3906,49 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       const card = t.pending.card
       const объяснение = applyMarketAuto(t, card)
       t.pending = { kind: 'market', card, notes: объяснение.length ? объяснение : undefined }
+      return t
+    }
+
+    /*
+     * Беда большого круга: заплатить сразу или тянуть.
+     *
+     * 🔴 Деньги списываются ТОЛЬКО ЗДЕСЬ, а не при выпадении клетки: пока
+     * карточка ждёт решения, у человека на руках всё, что было, — иначе
+     * «заплатить» и «тянуть» считались бы от разных сумм.
+     */
+    case 'PAY_FT_TROUBLE': {
+      if (t.pending?.kind !== 'ftEvent' || !t.pending.выбор) return prev
+      const { сумма } = t.pending.выбор
+      const было = l.cash
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -Math.min(сумма, l.cash) })
+      const стало = t.seats[seatIdx].ledger.cash
+      log(t, seat.id, `${t.pending.title}: рассчитался сразу — минус ${money(было - стало)}`)
+      плашка(t, seat.id, `${seat.name}: ${t.pending.title.toLowerCase()} — рассчитался сразу, ${money(было - стало)}`, 'худо')
+      t.pending = null
+      t.phase = 'turnEnd'
+      return t
+    }
+    case 'ENDURE_FT_TROUBLE': {
+      if (t.pending?.kind !== 'ftEvent' || !t.pending.выбор) return prev
+      const { просадкаПкт, месяцев } = t.pending.выбор
+      seatLedgerEvent(t, seat.id, {
+        type: 'SET_FT_DIP',
+        pct: просадкаПкт,
+        paydays: месяцев,
+      })
+      log(
+        t,
+        seat.id,
+        `${t.pending.title}: решил тянуть — доход просядет на ${просадкаПкт}% на ${месяцев} ${склонениеЗарплат(месяцев)}`,
+      )
+      плашка(
+        t,
+        seat.id,
+        `${seat.name}: ${t.pending.title.toLowerCase()} — тянет спор, доход −${просадкаПкт}% на ${месяцев} мес`,
+        'худо',
+      )
+      t.pending = null
+      t.phase = 'turnEnd'
       return t
     }
 

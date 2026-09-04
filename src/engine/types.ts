@@ -168,6 +168,9 @@ export interface FtBusiness {
 export interface FastTrackState {
   beginningIncome: number
   goalIncome: number
+  /** Просадка дохода на срок: множитель и сколько зарплат ещё держится. */
+  dipMul?: number
+  dipLeft?: number
   businesses: FtBusiness[]
   dream?: { name: string; pricePaid: number }
 }
@@ -789,6 +792,14 @@ export type Pending =
       after: number
       /** Сколько ходов пропускает — есть только у сокращения. */
       skip?: number
+      /**
+       * Беда ждёт решения: заплатить сразу или тянуть.
+       *
+       * 🔴 Пока поле есть, деньги ЕЩЁ НЕ СПИСАНЫ: карточка показывает, во что
+       * обойдётся каждый путь, и ждёт нажатия. У бед без выбора его нет, и
+       * они применяются сразу, как раньше.
+       */
+      выбор?: { сумма: number; просадкаПкт: number; месяцев: number }
     }
   | { kind: 'bankruptcy' }
   | { kind: 'gameOver' }

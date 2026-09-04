@@ -530,8 +530,23 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     // Поздравление с выходом из Круга — тоже просто закрыть.
     case 'freedom':
     // Событие Полосы (проверка, иск, развод, просадка) — деньги уже списаны.
-    case 'ftEvent':
+    case 'ftEvent': {
+      /*
+       * 🔴 БЕДА С ВЫБОРОМ ЖДЁТ РЕШЕНИЯ, А НЕ «ПОНЯТНО». Без этой ветки бот
+       * слал PASS_CARD, движок его отклонял, и стол вставал намертво — ровно
+       * та поломка, из-за которой партия умирала 31 августа.
+       *
+       * Решает как человек: платит, если после расчёта остаётся хотя бы
+       * три месяца расходов; иначе тянет и живёт с просадкой.
+       */
+      const беда = pending as { выбор?: { сумма: number } }
+      if (беда.выбор) {
+        const запас = seat.ledger.cash - беда.выбор.сумма
+        const тянуть = запас < totalExpenses(seat.ledger) * 3
+        return { type: тянуть ? 'ENDURE_FT_TROUBLE' : 'PAY_FT_TROUBLE' }
+      }
       return { type: 'PASS_CARD' }
+    }
 
     case 'ftBusiness': {
       const space = fastBoard()[pending.space]

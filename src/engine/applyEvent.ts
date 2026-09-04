@@ -335,6 +335,19 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
      * Монета обнулилась. Позиция уходит целиком: продавать нечего, вернуть
      * нечего. Наличные не трогаем — деньги были потрачены при покупке.
      */
+    /*
+     * Тянуть беду большого круга: доход просядет на срок. Просадка живёт в
+     * записи Полосы и сама тает — счёт ведёт день потока.
+     */
+    case 'SET_FT_DIP': {
+      if (!l.fastTrack) return prev
+      l.fastTrack = {
+        ...l.fastTrack,
+        dipMul: 1 - Math.min(90, Math.max(0, e.pct)) / 100,
+        dipLeft: Math.max(0, Math.round(e.paydays)),
+      }
+      return l
+    }
     case 'WIPE_STOCK': {
       const sym = e.symbol.toUpperCase()
       l.stocks = l.stocks.filter((lot) => lot.symbol.toUpperCase() !== sym)
@@ -806,9 +819,18 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
      * тот же счёт месяцев, тот же закят, та же амортизация. Разница ровно
      * одна, и она уже сделана при увольнении: `l.salary = 0`.
      */
-    case 'CASHFLOW_DAY':
+    case 'CASHFLOW_DAY': {
       if (!l.fastTrack) return prev
-      return applyEvent(l, { type: 'PAYCHECK', flowMul: e.flowMul })
+      const после = applyEvent(l, { type: 'PAYCHECK', flowMul: e.flowMul })
+      // Просадка от «тянуть беду» тает по месяцу — здесь, а не в зарплате:
+      // в Круге её не бывает, и лишний счётчик там только запутал бы.
+      const ф = после.fastTrack
+      if (ф && (ф.dipLeft ?? 0) > 0) {
+        const осталось = (ф.dipLeft ?? 0) - 1
+        после.fastTrack = { ...ф, dipLeft: осталось, dipMul: осталось > 0 ? ф.dipMul : 1 }
+      }
+      return после
+    }
 
     case 'BUY_FT_BUSINESS':
       if (!l.fastTrack) return prev

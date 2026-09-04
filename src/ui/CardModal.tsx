@@ -1485,6 +1485,53 @@ function CardBody({
      */
     case 'ftEvent': {
       const дельта = p.after - p.before
+      /*
+        🔴 БЕДА С ВЫБОРОМ, а не «понятно». Решение Камиля по второму кругу:
+        «беды — с выбором: заплатить сейчас или терпеть просадку». Пока
+        карточка ждёт решения, деньги ЕЩЁ НЕ СПИСАНЫ — поэтому показываем не
+        «было и стало», а два пути и их цену.
+      */
+      if (p.выбор) {
+        const { сумма, просадкаПкт, месяцев } = p.выбор
+        const хватает = l.cash >= сумма
+        return (
+          <S badge="Полоса свободы" title={p.title} flavor={p.text} accent="#f43f5e" art="⚖️">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                disabled={!хватает}
+                onClick={() => dispatch({ type: 'PAY_FT_TROUBLE' })}
+                className="rounded-xl border border-emerald-500/60 bg-emerald-500/10 p-3 text-left transition hover:bg-emerald-500/15 disabled:opacity-40"
+              >
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                  Рассчитаться сразу
+                </div>
+                <div className="tabnum mt-0.5 text-lg font-black">{money(сумма)}</div>
+                <div className="mt-1 text-[11px] text-[var(--muted)]">
+                  {хватает ? 'и забыть — доход не тронут' : 'столько наличными сейчас нет'}
+                </div>
+              </button>
+              <button
+                onClick={() => dispatch({ type: 'ENDURE_FT_TROUBLE' })}
+                className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] p-3 text-left transition hover:border-amber-500/60"
+              >
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                  Тянуть
+                </div>
+                <div className="tabnum mt-0.5 text-lg font-black text-amber-500">
+                  −{просадкаПкт}%
+                </div>
+                <div className="mt-1 text-[11px] text-[var(--muted)]">
+                  дохода на {месяцев} мес — деньги останутся, но выйдет дороже
+                </div>
+              </button>
+            </div>
+            <p className="text-center text-[11px] leading-snug text-[var(--muted)]">
+              На руках {money(l.cash)}. Тянуть всегда дороже, чем закрыть сразу, — зато не надо
+              отдавать всё сейчас.
+            </p>
+          </S>
+        )
+      }
       return (
         <S badge="Полоса свободы" title={p.title} flavor={p.text} accent="#f43f5e" art="⚖️">
           <div className="panel-2 space-y-1.5 rounded-lg px-3 py-2.5 text-[13px]">
