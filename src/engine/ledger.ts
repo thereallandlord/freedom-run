@@ -442,6 +442,16 @@ export function ribaRisk(l: Ledger): number {
   return Math.min(RIBA.maxRisk, (load / RIBA.loadStep) * 0.2)
 }
 
+/**
+ * Средняя месячная доходность обычного дела, процент от цены.
+ *
+ * 🔴 Живёт здесь, а не в интерфейсе: карточка партнёрского бизнеса сравнивает
+ * себя с обычным делом, и это сравнение обязано считаться от того же числа,
+ * что и колода. Вписанное руками оно уже разъехалось один раз — стояло 665 ₽
+ * при доходности 2,3%, а через день дела подняли до 4,2%.
+ */
+export const СРЕДНЯЯ_ДОХОДНОСТЬ_ДЕЛА = 4.2
+
 export function ribaLimit(l: Ledger): number {
   const base = Math.max(l.salary, totalIncome(l))
   return Math.round((base * RIBA.limitIncomeMul) / 10_000) * 10_000

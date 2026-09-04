@@ -39,10 +39,11 @@ import {
   glInitialState,
   glStructureIncome,
   glTotalIncome,
+  glOnPayday,
   glUpgradeCost,
   glUpgradeOptions,
 } from '../engine/greenleaf'
-import { RIBA, ribaLimit } from '../engine/ledger'
+import { RIBA, ribaLimit, СРЕДНЯЯ_ДОХОДНОСТЬ_ДЕЛА } from '../engine/ledger'
 import { HalalNote } from './HalalNote'
 import { DealTradeActions } from './DealTradeActions'
 import { AccessPicker } from './AccessPicker'
@@ -1155,13 +1156,34 @@ function CardBody({
                 Обычное дело даёт 2,3% в месяц и стоит на месте; структура
                 стартует ниже и растёт каждую зарплату сама.
               */}
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/[0.07] px-3 py-2 text-[11.5px] leading-snug">
-                <span className="font-semibold">Чем он отличается от обычного дела:</span> дело
-                приносит одну и ту же сумму всегда, а структура растёт каждую зарплату сама.
-                Платина за 28 900 ₽ начинает с 1 700 ₽/мес — меньше, чем принесло бы обычное дело
-                за те же деньги (665 ₽), — но через год это 73 000 ₽/мес, а через два 570 000 ₽.
-                Дело за 28 900 ₽ так и осталось бы на 665 ₽.
-              </div>
+              {(() => {
+                /*
+                  🔴 ЦИФРЫ СЧИТАЕМ, А НЕ ПИШЕМ РУКАМИ. Первая версия этой
+                  плашки называла «665 ₽» — доход обычного дела при прежних
+                  2,3% в месяц. Через день доходность дел подняли до жизненных
+                  4,2%, и текст стал врать, как врали карточки выкупа. Ровно
+                  тот же класс ошибки: число, вписанное в текст, живёт своей
+                  жизнью и разъезжается с движком на первой же правке.
+                */
+                const пакет = GL_PACKAGES[0]
+                const обычное = Math.round((пакет.price * СРЕДНЯЯ_ДОХОДНОСТЬ_ДЕЛА) / 100)
+                const старт = glStructureIncome(glInitialState(пакет.id, 1))
+                const через = (n: number) => {
+                  let g = glInitialState(пакет.id, 1)
+                  for (let i = 0; i < n; i++) g = glOnPayday(g).next
+                  return glTotalIncome(g)
+                }
+                return (
+                  <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/[0.07] px-3 py-2 text-[11.5px] leading-snug">
+                    <span className="font-semibold">Чем он отличается от обычного дела:</span> дело
+                    приносит одну и ту же сумму всегда, а структура растёт каждую зарплату сама.{' '}
+                    {пакет.name} за {money(пакет.price)} начинает с {money(старт)}/мес — меньше, чем
+                    принесло бы обычное дело за те же деньги ({money(обычное)}), — но через год это{' '}
+                    {money(через(12))}/мес, а через два {money(через(24))}. Дело за{' '}
+                    {money(пакет.price)} так и осталось бы на {money(обычное)}.
+                  </div>
+                )
+              })()}
             </div>
           ) : (
           <div className="grid gap-2 sm:grid-cols-2">
