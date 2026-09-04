@@ -839,6 +839,12 @@ export function Game({
             <header className="relative mb-1.5 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 pt-1.5">
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
           {topRight}
+          {/*
+            🔴 ПОРЯДОК ВКЛАДОК БЫЛ СЛУЧАЙНЫМ — живая жалоба с игры. Теперь он
+            по частоте использования: сначала то, чем пользуются каждый ход
+            (сделки, портфель, финансы), потом то, куда заглядывают изредка
+            (журнал), и в конце разбор — он нужен, когда партия уже сыграна.
+          */}
           <button
             onClick={() => setTradesOpen(true)}
             className="topbtn"
@@ -848,32 +854,6 @@ export function Game({
             🤝<span className="ml-1 hidden sm:max-lg:inline xl:inline">Сделки</span>
             {myDebt > 0 && <span className="ml-1 text-[10px] text-amber-400">●</span>}
           </button>
-          {/*
-            🔴 Журнал партии. Движок писал его с самого начала — кто что купил,
-            кто кому заплатил, что сделал рынок, — а посмотреть было негде:
-            строки мелькали всплывающими подсказками и пропадали. За настоящим
-            столом спорные моменты разбирают, глядя на записи.
-          */}
-          {/*
-            Разбор партии: смысл игры не в счёте, а в выводе. Доступен и по
-            ходу — посмотреть, как идёшь, — и открывается сам, когда партия
-            закончилась.
-          */}
-          <button
-            onClick={() => setDebriefOpen(true)}
-            className="topbtn"
-            title="Разбор: как вы играете и куда усиливаться"
-          >
-            🧭<span className="ml-1 hidden sm:max-lg:inline xl:inline">Разбор</span>
-          </button>
-          <button
-            onClick={() => setLogOpen(true)}
-            className="topbtn"
-            title="Журнал партии: что происходило по ходам"
-          >
-            📜<span className="ml-1 hidden sm:max-lg:inline xl:inline">Журнал</span>
-          </button>
-          {/* Портфель доступен ВСЕГДА: продать своё можно, не дожидаясь карточки. */}
           <button
             onClick={() => setPortfolioOpen(true)}
             className="topbtn"
@@ -890,6 +870,20 @@ export function Game({
           >
             {RULES.loansEnabled ? '🏦' : '💼'}
             <span className="ml-1 hidden sm:max-lg:inline xl:inline">{RULES.loansEnabled ? 'Банк' : 'Финансы'}</span>
+          </button>
+          <button
+            onClick={() => setLogOpen(true)}
+            className="topbtn"
+            title="Журнал партии: что происходило по ходам"
+          >
+            📜<span className="ml-1 hidden sm:max-lg:inline xl:inline">Журнал</span>
+          </button>
+          <button
+            onClick={() => setDebriefOpen(true)}
+            className="topbtn"
+            title="Разбор: как вы играете и куда усиливаться"
+          >
+            🧭<span className="ml-1 hidden sm:max-lg:inline xl:inline">Разбор</span>
           </button>
           {/*
             🔴 Отмена — ТОЛЬКО у хозяина стола. Журнал общий: если крутить его
