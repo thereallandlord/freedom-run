@@ -40,6 +40,15 @@ export interface Debrief {
   points: DebriefPoint[]
   /** Что делать дальше — в жизни, а не в игре. */
   next: string[]
+  /**
+   * Привычки, которые человек показал за столом.
+   *
+   * 🔴 Ради этого разбор и ценят вживую: «ты и в жизни так делаешь». Игра за
+   * два часа показывает то, что в жизни видно за годы, — осторожничал,
+   * тащил один, копил и не вкладывал. Формулируем как наблюдение, а не как
+   * приговор: это его выбор, а не диагноз.
+   */
+  привычки: string[]
 }
 
 const money = (n: number) => `${Math.round(n).toLocaleString('ru-RU')} ₽`
@@ -52,6 +61,10 @@ function countActions(events: TableEvent[], seatId: string) {
   let tookCredit = 0
   let creditSum = 0
   let borrowed = 0
+  let звалВДолю = 0
+  let нанимал = 0
+  let продавал = 0
+  let открывалДругим = 0
   for (const e of events) {
     const mine = !('by' in e) || !e.by || e.by === seatId
     if (!mine) continue
@@ -63,8 +76,12 @@ function countActions(events: TableEvent[], seatId: string) {
       creditSum += e.amount
     }
     if (e.type === 'ASK_LOAN') borrowed++
+    if (e.type === 'OFFER_COINVEST') звалВДолю++
+    if (e.type === 'HIRE_MANAGER') нанимал++
+    if (e.type === 'SELL_STOCK_LOT' || e.type === 'SELL_ASSET_NOW') продавал++
+    if (e.type === 'SET_ACCESS') открывалДругим++
   }
-  return { rolls, bought, passed, tookCredit, creditSum, borrowed }
+  return { rolls, bought, passed, tookCredit, creditSum, borrowed, звалВДолю, нанимал, продавал, открывалДругим }
 }
 
 /**
@@ -195,7 +212,45 @@ export function buildDebrief(table: Table, events: TableEvent[], seat: Seat): De
     next.push('Продолжать то же самое: выбранная стратегия работает.')
   }
 
-  return { seatId: seat.id, name: seat.name, headline, points, next }
+  /*
+   * 🔴 ПРИВЫЧКИ, А НЕ ЦИФРЫ. Живая просьба: в офлайне больше всего ценят
+   * разбор личных паттернов — «ты и в жизни так делаешь». Игра за два часа
+   * показывает то, что в жизни видно за годы. Формулируем как наблюдение и
+   * оставляем человеку выбор: это его манера, а не приговор.
+   */
+  const привычки: string[] = []
+  const решений = acts.bought + acts.passed
+  if (решений >= 6 && acts.passed >= acts.bought * 3)
+    привычки.push(
+      `Пропустили ${acts.passed} сделок и взяли ${acts.bought}. Осторожность бережёт деньги, но капитал растёт только с того, что вы взяли.`,
+    )
+  if (решений >= 6 && acts.bought >= acts.passed * 3)
+    привычки.push(
+      `Взяли ${acts.bought} сделок почти не отказываясь. Азарт двигает быстро, но однажды не хватит наличных на обязательный расход.`,
+    )
+  if (acts.borrowed === 0 && acts.звалВДолю === 0 && решений >= 5)
+    привычки.push(
+      'Ни разу не позвали соседа в долю и не попросили в долг — тащили всё сами. За столом это самый дорогой способ играть: чужие деньги стоили бы вам доли, а не всей сделки.',
+    )
+  if (acts.открывалДругим === 0 && решений >= 5)
+    привычки.push(
+      'Ни разу никого не пустили в свою находку. Пускать выгодно даже из корысти: вы берёте своё, а сделка всё равно случается.',
+    )
+  const своиДела = l.businesses.filter((b) => !b.gl)
+  if (своиДела.length >= 2 && acts.нанимал === 0)
+    привычки.push(
+      `Дел у вас ${своиДела.length}, а управляющего вы не наняли ни разу — значит, работали в них сами. Это и есть разница между «своё дело» и «свой доход».`,
+    )
+  if (!onFast && l.cash > expenses * 6 && l.realEstate.length + своиДела.length <= 1)
+    привычки.push(
+      `На руках ${money(l.cash)} — больше полугода ваших расходов, — а активов почти нет. Деньги лежали и ждали, вместо того чтобы работать.`,
+    )
+  if (acts.продавал >= 4)
+    привычки.push(
+      `Продавали ${acts.продавал} раз. Оборот — не то же самое, что доход: каждая продажа кормит вас один раз, а актив кормил бы каждый месяц.`,
+    )
+
+  return { seatId: seat.id, name: seat.name, headline, points, next, привычки }
 }
 
 /** Разборы всем игрокам: свой первым, дальше остальные. */

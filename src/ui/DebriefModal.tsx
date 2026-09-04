@@ -164,6 +164,27 @@ export function DebriefModal({
             </div>
           ))}
 
+          {/*
+            🔴 ПРИВЫЧКИ ИДУТ ПЕРЕД СОВЕТАМИ. Именно за них разбор и любят вживую:
+            «ты и в жизни так делаешь». Совет без узнавания себя — просто текст,
+            а узнав себя, человек к совету уже готов.
+          */}
+          {shown.привычки.length > 0 && (
+            <div className="hairline mt-3 pt-3">
+              <div className="caps mb-1.5 text-[10px] font-bold text-[var(--muted)]">
+                Как вы играли — и, скорее всего, живёте
+              </div>
+              <ul className="space-y-1.5">
+                {shown.привычки.map((н, i) => (
+                  <li key={i} className="flex gap-2 text-[13px] leading-snug">
+                    <span className="text-[var(--muted)]">·</span>
+                    <span>{н}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="hairline mt-3 pt-3">
             <div className="caps mb-1.5 text-[10px] font-bold text-[var(--muted)]">
               Куда усиливаться
