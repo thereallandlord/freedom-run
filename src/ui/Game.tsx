@@ -144,6 +144,71 @@ function Scoreboard({
  * ход не идёт, скучают. Красным полоска становится на последних секундах —
  * раньше этого дёргать человека незачем.
  */
+/**
+ * Ручная поправка счёта хозяином — на случай сбоя.
+ *
+ * Держим её нарочно неудобной: выбрать человека, ввести сумму и написать
+ * причину. Это не «выдать денег», а «вернуть, что пропало», и лишний шаг тут
+ * защищает от соблазна.
+ */
+function ПоправкаСчёта({
+  table,
+  моёМесто,
+  dispatch,
+}: {
+  table: Table
+  моёМесто?: string
+  dispatch: (e: TableEvent) => void
+}) {
+  const кандидаты = table.seats.filter((s) => !s.outOfGame && s.id !== моёМесто)
+  const [кому, setКому] = useState(кандидаты[0]?.id ?? '')
+  const [сумма, setСумма] = useState('')
+  const [причина, setПричина] = useState('')
+  if (!кандидаты.length) return null
+  const n = Number(сумма.replace(/[^\d-]/g, ''))
+  const можно = Number.isFinite(n) && n !== 0 && причина.trim().length >= 3 && !!кому
+  return (
+    <div className="flex flex-col gap-1">
+      {/*
+        🔴 Свой выпадающий список, а не системный: нативных элементов выбора в
+        игре нет нигде — это правило проекта, и оно про то, что стол должен
+        выглядеть одинаково на любом устройстве.
+      */}
+      <Dropdown
+        value={кому}
+        options={кандидаты.map((s) => ({ value: s.id, label: s.name }))}
+        onChange={setКому}
+      />
+      <div className="flex gap-1">
+        <input
+          value={сумма}
+          onChange={(e) => setСумма(e.target.value)}
+          inputMode="numeric"
+          placeholder="сумма, минус — списать"
+          className="min-w-0 flex-1 rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2 py-1.5 text-[11.5px]"
+        />
+      </div>
+      <input
+        value={причина}
+        onChange={(e) => setПричина(e.target.value)}
+        placeholder="за что — увидят все"
+        className="rounded-lg border border-[var(--t-line,var(--line))] bg-[var(--t-glass,var(--panel-2))] px-2 py-1.5 text-[11.5px]"
+      />
+      <button
+        disabled={!можно}
+        onClick={() => {
+          dispatch({ type: 'HOST_ADJUST_CASH', seatId: кому, amount: n, reason: причина } as TableEvent)
+          setСумма('')
+          setПричина('')
+        }}
+        className="btn-quiet py-1.5 text-[11.5px] disabled:opacity-40"
+      >
+        Поправить и объявить столу
+      </button>
+    </div>
+  )
+}
+
 function ЧасыХода() {
   const [, тик] = useState(0)
   useEffect(() => подписатьсяНаЧасыХода(() => тик((n) => n + 1)), [])
@@ -1149,6 +1214,16 @@ export function Game({
                         )
                       })}
                   </div>
+                  {/*
+                    🔴 РУЧНАЯ КОМПЕНСАЦИЯ ПОСЛЕ СБОЯ — твоя просьба с игры,
+                    где стол завис и часть действий пропала: вернуть человеку
+                    его деньги было нечем. Правка всегда объявляется столу с
+                    причиной — тихо менять чужой счёт нельзя даже хозяину.
+                  */}
+                  <div className="caps mb-1 mt-2 px-0.5 text-[9.5px] font-bold text-[var(--t-muted, var(--muted))]">
+                    Поправить счёт после сбоя
+                  </div>
+                  <ПоправкаСчёта table={table} моёМесто={моёМесто} dispatch={dispatch} />
                 </div>
               )}
 

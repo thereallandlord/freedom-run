@@ -1658,6 +1658,7 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   FINISH_GAME: 'служебное',
   // Хозяин распоряжается ЧУЖИМ местом — обычные проверки «только за себя» тут не годятся.
   SET_OUT_OF_RACE: 'служебное',
+  HOST_ADJUST_CASH: 'служебное',
 }
 
 /**
@@ -5453,6 +5454,31 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
      * только право на титул. Живая жалоба: «сейчас Анвар выиграет, хотя его
      * тут вообще нет» — досидевшим до конца это обесценивает вечер.
      */
+    /*
+     * Ручная поправка счёта хозяином — после сбоя, а не «по доброте».
+     *
+     * 🔴 ВСЕГДА ВСЛУХ И С ПРИЧИНОЙ. Хозяин распоряжается чужими деньгами, и
+     * единственное, что делает это честным, — что стол видит и сумму, и за
+     * что. Тихой правки счёта в игре быть не должно.
+     */
+    case 'HOST_ADJUST_CASH': {
+      const idx = t.seats.findIndex((s2) => s2.id === event.seatId)
+      if (idx < 0) return prev
+      const сумма = Math.round(event.amount)
+      if (!Number.isFinite(сумма) || сумма === 0) return prev
+      const кому = t.seats[idx]
+      // Списать больше, чем есть, нельзя: минус на счету — это банкротство, а не поправка.
+      if (сумма < 0 && кому.ledger.cash < -сумма) return prev
+      const причина = (event.reason || '').trim().slice(0, 80) || 'без объяснения'
+      seatLedgerEvent(t, кому.id, { type: 'ADJUST_CASH', amount: сумма })
+      const текст = `${кому.name}: хозяин ${сумма > 0 ? 'начислил' : 'списал'} ${money(
+        Math.abs(сумма),
+      )} — ${причина}`
+      log(t, кому.id, текст)
+      плашка(t, кому.id, текст, сумма > 0 ? 'добро' : 'худо')
+      return t
+    }
+
     case 'SET_OUT_OF_RACE': {
       const idx = t.seats.findIndex((s2) => s2.id === event.seatId)
       if (idx < 0) return prev
