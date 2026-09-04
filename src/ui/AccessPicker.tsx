@@ -87,6 +87,16 @@ export function AccessPicker({
       <p className="text-[11px] leading-snug text-[var(--muted)]">
         Карта выпала вам — вы решаете, войдёт ли кто-то ещё и что вам за это будет.
       </p>
+      {/*
+        🔴 «НЕПОНЯТНО, ЧТО ИМЕННО ОТКРЫВАЕТ ОТКРЫТЬ ВХОД — ПОКУПКУ ИЛИ И
+        ПРОДАЖУ ТОЖЕ». Живой вопрос за столом. Открывается ровно одно: право
+        КУПИТЬ этот актив себе, на свои деньги. Дальше он его собственный —
+        продаёт когда хочет и кому хочет, спрашивать не надо.
+      */}
+      <p className="mb-2 text-[11.5px] leading-snug text-[var(--muted)]">
+        Открывается только право <b>купить</b> этот актив себе и на свои деньги. Дальше он
+        целиком его: продаст когда захочет, разрешения не спросит.
+      </p>
 
       {!openTerms ? (
         <div className="grid grid-cols-2 gap-2">
@@ -94,7 +104,7 @@ export function AccessPicker({
             Никого не пускаю
           </button>
           <button onClick={() => setOpenTerms(true)} className="btn-quiet border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
-            Открыть вход
+            Пустить в покупку
           </button>
         </div>
       ) : (

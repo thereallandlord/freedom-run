@@ -847,9 +847,15 @@ export function Game({
             стол остаётся, на главной он ждёт карточкой «Продолжить». Начать
             всё сначала можно оттуда же, кнопкой «Забыть».
       */}
-          <button onClick={onExit} className="topbtn" title="На главную. Партия сохранится">
+          <button onClick={onExit} className="topbtn" title="Уйти со стола на главную. Партия сохранится — это НЕ выход из Круга">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="size-[15px] shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
-            <span className="ml-0.5 hidden sm:max-lg:inline xl:inline">Выйти</span>
+            {/*
+              🔴 «ВЫЙТИ» ПУТАЛОСЬ С ВЫХОДОМ ИЗ КРУГА — живая жалоба. Одно слово
+              на две совершенно разные вещи: уйти со стола и добиться свободы.
+              Здесь это первое, и называть его надо так, чтобы спутать было
+              нельзя.
+            */}
+            <span className="ml-0.5 hidden sm:max-lg:inline xl:inline">На главную</span>
           </button>
       {/*
             Созвон. Неприметная кнопка (просьба Камиля: «выделять не надо»):

@@ -554,6 +554,26 @@ export function useRoom(options: UseRoomOptions = {}): UseRoomApi {
       if (copyTimer.current) window.clearTimeout(copyTimer.current)
       copyTimer.current = window.setTimeout(() => setCopied(false), 1600)
     }
+    /*
+     * 🔴 НА ТЕЛЕФОНЕ — СИСТЕМНОЕ «ПОДЕЛИТЬСЯ», А НЕ БУФЕР. Живая жалоба:
+     * «ссылку на партию приходится вручную раздавать через телеграм».
+     * Скопировать мало — дальше человек сам ищет чат и вставляет. Системный
+     * лист отдаёт ссылку прямо в телеграм в два касания. На настольном
+     * браузере этого листа нет, там остаётся буфер.
+     */
+    const делиться = (navigator as { share?: (d: ShareData) => Promise<void> }).share
+    if (делиться && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      try {
+        await делиться.call(navigator, {
+          title: 'Партия в Cashflow',
+          text: 'Заходи играть — комната уже открыта',
+          url: inviteLink,
+        })
+        return true
+      } catch {
+        // Человек закрыл системный лист или его нет — не беда, копируем.
+      }
+    }
     try {
       await navigator.clipboard.writeText(inviteLink)
       flash()
