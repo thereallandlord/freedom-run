@@ -78,6 +78,7 @@ import {
   GL_TRIANGLE_BONUS,
   glPackage,
   glPromoReady,
+  glPromoAmount,
   glTotalIncome,
   glUpgradeCost,
   glПришлиЛюди,
@@ -4567,10 +4568,12 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
           `Съездил по промоушену. Познакомился с людьми — доход по структуре вырос на ${gainPct}% на ${forPaydays} ${склонениеЗарплат(forPaydays)}`,
         )
       } else {
-        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: promo.amount })
+        // Годовая премия считается от структуры, а не стоит фиксированной суммой.
+        const сумма = biz.gl ? glPromoAmount(biz.gl, promo) : promo.amount
+        seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: сумма })
         const after = t.seats[seatIdx].ledger.businesses.find((b) => b.id === biz.id)
         if (after?.gl) after.gl = mark(after.gl)
-        log(t, seat.id, `${promo.name}: забрал деньгами ${money(promo.amount)}`)
+        log(t, seat.id, `${promo.name}: забрал деньгами ${money(сумма)}`)
       }
       t.pending = null
       t.phase = 'turnEnd'
