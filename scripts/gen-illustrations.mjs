@@ -1968,7 +1968,15 @@ async function main() {
   const limit = Number(arg('limit', '0')) || 0
   const rpm = Math.max(1, Number(arg('rpm', String(RPM_DEFAULT))) || RPM_DEFAULT)
   // потока держим на один больше лимита: пока пятый ждёт окно, остальные качают ответ
-  const concurrency = Math.max(1, Math.min(10, Number(arg('concurrency', String(rpm))) || rpm))
+  /*
+   * 🔴 ПОТОКОВ НУЖНО БОЛЬШЕ, ЧЕМ СТАРТОВ В МИНУТУ. Лимит организации — пять
+   * ЗАПУСКОВ за минуту, а сама картинка рисуется три-четыре минуты. При пяти
+   * потоках в полёте всегда пять штук, и пропускная способность падает до
+   * полутора в минуту вместо пяти: замер на перерисовке колоды — 11 картинок
+   * за восемь минут. В установившемся режиме одновременно должно висеть
+   * примерно rpm × длительность, то есть около двадцати.
+   */
+  const concurrency = Math.max(1, Math.min(24, Number(arg('concurrency', String(rpm * 4))) || rpm * 4))
   takeSlot = makeRateLimiter(rpm)
 
   const { jobs, missing, manifest } = buildJobs()
