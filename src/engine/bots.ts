@@ -32,6 +32,7 @@ import {
   sellOfferPrice,
   stockPriceNow,
   можноВыйтиИзКруга,
+  делоПодходит,
 } from './table'
 import {
   RULES,
@@ -407,6 +408,35 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
       if (pending.выбор === 'беда') {
         const надо = Math.abs((card as { cash?: number }).cash ?? 0)
         return l.cash >= надо * 3 ? { type: 'PAY_BIZ_TROUBLE' } : { type: 'ENDURE_BIZ_TROUBLE' }
+      }
+      /*
+       * Предложение вложиться в своё дело.
+       *
+       * 🔴 Считаем ОКУПАЕМОСТЬ, а не «есть ли деньги»: вложение возвращается
+       * прибавкой к доходу, и вопрос ровно в том, за сколько месяцев. Порог —
+       * год: за такой срок вложение окупается заведомо лучше, чем те же деньги
+       * на счету. Удержать доход (минусовая карточка) бот считает по той же
+       * мерке: потерянный процент — это тоже деньги в месяц.
+       */
+      if (pending.выбор === 'вложение') {
+        const c = card as { вложить?: number; flowPct?: number }
+        const цена = c.вложить ?? 0
+        if (цена <= 0 || l.cash < цена) return { type: 'SKIP_BIZ_INVEST' }
+        /*
+         * 🔴 Считаем поток ТОЛЬКО тех дел, которых карточка касается. Сумма по
+         * всем делам завышает выгоду: у владельца партнёрского бизнеса он
+         * почти весь оттуда, а карточка про кафе его не трогает — бот платил
+         * бы за прибавку, которой не будет.
+         */
+        const дела = l.businesses.filter((b) => !b.gl && делоПодходит(card as never, b))
+        const поток = дела.reduce((n, b) => n + Math.max(0, b.cashFlow), 0)
+        const вМесяц = (поток * Math.abs(c.flowPct ?? 0)) / 100
+        if (вМесяц <= 0) return { type: 'SKIP_BIZ_INVEST' }
+        const окупится = цена / вМесяц
+        // Запас наличных бот всё же бережёт: вложение не должно оставить его пустым.
+        const остаток = l.cash - цена
+        const хватит = остаток >= totalExpenses(l)
+        return окупится <= 20 && хватит ? { type: 'INVEST_BIZ' } : { type: 'SKIP_BIZ_INVEST' }
       }
       if (card.kind === 'sellOffer') {
         const mult = inf(p.marketSellMultiple)

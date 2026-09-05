@@ -1825,8 +1825,22 @@ function CardBody({
 
             <div className="panel-2 space-y-2 rounded-lg p-3">
               {card.flowPct != null && (
+                /*
+                  🔴 ПОКА РЕШЕНИЕ НЕ ПРИНЯТО — БУДУЩЕЕ ВРЕМЯ. На карточке-
+                  предложении здесь стояло «Доход вырос навсегда» рядом с
+                  кнопками «вложиться» и «пройти мимо»: строка сообщала о том,
+                  чего ещё не случилось и могло не случиться вовсе.
+                */
                 <Stat
-                  label={card.flowPct > 0 ? 'Доход вырос навсегда' : 'Доход упал навсегда'}
+                  label={
+                    p.выбор === 'вложение'
+                      ? card.flowPct > 0
+                        ? 'Если вложиться — доход навсегда'
+                        : 'Если пройти мимо — доход навсегда'
+                      : card.flowPct > 0
+                        ? 'Доход вырос навсегда'
+                        : 'Доход упал навсегда'
+                  }
                   value={`${card.flowPct > 0 ? '+' : ''}${card.flowPct}%`}
                   strong
                 />
@@ -1949,6 +1963,73 @@ function CardBody({
                   )
                 })()}
               </div>
+            ) : p.выбор === 'вложение' && мойХод ? (
+              /*
+                🔴 ВЛОЖИТЬСЯ ИЛИ ПРОЙТИ МИМО. Раньше такие карточки прилетали
+                подарком: «рейтинг вырос — доход +12%», человек читал и
+                закрывал. Теперь на столе решение, и обе стороны названы
+                деньгами: слева цена, справа — что будет, если не платить.
+                Пока выбор не сделан, не списано ничего.
+              */
+              (() => {
+                const цена = card.вложить ?? 0
+                const процент = card.flowPct ?? 0
+                const прибавка = процент > 0
+                const поток = мои.reduce((n, b) => n + Math.max(0, b.cashFlow), 0)
+                const вМесяц = Math.round((поток * Math.abs(процент)) / 100)
+                const хватает = хозяин.ledger.cash >= цена
+                return (
+                  <>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <button
+                        disabled={!хватает}
+                        onClick={() => dispatch({ type: 'INVEST_BIZ' })}
+                        className="rounded-xl border border-emerald-500/60 bg-emerald-500/10 p-3 text-left transition hover:bg-emerald-500/15 disabled:opacity-40"
+                      >
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                          {прибавка ? 'Вложиться' : 'Удержать'}
+                        </div>
+                        <div className="tabnum mt-0.5 text-lg font-black">{money(цена)}</div>
+                        <div className="mt-1 text-[11px] text-[var(--muted)]">
+                          {!хватает
+                            ? 'столько наличными сейчас нет'
+                            : прибавка
+                              ? `доход +${процент}% навсегда${вМесяц ? ` — это ${money(вМесяц)} в месяц` : ''}`
+                              : 'дело работает как работало'}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => dispatch({ type: 'SKIP_BIZ_INVEST' })}
+                        className={`rounded-xl border border-[var(--line)] bg-[var(--panel-2)] p-3 text-left transition ${
+                          прибавка ? 'hover:border-[var(--line)]' : 'hover:border-amber-500/60'
+                        }`}
+                      >
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                          Пройти мимо
+                        </div>
+                        <div
+                          className={`tabnum mt-0.5 text-lg font-black ${
+                            прибавка ? '' : 'text-amber-500'
+                          }`}
+                        >
+                          {прибавка ? '0 ₽' : `${процент}%`}
+                        </div>
+                        <div className="mt-1 text-[11px] text-[var(--muted)]">
+                          {прибавка
+                            ? 'деньги останутся, прибавки не будет'
+                            : `доход дела упадёт навсегда${вМесяц ? ` — на ${money(вМесяц)} в месяц` : ''}`}
+                        </div>
+                      </button>
+                    </div>
+                    <p className="text-center text-[11px] leading-snug text-[var(--muted)]">
+                      На руках {money(хозяин.ledger.cash)}.{' '}
+                      {прибавка
+                        ? 'Вложение возвращается доходом — вопрос только в том, за сколько месяцев.'
+                        : 'Заплатить сейчас дешевле, чем терять каждый месяц до конца партии.'}
+                    </p>
+                  </>
+                )
+              })()
             ) : (
               <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-quiet w-full">
                 {card.managerPct != null && мойХод ? 'Пока справлюсь сам' : 'Дальше'}

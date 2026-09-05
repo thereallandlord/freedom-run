@@ -1678,6 +1678,8 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   SELL_ASSET_NOW: 'своё',
   PAY_BIZ_TROUBLE: 'карта',
   ENDURE_BIZ_TROUBLE: 'карта',
+  INVEST_BIZ: 'карта',
+  SKIP_BIZ_INVEST: 'карта',
   PAY_OFF_DEBT: 'своё',
   OFFER_ASSET: 'своё',
   OFFER_LOAN: 'своё',
@@ -2200,6 +2202,11 @@ function resolveLanding(t: Table, seatIdx: number) {
          * без вечного изменения дохода. Подарки, проценты навсегда и события
          * рынка применяются как раньше.
          */
+        if (нуженВыборПоВложению(t, card)) {
+          t.pending = { kind: 'market', card, выбор: 'вложение' }
+          t.phase = 'resolving'
+          return
+        }
         if (нуженВыборПоБеде(t, card)) {
           t.pending = { kind: 'market', card, выбор: 'беда' }
           t.phase = 'resolving'
@@ -2624,6 +2631,27 @@ function marketCardIsLive(t: Table, card: MarketCard): boolean {
  * Сплиты, выплаты и повышения применяются сразу — решать нечего.
  * Возвращает объяснение: что именно произошло, словами для человека.
  */
+/**
+ * Предложение вложиться в СВОЁ дело: карточка ждёт решения, а не сообщает.
+ *
+ * 🔴 ЗАЧЕМ. Из 77 событий дела 31 приходило подарком: «рейтинг вырос, доход
+ * +12%» применялось само, и человеку оставалось прочитать и закрыть. Просьба
+ * Камиля — «сделать карточки бизнесов интереснее»; интерес рождается
+ * решением. Работает в обе стороны по знаку `flowPct`: плюс — купить прибавку,
+ * минус — заплатить и удержать доход.
+ *
+ * 🔴 Сумма обязана быть на карточке. Считать её от потока дела на лету нельзя:
+ * у одного игрока кафе на 134 000, у другого барбершоп на 39 000, и «вложись
+ * в рекламу» стоило бы им разного — а карточка одна, и цена на ней написана.
+ */
+function нуженВыборПоВложению(t: Table, card: MarketCard): boolean {
+  if (card.kind !== 'bizEvent') return false
+  if (!card.вложить || card.вложить <= 0) return false
+  if (card.flowPct == null || card.flowPct === 0) return false
+  const seat = currentSeat(t)
+  return seat.ledger.businesses.some((b) => !b.gl && делоПодходит(card, b))
+}
+
 /** Разовая беда по своему делу, у которой есть честная альтернатива. */
 function нуженВыборПоБеде(t: Table, card: MarketCard): boolean {
   if (card.kind !== 'bizEvent') return false
@@ -4075,6 +4103,56 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       return t
     }
 
+    /*
+     * Вложиться в своё дело — или пройти мимо.
+     *
+     * 🔴 ЭФФЕКТ ПРИМЕНЯЕТ ТОТ ЖЕ КОД, что и обычные события (`applyMarketAuto`):
+     * доход дела делится между совладельцами, разовые суммы — по весу дел, и
+     * повторять эти правила во второй раз значит однажды их рассинхронить.
+     * Поэтому сюда уходит КОПИЯ карточки без цены вложения: деньги за решение
+     * списываются здесь и ровно один раз, дальше работает общий путь.
+     */
+    case 'INVEST_BIZ': {
+      if (t.pending?.kind !== 'market' || t.pending.выбор !== 'вложение') return prev
+      const card = t.pending.card
+      if (card.kind !== 'bizEvent' || !card.вложить) return prev
+      if (l.cash < card.вложить) return prev
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -card.вложить })
+      const заметки = [`Вложено ${money(card.вложить)}`]
+      if ((card.flowPct ?? 0) > 0) {
+        // Купил прибавку: применяем ровно то, что раньше приходило подарком.
+        заметки.push(...applyMarketAuto(t, { ...card, вложить: undefined, cash: undefined }))
+      } else {
+        заметки.push('Доход удержали — просадки не будет')
+      }
+      for (const з of заметки) log(t, seat.id, з)
+      плашка(t, seat.id, `${seat.name}: ${card.title} — вложился, ${money(card.вложить)}`, 'добро')
+      t.pending = { kind: 'market', card, notes: заметки }
+      return t
+    }
+
+    case 'SKIP_BIZ_INVEST': {
+      if (t.pending?.kind !== 'market' || t.pending.выбор !== 'вложение') return prev
+      const card = t.pending.card
+      if (card.kind !== 'bizEvent') return prev
+      const заметки: string[] = []
+      if ((card.flowPct ?? 0) < 0) {
+        // Не вложился — теряешь доход навсегда. Это и есть цена отказа.
+        заметки.push(...applyMarketAuto(t, { ...card, вложить: undefined, cash: undefined }))
+      } else {
+        заметки.push('Прошёл мимо — деньги остались, прибавки не будет')
+      }
+      for (const з of заметки) log(t, seat.id, з)
+      плашка(
+        t,
+        seat.id,
+        `${seat.name}: ${card.title} — прошёл мимо`,
+        (card.flowPct ?? 0) < 0 ? 'худо' : 'нейтр',
+      )
+      t.pending = { kind: 'market', card, notes: заметки }
+      return t
+    }
+
     case 'ENDURE_BIZ_TROUBLE': {
       if (t.pending?.kind !== 'market' || t.pending.выбор !== 'беда') return prev
       const card = t.pending.card
@@ -4941,6 +5019,14 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
     case 'PASS_CARD': {
       if (!t.pending) return prev
       if (t.pending.kind === 'doodad' || t.pending.kind === 'bankruptcy') return prev
+      /*
+       * 🔴 КАРТОЧКУ С ВЫБОРОМ ХОДЯЩИЙ НЕ СНИМАЕТ «ДАЛЬШЕ». Иначе у беды и у
+       * вложения появляется третий, бесплатный выход: не платить и ничего не
+       * потерять. В окне таких кнопок нет, но движок обязан держать правило
+       * сам — событие приезжает и по сети, и от бота, а не только из окна.
+       * Тупика это не создаёт: у обоих выборов вторая кнопка денег не требует.
+       */
+      if (t.pending.kind === 'market' && t.pending.выбор && seatIdx === t.turnIndex) return prev
       /*
        * «Пропустить» — это тоже РЕШЕНИЕ, а не закрытие окна для всех. Пока
        * кто-то из допущенных не ответил, карта остаётся на столе.
