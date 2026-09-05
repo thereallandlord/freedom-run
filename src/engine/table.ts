@@ -2854,12 +2854,23 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
     if (card.managerPct != null) {
       // Ничего не применяем: это предложение, а не событие. Решает игрок.
       плашка(t, seat.id, `${seat.name}: ${card.title}`, 'добро')
-      return []
+      return заметки
     }
     плашка(t, seat.id, `${seat.name}: ${card.title}`, тонСобытия)
-    return []
+    /*
+     * 🔴 ОБЪЯСНЕНИЕ ВОЗВРАЩАЕМ, А НЕ ВЫБРАСЫВАЕМ. Здесь стояло `return []`:
+     * движок аккуратно считал фразу «Кофейня у метро: доход вырос с 40 000 до
+     * 43 200 в месяц», клал её в скрытый журнал — и отдавал карточке пустоту.
+     * Человек видел заголовок события и цифры где-то в панели, но не мог
+     * связать одно с другим. Живая жалоба Камиля с игры: «непонятно, что
+     * случилось с моим бизнесом — он начал больше приносить или меньше?».
+     * Замер прогоном: из 2280 событий 1680 приходили БЕЗ единого слова.
+     */
+    return заметки
   }
   if (card.kind === 'glEvent' && !card.triangle) {
+    // Слова, которые доедут до карточки, а не только до скрытого журнала.
+    const слова: string[] = []
     /*
      * События партнёрского бизнеса. Применяются владельцу — и объясняются
      * человеческой фразой: игрок должен понимать, почему доход изменился.
@@ -2905,6 +2916,15 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
        */
       let разово = 0
       const объяснения: string[] = []
+      /*
+       * 🔴 Беда без цифры тоже обязана объясниться. При заморозке доход не
+       * меняется — меняется скорость роста, и без слов карточка читалась как
+       * «ничего не произошло».
+       */
+      if (card.freezePaydays)
+        объяснения.push(
+          `Структура перестанет расти на ${card.freezePaydays} ${склонениеЗарплат(card.freezePaydays)} — доход останется прежним, но прибавки не будет`,
+        )
       const c = card as unknown as {
         pvLeft?: number
         pvRight?: number
@@ -2960,8 +2980,24 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
         )
       }
       for (const о of объяснения) log(t, s.id, о)
+      /*
+       * 🔴 ТО ЖЕ, ЧТО И У ОБЫЧНОГО БИЗНЕСА: объяснения были посчитаны и
+       * выброшены. Здесь это било больнее всего — 97% всех событий рынка
+       * доезжали до карточки немыми, и почти все они партнёрские: «наставник
+       * выгорел», «из структуры выбыл лидер». Человек видел заголовок и не
+       * понимал, стало ему лучше или хуже.
+       */
+      слова.push(...объяснения)
+      const дельтаСлово =
+        дельтаГЛ === 0
+          ? ''
+          : дельтаГЛ > 0
+            ? `Партнёрский бизнес прибавил ${money(дельтаГЛ)}/мес — теперь ${money(сталоГЛ)}/мес`
+            : `Партнёрский бизнес просел на ${money(-дельтаГЛ)}/мес — теперь ${money(сталоГЛ)}/мес`
+      if (дельтаСлово) слова.push(дельтаСлово)
+      if (разово > 0) слова.push(`На счёт пришло ${money(разово)}`)
     }
-    return []
+    return слова
   }
   /*
    * 🔴 МЕМКОИН ОБЯЗАН УМЕТЬ УМИРАТЬ. Карточка цены — это разовое предложение
@@ -2976,6 +3012,7 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
    */
   if (card.kind === 'stockPrice' && (card as { wipe?: boolean }).wipe) {
     const sym = card.symbol.toUpperCase()
+    const сгорело: string[] = []
     for (const s of t.seats) {
       if (s.outOfGame || s.track === 'fast') continue
       const свои = s.ledger.stocks.filter((l) => l.symbol.toUpperCase() === sym)
@@ -2984,18 +3021,31 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
       seatLedgerEvent(t, s.id, { type: 'WIPE_STOCK', symbol: sym })
       log(t, s.id, `${card.title}: ${sym} обнулилась, сгорело ${money(вложено)}`)
       плашка(t, s.id, `${s.name}: ${sym} обнулилась — сгорело ${money(вложено)}`, 'худо')
+      сгорело.push(`${s.name}: сгорело ${money(вложено)}`)
     }
-    return []
+    return сгорело.length
+      ? [`${sym} обнулилась. ${сгорело.join(', ')}`]
+      : [`${sym} обнулилась — у вас её не было, вас это не задело`]
   }
   if (card.kind === 'stockSplit') {
+    // Что именно стало с бумагами КАЖДОГО — иначе сплит читается как пустое место.
+    const стало: string[] = []
     for (const s of t.seats) {
       if (s.outOfGame || s.track === 'fast') continue
+      const было = s.ledger.stocks
+        .filter((l) => l.symbol.toUpperCase() === card.symbol.toUpperCase())
+        .reduce((a, l) => a + l.shares, 0)
       seatLedgerEvent(t, s.id, {
         type: 'STOCK_SPLIT',
         symbol: card.symbol,
         direction: card.direction,
         ratio: card.ratio,
       })
+      if (!было) continue
+      const теперь = (t.seats.find((x) => x.id === s.id)?.ledger.stocks ?? [])
+        .filter((l) => l.symbol.toUpperCase() === card.symbol.toUpperCase())
+        .reduce((a, l) => a + l.shares, 0)
+      стало.push(`${s.name}: было ${было}, стало ${теперь}`)
     }
     const k = card.ratio ?? 2
     /*
@@ -3015,6 +3065,13 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
     })
     recalcMarket(t)
     log(t, null, `${card.symbol}: ${card.direction === 'split' ? `сплит ${k}:1` : `обратный сплит 1:${k}`}`)
+    return стало.length
+      ? [
+          card.direction === 'split'
+            ? `Каждая акция разделилась на ${k} — бумаг стало больше, цена каждой во столько же меньше. ${стало.join('; ')}`
+            : `Каждые ${k} акций слились в одну — бумаг стало меньше, цена каждой во столько же больше. ${стало.join('; ')}`,
+        ]
+      : [`${sym} меняет номинал — у вас этой бумаги нет, вас это не задело`]
   } else if (card.kind === 'windfall') {
     // Личная выплата — только вытянувшему; общая — всем в Рутине.
     const only = card.scope === 'self' ? currentSeat(t).id : null
@@ -3049,10 +3106,20 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
         'добро',
       )
     }
+    /*
+     * 🔴 То же, что у бизнеса и партнёрского: карточка обязана СКАЗАТЬ, что
+     * сделала, а не только записать это в скрытый журнал.
+     */
+    return получили.length
+      ? [получили.length > 1 ? `Деньги пришли всем: ${получили.join(', ')}` : `На счёт пришло: ${получили[0]}`]
+      : ['Вам эта выплата не досталась — она не про ваши активы']
   } else if (card.kind === 'payRaise') {
     const seat = currentSeat(t)
+    const было = seat.ledger.salary
     seatLedgerEvent(t, seat.id, { type: 'SALARY_RAISE', amount: card.amount })
+    const стало = t.seats.find((x) => x.id === seat.id)?.ledger.salary ?? было + card.amount
     log(t, seat.id, `Повышение: зарплата +${money(card.amount)}/мес`)
+    return [`Зарплата выросла с ${money(было)} до ${money(стало)} в месяц`]
   }
   return []
 }
