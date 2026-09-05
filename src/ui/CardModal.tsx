@@ -1505,6 +1505,46 @@ function CardBody({
      * человек видел только, что их стало меньше. Показываем «было — стало»:
      * ровно то, чего не хватало игрокам во всех остальных карточках тоже.
      */
+    /*
+     * Желание на большом круге: купить или пройти мимо.
+     *
+     * 🔴 Содержание показываем ОТДЕЛЬНОЙ строкой и не прячем: дом у моря стоит
+     * денег один раз, а платить за него придётся каждый месяц до конца партии.
+     * Это и есть та ловушка, о которой игра, и человек должен видеть её ДО
+     * нажатия, а не в ведомости после.
+     */
+    case 'ftWant': {
+      const хватает = l.cash >= p.amount
+      return (
+        <S badge="Можно себе позволить" title={p.name} flavor={p.flavor} accent="#a78bfa" art="✨">
+          <div className="panel-2 space-y-1 rounded-lg p-3">
+            <Stat label="Стоит" value={money(p.amount)} strong />
+            {p.upkeep ? (
+              <Stat label="И потом каждый месяц" value={`${money(p.upkeep)} на содержание`} />
+            ) : null}
+            <Stat label="Денег на руках" value={money(l.cash)} />
+          </div>
+          {p.upkeep ? (
+            <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-600 dark:text-amber-400">
+              Расходы вырастут навсегда — до свободы придётся дойти уже с ними.
+            </p>
+          ) : null}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              disabled={!хватает}
+              onClick={() => dispatch({ type: 'BUY_FT_WANT' })}
+              className="btn-primary disabled:opacity-40"
+            >
+              {хватает ? `Взять за ${money(p.amount)}` : 'Столько сейчас нет'}
+            </button>
+            <button onClick={() => dispatch({ type: 'SKIP_FT_WANT' })} className="btn-quiet">
+              Пройти мимо
+            </button>
+          </div>
+        </S>
+      )
+    }
+
     case 'ftEvent': {
       const дельта = p.after - p.before
       /*

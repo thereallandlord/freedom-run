@@ -1200,11 +1200,30 @@ export function marketMatches(
   }[]
 }[] {
   const out: ReturnType<typeof marketMatches> = []
+  /*
+   * 🔴 «*» — ЛЮБОЙ ВИД АКТИВА. Так устроена клетка продажи на большом поле:
+   * там капитал перекладывают из квартиры в дело и обратно, и привязывать
+   * предложение к одной категории незачем.
+   *
+   * 🔴 И НА ПОЛОСЕ ТОЖЕ ПРОДАЮТ. Раньше здесь стоял безусловный пропуск
+   * второго круга — он остался с тех времён, когда при выходе активы
+   * забирали и продавать было нечего. Теперь они остаются, и без этой правки
+   * новая клетка не нашла бы ни одного владельца.
+   */
+  const любой = category === '*'
   for (const seat of t.seats) {
-    if (seat.outOfGame || seat.track === 'fast') continue
+    if (seat.outOfGame) continue
+    /*
+     * 🔴 НА ПОЛОСЕ ПРОДАЮТ ТОЛЬКО ПО СВОЕЙ КЛЕТКЕ. Обычные карточки рынка
+     * первого круга второго круга не касаются — иначе они начинают ждать
+     * решения от человека, которому их даже не показывают, и стол встаёт.
+     * Я на этом уже подорвался: условие было написано наоборот, и партия
+     * переставала идти вовсе — ноль увольнений на двадцати пяти прогонах.
+     */
+    if (seat.track === 'fast' && !любой) continue
     const assets = [
       ...seat.ledger.realEstate
-        .filter((a) => a.category === category && !этоВтораяПоловина(a))
+        .filter((a) => (любой || a.category === category) && !этоВтораяПоловина(a))
         .map((a) => ({
           id: a.id,
           name: a.name,
@@ -1219,7 +1238,7 @@ export function marketMatches(
           profitSharePct: a.profitSharePct,
         })),
       ...seat.ledger.businesses
-        .filter((a) => a.category === category && !этоВтораяПоловина(a))
+        .filter((a) => (любой || a.category === category) && !этоВтораяПоловина(a) && !a.gl)
         .map((a) => ({
           id: a.id,
           name: a.name,
@@ -1663,6 +1682,8 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   // Решение по своей беде — только тот, чей ход: это его деньги и его доход.
   ENDURE_FT_TROUBLE: 'ход',
   PAY_FT_TROUBLE: 'ход',
+  BUY_FT_WANT: 'ход',
+  SKIP_FT_WANT: 'ход',
 }
 
 /**
@@ -2309,6 +2330,70 @@ function resolveLanding(t: Table, seatIdx: number) {
       t.phase = 'resolving'
       return
     }
+    /*
+     * ЖИЗНЬ НА ВТОРОМ КРУГЕ: то, на что уходят деньги, когда они уже есть.
+     *
+     * 🔴 Решение Камиля: «расходы сами не растут, растут точечно карточками».
+     * Клеток трат на большом поле не было вовсе — человек только зарабатывал,
+     * и второй круг превращался в копилку без событий. Отказаться нельзя:
+     * свадьбу ребёнка и помощь родителям не пропускают. А вот содержание
+     * купленного ложится в расходы навсегда — за дом у моря платят каждый
+     * месяц, и это ровно та ловушка, о которой игра.
+     */
+    case 'lifeSpend': {
+      // Желание — решение игрока: показываем карточку и ждём.
+      if (space.want) {
+        t.pending = {
+          kind: 'ftWant',
+          name: space.name,
+          flavor: space.flavor,
+          amount: space.amount,
+          upkeep: space.upkeep,
+        }
+        t.phase = 'resolving'
+        return
+      }
+      const before = l.cash
+      const сумма = Math.min(l.cash, space.amount)
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -сумма })
+      if (space.upkeep) seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: space.upkeep })
+      log(
+        t,
+        seat.id,
+        `${space.name}: минус ${money(сумма)}${space.upkeep ? `, содержание +${money(space.upkeep)}/мес` : ''}`,
+      )
+      t.pending = {
+        kind: 'ftEvent',
+        title: space.name,
+        text: space.flavor,
+        before,
+        after: t.seats[seatIdx].ledger.cash,
+      }
+      t.phase = 'resolving'
+      return
+    }
+    /*
+     * Предложение продать актив выше рынка. На первом круге такие карточки
+     * есть, на большом поле продавать было негде вовсе — а капитал там как раз
+     * и перекладывают: из квартиры в дело, из дела в мечту.
+     */
+    case 'ftSellOffer': {
+      t.pending = {
+        kind: 'market',
+        card: {
+          id: `ft-sell-${seat.position}`,
+          deck: 'market',
+          kind: 'sellOffer',
+          category: '*',
+          multiplierPct: space.multiplierPct,
+          title: space.name,
+          text: space.flavor,
+        } as never,
+      }
+      t.phase = 'resolving'
+      return
+    }
+
     case 'downsized': {
       const before = l.cash
       const amount = fastTrackIncome(l)
@@ -3916,6 +4001,26 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
      * карточка ждёт решения, у человека на руках всё, что было, — иначе
      * «заплатить» и «тянуть» считались бы от разных сумм.
      */
+    case 'BUY_FT_WANT': {
+      if (t.pending?.kind !== 'ftWant') return prev
+      const { name, amount, upkeep } = t.pending
+      if (l.cash < amount) return prev
+      seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -amount })
+      if (upkeep) seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: upkeep })
+      log(t, seat.id, `${name}: ${money(amount)}${upkeep ? `, содержание +${money(upkeep)}/мес` : ''}`)
+      плашка(t, seat.id, `${seat.name}: ${name.toLowerCase()} — ${money(amount)}`, 'нейтр')
+      t.pending = null
+      t.phase = 'turnEnd'
+      return t
+    }
+    case 'SKIP_FT_WANT': {
+      if (t.pending?.kind !== 'ftWant') return prev
+      log(t, seat.id, `${t.pending.name}: прошёл мимо — деньги нужнее на мечту`)
+      t.pending = null
+      t.phase = 'turnEnd'
+      return t
+    }
+
     case 'PAY_FT_TROUBLE': {
       if (t.pending?.kind !== 'ftEvent' || !t.pending.выбор) return prev
       const { сумма } = t.pending.выбор

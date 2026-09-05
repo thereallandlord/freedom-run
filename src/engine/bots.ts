@@ -38,6 +38,7 @@ import {
   isOutOfRatRace,
   monthlyCashFlow,
   totalExpenses,
+  freedomIncome,
   dealTerms,
   marketStockPrice,
   ownShare,
@@ -409,13 +410,59 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
       }
       if (card.kind === 'sellOffer') {
         const mult = inf(p.marketSellMultiple)
+        /*
+         * 🔴 НА ВТОРОМ КРУГЕ ПРОДАЖА ДОХОДА — САМОУБИЙСТВО, и бот этого не
+         * знал. Замер: с клетками продажи на большом поле до мечты доходили 52
+         * человека из 172, без них — 150 из 200. Бот распродавал то, что его
+         * кормит, ради наличных, и дальше расти было нечем.
+         *
+         * В Круге продажа осмысленна: там копят на выход. На Полосе она
+         * осмысленна ровно в одном случае — когда вырученного ХВАТИТ НА МЕЧТУ
+         * прямо сейчас. Иначе актив нужнее.
+         */
+        const наПолосе = seat.track === 'fast'
+        const ценаМечты = (() => {
+          if (!наПолосе) return 0
+          const кл = (fastBoard() as { type: string; price?: number }[])[seat.dreamSpace]
+          return кл && кл.type === 'dream' ? (кл.price ?? 0) : 0
+        })()
         for (const m of marketMatches(t, card.category)) {
           if (m.seat.id !== seat.id) continue
           for (const a of m.assets) {
             // База — та же, по которой платит стол: рыночная цена, не цена с наценкой.
             const база = a.value ?? a.cost
             const price = sellOfferPrice(база, card.multiplierPct, t.market.price[card.category] ?? 1)
-            if (price >= база * mult) {
+            const выручка = Math.max(0, price - a.debt)
+            /*
+             * 🔴 НЕ ПРОДАВАЙ СЕБЯ НИЖЕ СВОБОДЫ. Первая версия правила была
+             * «продаю, если хватит на мечту» — и бот всё равно проваливался:
+             * до мечты доходили 82 из 189 против 150 из 200 без этих клеток.
+             * Он выручал деньги, лишался дохода и не успевал доехать до своей
+             * клетки. Правило, которого и в жизни надо держаться: продавать
+             * можно только то, без чего доход ВСЁ РАВНО перекрывает расходы.
+             */
+            const свой =
+              [...l.realEstate, ...l.businesses].find((x) => x.id === a.id) ?? null
+            const доходАктива = свой ? ownShare(свой) : 0
+            const послеПродажи = freedomIncome(l, t.market.flow) - доходАктива
+            /*
+             * 🔴 И ТРЕТЬЕ УСЛОВИЕ: МЕЧТА ДОЛЖНА БЫТЬ БЛИЗКО. Двух прежних не
+             * хватило — бот выручал деньги заранее, лишался дохода и колесил
+             * по доске без него, пока не выпадала нужная клетка. Замер держался
+             * на 82 из 189 против 150 без этих клеток. Человек так не делает:
+             * он продаёт, когда до мечты рукой подать.
+             */
+            const доМечты = (() => {
+              const всего = (fastBoard() as unknown[]).length
+              return (seat.dreamSpace - seat.position + всего) % всего
+            })()
+            const продаватьМожно = наПолосе
+              ? ценаМечты > 0 &&
+                l.cash + выручка >= ценаМечты &&
+                послеПродажи >= totalExpenses(l) &&
+                доМечты <= 8
+              : price >= база * mult
+            if (продаватьМожно) {
               return { type: 'ACCEPT_OFFER', seatId: seat.id, assetId: a.id }
             }
           }
@@ -525,11 +572,23 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     case 'downsized':
       return { type: 'PAY_DOWNSIZED' }
 
+    case 'ftWant': {
+      /*
+       * Желание на большом круге. Берём, только если после покупки остаётся
+       * запас: главная цель там — мечта, и спускать на машину деньги, которых
+       * не хватит на неё, бот не должен. Человек, конечно, волен наоборот.
+       */
+      const желание = pending as { amount: number }
+      const запас = seat.ledger.cash - желание.amount
+      return { type: запас > желание.amount * 2 ? 'BUY_FT_WANT' : 'SKIP_FT_WANT' }
+    }
+
     // Бот на зарплате просто закрывает окно: деньги уже начислены.
     case 'payday':
     // Поздравление с выходом из Круга — тоже просто закрыть.
     case 'freedom':
     // Событие Полосы (проверка, иск, развод, просадка) — деньги уже списаны.
+
     case 'ftEvent': {
       /*
        * 🔴 БЕДА С ВЫБОРОМ ЖДЁТ РЕШЕНИЯ, А НЕ «ПОНЯТНО». Без этой ветки бот
