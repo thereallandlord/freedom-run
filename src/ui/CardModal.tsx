@@ -1438,6 +1438,7 @@ function CardBody({
           badge="Свобода"
           title={mine ? 'Вы вырвались из Круга!' : `${hero?.name ?? 'Игрок'} вырвался из Круга`}
           accent="#f59e0b"
+          photo={artBySpace('cashflowDay')}
           art="🎉"
         >
           {/* Конфетти рисует CSS: полсотни лоскутов, у каждого свой путь. */}
@@ -1516,7 +1517,14 @@ function CardBody({
     case 'ftWant': {
       const хватает = l.cash >= p.amount
       return (
-        <S badge="Можно себе позволить" title={p.name} flavor={p.flavor} accent="#a78bfa" art="✨">
+        <S
+          badge="Можно себе позволить"
+          title={p.name}
+          flavor={p.flavor}
+          accent="#a78bfa"
+          art="✨"
+          photo={artByDream(p.name) ?? artBySpace('doodad')}
+        >
           <div className="panel-2 space-y-1 rounded-lg p-3">
             <Stat label="Стоит" value={money(p.amount)} strong />
             {p.upkeep ? (
@@ -1557,7 +1565,14 @@ function CardBody({
         const { сумма, просадкаПкт, месяцев } = p.выбор
         const хватает = l.cash >= сумма
         return (
-          <S badge="Полоса свободы" title={p.title} flavor={p.text} accent="#f43f5e" art="⚖️">
+          <S
+            badge="Полоса свободы"
+            title={p.title}
+            flavor={p.text}
+            accent="#f43f5e"
+            art="⚖️"
+            photo={artBySpace('lawsuit')}
+          >
             <div className="grid gap-2 sm:grid-cols-2">
               <button
                 disabled={!хватает}
@@ -1595,7 +1610,14 @@ function CardBody({
         )
       }
       return (
-        <S badge="Полоса свободы" title={p.title} flavor={p.text} accent="#f43f5e" art="⚖️">
+        <S
+            badge="Полоса свободы"
+            title={p.title}
+            flavor={p.text}
+            accent="#f43f5e"
+            art="⚖️"
+            photo={artBySpace('lawsuit')}
+          >
           <div className="panel-2 space-y-1.5 rounded-lg px-3 py-2.5 text-[13px]">
             <div className="flex items-baseline justify-between">
               <span className="text-[var(--muted)]">Было на счету</span>
@@ -1630,7 +1652,7 @@ function CardBody({
 
     case 'payday':
       return (
-        <S badge="Зарплата" title="Пришли деньги" accent="#10b981" art="💰">
+        <S badge="Зарплата" title="Пришли деньги" accent="#10b981" art="💰" photo={artBySpace('paycheck')}>
           <div className="rounded-lg bg-emerald-500/10 px-3 py-3 text-center">
             <div className="tabnum text-[26px] font-black leading-none text-emerald-600 dark:text-emerald-400">
               {signed(p.amount)}
@@ -2055,7 +2077,14 @@ function CardBody({
         const созрел = biz?.gl && промо ? glPromoReady(biz.gl, промо) : { ready: false, why: '' }
         const можноПромо = !!biz?.gl && мойХод && созрел.ready
         return (
-          <S badge="Партнёрский бизнес" title={txt.title} flavor={txt.flavor} accent="#22c55e">
+          <S
+            badge="Партнёрский бизнес GreenLeaf"
+            title={txt.title}
+            flavor={txt.flavor}
+            accent="#22c55e"
+            art="🤝"
+            photo={artById(card.id) ?? artById('big-greenleaf')}
+          >
             {card.promo ? (
               <>
                 <div className="panel-2 rounded-lg p-3">
@@ -2258,7 +2287,14 @@ function CardBody({
           </div>
         ) : null
         return (
-          <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8" своё={моиБумаги}>
+          <S
+            badge="Рынок"
+            title={txt.title}
+            flavor={txt.flavor}
+            accent="#38bdf8"
+            photo={artById(card.id) ?? artByTicker((card as { symbol?: string }).symbol) ?? artBySpace('market')}
+            своё={моиБумаги}
+          >
             <div className="panel-2 rounded-lg p-3">
               <Stat label={card.symbol} value={money(px)} strong />
               {px !== card.price && (
@@ -2285,7 +2321,13 @@ function CardBody({
 
       // Сплит и разовая выплата применились автоматически.
       return (
-        <S badge="Рынок" title={txt.title} flavor={txt.flavor} accent="#38bdf8">
+        <S
+          badge="Рынок"
+          title={txt.title}
+          flavor={txt.flavor}
+          accent="#38bdf8"
+          photo={artById(card.id) ?? artBySpace('market')}
+        >
           {/*
             🔴 КОМУ ЭТО — САМЫЙ ЧАСТЫЙ ВОПРОС ПО ТАКИМ КАРТОЧКАМ. Живая
             путаница: «8 000 кэшбэк» приняли за свои, хотя карта была личной и
@@ -2674,7 +2716,13 @@ function CardBody({
       const flow = monthlyCashFlow(l)
       const recover = canRecover(l)
       return (
-        <S badge="Банкротство" title={`${seat.name} не свёл концы с концами`} accent="#f43f5e" art="🆘">
+        <S
+          badge="Банкротство"
+          title={`${seat.name} не свёл концы с концами`}
+          accent="#f43f5e"
+          art="🆘"
+          photo={artBySpace('downsized')}
+        >
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Деньги на руках" value={money(l.cash)} strong />
             <Stat label="Поток в месяц" value={signed(flow)} strong />

@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "esbuild src/engine/selftest.ts --bundle --platform=node --format=esm --outfile=.selftest.mjs --log-level=error && node .selftest.mjs",
     "test:mech": "esbuild src/engine/mechtest.ts --bundle --platform=node --format=esm --outfile=.mech.mjs --log-level=error && node .mech.mjs",
-    "test:all": "npm run test:mech && npm test && npm run test:phase && npm run test:turn && npm run test:meme && npm run test:stage && npm run test:world && npm run test:events && npm run test:passport && npm run test:biz && npm run test:keys && npm run test:markets && npm run test:gl && npm run test:voice",
+    "test:all": "npm run test:mech && npm test && npm run test:phase && npm run test:turn && npm run test:meme && npm run test:stage && npm run test:world && npm run test:events && npm run test:passport && npm run test:biz && npm run test:keys && npm run test:markets && npm run test:aim && npm run test:gl && npm run test:voice",
     "dump:state": "esbuild src/engine/dumpstate.ts --bundle --platform=node --format=esm --outfile=.dump.mjs --log-level=error && node .dump.mjs",
     "test:scen": "npx tsx src/engine/scenarios.ts",
     "fuzz": "npx tsx src/engine/fuzz.ts",
@@ -28,7 +28,8 @@
     "test:voice": "node scripts/voicetest.mjs",
     "test:gl": "npx tsx src/engine/gltest.ts",
     "ft": "npx tsx src/engine/ftmeter.ts",
-    "test:markets": "npx tsx src/engine/markettest.ts"
+    "test:markets": "npx tsx src/engine/markettest.ts",
+    "test:aim": "npx tsx src/engine/aimtest.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
