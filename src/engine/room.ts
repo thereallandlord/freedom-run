@@ -14,6 +14,7 @@ import { randomSeed } from './rng'
 import type { BotDifficulty } from './types'
 import type { DeckTheme } from './data'
 import type { SeatSetup, TableSetup } from './table'
+import { нормализоватьРынки, type Рынок } from './рынки'
 
 // ─── Константы ────────────────────────────────────────────────────────
 
@@ -97,6 +98,14 @@ export interface RoomSpectator {
 
 export interface RoomSettings {
   deckTheme: DeckTheme
+  /**
+   * Страны, из которых собрана колода. Пусто — играем всеми.
+   *
+   * 🔴 Настройка КОМНАТЫ, а не игрока: колода у всех за столом обязана быть
+   * одна. Хост отмечает страны до старта, дальше выбор едет в настройки стола
+   * и оттуда в журнал — партия пересобирается той же колодой.
+   */
+  рынки?: Рынок[]
   maxPlayers: number
   allowSpectators: boolean
   /** Хосту разрешено откатывать последние ходы. */
@@ -590,6 +599,14 @@ export function addBot(
 export function setSettings(room: RoomState, patch: Partial<RoomSettings>): RoomResult {
   const settings = { ...room.settings, ...patch }
   settings.maxPlayers = clampPlayers(settings.maxPlayers)
+  /*
+   * 🔴 Выбор стран приводим к порядку ЗДЕСЬ, а не только на старте. Настройки
+   * едут по сети от хоста ко всем, и `['TUR','RU']` от одного клиента против
+   * `['RU','TUR']` от другого — это два разных состояния комнаты при одном и
+   * том же столе: список сравнивают, лишняя разница будит пересборку и
+   * показывает «настройки изменились» на пустом месте.
+   */
+  settings.рынки = нормализоватьРынки(settings.рынки)
   // Потолок нельзя опустить ниже уже сидящих — иначе кто-то «исчезнет» молча.
   settings.maxPlayers = Math.max(settings.maxPlayers, room.players.length)
 
@@ -637,7 +654,12 @@ export function toTableSetup(room: RoomState): TableSetup {
     isBot: p.isBot || p.standIn,
     botDifficulty: p.botDifficulty,
   }))
-  return { seed: room.seed, deckTheme: room.settings.deckTheme, seats }
+  return {
+    seed: room.seed,
+    deckTheme: room.settings.deckTheme,
+    рынки: нормализоватьРынки(room.settings.рынки),
+    seats,
+  }
 }
 
 /** Место игрока в столе: индекс совпадает с порядком players. */

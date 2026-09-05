@@ -1288,6 +1288,53 @@ const SCENES_BIG_RE = {  /* Зарубежное расширение: круп�
     'A studio apartment building next to a modern ice hockey arena in a Russian city: fans in scarves walking toward the arena in the evening, warm street lamps, first snow on the ground',
 }
 
+/**
+ * Дела ВНЕ России и два новых выкупа.
+ *
+ * 🔴 Заведены вместе с выбором стран (05.09): до этого все обычные дела были
+ * российскими, и стол «без России» оставался вообще без единственного дохода,
+ * которым в игре выбираются из Круга. Сцены держат ту же линию, что и
+ * остальные карточки: живой момент работы, а не витрина.
+ */
+const SCENES_ABROAD_BIZ = {
+  'sd-biz-tur-simit':
+    'A Turkish street buffet at dawn next to a bus station: a vendor handing a sesame simit ring across the counter, a tray of glasses of tea, a queue of commuters with bags, early sunlight',
+  'sd-biz-dxb-laundry':
+    'A self-service laundrette in a working-class Dubai neighbourhood: a row of twelve washing machines, two men in work clothes loading a drum, folded laundry on a table, bright fluorescent light',
+  'sd-biz-sau-abaya':
+    'A small abaya tailoring workshop in Jeddah: two seamstresses at sewing machines, bolts of black and dark fabric on shelves, a finished embroidered garment on a mannequin, warm daylight through blinds',
+  'sd-biz-bali-bikes':
+    'A scooter rental yard in Bali: two rows of parked scooters under a bamboo canopy, a mechanic checking a tyre, a surfboard strapped to one bike, palm trees and wet tropical light',
+  'sd-biz-cis-pvz-tashkent':
+    'A parcel pickup point on the ground floor of a Tashkent apartment block: shelves of boxes, a woman collecting a package at the counter, a fitting-room curtain, a poplar tree outside the window',
+  'sd-biz-tur-barber-antalya':
+    'A Turkish barbershop in Antalya: three chairs occupied, a barber shaving a client with a straight razor, hot towels steaming, mirrors and warm bulbs, sea light through the door',
+  'big-biz-tur-lokanta':
+    'A busy Turkish lokanta at lunchtime: a steam table of home-cooked stews, a cook serving office workers in line with trays, every table full, bright daylight',
+  'big-biz-tur-carwash-istanbul':
+    'A six-bay self-service car wash beside an Istanbul motorway exit at dusk: one car covered in white foam, a driver holding the pressure lance, floodlights, wet reflective asphalt',
+  'big-biz-dxb-cloud-kitchen':
+    'A delivery-only cloud kitchen in an industrial Dubai district: three cooks at stainless-steel stations, stacked labelled takeaway bags on a rack, a courier taking bags out the back door, no dining room',
+  'big-biz-dxb-detailing':
+    'A car detailing workshop in Dubai: a black SUV under bright LED lamps, a technician polishing the bonnet with a machine, another masking trim, spotless epoxy floor, cars waiting outside',
+  'big-biz-sau-coffee-riyadh':
+    'A specialty coffee shop in a Riyadh office district: a barista pouring latte art, an espresso machine and a roaster in view, laptops on wooden tables, evening city light through glass',
+  'big-biz-sau-print-jeddah':
+    'A print shop in Jeddah: an offset press running sheets, a worker checking a fresh proof under a lamp, stacks of printed books and school forms, a large vinyl banner rolled at the side',
+  'big-biz-bali-cafe-canggu':
+    'A beachside café in Canggu: breakfast bowls and cold-pressed juice on wooden tables, a barista at the counter, surfboards leaning by the entrance, palm shade and bright tropical morning',
+  'big-biz-bali-villa-service':
+    'A villa maintenance crew at work in Ubud: one worker skimming a swimming pool, another trimming tropical hedges, a housekeeper carrying folded linen along a stone path, rice terraces beyond',
+  'big-biz-cis-bakery-almaty':
+    'A tandoor bakery in Almaty: a baker reaching into a clay tandoor oven to lift out flatbread, a tray of fresh lepyoshka on the counter, customers queuing, snowy mountains visible through the door',
+  'big-biz-cis-print-tashkent':
+    'A print shop in Tashkent: a press running wedding invitations, a worker cutting a stack on a guillotine, sample albums and banners on the wall, warm afternoon light',
+  'mkt-sell-apt-sau':
+    'A crowd of pilgrims in white ihram walking past modern apartment towers near the Grand Mosque, an estate agent showing a couple a flat on a balcony above the street, hot bright daylight',
+  'mkt-sell-apt-bali':
+    'A half-finished villa on a Bali rice terrace with a construction stop notice taped to the gate, an officer talking to the owner, a broker waiting by a car, heavy grey tropical sky',
+}
+
 /** Большие сделки — бизнес (включая партнёрскую программу — только живые сцены). */
 const SCENES_BIG_BIZ = {
   'big-biz-pvz-ufa':
@@ -1633,7 +1680,13 @@ function buildJobs() {
       /* 🔴 Часть бизнесов живёт в колоде МАЛЫХ сделок (их перенесли туда,
          чтобы бизнес попадался раньше) — сцены им искать надо и в бизнес-таблице,
          иначе у них не будет картинки вовсе. */
-      const scene = SCENES_SMALL_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_BIG_RE[c.id] || SCENES_NEW[c.id] || SCENES_SEP[c.id]
+      const scene =
+        SCENES_SMALL_RE[c.id] ||
+        SCENES_BIG_BIZ[c.id] ||
+        SCENES_BIG_RE[c.id] ||
+        SCENES_NEW[c.id] ||
+        SCENES_SEP[c.id] ||
+        SCENES_ABROAD_BIZ[c.id]
       push(c.id, c.id, scene, 'small-deal', () => {
         manifest.byId[c.id] = `/cards/${c.id}.webp`
       })
@@ -1642,7 +1695,12 @@ function buildJobs() {
 
   // Большие сделки
   for (const c of decks.BIG_DEALS_RU) {
-    const scene = SCENES_BIG_RE[c.id] || SCENES_BIG_BIZ[c.id] || SCENES_NEW[c.id] || SCENES_SEP[c.id]
+    const scene =
+      SCENES_BIG_RE[c.id] ||
+      SCENES_BIG_BIZ[c.id] ||
+      SCENES_NEW[c.id] ||
+      SCENES_SEP[c.id] ||
+      SCENES_ABROAD_BIZ[c.id]
     push(c.id, c.id, scene, 'big-deal', () => {
       manifest.byId[c.id] = `/cards/${c.id}.webp`
     })
@@ -1657,9 +1715,15 @@ function buildJobs() {
 
   // Карточки рынка
   for (const c of decks.MARKET_CARDS_RU) {
-    push(c.id, c.id, SCENES_MARKET[c.id] || SCENES_NEW[c.id] || SCENES_SEP[c.id], 'market', () => {
-      manifest.byId[c.id] = `/cards/${c.id}.webp`
-    })
+    push(
+      c.id,
+      c.id,
+      SCENES_MARKET[c.id] || SCENES_NEW[c.id] || SCENES_SEP[c.id] || SCENES_ABROAD_BIZ[c.id],
+      'market',
+      () => {
+        manifest.byId[c.id] = `/cards/${c.id}.webp`
+      },
+    )
   }
 
   // Быстрая дорожка

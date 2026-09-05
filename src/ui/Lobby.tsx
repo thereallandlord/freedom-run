@@ -25,6 +25,8 @@ import {
   type RoomState,
 } from '../engine/room'
 import type { BotDifficulty } from '../engine/types'
+import { ВыборРынков } from './ВыборРынков'
+import { имяРынка, ВСЕ_РЫНКИ, type Рынок } from '../engine/рынки'
 
 const BOT_LABEL: Record<BotDifficulty, string> = {
   easy: 'Лёгкий',
@@ -577,6 +579,14 @@ export function Lobby({
   const me = room.players.find((p) => p.id === meId)
   const theme = room.settings.deckTheme
   const { professions, dreams, isRub } = useDeckOptions(theme)
+  /*
+   * 🔴 Страны видят ВСЕ, а не только хост. Настройки комнаты открыты одному
+   * хозяину, а колода — общая: гость, севший за стол «без России», обязан
+   * знать это до броска, а не выяснять по отсутствию Казани в сделках.
+   */
+  const рынки = room.settings.рынки
+  const странПодпись =
+    рынки && рынки.length < ВСЕ_РЫНКИ.length ? рынки.map(имяРынка).join(' · ') : null
 
   const [editing, setEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
@@ -894,6 +904,7 @@ export function Lobby({
             <span className="shrink-0 text-sm font-bold">Настройки</span>
             <span className="truncate text-xs text-muted">
               {THEME_LABEL[theme]}
+              {странПодпись ? ` · ${странПодпись}` : ''}
             </span>
             <span
               className={`ml-auto text-[10px] text-muted transition duration-150 ${
@@ -919,6 +930,11 @@ export function Lobby({
                   }))}
                 />
               </div>
+
+              <ВыборРынков
+                выбор={рынки}
+                onChange={(в: Рынок[] | undefined) => onSettings({ рынки: в })}
+              />
 
               <div>
                 <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">

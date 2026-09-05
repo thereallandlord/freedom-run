@@ -16,9 +16,12 @@ import { THEME_RULES } from '../engine/table'
 import type { BotDifficulty } from '../engine/types'
 import { ROOM_MAX_PLAYERS } from '../engine/room'
 import { DECKS, DeckCard } from './DeckCard'
+import { ВыборРынков } from './ВыборРынков'
 import { Wordmark } from './Wordmark'
 import { Page } from './kit'
 import type { DeckTheme } from '../engine/data'
+import { setActiveMarkets, smallDeals, bigDeals } from '../engine/data'
+import type { Рынок } from '../engine/рынки'
 
 const MIN_PLAYERS = 2
 const MAX_PLAYERS = ROOM_MAX_PLAYERS
@@ -36,6 +39,21 @@ function money(n: number, rub: boolean) {
 
 export function Setup({ onStart, onBack }: { onStart: (s: TableSetup) => void; onBack?: () => void }) {
   const [theme, setTheme] = useState<DeckTheme>('ru')
+  const [рынки, setРынки] = useState<Рынок[] | undefined>(undefined)
+
+  /*
+   * 🔴 Считаем ТУ ЖЕ колоду, что соберёт стол, а не свою прикидку. Экран уже
+   * однажды держал копию правил, и она разъехалась с настоящими; повторять
+   * это на колодах тем более нельзя — человек увидел бы одно число сделок, а
+   * получил другое. Фильтр после подсчёта снимаем: списки профессий и мечт
+   * ниже к странам отношения не имеют.
+   */
+  const счёт = useMemo(() => {
+    setActiveMarkets(рынки)
+    const c = { малых: smallDeals(theme).length, крупных: bigDeals(theme).length }
+    setActiveMarkets(undefined)
+    return c
+  }, [рынки, theme])
 
   // Поле Полосы и набор профессий зависят от темы — переключаем до чтения списков.
   const { dreams, professions, isRub } = useMemo(() => {
@@ -210,6 +228,10 @@ export function Setup({ onStart, onBack }: { onStart: (s: TableSetup) => void; o
         )}
       </div>
 
+      <div className="panel mb-4 rounded-xl p-4">
+        <ВыборРынков выбор={рынки} onChange={setРынки} счёт={счёт} />
+      </div>
+
       <div className="space-y-3">
         {seats.map((seat, i) => (
           <div key={i} className="panel rounded-xl p-4">
@@ -308,7 +330,7 @@ export function Setup({ onStart, onBack }: { onStart: (s: TableSetup) => void; o
         </button>
         <button
           onClick={() =>
-            onStart({ seed: randomSeed(), deckTheme: theme, seats })
+            onStart({ seed: randomSeed(), deckTheme: theme, рынки, seats })
           }
           className="btn-primary ml-auto px-6 py-2.5 text-base"
         >

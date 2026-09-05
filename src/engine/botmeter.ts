@@ -13,12 +13,23 @@ import { netWorth } from './ledger'
 import type { Table, BotDifficulty } from './types'
 
 const ПАРТИЙ = Number(process.env.G || 30)
+/*
+ * Страны через переменную окружения: `M=RU,TUR npm run bots` меряет стол,
+ * собранный только этими рынками. Пусто — играем всеми, как раньше.
+ */
+const РЫНКИ = String(
+  (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.M || '',
+)
+  .split(',')
+  .map((x: string) => x.trim())
+  .filter(Boolean) as never[]
 const ХОДОВ = Number((globalThis as { process?: { env?: Record<string,string> } }).process?.env?.H || 600)
 
 function стол(seed: number, уровень: BotDifficulty): Table {
   return createTable({
     seed,
     deckTheme: 'ru',
+    рынки: РЫНКИ.length ? РЫНКИ : undefined,
     seats: [0, 1, 2, 3].map((i) => ({
       id: `s${i}`,
       name: `Б${i}`,

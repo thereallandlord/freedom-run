@@ -195,7 +195,8 @@
       "liability": 0,
       "cashFlow": 84000,
       "growthPerPayday": 200,
-      "growthCap": 73600
+      "growthCap": 73600,
+      "рынок": "RU"
     },
     {
       "id": "big-greenleaf",
@@ -221,7 +222,8 @@
       "liability": 0,
       "cashFlow": 36000,
       "growthPerPayday": 100,
-      "growthCap": 30700
+      "growthCap": 30700,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-barbershop-kzn",
@@ -235,7 +237,8 @@
       "cashFlow": 63000,
       "ремесло": "барбершоп",
       "growthPerPayday": 100,
-      "growthCap": 52800
+      "growthCap": 52800,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-kids-center-ufa",
@@ -249,7 +252,8 @@
       "cashFlow": 105000,
       "ремесло": "детский центр",
       "growthPerPayday": 200,
-      "growthCap": 88000
+      "growthCap": 88000,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-online-store",
@@ -273,7 +277,8 @@
       "downPayment": 44000,
       "mortgage": 176000,
       "cashFlow": 1200,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-park-open-kzn",
@@ -284,7 +289,8 @@
       "downPayment": 70000,
       "mortgage": 280000,
       "cashFlow": 1900,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-store-kzn",
@@ -295,7 +301,8 @@
       "downPayment": 100000,
       "mortgage": 400000,
       "cashFlow": 2800,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-park-ufa",
@@ -306,7 +313,8 @@
       "downPayment": 120000,
       "mortgage": 480000,
       "cashFlow": 3300,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-land-kzn",
@@ -317,7 +325,8 @@
       "downPayment": 800000,
       "mortgage": 0,
       "cashFlow": 1200,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-garage-batumi",
@@ -328,7 +337,8 @@
       "downPayment": 300000,
       "mortgage": 1200000,
       "cashFlow": 8300,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "CIS"
     },
     {
       "id": "sd-room-ufa",
@@ -339,7 +349,8 @@
       "downPayment": 220000,
       "mortgage": 880000,
       "cashFlow": 9400,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-park-kzn",
@@ -350,7 +361,8 @@
       "downPayment": 400000,
       "mortgage": 1600000,
       "cashFlow": 11000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "big-re-kzn-itpark",
@@ -361,7 +373,8 @@
       "cost": 5000000,
       "downPayment": 1000000,
       "mortgage": 4000000,
-      "cashFlow": 22500
+      "cashFlow": 22500,
+      "рынок": "RU"
     },
     {
       "id": "sd-studio-mersin-teje",
@@ -372,7 +385,8 @@
       "downPayment": 500000,
       "mortgage": 2000000,
       "cashFlow": 12500,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "TUR"
     },
     {
       "id": "big-re-tur-alanya",
@@ -383,7 +397,8 @@
       "cost": 7500000,
       "downPayment": 1500000,
       "mortgage": 6000000,
-      "cashFlow": 37500
+      "cashFlow": 37500,
+      "рынок": "TUR"
     },
     {
       "id": "big-re-kzn-pobedy",
@@ -394,7 +409,8 @@
       "cost": 9000000,
       "downPayment": 1800000,
       "mortgage": 7200000,
-      "cashFlow": 40500
+      "cashFlow": 40500,
+      "рынок": "RU"
     },
     {
       "id": "big-re-msk-butovo",
@@ -405,7 +421,8 @@
       "cost": 12000000,
       "downPayment": 2400000,
       "mortgage": 9600000,
-      "cashFlow": 54000
+      "cashFlow": 54000,
+      "рынок": "RU"
     },
     {
       "id": "sd-re-mahachkala",
@@ -416,7 +433,8 @@
       "downPayment": 700000,
       "mortgage": 2800000,
       "cashFlow": 31500,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-re-derbent",
@@ -427,7 +445,8 @@
       "downPayment": 1000000,
       "mortgage": 4000000,
       "cashFlow": 45000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-re-sochi-studio",
@@ -438,7 +457,8 @@
       "downPayment": 3000000,
       "mortgage": 12000000,
       "cashFlow": 135000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-re-tashkent",
@@ -449,7 +469,8 @@
       "downPayment": 560000,
       "mortgage": 2240000,
       "cashFlow": 15400,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "CIS"
     },
     {
       "id": "sd-re-almaty",
@@ -460,7 +481,8 @@
       "downPayment": 720000,
       "mortgage": 2880000,
       "cashFlow": 19800,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "CIS"
     },
     {
       "id": "sd-re-batumi-studio",
@@ -471,7 +493,95 @@
       "downPayment": 720000,
       "mortgage": 2880000,
       "cashFlow": 19800,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "CIS"
+    },
+    {
+      "id": "sd-biz-tur-simit",
+      "kind": "business",
+      "category": "bizFood",
+      "title": "Симит-буфет у автовокзала (Мерсин)",
+      "text": "Очередь с шести утра: чай, симит, айран. Хозяин уезжает к семье, оборудование и поставщик остаются.",
+      "cost": 1600000,
+      "downPayment": 1600000,
+      "liability": 0,
+      "cashFlow": 67200,
+      "growthPerPayday": 200,
+      "growthCap": 58900,
+      "рынок": "TUR"
+    },
+    {
+      "id": "sd-biz-dxb-laundry",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Прачечная самообслуживания (Дубай, Аль-Кусаис)",
+      "text": "Двенадцать машин в доме, где живут рабочие. Никакого персонала, только карта и мешок белья.",
+      "cost": 2800000,
+      "downPayment": 2800000,
+      "liability": 0,
+      "cashFlow": 117600,
+      "growthPerPayday": 200,
+      "growthCap": 103000,
+      "рынок": "DXB"
+    },
+    {
+      "id": "sd-biz-sau-abaya",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Ателье абай в Джидде",
+      "text": "Две швеи, постоянные заказчицы и очередь перед Рамаданом. Аренда оплачена на год вперёд.",
+      "cost": 1400000,
+      "downPayment": 1400000,
+      "liability": 0,
+      "cashFlow": 58800,
+      "growthPerPayday": 200,
+      "growthCap": 51500,
+      "рынок": "SAU"
+    },
+    {
+      "id": "sd-biz-bali-bikes",
+      "kind": "business",
+      "category": "bizRental",
+      "title": "Прокат байков в Чангу",
+      "text": "Двадцать восемь байков, договор со школой сёрфинга и с двумя гестхаусами. Механик остаётся.",
+      "cost": 1800000,
+      "downPayment": 1800000,
+      "liability": 0,
+      "cashFlow": 75600,
+      "growthPerPayday": 200,
+      "growthCap": 66200,
+      "рынок": "BALI",
+      "ремесло": "самокаты"
+    },
+    {
+      "id": "sd-biz-cis-pvz-tashkent",
+      "kind": "business",
+      "category": "bizPVZ",
+      "title": "Пункт выдачи заказов (Ташкент, Чиланзар)",
+      "text": "Первый этаж жилого дома, поток соседей. Владелец переезжает, витрины и стеллажи остаются.",
+      "cost": 900000,
+      "downPayment": 900000,
+      "liability": 0,
+      "cashFlow": 40500,
+      "growthPerPayday": 100,
+      "growthCap": 33100,
+      "рынок": "CIS",
+      "ремесло": "ПВЗ"
+    },
+    {
+      "id": "sd-biz-tur-barber-antalya",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Барбершоп в Анталии, Коньяалты",
+      "text": "Три кресла, запись на неделю вперёд. Мастера работают за процент — уходить не собираются.",
+      "cost": 1500000,
+      "downPayment": 1500000,
+      "liability": 0,
+      "cashFlow": 63000,
+      "growthPerPayday": 100,
+      "growthCap": 55200,
+      "рынок": "TUR",
+      "ремесло": "барбершоп"
     }
   ],
   "BIG_DEALS_RU": [
@@ -486,7 +596,8 @@
       "liability": 1600000,
       "cashFlow": 134400,
       "growthPerPayday": 300,
-      "growthCap": 117800
+      "growthCap": 117800,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-darkstore-msk",
@@ -499,7 +610,8 @@
       "liability": 2500000,
       "cashFlow": 110000,
       "growthPerPayday": 500,
-      "growthCap": 184000
+      "growthCap": 184000,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-shaurma-spb",
@@ -508,11 +620,12 @@
       "title": "Шаурма у метро в Питере",
       "text": "Шаурма в Питере — твёрдая валюта. Три точки у метро, очередь и после полуночи. Владелец уходит в стройку, остаток — в рассрочку.",
       "cost": 1200000,
-      "downPayment": 1300000,
-      "liability": 1300000,
+      "downPayment": 600000,
+      "liability": 600000,
       "cashFlow": 50400,
       "growthPerPayday": 200,
-      "growthCap": 95700
+      "growthCap": 44000,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-print-kzn",
@@ -526,7 +639,8 @@
       "cashFlow": 126000,
       "ремесло": "типография",
       "growthPerPayday": 300,
-      "growthCap": 105600
+      "growthCap": 105600,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-scooters-kzn",
@@ -540,7 +654,8 @@
       "cashFlow": 92400,
       "ремесло": "самокаты",
       "growthPerPayday": 200,
-      "growthCap": 77400
+      "growthCap": 77400,
+      "рынок": "RU"
     },
     {
       "id": "big-re-dag-hotel",
@@ -553,7 +668,8 @@
       "liability": 0,
       "cashFlow": 88000,
       "growthPerPayday": 400,
-      "growthCap": 140800
+      "growthCap": 140800,
+      "рынок": "RU"
     },
     {
       "id": "big-biz-carwash-kzn",
@@ -567,7 +683,8 @@
       "cashFlow": 88000,
       "ремесло": "автомойка",
       "growthPerPayday": 400,
-      "growthCap": 140800
+      "growthCap": 140800,
+      "рынок": "RU"
     },
     {
       "id": "sd-re-tur-mersin2",
@@ -578,7 +695,8 @@
       "cost": 3400000,
       "downPayment": 680000,
       "mortgage": 2720000,
-      "cashFlow": 17000
+      "cashFlow": 17000,
+      "рынок": "TUR"
     },
     {
       "id": "big-re-spb-vasilevsky",
@@ -589,7 +707,8 @@
       "cost": 14000000,
       "downPayment": 2800000,
       "mortgage": 11200000,
-      "cashFlow": 63000
+      "cashFlow": 63000,
+      "рынок": "RU"
     },
     {
       "id": "big-re-kzn-center",
@@ -600,7 +719,8 @@
       "cost": 14000000,
       "downPayment": 2800000,
       "mortgage": 11200000,
-      "cashFlow": 63000
+      "cashFlow": 63000,
+      "рынок": "RU"
     },
     {
       "id": "sd-tur-mersin",
@@ -611,7 +731,8 @@
       "downPayment": 892000,
       "mortgage": 3568000,
       "cashFlow": 22300,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "TUR"
     },
     {
       "id": "sd-re-tur-alanya2",
@@ -622,7 +743,8 @@
       "cost": 10000000,
       "downPayment": 2000000,
       "mortgage": 8000000,
-      "cashFlow": 95000
+      "cashFlow": 95000,
+      "рынок": "BALI"
     },
     {
       "id": "big-re-dxb-jvc",
@@ -633,7 +755,8 @@
       "cost": 18000000,
       "downPayment": 3600000,
       "mortgage": 14400000,
-      "cashFlow": 117000
+      "cashFlow": 117000,
+      "рынок": "DXB"
     },
     {
       "id": "sd-dag-sulak",
@@ -644,7 +767,8 @@
       "downPayment": 700000,
       "mortgage": 2800000,
       "cashFlow": 31500,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-re-bali-ubud",
@@ -655,7 +779,8 @@
       "cost": 11000000,
       "downPayment": 2200000,
       "mortgage": 8800000,
-      "cashFlow": 104500
+      "cashFlow": 104500,
+      "рынок": "BALI"
     },
     {
       "id": "big-re-msk-ttk",
@@ -666,7 +791,8 @@
       "cost": 22000000,
       "downPayment": 4400000,
       "mortgage": 17600000,
-      "cashFlow": 99000
+      "cashFlow": 99000,
+      "рынок": "RU"
     },
     {
       "id": "sd-tur-mahmutlar",
@@ -677,7 +803,8 @@
       "downPayment": 1264000,
       "mortgage": 5056000,
       "cashFlow": 31600,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "TUR"
     },
     {
       "id": "big-re-dxb-marina",
@@ -688,7 +815,8 @@
       "cost": 42000000,
       "downPayment": 8400000,
       "mortgage": 33600000,
-      "cashFlow": 189000
+      "cashFlow": 189000,
+      "рынок": "DXB"
     },
     {
       "id": "sd-re-bali-canggu",
@@ -699,7 +827,8 @@
       "cost": 10000000,
       "downPayment": 2000000,
       "mortgage": 8000000,
-      "cashFlow": 95000
+      "cashFlow": 95000,
+      "рынок": "BALI"
     },
     {
       "id": "big-re-msk-apart-new",
@@ -710,7 +839,8 @@
       "cost": 40000000,
       "downPayment": 8000000,
       "mortgage": 32000000,
-      "cashFlow": 180000
+      "cashFlow": 180000,
+      "рынок": "RU"
     },
     {
       "id": "sd-dxb-arjan",
@@ -721,7 +851,8 @@
       "downPayment": 2240000,
       "mortgage": 8960000,
       "cashFlow": 72800,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "DXB"
     },
     {
       "id": "big-re-msk-loft",
@@ -732,7 +863,8 @@
       "cost": 70000000,
       "downPayment": 14000000,
       "mortgage": 56000000,
-      "cashFlow": 315000
+      "cashFlow": 315000,
+      "рынок": "RU"
     },
     {
       "id": "sd-re-dxb-jvt",
@@ -743,7 +875,8 @@
       "cost": 17000000,
       "downPayment": 3400000,
       "mortgage": 13600000,
-      "cashFlow": 110500
+      "cashFlow": 110500,
+      "рынок": "DXB"
     },
     {
       "id": "sd-tur-istanbul",
@@ -754,7 +887,8 @@
       "downPayment": 1767000,
       "mortgage": 7068000,
       "cashFlow": 53000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "TUR"
     },
     {
       "id": "sd-dxb-jvc",
@@ -765,7 +899,8 @@
       "downPayment": 4200000,
       "mortgage": 16800000,
       "cashFlow": 199500,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "BALI"
     },
     {
       "id": "sd-tur-bodrum",
@@ -776,7 +911,8 @@
       "downPayment": 3200000,
       "mortgage": 12800000,
       "cashFlow": 96000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "SAU"
     },
     {
       "id": "sd-loft-kzn",
@@ -787,7 +923,8 @@
       "downPayment": 3600000,
       "mortgage": 14400000,
       "cashFlow": 81000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "RU"
     },
     {
       "id": "sd-re-sau-jeddah",
@@ -798,7 +935,8 @@
       "cost": 40000000,
       "downPayment": 8000000,
       "mortgage": 32000000,
-      "cashFlow": 240000
+      "cashFlow": 240000,
+      "рынок": "SAU"
     },
     {
       "id": "sd-re-dxb-silicon",
@@ -809,7 +947,8 @@
       "cost": 21000000,
       "downPayment": 4200000,
       "mortgage": 16800000,
-      "cashFlow": 136500
+      "cashFlow": 136500,
+      "рынок": "DXB"
     },
     {
       "id": "sd-tur-lara",
@@ -820,7 +959,8 @@
       "downPayment": 2046000,
       "mortgage": 8184000,
       "cashFlow": 51200,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "TUR"
     },
     {
       "id": "big-re-tur-antalya2",
@@ -831,7 +971,8 @@
       "cost": 11800000,
       "downPayment": 2360000,
       "mortgage": 9440000,
-      "cashFlow": 64900
+      "cashFlow": 64900,
+      "рынок": "CIS"
     },
     {
       "id": "sd-dxb-south",
@@ -842,7 +983,8 @@
       "downPayment": 8000000,
       "mortgage": 32000000,
       "cashFlow": 240000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "SAU"
     },
     {
       "id": "sd-re-sau-riyadh",
@@ -853,7 +995,8 @@
       "cost": 28000000,
       "downPayment": 5600000,
       "mortgage": 22400000,
-      "cashFlow": 168000
+      "cashFlow": 168000,
+      "рынок": "SAU"
     },
     {
       "id": "sd-tur-konyaalti",
@@ -864,7 +1007,8 @@
       "downPayment": 2510000,
       "mortgage": 10040000,
       "cashFlow": 62800,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "TUR"
     },
     {
       "id": "sd-dxb-jvt",
@@ -875,7 +1019,8 @@
       "downPayment": 3880000,
       "mortgage": 15520000,
       "cashFlow": 97000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "DXB"
     },
     {
       "id": "big-re-tur-istanbul2",
@@ -886,7 +1031,8 @@
       "cost": 21000000,
       "downPayment": 4200000,
       "mortgage": 16800000,
-      "cashFlow": 126000
+      "cashFlow": 126000,
+      "рынок": "TUR"
     },
     {
       "id": "sd-dxb-bay",
@@ -897,7 +1043,8 @@
       "downPayment": 4080000,
       "mortgage": 16320000,
       "cashFlow": 102000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "DXB"
     },
     {
       "id": "big-re-bali-seminyak",
@@ -908,7 +1055,8 @@
       "cost": 14000000,
       "downPayment": 2800000,
       "mortgage": 11200000,
-      "cashFlow": 133000
+      "cashFlow": 133000,
+      "рынок": "BALI"
     },
     {
       "id": "sd-tur-fethiye",
@@ -919,7 +1067,8 @@
       "downPayment": 4400000,
       "mortgage": 17600000,
       "cashFlow": 110000,
-      "kind": "realEstate"
+      "kind": "realEstate",
+      "рынок": "TUR"
     },
     {
       "id": "big-re-tur-bodrum",
@@ -930,7 +1079,8 @@
       "cost": 30000000,
       "downPayment": 6000000,
       "mortgage": 24000000,
-      "cashFlow": 150000
+      "cashFlow": 150000,
+      "рынок": "TUR"
     },
     {
       "id": "big-re-bali-villa",
@@ -941,7 +1091,8 @@
       "cost": 18500000,
       "downPayment": 3700000,
       "mortgage": 14800000,
-      "cashFlow": 175800
+      "cashFlow": 175800,
+      "рынок": "BALI"
     },
     {
       "id": "big-re-dxb-business",
@@ -952,7 +1103,8 @@
       "cost": 36000000,
       "downPayment": 7200000,
       "mortgage": 28800000,
-      "cashFlow": 162000
+      "cashFlow": 162000,
+      "рынок": "DXB"
     },
     {
       "id": "big-re-sau-riyadh-big",
@@ -963,7 +1115,8 @@
       "cost": 24000000,
       "downPayment": 4800000,
       "mortgage": 19200000,
-      "cashFlow": 144000
+      "cashFlow": 144000,
+      "рынок": "SAU"
     },
     {
       "id": "big-re-dxb-marina-1room",
@@ -974,7 +1127,8 @@
       "cost": 26000000,
       "downPayment": 5200000,
       "mortgage": 20800000,
-      "cashFlow": 143000
+      "cashFlow": 143000,
+      "рынок": "CIS"
     },
     {
       "id": "big-re-dxb-hills",
@@ -985,7 +1139,151 @@
       "cost": 95000000,
       "downPayment": 19000000,
       "mortgage": 76000000,
-      "cashFlow": 427500
+      "cashFlow": 427500,
+      "рынок": "DXB"
+    },
+    {
+      "id": "big-biz-tur-lokanta",
+      "kind": "business",
+      "category": "bizFood",
+      "title": "Локанта в Анталии (Коньяалты)",
+      "text": "Домашняя кухня, обеды для соседних контор. Повар с семьёй остаётся, поставщики свои. Половина — в рассрочку.",
+      "cost": 3400000,
+      "downPayment": 1700000,
+      "liability": 1700000,
+      "cashFlow": 142800,
+      "growthPerPayday": 300,
+      "growthCap": 125100,
+      "рынок": "TUR"
+    },
+    {
+      "id": "big-biz-tur-carwash-istanbul",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Автомойка самообслуживания в Стамбуле",
+      "text": "Шесть постов у выезда на трассу. Оборудование новое, вода по счётчику, персонала нет.",
+      "cost": 4400000,
+      "downPayment": 2200000,
+      "liability": 2200000,
+      "cashFlow": 96800,
+      "growthPerPayday": 400,
+      "growthCap": 161900,
+      "рынок": "TUR",
+      "ремесло": "автомойка"
+    },
+    {
+      "id": "big-biz-dxb-cloud-kitchen",
+      "kind": "business",
+      "category": "bizFood",
+      "title": "Дарк-кухня в Дубае (Аль-Кувз)",
+      "text": "Готовит на четыре доставки сразу, зала нет. Оборудование дорогое, зато аренда вдвое дешевле ресторана.",
+      "cost": 6000000,
+      "downPayment": 3000000,
+      "liability": 3000000,
+      "cashFlow": 132000,
+      "growthPerPayday": 500,
+      "growthCap": 220800,
+      "рынок": "DXB"
+    },
+    {
+      "id": "big-biz-dxb-detailing",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Детейлинг-центр в Дубае (Аль-Кусаис)",
+      "text": "Запись на две недели вперёд, половина клиентов — автосалоны. Мастера обучены, аренда до 2029 года.",
+      "cost": 3600000,
+      "downPayment": 1800000,
+      "liability": 1800000,
+      "cashFlow": 151200,
+      "growthPerPayday": 300,
+      "growthCap": 132500,
+      "рынок": "DXB"
+    },
+    {
+      "id": "big-biz-sau-coffee-riyadh",
+      "kind": "business",
+      "category": "bizFood",
+      "title": "Кофейня спешелти в Эр-Рияде",
+      "text": "Район офисов, поток с восьми утра до полуночи. Обжарщик свой, бариста остаются.",
+      "cost": 3000000,
+      "downPayment": 1500000,
+      "liability": 1500000,
+      "cashFlow": 126000,
+      "growthPerPayday": 300,
+      "growthCap": 110400,
+      "рынок": "SAU"
+    },
+    {
+      "id": "big-biz-sau-print-jeddah",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Типография в Джидде",
+      "text": "Печатает для школ и мечетей: бланки, книги, вывески. Станки на ходу, заказчики на договорах.",
+      "cost": 2800000,
+      "downPayment": 1400000,
+      "liability": 1400000,
+      "cashFlow": 117600,
+      "growthPerPayday": 300,
+      "growthCap": 103000,
+      "рынок": "SAU",
+      "ремесло": "типография"
+    },
+    {
+      "id": "big-biz-bali-cafe-canggu",
+      "kind": "business",
+      "category": "bizFood",
+      "title": "Кафе у пляжа в Чангу",
+      "text": "Завтраки, кофе, соки. Сезон девять месяцев, персонал местный и недорогой.",
+      "cost": 2800000,
+      "downPayment": 1400000,
+      "liability": 1400000,
+      "cashFlow": 117600,
+      "growthPerPayday": 300,
+      "growthCap": 103000,
+      "рынок": "BALI"
+    },
+    {
+      "id": "big-biz-bali-villa-service",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Обслуживание вилл в Убуде",
+      "text": "Уборка, бассейны, сад — тридцать вилл на договоре. Всё, что нужно, уже куплено.",
+      "cost": 2000000,
+      "downPayment": 1000000,
+      "liability": 1000000,
+      "cashFlow": 84000,
+      "growthPerPayday": 200,
+      "growthCap": 73600,
+      "рынок": "BALI"
+    },
+    {
+      "id": "big-biz-cis-bakery-almaty",
+      "kind": "business",
+      "category": "bizFood",
+      "title": "Пекарня-тандыр в Алматы",
+      "text": "Две печи, лепёшки разбирают к обеду. Пекарь с двадцатилетним стажем остаётся.",
+      "cost": 2600000,
+      "downPayment": 1300000,
+      "liability": 1300000,
+      "cashFlow": 109200,
+      "growthPerPayday": 200,
+      "growthCap": 95700,
+      "рынок": "CIS"
+    },
+    {
+      "id": "big-biz-cis-print-tashkent",
+      "kind": "business",
+      "category": "bizService",
+      "title": "Типография в Ташкенте",
+      "text": "Работает на школы и свадьбы: приглашения, альбомы, баннеры. Станки свои, помещение в собственности арендодателя.",
+      "cost": 2400000,
+      "downPayment": 1200000,
+      "liability": 1200000,
+      "cashFlow": 100800,
+      "growthPerPayday": 200,
+      "growthCap": 88300,
+      "рынок": "CIS",
+      "ремесло": "типография"
     }
   ],
   "MARKET_CARDS_RU": [
@@ -996,7 +1294,8 @@
       "category": "roomUFA",
       "multiplierPct": 112,
       "title": "Комнатный ажиотаж в Уфе",
-      "text": "Застройщик расселяет старый квартал под новый ЖК и скупает ВСЕ комнаты и студии. Даёт 112% от цены. Держал комнату — пришло твоё время."
+      "text": "Застройщик расселяет старый квартал под новый ЖК и скупает ВСЕ комнаты и студии. Даёт 112% от цены. Держал комнату — пришло твоё время.",
+      "рынок": "RU"
     },
     {
       "id": "mkt-sell-apt-kzn",
@@ -1005,7 +1304,8 @@
       "category": "aptKZN",
       "multiplierPct": 115,
       "title": "Казань принимает всех",
-      "text": "Большой форум, отели забиты до крыши. Инвесторы хватают квартиры под посуточную сдачу и дают 115% любому владельцу жилья в Казани."
+      "text": "Большой форум, отели забиты до крыши. Инвесторы хватают квартиры под посуточную сдачу и дают 115% любому владельцу жилья в Казани.",
+      "рынок": "RU"
     },
     {
       "id": "mkt-sell-apt-msk",
@@ -1014,7 +1314,8 @@
       "category": "aptMSK",
       "multiplierPct": 110,
       "title": "Москва не резиновая, но дорогая",
-      "text": "Крупная компания перевозит сотрудников в столицу и выкупает жильё пачками. За московскую квартиру дают 110% — и даже не торгуются."
+      "text": "Крупная компания перевозит сотрудников в столицу и выкупает жильё пачками. За московскую квартиру дают 110% — и даже не торгуются.",
+      "рынок": "RU"
     },
     {
       "id": "mkt-sell-apt-spb",
@@ -1023,7 +1324,8 @@
       "category": "aptSPB",
       "multiplierPct": 112,
       "title": "Питер вдохновляет",
-      "text": "Сериал про Питер порвал все рейтинги — романтики скупают квартиры с видом на дворы-колодцы. За питерское жильё дают 112%. Сырость в подарок."
+      "text": "Сериал про Питер порвал все рейтинги — романтики скупают квартиры с видом на дворы-колодцы. За питерское жильё дают 112%. Сырость в подарок.",
+      "рынок": "RU"
     },
     {
       "id": "mkt-sell-apt-dxb",
@@ -1032,7 +1334,8 @@
       "category": "aptDXB",
       "multiplierPct": 65,
       "title": "Паника в Дубае",
-      "text": "Война на Ближнем Востоке. Инвесторы бегут, перекупщики дают всего 65% за квартиры в Дубае. Кто-то теряет всё, а кто-то покупает дно."
+      "text": "Война на Ближнем Востоке. Инвесторы бегут, перекупщики дают всего 65% за квартиры в Дубае. Кто-то теряет всё, а кто-то покупает дно.",
+      "рынок": "DXB"
     },
     {
       "id": "mkt-sell-apt-tur",
@@ -1041,7 +1344,8 @@
       "category": "aptTUR",
       "multiplierPct": 125,
       "title": "Турецкий бум",
-      "text": "Лира просела, туристы прибывают — иностранцы сметают жильё на побережье. За квартиру в Стамбуле или Алании дают 125%. Чай за счёт покупателя."
+      "text": "Лира просела, туристы прибывают — иностранцы сметают жильё на побережье. За квартиру в Стамбуле или Алании дают 125%. Чай за счёт покупателя.",
+      "рынок": "TUR"
     },
     {
       "id": "mkt-sell-parking",
@@ -1050,7 +1354,8 @@
       "category": "parking",
       "multiplierPct": 130,
       "title": "Во дворе не встать",
-      "text": "Город убрал парковки с улиц. Машиноместа и кладовки теперь на вес золота — дают 130%. Кто смеялся над «бетонной клеткой», больше не смеётся."
+      "text": "Город убрал парковки с улиц. Машиноместа и кладовки теперь на вес золота — дают 130%. Кто смеялся над «бетонной клеткой», больше не смеётся.",
+      "рынок": "RU"
     },
     {
       "id": "mkt-sell-land",
@@ -1059,7 +1364,8 @@
       "category": "land",
       "multiplierPct": 160,
       "title": "Земельная лихорадка",
-      "text": "Слух: рядом с твоим участком проведут скоростную трассу и построят технопарк. Спекулянты дают 160% за землю. Слух, правда, никто не проверял."
+      "text": "Слух: рядом с твоим участком проведут скоростную трассу и построят технопарк. Спекулянты дают 160% за землю. Слух, правда, никто не проверял.",
+      "рынок": "RU"
     },
     {
       "id": "mkt-sell-house-rf",
@@ -1068,7 +1374,8 @@
       "category": "houseRF",
       "multiplierPct": 118,
       "title": "Все на удалёнку — все за город",
-      "text": "Горожане устали от лифтов и соседа с перфоратором. Мода на свой дом: за дома в России дают 118%. Огород можешь забрать с собой."
+      "text": "Горожане устали от лифтов и соседа с перфоратором. Мода на свой дом: за дома в России дают 118%. Огород можешь забрать с собой.",
+      "рынок": "RU"
     },
     {
       "id": "mkt-sell-biz-food",
@@ -2516,7 +2823,8 @@
       "category": "aptCIS",
       "multiplierPct": 128,
       "title": "Соседние столицы разогрелись",
-      "text": "Переезжающих стало больше, чем квартир: в Ташкенте, Алматы и Батуми скупают всё готовое. Дают 128% от цены — держал квартиру там, сейчас её момент."
+      "text": "Переезжающих стало больше, чем квартир: в Ташкенте, Алматы и Батуми скупают всё готовое. Дают 128% от цены — держал квартиру там, сейчас её момент.",
+      "рынок": "CIS"
     },
     {
       "id": "mkt-price-shib-rug",
@@ -2898,6 +3206,26 @@
         2,
         3
       ]
+    },
+    {
+      "id": "mkt-sell-apt-sau",
+      "deck": "market",
+      "kind": "sellOffer",
+      "category": "aptSAU",
+      "multiplierPct": 133,
+      "title": "Паломников стало вдвое больше",
+      "text": "Королевство подняло квоту на умру, и жильё у Харама расхватывают под краткосрочную аренду. За квартиры в Мекке, Медине и Джидде дают 133% от цены.",
+      "рынок": "SAU"
+    },
+    {
+      "id": "mkt-sell-apt-bali",
+      "deck": "market",
+      "kind": "sellOffer",
+      "category": "aptBALI",
+      "multiplierPct": 71,
+      "title": "Бали закручивает гайки",
+      "text": "Власти взялись за посуточную аренду без лицензии и за самострой на рисовых полях. Покупатели осторожничают: за виллы и студии дают 71% от цены.",
+      "рынок": "BALI"
     }
   ],
   "DOODADS_RU": [
