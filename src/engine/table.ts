@@ -2731,8 +2731,12 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
           `${b.name}: доход ${card.flowPct > 0 ? 'вырос' : 'упал'} с ${money(было)} до ${money(b.cashFlow)} в месяц`,
         )
       }
-      // Просадка на срок — только у дел: у недвижимости этих полей нет.
-      if (card.dipPct && 'liability' in b) {
+      /*
+       * 🔴 Просадка теперь и у объектов. Прежде здесь стояла проверка
+       * «только у дел: у недвижимости этих полей нет» — из-за неё «арендатор
+       * съехал» не отнимал у квартиры ни рубля дохода.
+       */
+      if (card.dipPct) {
         b.dipMul = 1 - card.dipPct / 100
         b.dipLeft = card.dipPaydays ?? 3
         пиши(`${b.name}: доход просел на ${card.dipPct}% на ${b.dipLeft} ${склонениеЗарплат(b.dipLeft)}`)

@@ -213,6 +213,14 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           if (b.dipLeft === 0) b.dipMul = 1
         }
       }
+      // Простой квартиры кончается по тем же зарплатам, что и просадка дела.
+      for (const a of l.realEstate) {
+        if (a.partnerId && !a.investorShare) continue
+        if ((a.dipLeft ?? 0) > 0) {
+          a.dipLeft = (a.dipLeft ?? 0) - 1
+          if (a.dipLeft === 0) a.dipMul = 1
+        }
+      }
       /*
        * Уровень жизни подтягивается за доходом — ПОСЛЕ начисления, чтобы этот
        * чек человек получил целиком, а прибавка к расходам пришла со
@@ -679,7 +687,12 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
 
     /** Просадка общего дела — снаружи: срок у заведения один на двоих. */
     case 'SET_ASSET_DIP': {
-      const a = l.businesses.find((x) => x.id === e.assetId)
+      // 🔴 И у объектов тоже: «арендатор съехал» обязан отнимать доход, а не
+      // только деньги. Раньше искали только среди дел — квартира была
+      // неуязвима.
+      const a =
+        l.businesses.find((x) => x.id === e.assetId) ??
+        l.realEstate.find((x) => x.id === e.assetId)
       if (!a) return prev
       a.dipMul = e.dipMul
       a.dipLeft = e.dipLeft
