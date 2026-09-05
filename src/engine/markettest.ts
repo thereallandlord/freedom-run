@@ -7,7 +7,15 @@
  * Проверка ловит именно это: не «фильтр работает», а «в оставшейся колоде
  * есть чем играть».
  */
-import { smallDeals, bigDeals, marketCards, setActiveMarkets, полныеКолоды } from './data'
+import {
+  smallDeals,
+  bigDeals,
+  marketCards,
+  setActiveMarkets,
+  полныеКолоды,
+  fastBoard,
+  setFastBoardTheme,
+} from './data'
 import { createTable, applyTableEvent } from './table'
 import { decideBotEvent } from './bots'
 import { ВСЕ_РЫНКИ, РЫНКИ, нормализоватьРынки, type Рынок } from './рынки'
@@ -47,6 +55,33 @@ for (const р of РЫНКИ) {
   проверка(`${р.имя}: есть недвижимость`, с.объекты >= 1, `${с.объекты}`)
   проверка(`${р.имя}: партнёрский бизнес на месте`, с.гринлиф, с.гринлиф ? 'есть' : 'ПРОПАЛ')
 }
+
+console.log('\n=== Второй круг тоже без России ===')
+setActiveMarkets(ВСЕ_РЫНКИ.filter((к) => к !== 'RU'))
+setFastBoardTheme('ru')
+const полоса = fastBoard() as unknown as { type: string; name?: string; рынок?: string }[]
+const делаПолосы = полоса.filter((x) => x.type === 'business' || x.type === 'venture')
+const российские = делаПолосы.filter((x) => x.рынок === 'RU')
+console.log(`  дел и венчуров на Полосе: ${делаПолосы.length} · из них российских: ${российские.length}`)
+проверка(
+  'на Полосе не осталось российских дел',
+  российские.length === 0,
+  российские.map((x) => x.name).join(', ') || 'ни одного',
+)
+/*
+ * 🔴 ДЛИНА ПОЛЯ И ТИПЫ КЛЕТОК НЕПРИКОСНОВЕННЫ. Мечта игрока хранится НОМЕРОМ
+ * клетки: выкинь одну — и все мечты за ней съедут на чужие. На этом уже
+ * обжигались: перестановка доски по типам дала ноль побед за партию.
+ */
+setActiveMarkets(undefined)
+setFastBoardTheme('ru')
+const полная = fastBoard() as unknown as { type: string }[]
+проверка('длина Полосы не изменилась', полная.length === полоса.length, `${полная.length} против ${полоса.length}`)
+проверка(
+  'типы клеток на своих местах',
+  полная.every((x, i) => x.type === полоса[i].type),
+  'порядок сохранён',
+)
 
 console.log('\n=== Без России ===')
 const безРФ = ВСЕ_РЫНКИ.filter((к) => к !== 'RU')

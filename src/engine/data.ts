@@ -94,12 +94,53 @@ export const RAT_BOARD_SIZE = RAT_BOARD.length
 
 const FAST_BOARD_CLASSIC = boardsJson.FAST_BOARD as unknown as FastSpace[]
 const FAST_BOARD_RU = ((decksRuJson as any).FAST_BOARD_RU ?? FAST_BOARD_CLASSIC) as FastSpace[]
+/** Дела Полосы вне России — на замену тем, чья страна выключена. */
+const FAST_BOARD_ALT = ((decksRuJson as any).FAST_BOARD_ALT_RU ?? []) as FastSpace[]
 
 /** Активное поле Полосы свободы — задаётся темой при создании стола. */
 let ACTIVE_FAST_BOARD: FastSpace[] = FAST_BOARD_CLASSIC
 
+/**
+ * Второй круг тоже слушается выбора стран.
+ *
+ * 🔴 ЗАЧЕМ. Выбор стран резал только колоды сделок, а Полоса свободы
+ * оставалась полностью российской: все 15 дел и 4 венчура — Уфа, Казань,
+ * Челны, Сургут. Стол «без России» на первом круге играл про Дубай и Стамбул,
+ * а выйдя из Круга, внезапно оказывался в Башкирии.
+ *
+ * 🔴 КЛЕТКИ НЕ УДАЛЯЕМ, А ПОДМЕНЯЕМ. Мечта игрока хранится НОМЕРОМ клетки:
+ * выкинь одну — и все мечты за ней съедут на чужие. На этом уже обжигались:
+ * перестановка доски по типам дала ноль побед за партию. Поэтому длина поля
+ * и порядок клеток неприкосновенны, меняется только содержимое.
+ *
+ * Подмена детерминированная — по порядку: n-я российская клетка получает n-ю
+ * замену из подходящих. Значит журнал ходов переигрывается тем же полем.
+ */
+function собратьПолосу(рынки: Рынок[] | undefined): FastSpace[] {
+  if (!рынки) return FAST_BOARD_RU
+  const годится = (x: FastSpace) => {
+    const м = (x as unknown as { рынок?: string }).рынок
+    return !м || (рынки as string[]).includes(м)
+  }
+  const запас = FAST_BOARD_ALT.filter(годится)
+  if (!запас.length) return FAST_BOARD_RU
+  let к = 0
+  return FAST_BOARD_RU.map((клетка) => {
+    if (годится(клетка)) return клетка
+    const замена = запас[к % запас.length]
+    к += 1
+    // Тип клетки и её место на доске не трогаем — меняем только содержимое.
+    return { ...замена, type: (клетка as { type: string }).type } as FastSpace
+  })
+}
+
 export function setFastBoardTheme(_theme: DeckTheme) {
-  ACTIVE_FAST_BOARD = FAST_BOARD_RU
+  ACTIVE_FAST_BOARD = собратьПолосу(АКТИВНЫЕ_РЫНКИ)
+}
+
+/** Полоса ЦЕЛИКОМ, мимо выбора стран — для отпечатка правил. */
+export function полнаяПолоса(): FastSpace[] {
+  return FAST_BOARD_RU
 }
 
 export function fastBoard(): FastSpace[] {

@@ -18,6 +18,7 @@ import {
   известнаяКолода,
   fastBoard,
   полныеКолоды,
+  полнаяПолоса,
 } from '../engine/data'
 import { botOfferReply } from './tradeHelpers'
 import { saveGame } from '../net/gamesApi'
@@ -95,7 +96,7 @@ function отпечатокПравил(): string {
      * реальную жизнь прошла бы мимо отпечатка: чужой журнал восстановился бы
      * и человек купил бы мечту по цене, которой в его партии не было.
      */
-    fastBoard(),
+    полнаяПолоса(),
   ])
   let h = 0x811c9dc5
   for (let i = 0; i < всё.length; i++) {

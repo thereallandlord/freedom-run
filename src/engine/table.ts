@@ -209,7 +209,6 @@ export const THEME_RULES: Record<DeckTheme, Parameters<typeof setRules>[0]> = {
 export function createTable(setup: TableSetup): Table {
   const theme = setup.deckTheme
   setActiveTheme(theme)
-  setFastBoardTheme(theme)
   /*
    * 🔴 СТРАНЫ — ДО СБОРКИ КОЛОД. Ниже по этой же функции колоды тасуются, и
    * порядок хранится НОМЕРАМИ карт в колоде. Поставь фильтр после — номера
@@ -217,6 +216,12 @@ export function createTable(setup: TableSetup): Table {
    * карточки, ничего при этом не сломав заметно.
    */
   setActiveMarkets(нормализоватьРынки(setup.рынки))
+  /*
+   * 🔴 И ПОЛЕ ВТОРОГО КРУГА — ПОСЛЕ стран, а не до. Оно тоже собирается по
+   * выбору: клетки дел, чья страна выключена, подменяются на заграничные.
+   * Стояло выше — и поле успевало собраться по выбору ПРЕДЫДУЩЕГО стола.
+   */
+  setFastBoardTheme(theme)
   /*
    * 🔴 Правила темы, а СВЕРХУ — правки хозяина. Порядок важен: тема задаёт
    * основу, панель её точечно поправляет. Наоборот было бы бессмысленно —

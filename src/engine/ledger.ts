@@ -487,7 +487,25 @@ export function marketStockPrice(base: number, mul: number | undefined): number 
  * рассрочку — выдумывать долг, которого нет.
  */
 export function dealTerms(card: { cost: number; downPayment: number; cashFlow: number }, kind: 'realEstate' | 'business') {
-  const financeable = card.downPayment < card.cost
+  /*
+   * 🔴 РАССРОЧКУ ДАЮТ НЕ ВСЕГДА — ТОЛЬКО ЕСЛИ ДЕЛО ЕЁ ТЯНЕТ.
+   *
+   * Всплыло, когда цены и доходы дел привели к настоящим (05.09): автомойка
+   * стоит 6,5 млн и приносит 100 000, а платёж по трёхлетней рассрочке — 104
+   * 000. Купивший в рассрочку уходил В МИНУС каждый месяц, и движок спокойно
+   * это предлагал. В жизни продавец на таких условиях рассрочку и не даёт:
+   * дело с окупаемостью в семь лет за три года не выплатить.
+   *
+   * Порог не «хоть бы ноль», а половина потока: платёж, съедающий больше
+   * половины, — это не покупка актива, а работа на продавца.
+   */
+  const заявлена = card.downPayment < card.cost
+  const пробныйДолг = заявлена
+    ? Math.max(0, installmentPrice(card.cost, kind) - card.downPayment)
+    : 0
+  const пробныйПлатёж = заявлена ? installmentMonthly(пробныйДолг, kind) : 0
+  const тянет = kind !== 'business' || пробныйПлатёж <= card.cashFlow * 0.5
+  const financeable = заявлена && тянет
   const instTotal = financeable ? installmentPrice(card.cost, kind) : card.cost
   const instDebt = financeable ? Math.max(0, instTotal - card.downPayment) : 0
   const monthly = financeable ? installmentMonthly(instDebt, kind) : 0
@@ -499,7 +517,7 @@ export function dealTerms(card: { cost: number; downPayment: number; cashFlow: n
     /** В рассрочку: платишь взнос, остаток с наценкой, платёж съедает доход. */
     instTotal,
     instDebt,
-    instDown: card.downPayment,
+    instDown: financeable ? card.downPayment : card.cost,
     instMonthly: monthly,
     instFlow: card.cashFlow - monthly,
   }
