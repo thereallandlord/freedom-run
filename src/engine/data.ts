@@ -245,6 +245,29 @@ export function bigDeals(theme: DeckTheme): DealCard[] {
 export function marketCards(theme: DeckTheme): MarketCard[] {
   return колода(`market:${theme}`, () => DRU.MARKET_CARDS_RU as MarketCard[])
 }
+/**
+ * Беды Полосы свободы.
+ *
+ * 🔴 ЗАЧЕМ ОТДЕЛЬНОЙ КОЛОДОЙ. Живая жалоба Камиля: «продумать неудачные
+ * карточки на большой карте — сейчас выпадают одни иски». Так и было: на всё
+ * поле стояли ровно две клетки беды, и обе делали одно и то же — забирали
+ * половину наличных. Разные подписи поверх одной механики бедой не
+ * ощущаются. Теперь их двенадцать и четыре разных механики: разовая сумма
+ * от ДОХОДА (а не от кошелька), просадка дохода на срок, пропуск ходов и
+ * прежний выбор «заплатить или тянуть».
+ */
+export function fastTroubles(): {
+  id: string
+  вид: 'деньги' | 'просадка' | 'пропуск' | 'выбор'
+  title: string
+  text: string
+  месяцев?: number
+  пкт?: number
+  ходов?: number
+}[] {
+  return ((decksRuJson as any).FAST_TROUBLES_RU ?? []) as never
+}
+
 export function doodads(theme: DeckTheme): DoodadCard[] {
   return колода(`doodad:${theme}`, () => DRU.DOODADS_RU as DoodadCard[])
 }
