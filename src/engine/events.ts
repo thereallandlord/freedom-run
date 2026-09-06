@@ -43,7 +43,7 @@ export type LedgerEvent =
    * трогать чужие половины общих объектов.
    */
   | { type: 'SET_FT_DIP'; pct: number; paydays: number }
-  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; value?: number; profitShareTo?: string; profitSharePct?: number; арендаЗемлиЛет?: number }
+  | { type: 'BUY_REAL_ESTATE'; id: string; name: string; cost: number; downPayment: number; mortgage: number; cashFlow: number; category: string; investorShare?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; value?: number; стоимостьПриПокупке?: number; profitShareTo?: string; profitSharePct?: number; арендаЗемлиЛет?: number }
   | {
       type: 'SELL_REAL_ESTATE'
       assetId: string

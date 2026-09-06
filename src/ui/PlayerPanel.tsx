@@ -263,9 +263,30 @@ function AssetRow({
       {open && (
         <div className="mb-1 ml-3 space-y-0.5 border-l border-[var(--t-line, var(--line))] pl-2 text-[11px] text-[var(--t-muted, var(--muted))]">
           <div className="flex justify-between">
-            <span>Стоимость</span>
-            <span className="tabnum">{money(a.cost)}</span>
+            <span>Стоимость сейчас</span>
+            <span className="tabnum">{money((a as { value?: number }).value ?? a.cost)}</span>
           </div>
+          {/*
+            🔴 РОСТ ЦЕНЫ ВИДЕН, ИНАЧЕ ЕГО НЕТ. Дорогую квартиру держат не ради
+            потока — поток у неё слабый, — а потому что дорожает она сама. Пока
+            панель печатала цену с наценкой и не менялась никогда, половина
+            колоды выглядела просто плохими сделками.
+          */}
+          {(() => {
+            const было = (a as { стоимостьПриПокупке?: number }).стоимостьПриПокупке
+            const стало = (a as { value?: number }).value
+            if (!было || !стало || стало === было) return null
+            const дельта = стало - было
+            return (
+              <div className="flex justify-between">
+                <span>{дельта > 0 ? 'Выросла в цене' : 'Потеряла в цене'}</span>
+                <span className={`tabnum ${дельта > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {signed(дельта)} ({дельта > 0 ? '+' : ''}
+                  {Math.round((дельта / было) * 100)}%)
+                </span>
+              </div>
+            )
+          })()}
           <div className="flex justify-between">
             <span>Вложено своих</span>
             {/*

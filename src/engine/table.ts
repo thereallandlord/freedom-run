@@ -375,6 +375,8 @@ function dealAssetEvent(
     cost: payCash ? terms.cashPrice : terms.instTotal,
     // Рыночная цена одна и та же независимо от способа покупки.
     value: terms.cashPrice,
+    // Отметка на входе: от неё считается рост стоимости в панели.
+    стоимостьПриПокупке: terms.cashPrice,
     downPayment: payCash ? terms.cashPrice : terms.instDown,
     cashFlow: payCash ? terms.cashFlow : terms.instFlow,
     category: card.category ?? '',

@@ -1,3 +1,4 @@
+import { множительРостаЗаМесяц } from './категории'
 import type { Ledger } from './types'
 import { DEBT_TO_PAYMENT } from './types'
 import type { LedgerEvent } from './events'
@@ -239,6 +240,23 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
           ар.осталосьМес -= 1
           const база = a.value ?? a.cost
           a.value = Math.max(0, Math.round((база * ар.осталосьМес) / (ар.осталосьМес + 1)))
+        } else {
+          /*
+           * 🔴 ОБЪЕКТ ДОРОЖАЕТ САМ. Ровно за этим дорогую квартиру и покупают:
+           * поток у неё слабый, а метры растут. Пока роста не было, половина
+           * колоды состояла из заведомо плохих сделок, и «квартира растёт, но
+           * не кормит» игра не рассказывала ничем.
+           *
+           * Растёт РЫНОЧНАЯ стоимость (`value`), а не `cost`: в `cost` у
+           * купленного в рассрочку сидит наценка за рассрочку, и растить её
+           * значило бы начислять доход на собственный долг. Продажа и так
+           * считается от `value`.
+           *
+           * Только у того, чья земля НЕ в аренде: на Бали стоимость тает, и
+           * складывать рост с таянием нельзя — получится ни то ни сё.
+           */
+          const мн = множительРостаЗаМесяц(a.category)
+          if (мн !== 1) a.value = Math.round((a.value ?? a.cost) * мн)
         }
       }
       /*
@@ -425,6 +443,7 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
         // Сколько своих денег ушло — для панели: downPayment у долевой покупки нулевой.
         paidIn: e.paidIn ?? e.downPayment,
         value: e.value,
+        стоимостьПриПокупке: e.стоимостьПриПокупке ?? e.value,
         profitShareTo: e.profitShareTo,
         profitSharePct: e.profitSharePct,
         /*
