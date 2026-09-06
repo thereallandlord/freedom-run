@@ -3181,15 +3181,17 @@ const ДЛИНА_ГРАФИКА = 14
 function сдвинутьКотировки(t: Table) {
   if (!t.котировки) return
   t.историяКотировок ??= {}
+  t.движениеКотировок ??= {}
   for (const c of smallDeals(t.deckTheme)) {
     if (c.kind !== 'stock') continue
     const sym = c.symbol.toUpperCase()
     const было = t.котировки[sym] ?? c.price
     const нрав = НРАВЫ[классБумаги(c as { symbol: string; meme?: boolean })]
-    const стало = шагЦены(было, c.price, c.range, нрав, () => rng(t, 8891))
-    t.котировки[sym] = стало
+    const шаг = шагЦены(было, c.price, c.range, нрав, () => rng(t, 8891), t.движениеКотировок[sym] ?? 0)
+    t.котировки[sym] = шаг.цена
+    t.движениеКотировок[sym] = шаг.движение
     const хвост = t.историяКотировок[sym] ?? [было]
-    t.историяКотировок[sym] = [...хвост, стало].slice(-ДЛИНА_ГРАФИКА)
+    t.историяКотировок[sym] = [...хвост, шаг.цена].slice(-ДЛИНА_ГРАФИКА)
   }
 }
 
