@@ -382,7 +382,13 @@ function dealAssetEvent(
     installmentMonthly: payCash ? 0 : terms.instMonthly,
   }
   return card.kind === 'realEstate'
-    ? { type: 'BUY_REAL_ESTATE', ...common, mortgage: payCash ? 0 : terms.instDebt }
+    ? {
+        type: 'BUY_REAL_ESTATE',
+        ...common,
+        mortgage: payCash ? 0 : terms.instDebt,
+        // Земля в аренде — срок переезжает с карточки на актив.
+        арендаЗемлиЛет: (card as { арендаЗемлиЛет?: number }).арендаЗемлиЛет,
+      }
     : {
         type: 'BUY_BUSINESS',
         ...common,

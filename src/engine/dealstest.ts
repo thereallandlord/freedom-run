@@ -8,7 +8,8 @@
 import { createTable, applyTableEvent } from './table'
 import { decideBotEvent } from './bots'
 import { buildDebrief } from './debrief'
-import type { Table, TableEvent } from './types'
+import type { Table } from './types'
+import type { TableEvent } from './events'
 
 let сРешениями = 0
 let сПунктом = 0
