@@ -1005,6 +1005,32 @@ function снятьКарточку(t: Table): boolean {
   return false
 }
 
+/**
+ * Запомнить решение по сделке: взял или прошёл мимо.
+ *
+ * 🔴 Пишем В МОМЕНТ РЕШЕНИЯ, пока карточка ещё на столе. Потом она снимается,
+ * и назвать её будет нечем — разбор в конце партии знал только счётчики
+ * «купил 7 раз, пропустил 12», а человеку нужно имя: «прошёл мимо пекарни за
+ * два миллиона, которая приносила бы 75 тысяч».
+ */
+function записатьРешение(t: Table, seatId: string, card: DealCard, взял: boolean) {
+  const i = t.seats.findIndex((s) => s.id === seatId)
+  if (i < 0) return
+  const место = t.seats[i]
+  const цена = card.kind === 'stock' ? card.price : card.downPayment
+  const поток = card.kind === 'stock' ? card.dividendPerShare ?? 0 : card.cashFlow
+  t.seats[i] = {
+    ...место,
+    ledger: {
+      ...место.ledger,
+      решения: [
+        ...(место.ledger.решения ?? []),
+        { ход: t.turnCounter, что: localizedCardTitle(card), цена, поток, взял },
+      ].slice(-60),
+    },
+  }
+}
+
 function log(t: Table, seatId: string | null, text: string) {
   t.log.push({ at: t.log.length, seatId, text })
   if (t.log.length > 300) t.log.shift()
@@ -3647,6 +3673,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       if (t.pending?.kind !== 'deal') return prev
       const card = t.pending.card
       if (card.kind === 'stock') return prev
+      записатьРешение(t, event.seatId ?? seat.id, card, true)
 
       /*
        * 🔴 В чужую находку можно войти только с разрешения того, кому она
@@ -5338,6 +5365,13 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
        * кто-то из допущенных не ответил, карта остаётся на столе.
        */
       if (t.pending.kind === 'deal' || t.pending.kind === 'market') {
+        /*
+         * Прошёл мимо находки — это тоже решение, и разбор о нём спросит.
+         * Записываем только СВОЮ находку и только один раз: «Дальше» жмут по
+         * два раза, а второе нажатие лишь снимает карту со стола.
+         */
+        if (t.pending.kind === 'deal' && !(t.pending.decided ?? []).includes(seat.id))
+          записатьРешение(t, seat.id, t.pending.card, false)
         /*
          * 🔴 Владелец хода может СНЯТЬ карту со стола. Нажал «Пропустить»
          * второй раз — карта уходит, даже если кто-то из приглашённых так и
