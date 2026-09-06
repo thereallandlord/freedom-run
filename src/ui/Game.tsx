@@ -98,10 +98,26 @@ function Scoreboard({
                 style={{ background: s.color }}
               />
               <span className="font-semibold">{s.name}</span>
-              <span className={`tabnum text-[var(--t-muted, var(--muted))] ${stacked ? 'ml-auto' : ''}`}>
+              {/*
+                🔴 ДВА ЧИСЛА БЕЗ ПОДПИСЕЙ ЧИТАЮТСЯ КАК ОДНО. Живая жалоба
+                Камиля: «справа показывает 654 тысячи чистыми, слева 1.15 —
+                непонятно, надо просчитать, всё ли верно». Считалось всё
+                верно, просто рядом стояли деньги НА РУКАХ и ЧИСТЫЙ ДОХОД в
+                месяц — разные вещи, и ничто на это не указывало. Подпись
+                всплывает по наведению, а в узкой раскладке стоит текстом:
+                места в верхней панели мало, но молчать нельзя.
+              */}
+              <span
+                title="Деньги на руках"
+                className={`tabnum text-[var(--t-muted, var(--muted))] ${stacked ? 'ml-auto' : ''}`}
+              >
                 {money(s.ledger.cash)}
               </span>
-              {!stacked && <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>}
+              {!stacked && (
+                <span title="Чистый доход в месяц: доход минус расходы" className={`tabnum ${tone(flow)}`}>
+                  {signed(flow)}
+                </span>
+              )}
               {s.won && <span className="text-[10px]">🏆</span>}
               {!s.won && s.track === 'fast' && (
                 <span className="text-[10px] text-emerald-400">свобода</span>
@@ -123,8 +139,12 @@ function Scoreboard({
                     неё. Камиль поймал на живой игре: «по факту это 39% у тебя
                     собрано, до свободы получается 61%».
                   */}
-                  <span className="text-[var(--t-muted, var(--muted))]">собрано {pct}%</span>
-                  <span className={`tabnum ${tone(flow)}`}>{signed(flow)}</span>
+                  <span className="text-[var(--t-muted, var(--muted))]">
+                    {наПолосе ? 'до мечты' : 'к свободе'} {pct}%
+                  </span>
+                  <span className={`tabnum ${tone(flow)}`} title="Чистый доход в месяц">
+                    {signed(flow)}/мес
+                  </span>
                 </span>
               </>
             )}
