@@ -165,6 +165,7 @@ function AssetRow({
   dispatch,
   cash,
   flowMul,
+  priceMul,
   cashOf,
 }: {
   a: RealEstateAsset | BusinessAsset
@@ -172,6 +173,7 @@ function AssetRow({
   dispatch?: (e: TableEvent) => void
   cash?: number
   flowMul?: Record<string, number>
+  priceMul?: Record<string, number>
   cashOf?: (seatId: string) => number | undefined
 }) {
   const [open, setOpen] = useState(false)
@@ -522,7 +524,12 @@ function AssetRow({
             надо ждать карту, где дают больше ста процентов.
           */}
           {dispatch && !вторая && !(a as BusinessAsset).gl && (
-            <КнопкаБыстройПродажи актив={a} долг={debt} dispatch={dispatch} />
+            <КнопкаБыстройПродажи
+              актив={a}
+              долг={debt}
+              рынок={(priceMul ?? {})[a.category ?? ''] ?? 1}
+              dispatch={dispatch}
+            />
           )}
           {kind === 'business' &&
             dispatch &&
@@ -566,14 +573,23 @@ function AssetRow({
 function КнопкаБыстройПродажи({
   актив,
   долг,
+  рынок,
   dispatch,
 }: {
   актив: RealEstateAsset | BusinessAsset
   долг: number
+  рынок: number
   dispatch: (e: TableEvent) => void
 }) {
   const [готов, setГотов] = useState(false)
-  const { price, rebate } = sellOfferQuote(актив, долг, СКИДКА_ЗА_СКОРОСТЬ, 1)
+  /*
+   * 🔴 МНОЖИТЕЛЬ РЫНКА ЗДЕСЬ ОБЯЗАТЕЛЕН. Стояла единица — то есть кнопка
+   * считала цену так, будто рынок не двигался, а движок платил с учётом
+   * подорожания. Живая жалоба Камиля: «машиноместо подорожало на 25% — а что
+   * толку?». Толк был, просто кнопка о нём не знала и обещала меньше, чем
+   * приходило.
+   */
+  const { price, rebate } = sellOfferQuote(актив, долг, СКИДКА_ЗА_СКОРОСТЬ, рынок)
   const наСчёт = Math.round((price - (долг - rebate)) * (1 - (актив.investorShare ?? 0)))
   if (price <= 0) return null
   return (
@@ -654,6 +670,7 @@ function GoalCard({
 }: {
   seat: Seat
   flowMul?: Record<string, number>
+  priceMul?: Record<string, number>
   /** Цена мечты этого игрока — на втором круге она и есть цель. */
   ценаМечты?: number
 }) {
@@ -806,6 +823,7 @@ export function PlayerPanel({
   seat,
   dispatch,
   flowMul,
+  priceMul,
   priceNow,
   cashOf,
   ценаМечты = 0,
@@ -813,6 +831,15 @@ export function PlayerPanel({
   seat: Seat
   dispatch?: (e: TableEvent) => void
   flowMul?: Record<string, number>
+  /**
+   * Множитель ЦЕНЫ при продаже: категория → во сколько раз рынок её двинул.
+   *
+   * 🔴 Кнопка быстрой продажи считала цену с единицей, то есть будто рынок не
+   * двигался, а движок платил с учётом подорожания. Живая жалоба Камиля:
+   * «машиноместо подорожало на 25% — а что толку?». Толк был, кнопка о нём не
+   * знала и обещала меньше, чем приходило на счёт.
+   */
+  priceMul?: Record<string, number>
   /** Цена мечты этого игрока — на втором круге она и есть цель шкалы. */
   ценаМечты?: number
   /** Цена бумаги сегодня — чтобы портфель показывал рынок, а не цену покупки. */
@@ -953,6 +980,7 @@ export function PlayerPanel({
                 dispatch={dispatch}
                 cash={l.cash}
                 flowMul={flowMul}
+                priceMul={priceMul}
                 cashOf={cashOf}
               />
             ))}
@@ -964,6 +992,7 @@ export function PlayerPanel({
                 dispatch={dispatch}
                 cash={l.cash}
                 flowMul={flowMul}
+                priceMul={priceMul}
                 cashOf={cashOf}
               />
             ))}

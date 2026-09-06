@@ -782,6 +782,7 @@ export function Game({
             dispatch={!seat.isBot ? dispatch : undefined}
             priceNow={(sym) => stockPriceNow(table, sym)}
             flowMul={table.market.flow}
+              priceMul={table.market.price}
             cashOf={(id) => table.seats.find((s) => s.id === id)?.ledger.cash}
             ценаМечты={dreamPriceAt(table, seat.dreamSpace)}
           />
@@ -1351,6 +1352,7 @@ export function Game({
             <PlayerPanel
               seat={peeked}
               flowMul={table.market.flow}
+              priceMul={table.market.price}
               priceNow={(sym) => stockPriceNow(table, sym)}
               cashOf={(id) => table.seats.find((s) => s.id === id)?.ledger.cash}
               ценаМечты={dreamPriceAt(table, peeked.dreamSpace)}
