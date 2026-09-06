@@ -168,7 +168,14 @@ function StockRow({
   точки,
   onSell,
 }: {
-  lot: { id: string; symbol: string; shares: number; costPerShare: number }
+  lot: {
+    id: string
+    symbol: string
+    shares: number
+    costPerShare: number
+    profitShareTo?: string
+    profitSharePct?: number
+  }
   price: number
   точки: number[]
   onSell: (shares: number, price: number) => void
@@ -177,6 +184,18 @@ function StockRow({
   const [armed, setArmed] = useState(false)
   const take = Math.min(n, lot.shares)
   const profit = Math.round((price - lot.costPerShare) * take)
+  /*
+   * 🔴 ТА ЖЕ АРИФМЕТИКА, ЧТО В ДВИЖКЕ И В КАРТОЧКЕ РЫНКА. Здесь кнопка
+   * печатала ВАЛОВУЮ выручку и не вычитала долю за вход в чужую находку:
+   * замер — обещано 460 000, приходило 414 000, и ни слова об этом. В
+   * карточке рынка это давно поправлено, а в портфеле осталось.
+   */
+  const пктДоли = Math.min(100, Math.max(0, Math.round(lot.profitSharePct ?? 0)))
+  const доля =
+    lot.profitShareTo && пктДоли > 0 && profit > 0
+      ? Math.round((profit * пктДоли) / 100)
+      : 0
+  const наСчёт = take * price - доля
 
   return (
     <div className="panel-2 rounded-lg px-3 py-2 text-[13px]">
@@ -211,6 +230,12 @@ function StockRow({
         </div>
       )}
 
+      {доля > 0 && (
+        <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
+          За вход в эту находку уйдёт {money(доля)} — {пктДоли}% с прибыли.
+        </p>
+      )}
+
       <button
         onClick={() => (armed ? onSell(take, price) : setArmed(true))}
         className={`mt-1.5 w-full rounded-lg px-2 py-1.5 text-[12px] font-semibold transition ${
@@ -220,8 +245,8 @@ function StockRow({
         }`}
       >
         {armed
-          ? `Точно продать ${take} шт за ${money(take * price)}?`
-          : `Продать ${take} шт · ${money(take * price)}`}
+          ? `Точно продать ${take} шт за ${money(наСчёт)}?`
+          : `Продать ${take} шт · ${money(наСчёт)}`}
       </button>
     </div>
   )

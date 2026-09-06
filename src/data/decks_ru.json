@@ -723,18 +723,6 @@
       "рынок": "RU"
     },
     {
-      "id": "sd-tur-mersin",
-      "category": "aptTUR",
-      "title": "1+1, Мерсин, Томюк",
-      "text": "Самый дешёвый вход в турецкую недвижимость на побережье. Дом 2021 года, бассейн, до моря пешком. Сдаётся местным на длинный срок.",
-      "cost": 4460000,
-      "downPayment": 892000,
-      "mortgage": 3568000,
-      "cashFlow": 22300,
-      "kind": "realEstate",
-      "рынок": "TUR"
-    },
-    {
       "id": "sd-re-tur-alanya2",
       "kind": "realEstate",
       "category": "aptBALI",

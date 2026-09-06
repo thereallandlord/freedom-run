@@ -26,6 +26,15 @@ export function DealTradeActions({
   card: TradeCard
   dispatch: (e: TableEvent) => void
 }) {
+  /*
+   * 🔴 ПАРТНЁРСКИЙ БИЗНЕС НЕ ПЕРЕПРОДАЁТСЯ И НЕ БЕРЁТСЯ В СКЛАДЧИНУ. Пакет
+   * берёт только тот, кому карточка выпала: структуру строит тот, кто её
+   * строит, и передать её нельзя — сосед получил бы мёртвую пустышку без
+   * структуры. Движок это запрещает сам; здесь убираем кнопки, чтобы они не
+   * жались впустую.
+   */
+  if ((card as { greenleaf?: boolean }).greenleaf) return null
+
   const others = table.seats.filter(
     (s) => s.id !== seat.id && !s.outOfGame && !s.won && s.track === 'rat',
   )
