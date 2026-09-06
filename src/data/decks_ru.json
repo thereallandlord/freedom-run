@@ -269,30 +269,6 @@
       "growthCap": 29000
     },
     {
-      "id": "sd-store-ufa-small",
-      "category": "parking",
-      "title": "Кладовка 3 м², старый дом на Айской (Уфа)",
-      "text": "Каморка под лестницей в подъезде сталинки. Денег приносит немного — зато это первая в жизни вещь, которая платит вам, а не вы за неё.",
-      "cost": 120000,
-      "downPayment": 24000,
-      "mortgage": 96000,
-      "cashFlow": 1872,
-      "kind": "realEstate",
-      "рынок": "RU"
-    },
-    {
-      "id": "sd-park-open-kzn",
-      "category": "parking",
-      "title": "Место на открытой стоянке у рынка (Казань)",
-      "text": "Асфальт, номер краской, шлагбаум. Снимает продавец с рынка: ему нужно ставить газель каждый день с шести утра.",
-      "cost": 350000,
-      "downPayment": 70000,
-      "mortgage": 280000,
-      "cashFlow": 2350,
-      "kind": "realEstate",
-      "рынок": "RU"
-    },
-    {
       "id": "sd-store-kzn",
       "category": "parking",
       "title": "Кладовка в цоколе ЖК, Казань",
@@ -300,7 +276,7 @@
       "cost": 500000,
       "downPayment": 100000,
       "mortgage": 400000,
-      "cashFlow": 2500,
+      "cashFlow": 5000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -312,7 +288,7 @@
       "cost": 1300000,
       "downPayment": 260000,
       "mortgage": 1040000,
-      "cashFlow": 2950,
+      "cashFlow": 4500,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -324,7 +300,7 @@
       "cost": 3200000,
       "downPayment": 3200000,
       "mortgage": 0,
-      "cashFlow": 26400,
+      "cashFlow": 22000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -336,7 +312,7 @@
       "cost": 1600000,
       "downPayment": 320000,
       "mortgage": 1280000,
-      "cashFlow": 8300,
+      "cashFlow": 8800,
       "kind": "realEstate",
       "рынок": "CIS"
     },
@@ -345,10 +321,10 @@
       "category": "roomUFA",
       "title": "Комната 13 м², Уфа, Черниковка",
       "text": "Комната в общежитии семейного типа: своя раковина, кухня на этаже. Снимают вахтовики — заезжают на месяц, съезжают, приезжают следующие. Пустой она не стоит.",
-      "cost": 1100000,
-      "downPayment": 220000,
-      "mortgage": 880000,
-      "cashFlow": 5700,
+      "cost": 1400000,
+      "downPayment": 280000,
+      "mortgage": 1120000,
+      "cashFlow": 12000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -360,7 +336,7 @@
       "cost": 2650000,
       "downPayment": 530000,
       "mortgage": 2120000,
-      "cashFlow": 15500,
+      "cashFlow": 20000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -370,10 +346,10 @@
       "category": "aptKZN",
       "title": "Студия у ИТ-парка (Казань)",
       "text": "Айтишники стоят в очереди на съём. Маленькая, зато сдаётся быстрее, чем остывает чай.",
-      "cost": 5000000,
-      "downPayment": 1000000,
-      "mortgage": 4000000,
-      "cashFlow": 24300,
+      "cost": 7100000,
+      "downPayment": 1420000,
+      "mortgage": 5680000,
+      "cashFlow": 50000,
       "рынок": "RU"
     },
     {
@@ -384,7 +360,7 @@
       "cost": 3860000,
       "downPayment": 772000,
       "mortgage": 3088000,
-      "cashFlow": 25000,
+      "cashFlow": 30500,
       "kind": "realEstate",
       "рынок": "TUR"
     },
@@ -397,7 +373,7 @@
       "cost": 7500000,
       "downPayment": 1500000,
       "mortgage": 6000000,
-      "cashFlow": 32000,
+      "cashFlow": 43000,
       "рынок": "TUR"
     },
     {
@@ -409,7 +385,7 @@
       "cost": 9000000,
       "downPayment": 1800000,
       "mortgage": 7200000,
-      "cashFlow": 30600,
+      "cashFlow": 45000,
       "рынок": "RU"
     },
     {
@@ -421,7 +397,7 @@
       "cost": 14500000,
       "downPayment": 2900000,
       "mortgage": 11600000,
-      "cashFlow": 39400,
+      "cashFlow": 52000,
       "рынок": "RU"
     },
     {
@@ -432,7 +408,7 @@
       "cost": 4700000,
       "downPayment": 940000,
       "mortgage": 3760000,
-      "cashFlow": 24200,
+      "cashFlow": 41700,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -444,7 +420,7 @@
       "cost": 5500000,
       "downPayment": 1100000,
       "mortgage": 4400000,
-      "cashFlow": 30000,
+      "cashFlow": 58000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -453,10 +429,10 @@
       "category": "houseRF",
       "title": "Дом у моря, Сочи, Мамайка",
       "text": "Небольшой дом в пяти минутах пешком от моря, во дворе две машины встают. Летом сдаётся по тройной цене, зимой — помесячно.",
-      "cost": 15000000,
-      "downPayment": 3000000,
-      "mortgage": 12000000,
-      "cashFlow": 70000,
+      "cost": 18000000,
+      "downPayment": 3600000,
+      "mortgage": 14400000,
+      "cashFlow": 150000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -468,7 +444,7 @@
       "cost": 4200000,
       "downPayment": 840000,
       "mortgage": 3360000,
-      "cashFlow": 24000,
+      "cashFlow": 28000,
       "kind": "realEstate",
       "рынок": "CIS"
     },
@@ -480,7 +456,7 @@
       "cost": 6270000,
       "downPayment": 1254000,
       "mortgage": 5016000,
-      "cashFlow": 41600,
+      "cashFlow": 53200,
       "kind": "realEstate",
       "рынок": "CIS"
     },
@@ -489,10 +465,10 @@
       "category": "aptCIS",
       "title": "Студия 28 м², Батуми, у моря",
       "text": "Дом первой линии, балкон смотрит на порт. Сезон длинный, зимой берут на месяцы.",
-      "cost": 3600000,
-      "downPayment": 720000,
-      "mortgage": 2880000,
-      "cashFlow": 23500,
+      "cost": 4900000,
+      "downPayment": 980000,
+      "mortgage": 3920000,
+      "cashFlow": 49000,
       "kind": "realEstate",
       "рынок": "CIS"
     },
@@ -695,7 +671,7 @@
       "cost": 5100000,
       "downPayment": 1020000,
       "mortgage": 4080000,
-      "cashFlow": 21900,
+      "cashFlow": 46100,
       "рынок": "TUR"
     },
     {
@@ -707,7 +683,7 @@
       "cost": 14000000,
       "downPayment": 2800000,
       "mortgage": 11200000,
-      "cashFlow": 36000,
+      "cashFlow": 52000,
       "рынок": "RU"
     },
     {
@@ -719,7 +695,7 @@
       "cost": 14000000,
       "downPayment": 2800000,
       "mortgage": 11200000,
-      "cashFlow": 42500,
+      "cashFlow": 100000,
       "рынок": "RU"
     },
     {
@@ -731,7 +707,7 @@
       "cost": 8500000,
       "downPayment": 1700000,
       "mortgage": 6800000,
-      "cashFlow": 27000,
+      "cashFlow": 68000,
       "рынок": "BALI",
       "арендаЗемлиЛет": 25
     },
@@ -744,7 +720,7 @@
       "cost": 14380000,
       "downPayment": 2876000,
       "mortgage": 11504000,
-      "cashFlow": 56900,
+      "cashFlow": 82600,
       "рынок": "DXB"
     },
     {
@@ -752,10 +728,10 @@
       "category": "houseRF",
       "title": "Домик над Сулакским каньоном",
       "text": "Обрыв в семьсот метров прямо за забором. Летом очередь на ночь, зимой ветер и тишина. В карточке средний за год.",
-      "cost": 4500000,
-      "downPayment": 900000,
-      "mortgage": 3600000,
-      "cashFlow": 32000,
+      "cost": 4900000,
+      "downPayment": 980000,
+      "mortgage": 3920000,
+      "cashFlow": 49000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -768,7 +744,7 @@
       "cost": 11000000,
       "downPayment": 2200000,
       "mortgage": 8800000,
-      "cashFlow": 57000,
+      "cashFlow": 122000,
       "рынок": "BALI",
       "арендаЗемлиЛет": 25
     },
@@ -781,7 +757,7 @@
       "cost": 22000000,
       "downPayment": 4400000,
       "mortgage": 17600000,
-      "cashFlow": 69000,
+      "cashFlow": 85000,
       "рынок": "RU"
     },
     {
@@ -792,7 +768,7 @@
       "cost": 7130000,
       "downPayment": 1426000,
       "mortgage": 5704000,
-      "cashFlow": 26600,
+      "cashFlow": 45000,
       "kind": "realEstate",
       "рынок": "TUR"
     },
@@ -805,7 +781,7 @@
       "cost": 41400000,
       "downPayment": 8280000,
       "mortgage": 33120000,
-      "cashFlow": 112700,
+      "cashFlow": 239600,
       "рынок": "DXB"
     },
     {
@@ -817,7 +793,7 @@
       "cost": 10000000,
       "downPayment": 2000000,
       "mortgage": 8000000,
-      "cashFlow": 95000,
+      "cashFlow": 102000,
       "рынок": "BALI",
       "арендаЗемлиЛет": 25
     },
@@ -830,7 +806,7 @@
       "cost": 40000000,
       "downPayment": 8000000,
       "mortgage": 32000000,
-      "cashFlow": 120000,
+      "cashFlow": 175000,
       "рынок": "RU"
     },
     {
@@ -841,7 +817,7 @@
       "cost": 12900000,
       "downPayment": 2580000,
       "mortgage": 10320000,
-      "cashFlow": 54400,
+      "cashFlow": 76200,
       "kind": "realEstate",
       "рынок": "DXB"
     },
@@ -854,7 +830,7 @@
       "cost": 70000000,
       "downPayment": 14000000,
       "mortgage": 56000000,
-      "cashFlow": 234000,
+      "cashFlow": 312000,
       "рынок": "RU"
     },
     {
@@ -866,7 +842,7 @@
       "cost": 12850000,
       "downPayment": 2570000,
       "mortgage": 10280000,
-      "cashFlow": 62800,
+      "cashFlow": 100000,
       "рынок": "DXB"
     },
     {
@@ -877,7 +853,7 @@
       "cost": 9060000,
       "downPayment": 1812000,
       "mortgage": 7248000,
-      "cashFlow": 53900,
+      "cashFlow": 71800,
       "kind": "realEstate",
       "рынок": "TUR"
     },
@@ -889,7 +865,7 @@
       "cost": 21000000,
       "downPayment": 4200000,
       "mortgage": 16800000,
-      "cashFlow": 102000,
+      "cashFlow": 147000,
       "kind": "realEstate",
       "рынок": "BALI",
       "арендаЗемлиЛет": 25
@@ -902,7 +878,7 @@
       "cost": 16000000,
       "downPayment": 3200000,
       "mortgage": 12800000,
-      "cashFlow": 76800,
+      "cashFlow": 96000,
       "kind": "realEstate",
       "рынок": "SAU"
     },
@@ -914,7 +890,7 @@
       "cost": 20000000,
       "downPayment": 4000000,
       "mortgage": 16000000,
-      "cashFlow": 60000,
+      "cashFlow": 150000,
       "kind": "realEstate",
       "рынок": "RU"
     },
@@ -927,7 +903,7 @@
       "cost": 40000000,
       "downPayment": 8000000,
       "mortgage": 32000000,
-      "cashFlow": 142000,
+      "cashFlow": 171000,
       "рынок": "SAU"
     },
     {
@@ -939,7 +915,7 @@
       "cost": 17400000,
       "downPayment": 3480000,
       "mortgage": 13920000,
-      "cashFlow": 72500,
+      "cashFlow": 109000,
       "рынок": "DXB"
     },
     {
@@ -950,7 +926,7 @@
       "cost": 10230000,
       "downPayment": 2046000,
       "mortgage": 8184000,
-      "cashFlow": 25700,
+      "cashFlow": 85000,
       "kind": "realEstate",
       "рынок": "TUR"
     },
@@ -963,7 +939,7 @@
       "cost": 11000000,
       "downPayment": 2200000,
       "mortgage": 8800000,
-      "cashFlow": 60000,
+      "cashFlow": 80000,
       "рынок": "CIS"
     },
     {
@@ -974,7 +950,7 @@
       "cost": 12800000,
       "downPayment": 2560000,
       "mortgage": 10240000,
-      "cashFlow": 55400,
+      "cashFlow": 72900,
       "kind": "realEstate",
       "рынок": "SAU"
     },
@@ -987,7 +963,7 @@
       "cost": 28000000,
       "downPayment": 5600000,
       "mortgage": 22400000,
-      "cashFlow": 135000,
+      "cashFlow": 147000,
       "рынок": "SAU"
     },
     {
@@ -998,7 +974,7 @@
       "cost": 12600000,
       "downPayment": 2520000,
       "mortgage": 10080000,
-      "cashFlow": 46000,
+      "cashFlow": 60000,
       "kind": "realEstate",
       "рынок": "TUR"
     },
@@ -1010,7 +986,7 @@
       "cost": 20000000,
       "downPayment": 4000000,
       "mortgage": 16000000,
-      "cashFlow": 88000,
+      "cashFlow": 109000,
       "kind": "realEstate",
       "рынок": "DXB"
     },
@@ -1023,7 +999,7 @@
       "cost": 21000000,
       "downPayment": 4200000,
       "mortgage": 16800000,
-      "cashFlow": 126000,
+      "cashFlow": 141700,
       "рынок": "TUR"
     },
     {
@@ -1034,7 +1010,7 @@
       "cost": 20400000,
       "downPayment": 4080000,
       "mortgage": 16320000,
-      "cashFlow": 86000,
+      "cashFlow": 118000,
       "kind": "realEstate",
       "рынок": "DXB"
     },
@@ -1047,7 +1023,7 @@
       "cost": 14000000,
       "downPayment": 2800000,
       "mortgage": 11200000,
-      "cashFlow": 92000,
+      "cashFlow": 105000,
       "рынок": "BALI",
       "арендаЗемлиЛет": 25
     },
@@ -1059,7 +1035,7 @@
       "cost": 19500000,
       "downPayment": 3900000,
       "mortgage": 15600000,
-      "cashFlow": 62000,
+      "cashFlow": 107600,
       "kind": "realEstate",
       "рынок": "TUR"
     },
@@ -1072,7 +1048,7 @@
       "cost": 30000000,
       "downPayment": 6000000,
       "mortgage": 24000000,
-      "cashFlow": 160000,
+      "cashFlow": 159000,
       "рынок": "TUR"
     },
     {
@@ -1084,7 +1060,7 @@
       "cost": 18500000,
       "downPayment": 3700000,
       "mortgage": 14800000,
-      "cashFlow": 83000,
+      "cashFlow": 149400,
       "рынок": "BALI",
       "арендаЗемлиЛет": 25
     },
@@ -1097,7 +1073,7 @@
       "cost": 36000000,
       "downPayment": 7200000,
       "mortgage": 28800000,
-      "cashFlow": 108000,
+      "cashFlow": 156000,
       "рынок": "DXB"
     },
     {
@@ -1109,7 +1085,7 @@
       "cost": 49000000,
       "downPayment": 9800000,
       "mortgage": 39200000,
-      "cashFlow": 242000,
+      "cashFlow": 270000,
       "рынок": "SAU"
     },
     {
@@ -1121,7 +1097,7 @@
       "cost": 29000000,
       "downPayment": 5800000,
       "mortgage": 23200000,
-      "cashFlow": 132000,
+      "cashFlow": 247000,
       "рынок": "CIS"
     },
     {
@@ -1133,7 +1109,7 @@
       "cost": 108000000,
       "downPayment": 21600000,
       "mortgage": 86400000,
-      "cashFlow": 360000,
+      "cashFlow": 399000,
       "рынок": "DXB"
     },
     {
