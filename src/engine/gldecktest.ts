@@ -113,4 +113,4 @@ for (const c of gl)
     if ((c.text ?? '').includes(ж) || (c.title ?? '').includes(ж)) провал(`${c.id}: жаргон «${ж}» в тексте карточки`)
 
 console.log(плохо === 0 ? `\n✅ ПАРТНЁРСКАЯ КОЛОДА: ${gl.length} карточек, бед ${беды.length}, проверки прошли` : `\n❌ ПАРТНЁРСКАЯ КОЛОДА: ${плохо} замечаний`)
-if (плохо) process.exit(1)
+if (плохо) (globalThis as { process?: { exit(n: number): void } }).process?.exit(1)
