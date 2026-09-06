@@ -16,6 +16,8 @@ import {
   glStructureIncome,
   glUpgradeCost,
   glUpgradeOptions,
+  GL_TRIANGLE_BONUS,
+  GL_TRIANGLE_COST,
 } from '../engine/greenleaf'
 import { Corridor, MoneySlider, SeatTag, TradeBlock, TradeLine, TradeShell, payback } from './TradeBits'
 import {
@@ -240,6 +242,46 @@ export function TradesModal({
             </div>
           </TradeBlock>
         ))}
+
+
+      {/*
+        🔴 ВТОРОЙ И ТРЕТИЙ КАБИНЕТ — ПО СВОЕЙ ВОЛЕ, А НЕ ПО УДАЧЕ. Просьба
+        Камиля: «добавь в сделки покупку дополнительных аккаунтов GreenLeaf —
+        усиления своего бизнеса нет». Механика в движке была давно, но купить
+        кабинеты можно было ТОЛЬКО если случайно выпадет нужная карточка
+        рынка. Теперь это обычная сделка, доступная в любой момент.
+      */}
+      {seat.ledger.businesses
+        .filter((b) => b.gl && !b.gl.triangle)
+        .map((b) => {
+          const прирост =
+            Math.round(glStructureIncome(b.gl!) * GL_TRIANGLE_BONUS) - glStructureIncome(b.gl!)
+          const окуп = прирост > 0 ? Math.ceil(GL_TRIANGLE_COST / прирост) : 0
+          return (
+            <TradeBlock key={`tri-${b.id}`} title="Открыть ещё два кабинета">
+              <p className="text-[12px] leading-snug text-[var(--muted)]">
+                Три кабинета вместо одного: структура та же, а считается по всем трём. Доход по
+                партнёрскому бизнесу вырастет на {Math.round((GL_TRIANGLE_BONUS - 1) * 100)}%
+                — навсегда.
+              </p>
+              <button
+                disabled={seat.ledger.cash < GL_TRIANGLE_COST}
+                onClick={() => dispatch({ type: 'GL_BUY_TRIANGLE', cost: GL_TRIANGLE_COST })}
+                className="mt-2 w-full rounded-xl border border-[var(--line)] p-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40"
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-bold">Два кабинета</span>
+                  <span className="tabnum font-black">{money(GL_TRIANGLE_COST)}</span>
+                </div>
+                <div className="mt-1 text-[11px] text-[var(--muted)]">
+                  доход вырастет на {money(прирост)}/мес
+                  {окуп > 0 ? ` · окупится за ${окуп} мес` : ''}
+                  {seat.ledger.cash < GL_TRIANGLE_COST ? ' · денег пока не хватает' : ''}
+                </div>
+              </button>
+            </TradeBlock>
+          )
+        })}
 
       {/*
         Кредит в банке. Условия намеренно вкусные — иначе никто бы и не брал,
