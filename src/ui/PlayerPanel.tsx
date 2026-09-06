@@ -33,6 +33,7 @@ import {
   glStructureIncome,
   glUpgradeCost,
   glUpgradeOptions,
+  glИсходыПары,
 } from '../engine/greenleaf'
 
 /** «1 месяц / 2 месяца / 5 месяцев» — иначе число выглядит машинным. */
@@ -1107,6 +1108,29 @@ export function PlayerPanel({
                     })()}
                     {rank.level > 0 && <div className="mt-0.5">Ранг: {rank.name}</div>}
                     {/*
+                      🔴 ЖИВОЙ ВОПРОС КАМИЛЯ: «почему пришло 8 595, а не 9 508?».
+                      Пара платит по-разному в зависимости от того, кого привёл
+                      ты сам, а кого перелил наставник: реферальный бонус идёт
+                      только за личных. Пока на экране стояло одно число, любая
+                      другая сумма читалась как сбой начисления.
+                    */}
+                    <details className="mt-1">
+                      <summary className="cursor-pointer text-[10px] text-[var(--muted)]">
+                        Сколько приносит пара
+                      </summary>
+                      <div className="mt-0.5 space-y-0.5">
+                        {glИсходыПары(g).map((и) => (
+                          <div key={и.подпись} className="flex justify-between text-[10px]">
+                            <span className="text-[var(--muted)]">{и.подпись}</span>
+                            <span className="tabnum">{money(и.сумма)}</span>
+                          </div>
+                        ))}
+                        <div className="text-[10px] leading-snug text-[var(--muted)]">
+                          Разницу делает бонус за лично приглашённого: за переливы его не платят.
+                        </div>
+                      </div>
+                    </details>
+                    {/*
                       🔴 Купленная возможность должна быть ВИДНА отдельной
                       строкой и со своей цифрой. Анвар взял ещё два кабинета —
                       доход вырос, но в панели об этом не было ни слова, и
@@ -1341,7 +1365,17 @@ export function PlayerPanel({
       )}
 
           <Section title="Расходы" tone="expense" end={money(expenses)}>
-            <Row label="Налоги" value={money(l.expenses.taxes)} dim />
+            {/*
+              🔴 СТРОКА, КОТОРАЯ ВСЕГДА НОЛЬ, — ЭТО ЛОЖЬ ПО УМОЛЧАНИЮ. Она
+              одна во всём блоке показывалась безусловно, и каждый игрок видел
+              «Налоги 0 ₽»: выходило, что в игре с зарплаты не удерживают
+              ничего. На деле зарплаты профессий — это то, что приходит НА
+              РУКИ, и удерживать нечего. Ведём себя как соседние строки:
+              ноль не показываем.
+            */}
+            {l.expenses.taxes > 0 && (
+              <Row label="Налоги" value={money(l.expenses.taxes)} dim />
+            )}
             {l.expenses.homeMortgagePayment > 0 && (
               <Row label={RULES.loansEnabled ? "Ипотека" : "Рассрочка за жильё"} value={money(l.expenses.homeMortgagePayment)} dim />
             )}

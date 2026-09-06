@@ -429,6 +429,57 @@ const SCENES_MARKET = {
     'A person at a home desk reviewing a payslip with quiet satisfaction, calculator and coffee beside them, plant on the sill, soft daylight',
   'mkt-raise-side-hustle':
     'A person packing handmade goods into parcels at a kitchen table late in the evening, laptop open beside a stack of finished orders, warm lamp light',
+
+  /* ── Партнёрский бизнес: беды, которых в колоде не было (06.09) ── */
+  'gl-reklama-vpustuyu':
+    'A small rented seminar room with rows of empty folding chairs, one person alone by a laptop on a table, a single untouched water bottle, evening light through blinds',
+  'gl-vykupil-sam':
+    'A flat hallway stacked chest-high with identical sealed cardboard boxes, a person squeezing past them with a phone in hand, warm domestic light',
+  'gl-ne-zvonil':
+    'A phone lying face down on a windowsill beside a cold cup of tea and an unopened notebook, a person looking out at grey weather',
+  'gl-tovar-snyali':
+    'An empty gap on a warehouse shelf between full rows of identical boxes, a worker checking a clipboard in front of it, cool overhead light',
+  'gl-krupny-zakaz':
+    'Three generations of a family around a kitchen table unpacking one large box of products together, pleased and busy, warm afternoon light',
+  'gl-lider-vyros':
+    'Two people shaking hands on the pavement outside a new office while a fresh sign is being fitted above the door, boxes in an open car boot behind them, bright morning',
+  'gl-drugaya-strana':
+    'A laptop on a dark desk at night showing a video call with a group of people in a sunlit room far away, a world map on the wall behind, one hand raised to the screen',
+
+  /* ── Вторые выходы из объектов: рост цены надо где-то обналичить (06.09) ── */
+  'mkt-sell-apt-msk-2':
+    'A Moscow courtyard of old five-storey blocks with a construction fence and a new tower rising behind, residents with documents talking to an official in a hi-vis vest, overcast',
+  'mkt-sell-apt-spb-2':
+    'A Saint Petersburg stairwell landing with several apartment doors, one standing open while workers measure the rooms with tape and drawings, tall window light',
+  'mkt-sell-apt-kzn-2':
+    'A Kazan street beside a deep excavation behind construction hoarding, cranes above it, new residential towers close by, bright day',
+  'mkt-sell-house-rf-2':
+    'A country house behind its fence while road-building machinery works on a raw embankment cutting across the field beyond, dust in the air, afternoon sun',
+  'mkt-sell-apt-tur-2':
+    'A crowded Turkish estate-agency window at dusk covered with property listings, several people looking in from the pavement, warm shop light',
+  'mkt-sell-apt-dxb-2':
+    'A newly finished Dubai tower with landscaping trucks and workers rolling out fresh turf at its base, an elevated metro line beyond, harsh sun',
+  'mkt-sell-apt-sau-2':
+    'A Saudi city street of apartment buildings at dusk, heavy traffic and crowds of visitors with luggage on the pavements, warm lamps',
+  'mkt-sell-apt-cis-2':
+    'A new industrial plant on the edge of a Central Asian city, shift buses arriving, families with suitcases outside a residential block nearby, clear morning',
+  'mkt-sell-apt-bali-2':
+    'A Balinese villa terrace where a notary and a buyer work through a thick folder of documents at an outdoor table, dense tropical greenery, filtered light',
+  'mkt-sell-parking-2':
+    'A residential courtyard with a new barrier arm at its entrance while cars queue on the street outside looking for space, evening',
+  'mkt-sell-land-2':
+    'An empty field marked with survey stakes and ribbons, a developer excavator parked at the edge, a new road ending abruptly at the boundary, overcast',
+  'mkt-sell-room-ufa-2':
+    'Two neighbours talking in the corridor of a shared flat, one holding an envelope, separate room doors along the wall, soft daylight',
+
+  /* ── Три рыночные карточки, у которых сцены не было изначально ── */
+  're-sdal-deshevle':
+    'A district of many identical new towers with dozens of rental banners hanging from balconies, one person walking alone below, flat grey light',
+  're-nalog-na-arendu':
+    'A desk with a rental contract, a calculator and a banking app open on a phone, a person signing the last page, morning light through a window',
+  're-upravlyayushchiy-kvartir':
+    'A property manager handing over a set of keys in a tidy furnished flat while the owner leaves through the door with a suitcase, neutral daylight',
+
 }
 
 /**
@@ -1171,6 +1222,10 @@ const SCENES_EVENTS_NEW = {
     EVENT_RULE + " " + "A school gym polling station after closing: folding cardboard voting booths, sealed ballot boxes on a trestle table, a volunteer stacking chairs under bright ceiling lights.",
   "gold-4000":
     EVENT_RULE + " " + "A refiner in a heat-proof apron tips a crucible of molten gold into a row of bar moulds; orange glare fills the dark workshop, sparks scattering.",
+  /* 🔴 Единственная новость, оставшаяся без картинки после переписи (06.09). */
+  'dron-zhiloy-rayon':
+    'Early morning in a residential courtyard of tall apartment blocks: two entrances with windows boarded over with plywood, glass swept into a pile, a municipal van and a few residents standing apart looking up, overcast light',
+
 }
 
 const SCENES_WORLD = {
@@ -1565,6 +1620,12 @@ const SCENES_FAST_BIZ = {
     'A goat farm with a small cheese dairy: goats in a clean straw-bedded barn, and beside it a cheesemaker turning wheels of cheese on wooden cellar shelves, rolling green hills through the open door',
   'fast-biz-meat-shops-kzn':
     'A butcher stall in a covered market: a butcher in a white apron cutting meat on a thick block, a neat chilled display case, hanging scales, customers queueing, warm market light',
+  /* Две клетки GreenLeaf на Полосе — решение Камиля 20.08. */
+  'fast-gl-shops':
+    'A bright branded retail counter inside a shopping mall: shelves of neatly arranged product boxes, a consultant talking to two customers, a pickup desk with parcels behind, clean daylight',
+  'fast-gl-factory':
+    'A modern production hall: stainless steel filling lines running bottles and jars past workers in white coats and caps, pallets of finished cartons at the end of the line, bright even light',
+
 }
 
 /** Быстрая дорожка — совместные предприятия. */
@@ -1580,6 +1641,84 @@ const SCENES_FAST_VENTURE = {
 }
 
 /** Мечты (в данных у них нет id — ключ по точному названию). */
+
+/**
+ * Дела и венчуры Полосы свободы — зарубежный набор.
+ *
+ * 🔴 Этих сцен не было, и генератор эту колоду вообще не обходил: девятнадцать
+ * карточек выходили без картинки. Ключ — id карточки.
+ */
+const SCENES_FAST_ALT = {
+  'fast-alt-biz-kofe-istanbul':
+    'A small coffee counter on a busy Istanbul pedestrian street, a morning queue of locals, a tram passing behind, steam rising from the machine',
+  'fast-alt-biz-lepeshki-tashkent':
+    'A tandoor bakery in a Tashkent mahalla courtyard, a baker pressing dough onto the hot clay wall, stacks of round flatbread on a wooden table, early morning',
+  'fast-alt-biz-carwash-dubai':
+    'An automated car wash bay at night, a car passing through rotating brushes, water and coloured light, an empty forecourt with desert dust on the ground',
+  'fast-alt-biz-lokanta-set-antalya':
+    'A home-style Turkish lokanta at lunchtime, steam trays of stews behind glass, office workers queuing with trays',
+  'fast-alt-biz-shveyka-tashkent':
+    'A garment workshop with forty sewing machines in long rows, workers on shift, bolts of uniform fabric stacked at the end, bright industrial light',
+  'fast-alt-biz-it-dubai':
+    'A small software team at desks in a Dubai office, code and dashboards on their screens, a glass wall with towers beyond',
+  'fast-alt-biz-voda-jeddah':
+    'A delivery van loaded with five-gallon water bottles, a driver carrying two of them into an office lobby, hot bright daylight',
+  'fast-alt-biz-glamping-bali':
+    'Eight geodesic dome tents on a hillside overlooking rice terraces at sunrise, lanterns still glowing, mist in the valley',
+  'fast-alt-biz-zavod-almaty':
+    'A food production line before dawn: workers in white forming dumplings on stainless steel tables, trays moving into a freezer tunnel',
+  'fast-alt-biz-stomat-istanbul':
+    'A modern dental clinic with several treatment chairs, a patient with a suitcase waiting in the reception area, clean bright light',
+  'fast-alt-biz-avtoservis-dubai':
+    'Three service bays with cars raised on lifts, mechanics at work, a dealership banner on the wall, industrial daylight',
+  'fast-alt-biz-medrese-jeddah':
+    'A new private school building in Jeddah, children arriving in the morning, parent cars queuing at the gate, palm trees along the wall',
+  'fast-alt-biz-logistika-almaty':
+    'A line of long-haul trucks in a border warehouse yard, containers being loaded, mountains on the horizon, cold clear morning',
+  'fast-alt-biz-ferma-bali':
+    'A coffee farm on Bali: workers picking red cherries on terraced slopes, drying beds and a small roastery shed below, morning mist',
+  'fast-alt-biz-myaso-istanbul':
+    'A neighbourhood butcher shop at opening time, fresh cuts in the display case, a butcher in white behind the counter, early light',
+  'fast-alt-venture-port-dubai':
+    'A container terminal at dusk with cranes over a docked ship, a small group in hard hats looking down at the yard from a gantry',
+  'fast-alt-venture-podryad-neom':
+    'A vast desert construction site with survey markers and a distant line of machinery, engineers under a canopy studying drawings, harsh light',
+  'fast-alt-venture-startup-friend':
+    'A pitch in a small meeting room: one person presenting slides to two listeners sitting with folded arms, laptop cables across the table, evening',
+  'fast-alt-venture-export-bali':
+    'A single sealed shipping container standing in a tropical yard, a person beside it on the phone looking towards the closed gate, heavy afternoon light',
+}
+
+/**
+ * Беды Полосы свободы. Та же история: колода в обход не входила.
+ */
+const SCENES_FAST_TROUBLE = {
+  'ft-nalog-pereschet':
+    'A desk buried under old paper declarations and folders, a person with a calculator holding a stern official letter, hard office light',
+  'ft-remont-krovli':
+    'Workers on a flat roof with buckets and torn insulation, a dark water stain spreading across the ceiling in the room below, grey weather',
+  'ft-shtraf-kontrolyory':
+    'An inspector with a clipboard inside a small shop pointing at a fire extinguisher on the wall, the owner standing beside him, fluorescent light',
+  'ft-upravlyayushchiy-ushel':
+    'An empty manager desk with a bare noticeboard above it and no personal things left, staff working further down the room, quiet daylight',
+  'ft-set-otkrylas-ryadom':
+    'A bright new chain store with a discount banner and a crowd at its door, and across the street a small shop with an empty doorway',
+  'ft-postavshik-podnyal':
+    'A supplier invoice lying on a shop counter beside stacked boxes, the owner rubbing his forehead, a printed price list on the wall',
+  'ft-slegli-v-bolnicu':
+    'A hospital room with a person in bed looking at a phone, an untouched folder of work papers on the bedside table, pale window light',
+  'ft-rodstvennik-zabolel':
+    'A packed bag by the front door and a person pulling on a coat while talking on the phone, keys in hand, night',
+  'ft-isk-partnyora':
+    'Two people with their lawyers on opposite sides of a long table covered in document folders, nobody looking at anyone',
+  'ft-nalogovaya-proverka':
+    'Inspectors going through boxes of accounting files in a back office while the owner watches from the doorway',
+  'ft-arendodatel-sud':
+    'A landlord and a tenant arguing over a contract at a shop entrance, a lease sign leaning against the wall beside them',
+  'ft-klient-podal':
+    'An empty restaurant table with a legal letter lying on it, a worried owner standing at the counter behind, dim light',
+}
+
 const SCENES_DREAMS = {
   'Хадж всей семьёй': {
     slug: 'dream-hajj-family',
@@ -1742,6 +1881,24 @@ function buildJobs() {
       jobs.push({ key: c.name, file: d.slug, scene: d.scene, group: 'dream' })
       manifest.byDream[c.name] = `/cards/${d.slug}.webp`
     }
+  }
+
+  /*
+   * 🔴 ЭТИ ДВЕ КОЛОДЫ ГЕНЕРАТОР НЕ ОБХОДИЛ ВОВСЕ — отсюда 31 карточка без
+   * картинки. Колоды добавили позже, а сюда их дописать забыли: проверить это
+   * нечем, потому что «нет сцены» и «нет обхода» выглядят одинаково — пустая
+   * карточка в игре.
+   */
+  for (const c of decks.FAST_BOARD_ALT_RU || []) {
+    push(c.id, c.id, SCENES_FAST_ALT[c.id], 'fast-alt', () => {
+      manifest.byId[c.id] = `/cards/${c.id}.webp`
+    })
+  }
+
+  for (const c of decks.FAST_TROUBLES_RU || []) {
+    push(c.id, c.id, SCENES_FAST_TROUBLE[c.id], 'fast-trouble', () => {
+      manifest.byId[c.id] = `/cards/${c.id}.webp`
+    })
   }
 
   // Зелёные фоны
