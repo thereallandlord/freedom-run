@@ -84,6 +84,7 @@ import {
   glTotalIncome,
   glUpgradeCost,
   glПришлиЛюди,
+  glЛюдиУшли,
   glПереливНаставника,
   glСтадия,
 } from './greenleaf'
@@ -3139,6 +3140,31 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
         Object.assign(g, r.next)
         разово += r.деньги
         объяснения.push(...r.заметки)
+      }
+      /*
+       * 🔴 Люди ушли навсегда. Считаем ДО денег: если человек увёл ветку, то
+       * и доход дальше считается уже без неё.
+       */
+      if (card.потеряЛюдей) {
+        const r = glЛюдиУшли(g, card.потеряЛюдей)
+        Object.assign(g, r.next)
+        объяснения.push(...r.заметки)
+      }
+      /*
+       * 🔴 Живые деньги из кармана. Не хватает наличных — уходит в долг тем же
+       * механизмом, что и неподъёмная трата: застрять на карточке нельзя.
+       */
+      if (card.тратаДенег) {
+        const сумма = card.тратаДенег
+        if (s.ledger.cash >= сумма) {
+          seatLedgerEvent(t, s.id, { type: 'DOODAD', amount: сумма })
+          объяснения.push(`Из кармана ушло ${money(сумма)}.`)
+        } else {
+          seatLedgerEvent(t, s.id, { type: 'FINANCE_DOODAD', amount: сумма })
+          объяснения.push(
+            `Наличных не хватило — ${money(сумма)} ушли в долг, и он теперь в ежемесячных расходах.`,
+          )
+        }
       }
 
       /*
