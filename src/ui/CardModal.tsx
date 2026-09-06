@@ -1430,6 +1430,68 @@ function CardBody({
       )
     }
 
+    case 'glRank': {
+      /*
+       * 🔴 ОТДЕЛЬНАЯ НОВОСТЬ, А НЕ СТРОЧКА В СПИСКЕ. Просьба Камиля:
+       * «закрытие ранга директора должно приходить отдельной новостью, а не
+       * вместе с зарплатой и партнёрским бизнесом». Раньше это была одна
+       * строка среди пяти-шести пояснений на карточке зарплаты, и крупнейшее
+       * событие партнёрского бизнеса пролистывали не глядя. Зарплата придёт
+       * следом — она ждёт своей очереди.
+       */
+      const герой = table.seats.find((x) => x.id === p.seatId)
+      const мой = герой?.id === seat.id
+      return (
+        <S
+          badge="Партнёрский бизнес GreenLeaf"
+          title={мой ? `Вы закрыли ранг «${p.rank}»` : `${герой?.name ?? 'Игрок'} закрыл ранг «${p.rank}»`}
+          flavor="Объём структуры набрался сам собой, по чуть-чуть — как это и бывает."
+          accent="#22c55e"
+          art="🏅"
+          photo={artById('big-greenleaf')}
+        >
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="panel-2 rounded-lg px-3 py-3 text-center">
+              <div className="text-[11px] uppercase tracking-wide text-[var(--muted)]">
+                Разовая премия
+              </div>
+              <div className="tabnum mt-0.5 text-[22px] font-black leading-none text-emerald-600 dark:text-emerald-400">
+                {money(p.bonus)}
+              </div>
+              <div className="mt-1 text-[11px] text-[var(--muted)]">сразу на счёт</div>
+            </div>
+            <div className="panel-2 rounded-lg px-3 py-3 text-center">
+              <div className="text-[11px] uppercase tracking-wide text-[var(--muted)]">
+                Прибавка навсегда
+              </div>
+              <div className="tabnum mt-0.5 text-[22px] font-black leading-none text-emerald-600 dark:text-emerald-400">
+                {money(p.pension)}
+              </div>
+              <div className="mt-1 text-[11px] text-[var(--muted)]">
+                каждый месяц сверх дохода структуры
+              </div>
+            </div>
+          </div>
+
+          {p.notes?.length ? (
+            <div className="panel-2 space-y-1.5 rounded-lg p-3 text-[12.5px] leading-snug">
+              {p.notes.map((н: string, i: number) => (
+                <div key={i}>{н}</div>
+              ))}
+            </div>
+          ) : null}
+
+          <p className="text-center text-[11.5px] leading-snug text-[var(--muted)]">
+            Ранг не слетает: набранный объём остаётся с вами до конца партии.
+          </p>
+
+          <button onClick={() => dispatch({ type: 'END_TURN' })} className="btn-primary w-full">
+            Дальше — зарплата
+          </button>
+        </S>
+      )
+    }
+
     case 'freedom': {
       const hero = table.seats.find((x) => x.id === p.seatId)
       const mine = hero?.id === seat.id
@@ -1741,8 +1803,17 @@ function CardBody({
             */}
             {мои.length === 0 ? (
               <p className="text-center text-sm text-[var(--muted)]">
+                {/*
+                  🔴 ИМЯ БЕЗ НАЗВАНИЯ ОБЪЕКТА — ПОЛОВИНА ОТВЕТА. Просьба
+                  Камиля: «если у кого-то есть подходящий объект, это должно
+                  показываться всем — у такого-то человека такой-то объект».
+                  Сначала мы заменили ложное «ни у кого нет» на список имён, но
+                  за одним экраном этого мало: люди спорили, о чём вообще речь.
+                */}
                 {чужие.length
-                  ? `Это не про ваши активы. Подходящие есть у: ${чужие.map((m) => m.seat.name).join(', ')}.`
+                  ? `Это не про ваши активы. Подходящие есть у: ${чужие
+                      .map((m) => `${m.seat.name} — ${m.assets.map((a) => a.name).join(', ')}`)
+                      .join('; ')}.`
                   : 'Ни у кого нет подходящих активов.'}
               </p>
             ) : (

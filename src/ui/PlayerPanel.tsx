@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { RealEstateAsset, BusinessAsset, Seat } from '../engine/types'
+import type { RealEstateAsset, BusinessAsset, Seat, Ledger } from '../engine/types'
 import {
   dividendLines,
   fastTrackIncome,
@@ -17,7 +17,9 @@ import {
   RULES,
   ribaRisk,
   MANAGER_PCT,
+  freedomBreakdown,
 } from '../engine/ledger'
+import type { FlowMul } from '../engine/ledger'
 import { МИНИМУМ_ВЛОЖЕНИЯ, СКИДКА_ЗА_СКОРОСТЬ, sellOfferQuote } from '../engine/table'
 import type { TableEvent } from '../engine/events'
 import { вКругах } from './срок'
@@ -65,6 +67,36 @@ export function tone(n: number) {
     : n < 0
       ? 'text-[var(--t-out,#D6425B)]'
       : 'text-[var(--t-muted, var(--muted))]'
+}
+
+
+/** Раскрывающийся список: из чего складывается доход, работающий без вас. */
+function ПассивныйПоИсточникам({ l, flowMul }: { l: Ledger; flowMul?: FlowMul }) {
+  const [открыто, setОткрыто] = useState(false)
+  const строки = freedomBreakdown(l, flowMul)
+  if (!строки.length) return null
+  return (
+    <div className="mt-0.5">
+      <button
+        onClick={() => setОткрыто((v) => !v)}
+        aria-expanded={открыто}
+        className="flex w-full items-center gap-1 py-[2px] text-left text-[11.5px] text-[var(--t-muted, var(--muted))] transition hover:text-[var(--t-ink, var(--ink))]"
+      >
+        <span className={`text-[9px] transition-transform ${открыто ? 'rotate-90' : ''}`}>▶</span>
+        <span>{открыто ? 'скрыть, из чего' : `из чего · ${строки.length}`}</span>
+      </button>
+      {открыто && (
+        <div className="mb-1 space-y-[2px] rounded-lg bg-[var(--t-glass, var(--panel-2))] px-2.5 py-1.5">
+          {строки.map((с: { name: string; amount: number }, i: number) => (
+            <div key={i} className="flex items-baseline justify-between gap-3 text-[11.5px]">
+              <span className="min-w-0 truncate text-[var(--t-muted, var(--muted))]">{с.name}</span>
+              <span className="tabnum shrink-0">{money(с.amount)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function Row({ label, value, dim }: { label: string; value: string; dim?: boolean }) {
@@ -1124,6 +1156,14 @@ export function PlayerPanel({
                 label="Из них пассивный (работает без вас)"
                 value={money(freedomIncome(l, flowMul))}
               />
+              {/*
+                🔴 РАЗБИВКА ПАССИВНОГО ДОХОДА. Просьба Камиля: «детализацию
+                надо сделать». Строка стояла одним числом, и на вопрос «за
+                счёт чего 182 тысячи?» ответить было нечем — живая жалоба
+                31.08. Считает `freedomBreakdown` — та же функция, из которой
+                собирается итог, поэтому строки не могут разойтись с суммой.
+              */}
+              <ПассивныйПоИсточникам l={l} flowMul={flowMul} />
               <Row label="Всего доходов" value={money(income)} />
             </div>
           </Section>

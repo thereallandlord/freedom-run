@@ -293,16 +293,48 @@ export const MANAGER_RARE_PCT = 20
  *     в начале ты в нём работаешь так же, как в любом деле.
  */
 export function freedomIncome(l: Ledger, m?: FlowMul): number {
-  const stocks = l.stocks.reduce((s, lot) => s + lot.shares * lot.dividendPerShareMonthly, 0)
-  const realEstate = l.realEstate.reduce((s, a) => s + ownShareAt(a, m), 0)
-  const businesses = l.businesses.reduce((s, a) => {
+  return freedomBreakdown(l, m).reduce((s, x) => s + x.amount, 0)
+}
+
+/**
+ * ИЗ ЧЕГО складывается доход, который работает без вас.
+ *
+ * 🔴 ЗАЧЕМ. Просьба Камиля: «детализацию надо сделать» — строка «из них
+ * пассивный» стояла одним числом, и на вопрос «за счёт чего 182 тысячи?»
+ * ответить было нечем. Живая жалоба 31.08: «пассивный встал 182 вместо 40,
+ * но за счёт чего? Тоже непонятно».
+ *
+ * 🔴 СЧИТАЕТСЯ ТУТ ЖЕ, ГДЕ И ИТОГ, и итог собирается ИЗ НЕЁ. Иначе строки
+ * разъедутся с суммой при первой же правке — а это ровно та ложь, от которой
+ * детализацию и заводят.
+ */
+export function freedomBreakdown(
+  l: Ledger,
+  m?: FlowMul,
+): { name: string; amount: number; kind: 'stock' | 'realEstate' | 'business' | 'gl' }[] {
+  const out: { name: string; amount: number; kind: 'stock' | 'realEstate' | 'business' | 'gl' }[] = []
+  for (const lot of l.stocks) {
+    const сумма = lot.shares * lot.dividendPerShareMonthly
+    if (сумма) out.push({ name: `${lot.symbol} · дивиденды`, amount: сумма, kind: 'stock' })
+  }
+  for (const a of l.realEstate) {
+    const сумма = ownShareAt(a, m)
+    if (сумма) out.push({ name: a.name, amount: сумма, kind: 'realEstate' })
+  }
+  for (const a of l.businesses) {
     // ownShareAt уже вычел долю управляющего — здесь только решаем,
     // идёт ли остаток в зачёт свободы.
     const mine = ownShareAt(a, m)
-    if (a.gl) return s + Math.round((mine * glFreedomShare(a.gl)) / 100)
-    return a.managerPct ? s + mine : s
-  }, 0)
-  return stocks + realEstate + businesses
+    if (a.gl) {
+      const доля = glFreedomShare(a.gl)
+      const сумма = Math.round((mine * доля) / 100)
+      if (сумма)
+        out.push({ name: `${a.name} · ${доля}% структуры`, amount: сумма, kind: 'gl' })
+      continue
+    }
+    if (a.managerPct && mine) out.push({ name: `${a.name} · с управляющим`, amount: mine, kind: 'business' })
+  }
+  return out.sort((a, b) => b.amount - a.amount)
 }
 
 /**

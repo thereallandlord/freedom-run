@@ -974,8 +974,34 @@ function cloneTable(t: Table): Table {
     loans: t.loans.map((l) => ({ ...l })),
     log: [...t.log],
     pending: t.pending ? ({ ...t.pending } as Pending) : null,
+    /*
+     * 🔴 ОЧЕРЕДЬ ТОЖЕ КОПИРУЕМ. Клон стола перечисляет поля поимённо, и
+     * забытое поле пропадает МОЛЧА: карточка ранга показывалась, а зарплата
+     * следом не приходила ни разу из двухсот пятнадцати — замер поймал.
+     */
+    следом: t.следом ? ({ ...t.следом } as Pending) : null,
     lastRoll: t.lastRoll ? [...t.lastRoll] : null,
   }
+}
+
+/**
+ * Снять текущую карточку и, если в очереди есть следующая, показать её.
+ *
+ * 🔴 ЗАЧЕМ ОБЩИЙ ХЕЛПЕР. Карточку закрывают из ДВУХ мест — «Дальше»
+ * (`PASS_CARD`) и конец хода (`END_TURN`), — и бот шлёт именно первое. Я
+ * положил очередь только во второе, и замер это поймал: карточка ранга
+ * показалась 215 раз, а зарплата следом не пришла НИ РАЗУ. Теперь оба места
+ * зовут одно и то же.
+ */
+function снятьКарточку(t: Table): boolean {
+  if (t.следом) {
+    t.pending = t.следом
+    t.следом = null
+    t.phase = 'resolving'
+    return true
+  }
+  t.pending = null
+  return false
 }
 
 function log(t: Table, seatId: string | null, text: string) {
@@ -2310,12 +2336,41 @@ function resolveLanding(t: Table, seatIdx: number) {
          */
         const paid =
           seat.track === 'rat' ? (l.lastPaycheck ?? monthlyCashFlow(l, t.market.flow)) : fastTrackIncome(l)
-        t.pending = {
-          kind: 'payday',
+        /*
+         * 🔴 ЗАКРЫТИЕ РАНГА — ОТДЕЛЬНАЯ НОВОСТЬ, И ОНА ИДЁТ ПЕРВОЙ.
+         *
+         * Просьба Камиля: «закрытие ранга директора должно приходить отдельной
+         * новостью, а не вместе с зарплатой и партнёрским бизнесом». Раньше
+         * это была строчка среди пяти-шести пояснений на карточке зарплаты, и
+         * крупнейшее событие партнёрского бизнеса пролистывали не глядя.
+         *
+         * Зарплата не теряется: она ждёт своей очереди в `следом` и
+         * показывается, как только карточку ранга закрыли.
+         */
+        const ранг = t.seats[seatIdx].ledger.glRankClosed
+        const зарплата = {
+          kind: 'payday' as const,
           amount: paid,
           notes: t.seats[seatIdx].ledger.glNotes?.length
             ? [...t.seats[seatIdx].ledger.glNotes]
             : undefined,
+        }
+        if (ранг) {
+          t.seats[seatIdx] = {
+            ...t.seats[seatIdx],
+            ledger: { ...t.seats[seatIdx].ledger, glRankClosed: undefined },
+          }
+          t.следом = зарплата
+          t.pending = {
+            kind: 'glRank',
+            seatId: seat.id,
+            rank: ранг.rank,
+            bonus: ранг.bonus,
+            pension: ранг.pension,
+            notes: ранг.notes.length ? ранг.notes : undefined,
+          }
+        } else {
+          t.pending = зарплата
         }
         /*
          * 🔴 ФАЗУ МЕНЯТЬ ОБЯЗАТЕЛЬНО. Здесь её не трогали, и стол оставался в
@@ -5231,7 +5286,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
         markDecided(t, seat.id)
         return t
       }
-      t.pending = null
+      if (снятьКарточку(t)) return t
       t.phase = 'turnEnd'
       return t
     }
@@ -6012,11 +6067,18 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
         t.pending &&
         (t.pending.kind === 'payday' ||
           t.pending.kind === 'ftEvent' ||
+          // Закрытие ранга — тоже просто «Понятно», решать нечего.
+          t.pending.kind === 'glRank' ||
           // Поздравление с выходом из Круга — тоже просто «Понятно».
           t.pending.kind === 'freedom')
       if (t.pending && !безРешения && t.pending.kind !== 'market' && t.pending.kind !== 'deal')
         return prev
-      t.pending = null
+      /*
+       * 🔴 ОЧЕРЕДЬ ИЗ ОДНОЙ КАРТОЧКИ. Закрыли ранг — следом ждёт зарплата, и
+       * ход на ней не кончается: иначе человек, закрывший ранг, остался бы
+       * без карточки зарплаты, а деньги пришли бы молча.
+       */
+      if (снятьКарточку(t)) return t
       /*
        * Последняя возможность отдать партнёрский бизнес в срок: карточка хода
        * уже закрыта, ход ещё не ушёл. Так обещание «не позже четвёртого хода»
