@@ -87,6 +87,7 @@ import {
   glСтадия,
 } from './greenleaf'
 import { нормализоватьРынки, type Рынок } from './рынки'
+import { НРАВЫ, классБумаги, шагЦены } from './котировки'
 import {
   auctionWinner,
   clampPrice,
@@ -294,6 +295,15 @@ export function createTable(setup: TableSetup): Table {
     idSeq: 0,
     worldDeck: { order: shuffleIndices(WORLD_EVENTS.length, setup.seed + 5), next: 0 },
     market: { price: {}, flow: {}, stock: {} },
+    /*
+     * 🔴 Начальная цена — печатная с карточки. Дальше она ходит сама, но
+     * стартуют все с того, что нарисовано: игрок должен узнавать бумагу.
+     */
+    котировки: Object.fromEntries(
+      smallDeals(theme)
+        .filter((c) => c.kind === 'stock')
+        .map((c) => [(c as { symbol: string }).symbol.toUpperCase(), (c as { price: number }).price]),
+    ),
     marketEffects: [],
     лента: [],
     worldTick: 0,
@@ -1163,12 +1173,30 @@ const ПЕРЕКОС_МЕМКОИНА = 3
 
 function stockDrawPrice(t: Table, card: DealCard): DealCard {
   if (card.kind !== 'stock') return card
-  const [lo, hi] = card.range
-  if (!(hi > lo)) return card
-  const u = rng(t, 8171)
-  const перекос = (card as { meme?: boolean }).meme ? ПЕРЕКОС_МЕМКОИНА : ПЕРЕКОС_ЦЕНЫ
-  const price = Math.round((lo + (hi - lo) * Math.pow(u, перекос)) / 100) * 100
-  return { ...card, price: Math.max(lo, Math.min(hi, price)) }
+  /*
+   * 🔴 ПОКУПАЮТ ПО СЕГОДНЯШНЕЙ ЦЕНЕ, А НЕ ПО ВЫГОДНОМУ БРОСКУ.
+   *
+   * Раньше цена покупки разыгрывалась из вилки с перекосом ВНИЗ, а продажа
+   * шла по печатной цене — то есть прибыль была заложена в саму механику, и
+   * снять её можно было в любой момент без единого события. Это и есть
+   * «продавать в плюс странно», о чём говорил Камиль.
+   *
+   * Теперь цена одна и та же в обе стороны: покупаешь по той, что сегодня на
+   * рынке, продаёшь по той, что будет тогда. Заработок появляется только из
+   * движения цены — как в жизни.
+   */
+  const sym = card.symbol.toUpperCase()
+  const сегодня = t.котировки?.[sym]
+  if (!сегодня) {
+    // Старая запись без котировок — прежнее поведение, чтобы её не сломать.
+    const [lo, hi] = card.range
+    if (!(hi > lo)) return card
+    const u = rng(t, 8171)
+    const перекос = (card as { meme?: boolean }).meme ? ПЕРЕКОС_МЕМКОИНА : ПЕРЕКОС_ЦЕНЫ
+    const price = Math.round((lo + (hi - lo) * Math.pow(u, перекос)) / 100) * 100
+    return { ...card, price: Math.max(lo, Math.min(hi, price)) }
+  }
+  return { ...card, price: сегодня }
 }
 
 /** Карта сделки в масштабе режима: партнёрский бизнес не трогаем — у него своя экономика. */
@@ -1393,10 +1421,16 @@ export function stockBasePrice(theme: Table['deckTheme'], symbol: string): numbe
 export function stockPriceNow(t: Table, symbol: string): number {
   const sym = symbol.toUpperCase()
   const p = t.pending
+  /*
+   * 🔴 Карточка рынка по ЭТОЙ бумаге — это и есть новость «теперь она стоит
+   * столько». Она перебивает ход цены на время своего показа; в остальное
+   * время цена берётся из котировок стола, которые ходят сами каждый ход.
+   * Печатная цена остаётся запасом для старых записей, где котировок нет.
+   */
   const base =
     p?.kind === 'market' && p.card.kind === 'stockPrice' && p.card.symbol.toUpperCase() === sym
       ? p.card.price
-      : stockBasePrice(t.deckTheme, sym)
+      : (t.котировки?.[sym] ?? stockBasePrice(t.deckTheme, sym))
   return marketStockPrice(base, t.market.stock[sym])
 }
 
@@ -3135,7 +3169,37 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
 
 // ─── Переход хода ─────────────────────────────────────────────────────
 
+/**
+ * Сдвинуть все котировки на один ход.
+ *
+ * 🔴 ЗАЧЕМ ЭТО ЗДЕСЬ, А НЕ В ОТРИСОВКЕ. Движение обязано быть частью партии:
+ * посчитанное на лету, оно разъехалось бы между экранами игроков, а при
+ * пересборке из журнала дало бы другие цены — и другой исход.
+ */
+const ДЛИНА_ГРАФИКА = 14
+
+function сдвинутьКотировки(t: Table) {
+  if (!t.котировки) return
+  t.историяКотировок ??= {}
+  for (const c of smallDeals(t.deckTheme)) {
+    if (c.kind !== 'stock') continue
+    const sym = c.symbol.toUpperCase()
+    const было = t.котировки[sym] ?? c.price
+    const нрав = НРАВЫ[классБумаги(c as { symbol: string; meme?: boolean })]
+    const стало = шагЦены(было, c.price, c.range, нрав, () => rng(t, 8891))
+    t.котировки[sym] = стало
+    const хвост = t.историяКотировок[sym] ?? [было]
+    t.историяКотировок[sym] = [...хвост, стало].slice(-ДЛИНА_ГРАФИКА)
+  }
+}
+
+/** Короткий хвост цены для графика в интерфейсе. */
+export function историяЦены(t: Table, symbol: string): number[] {
+  return t.историяКотировок?.[symbol.toUpperCase()] ?? []
+}
+
 function nextTurn(t: Table) {
+  сдвинутьКотировки(t)
   // Победители выходят из очереди — доигрывают только остальные.
   const alive = t.seats.filter((s) => !s.outOfGame && !s.won)
   if (alive.length === 0) {

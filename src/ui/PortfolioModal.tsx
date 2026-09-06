@@ -13,7 +13,7 @@
 import { useState } from 'react'
 import type { Seat, Table } from '../engine/types'
 import type { TableEvent } from '../engine/events'
-import { stockPriceNow } from '../engine/table'
+import { stockPriceNow, историяЦены } from '../engine/table'
 import { money, signed, tone } from './PlayerPanel'
 
 export function PortfolioModal({
@@ -73,6 +73,7 @@ export function PortfolioModal({
                   key={lot.id}
                   lot={lot}
                   price={stockPriceNow(table, lot.symbol)}
+                  точки={историяЦены(table, lot.symbol)}
                   onSell={(n, price) =>
                     dispatch({
                       type: 'SELL_STOCK_LOT',
@@ -126,14 +127,50 @@ export function PortfolioModal({
   )
 }
 
+
+/**
+ * Крошечный график цены за последние ходы.
+ *
+ * 🔴 ЗАЧЕМ. С 06.09 цена бумаги ходит каждый ход, и без картинки это движение
+ * невидимо: человек видит одно число и не понимает, растёт оно или падает.
+ * Камиль просил именно тенденцию, а не скачки — тенденция и рисуется.
+ */
+function ГрафикЦены({ точки }: { точки: number[] }) {
+  if (точки.length < 2) return null
+  const низ = Math.min(...точки)
+  const верх = Math.max(...точки)
+  const размах = верх - низ || 1
+  const Ш = 68
+  const В = 18
+  const шаг = Ш / (точки.length - 1)
+  const путь = точки
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${(i * шаг).toFixed(1)},${(В - ((p - низ) / размах) * В).toFixed(1)}`)
+    .join(' ')
+  const рост = точки[точки.length - 1] >= точки[0]
+  const цвет = рост ? 'var(--good, #10b981)' : 'var(--bad, #f43f5e)'
+  return (
+    <svg width={Ш} height={В} viewBox={`0 0 ${Ш} ${В}`} aria-hidden className="shrink-0">
+      <path d={путь} fill="none" stroke={цвет} strokeWidth="1.5" strokeLinejoin="round" />
+      <circle
+        cx={Ш}
+        cy={(В - ((точки[точки.length - 1] - низ) / размах) * В).toFixed(1)}
+        r="1.8"
+        fill={цвет}
+      />
+    </svg>
+  )
+}
+
 /** Строка бумаги: сколько продать и по какой цене сегодня. */
 function StockRow({
   lot,
   price,
+  точки,
   onSell,
 }: {
   lot: { id: string; symbol: string; shares: number; costPerShare: number }
   price: number
+  точки: number[]
   onSell: (shares: number, price: number) => void
 }) {
   const [n, setN] = useState(lot.shares)
@@ -151,8 +188,9 @@ function StockRow({
           куплено по {money(lot.costPerShare)}
         </span>
       </div>
-      <div className="mt-0.5 flex items-baseline justify-between gap-2">
+      <div className="mt-0.5 flex items-center justify-between gap-2">
         <span className="tabnum font-bold">{money(price)} сегодня</span>
+        <ГрафикЦены точки={точки} />
         <span className={`tabnum font-semibold ${tone(profit)}`}>{signed(profit)}</span>
       </div>
 

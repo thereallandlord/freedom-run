@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { CAT_SHORT, CAT_FULL } from '../engine/категории'
 import type { Seat, Table, WorldEffect, WorldEvent } from '../engine/types'
 import { WORLD_EVENTS } from '../engine/data'
-import { stockBasePrice } from '../engine/table'
+import { stockPriceNow } from '../engine/table'
 import { artByWorld } from './cardArt'
 import { money, signed } from './PlayerPanel'
 import { WORLD_EVENT_MIN } from './useGame'
@@ -581,7 +581,12 @@ function personalImpact(
   if (e.kind === 'stockPrice') {
     for (const lot of l.stocks) {
       if (!e.symbols.includes(lot.symbol)) continue
-      const base = stockBasePrice(table.deckTheme, lot.symbol)
+      /*
+       * 🔴 От СЕГОДНЯШНЕЙ цены, а не от печатной. С 06.09 цена бумаги ходит
+       * каждый ход, и «плюс двадцать процентов» от старой печатной обещало бы
+       * не те деньги: чем дольше идёт партия, тем сильнее расходились цифры.
+       */
+      const base = stockPriceNow(table, lot.symbol)
       const delta = Math.round((base * (e.pct / 100)) * lot.shares)
       out.push({ text: `${lot.symbol} × ${lot.shares}`, delta })
     }
