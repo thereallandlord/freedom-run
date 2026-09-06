@@ -4883,21 +4883,63 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       if (!Number.isInteger(die) || die < 1 || die > 6) return prev
       const before = l.cash
 
-      if (die >= space.threshold) {
+      /*
+       * 🔴 ВЕНЧУР — НЕ МОНЕТКА. Камиль: «продумать механику рискованных
+       * карточек-ставок и лотереи — в жизни такие ситуации не выпадают, а
+       * шансы равные». Так и было: бросок либо давал проект целиком, либо
+       * сжигал ставку дотла, ровно пополам.
+       *
+       * В жизни у венчура исходов больше, и распределение у них рваное:
+       * большинство проектов не возвращают ничего, часть возвращает часть
+       * денег, немногие работают скромнее обещанного, и лишь единицы
+       * выстреливают как в презентации. Лесенка это и повторяет.
+       *
+       * 🔴 Порог карточки не выброшен, а стал СДВИГОМ по лесенке: проект с
+       * порогом 4 «надёжнее» проекта с порогом 5 ровно на одну ступень.
+       * Иначе все венчуры стали бы одинаковыми, а они разные по риску.
+       */
+      const ступень = die + (5 - space.threshold)
+      const исход: 'сгорело' | 'половина' | 'ноль' | 'вполсилы' | 'выстрелил' =
+        ступень <= 2 ? 'сгорело' : ступень === 3 ? 'половина' : ступень === 4 ? 'ноль' : ступень === 5 ? 'вполсилы' : 'выстрелил'
+      const вернули =
+        исход === 'половина'
+          ? Math.round(space.downPayment / 2 / 1000) * 1000
+          : исход === 'ноль'
+            ? space.downPayment
+            : 0
+      const доход =
+        исход === 'выстрелил'
+          ? space.cashFlow
+          : исход === 'вполсилы'
+            ? Math.round(space.cashFlow / 2 / 100) * 100
+            : 0
+
+      if (доход > 0) {
         seatLedgerEvent(t, seat.id, {
           type: 'BUY_FT_BUSINESS',
           id: `ft-${spaceIdx}`,
           name: localizedSpaceName(spaceIdx),
           downPayment: space.downPayment,
-          cashFlow: space.cashFlow,
+          cashFlow: доход,
         })
         t.ftOwnership[spaceIdx] = seat.id
-        log(t, seat.id, `🎲 ${die} — проект выстрелил! +${money(space.cashFlow)}/мес`)
-        плашка(t, seat.id, `${seat.name}: выпало ${die} — проект выстрелил, +${money(space.cashFlow)}/мес`, 'добро')
+        const слово =
+          исход === 'выстрелил'
+            ? 'проект выстрелил'
+            : 'проект пошёл, но скромнее обещанного'
+        log(t, seat.id, `🎲 ${die} — ${слово}: +${money(доход)}/мес`)
+        плашка(t, seat.id, `${seat.name}: выпало ${die} — ${слово}, +${money(доход)}/мес`, 'добро')
       } else {
         seatLedgerEvent(t, seat.id, { type: 'FT_STAKE_LOST', amount: space.downPayment })
-        log(t, seat.id, `🎲 ${die} — ставка ${money(space.downPayment)} сгорела`)
-        плашка(t, seat.id, `${seat.name}: выпало ${die} — ставка ${money(space.downPayment)} сгорела`, 'худо')
+        if (вернули > 0) seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: вернули })
+        const слово =
+          исход === 'ноль'
+            ? `проект закрылся, вложенное вернули — ${money(вернули)}`
+            : вернули > 0
+              ? `проект закрылся, вернули только часть — ${money(вернули)} из ${money(space.downPayment)}`
+              : `ставка ${money(space.downPayment)} сгорела`
+        log(t, seat.id, `🎲 ${die} — ${слово}`)
+        плашка(t, seat.id, `${seat.name}: выпало ${die} — ${слово}`, вернули > 0 ? 'нейтр' : 'худо')
       }
       /*
        * 🔴 Карточку НЕ убираем — показываем на ней, что выпало и чем это
@@ -4909,7 +4951,10 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
         t.pending = {
           ...t.pending,
           rolled: die,
-          won: die >= space.threshold,
+          won: доход > 0,
+          исход,
+          вернули,
+          доход,
           before,
           after: t.seats[seatIdx].ledger.cash,
         }

@@ -2637,8 +2637,12 @@ function CardBody({
               была честная, но выглядела как обман: поставил и всё пропало.
             */}
             <Stat
-              label="Шанс"
-              value={`${7 - space.threshold} из 6 — примерно ${Math.round(((7 - space.threshold) / 6) * 100)}%`}
+              label="Как может кончиться"
+              value={
+                space.threshold <= 4
+                  ? 'от полной потери до полного дохода'
+                  : 'чаще потеря, чем доход'
+              }
             />
           </div>
           <HalalNote topic="venture" />
@@ -2666,11 +2670,43 @@ function CardBody({
               и выглядело как «механика риска не работает».
             */
             <>
+              {(() => {
+                /*
+                  🔴 ПЯТЬ ИСХОДОВ, А НЕ ДВА. Камиль: «в жизни такие ставки не
+                  выпадают, а шансы равные». Раньше карточка знала только
+                  «выстрелило» и «сгорело», и середины — вернули часть, вышли
+                  в ноль, проект пошёл скромнее — просто не существовало.
+                  Старые записи без поля `исход` показываются как раньше.
+                */
+                const и = p.исход
+                const цвет =
+                  и === 'выстрелил' || и === 'вполсилы' || (и == null && p.won)
+                    ? 'emerald'
+                    : и === 'ноль' || и === 'половина'
+                      ? 'amber'
+                      : 'rose'
+                const текст =
+                  и === 'выстрелил'
+                    ? `Выстрелило! ${signed(p.доход ?? space.cashFlow)}/мес`
+                    : и === 'вполсилы'
+                      ? `Проект пошёл, но скромнее обещанного: ${signed(p.доход ?? 0)}/мес`
+                      : и === 'ноль'
+                        ? `Проект закрылся, вложенное вернули — ${money(p.вернули ?? 0)}`
+                        : и === 'половина'
+                          ? `Проект закрылся, вернули только часть — ${money(p.вернули ?? 0)} из ${money(space.downPayment)}`
+                          : и === 'сгорело'
+                            ? `Ставка ${money(space.downPayment)} сгорела`
+                            : p.won
+                              ? `Выстрелило! ${signed(space.cashFlow)}/мес`
+                              : `Ставка ${money(space.downPayment)} сгорела`
+                return (
               <div
                 className={`rounded-xl border px-3 py-3 text-center ${
-                  p.won
+                  цвет === 'emerald'
                     ? 'border-emerald-500/50 bg-emerald-500/10'
-                    : 'border-rose-500/50 bg-rose-500/10'
+                    : цвет === 'amber'
+                      ? 'border-amber-500/50 bg-amber-500/10'
+                      : 'border-rose-500/50 bg-rose-500/10'
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -2679,12 +2715,14 @@ function CardBody({
                 </div>
                 <div
                   className={`mt-1.5 text-[14px] font-bold ${
-                    p.won ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                    цвет === 'emerald'
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : цвет === 'amber'
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-rose-600 dark:text-rose-400'
                   }`}
                 >
-                  {p.won
-                    ? `Выстрелило! ${signed(space.cashFlow)}/мес`
-                    : `Нужно было ${space.threshold} или больше — ставка сгорела`}
+                  {текст}
                 </div>
                 {p.before != null && p.after != null && (
                   <div className="mt-1 text-[12px] text-[var(--muted)]">
@@ -2692,6 +2730,8 @@ function CardBody({
                   </div>
                 )}
               </div>
+                )
+              })()}
               <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
                 Понятно
               </button>
