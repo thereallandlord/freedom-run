@@ -409,25 +409,29 @@ function WinScreen({
 
         <div className="mt-5 space-y-1 text-left">
           {standings.map(({ seat: s, почему }, i) => (
-            <div key={s.id} className="panel-2 flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm">
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="text-[var(--t-muted, var(--muted))]">{i + 1}.</span>
-                <span className="size-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
-                <span className="min-w-0">
-                  <span className="block truncate">
-                    {s.name}
-                    {s.won && <span className="ml-1 text-xs text-emerald-400">🏆</span>}
-                  </span>
-                  <span
-                    className={`block text-[11px] ${s.outOfGame ? 'text-rose-400' : 'text-[var(--t-muted, var(--muted))]'}`}
-                  >
-                    {почему}
-                  </span>
+            <div key={s.id} className="panel-2 rounded-lg px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="text-[var(--t-muted, var(--muted))]">{i + 1}.</span>
+                  <span className="size-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+                  <span className="truncate">{s.name}</span>
+                  {s.won && <span className="shrink-0 text-xs text-emerald-400">🏆</span>}
                 </span>
-              </span>
-              <span className="tabnum shrink-0 text-[var(--t-muted, var(--muted))]">
-                капитал {money(netWorth(s.ledger))}
-              </span>
+                {/* 🔴 На телефоне слово «капитал» съедало полстроки и рвало имя. */}
+                <span className="tabnum shrink-0 text-[var(--t-muted, var(--muted))]">
+                  <span className="hidden sm:inline">капитал </span>
+                  {money(netWorth(s.ledger))}
+                </span>
+              </div>
+              {/*
+                🔴 Подпись — отдельной строкой во всю ширину. В колонке рядом с
+                капиталом она на узком экране рассыпалась по слову в строку.
+              */}
+              <div
+                className={`mt-0.5 pl-10 text-left text-[11px] ${s.outOfGame ? 'text-rose-400' : 'text-[var(--t-muted, var(--muted))]'}`}
+              >
+                {почему}
+              </div>
             </div>
           ))}
         </div>
