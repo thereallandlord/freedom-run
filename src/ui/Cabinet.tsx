@@ -37,7 +37,12 @@ export function Cabinet({
    * браузерах игроков, комната, из которой вышли все, пропадала навсегда —
    * поднять стол было неоткуда.
    */
-  поднять?: (setup: unknown, journal: unknown) => void
+  поднять?: (
+    setup: unknown,
+    journal: unknown,
+    /** Итог моего места при записи — по нему проверяем, сошлась ли партия после повтора. */
+    ожидание?: { turns: number; seatId: string; netWorth: number },
+  ) => void
 }) {
   const me = currentUser()
   const [games, setGames] = useState<SavedGame[] | null>(null)
@@ -167,7 +172,7 @@ export function Cabinet({
                       <div className="border-t border-[var(--line)] px-3 py-2">
                         <button
                           onClick={() => {
-                            поднять(g.setup, g.journal)
+                            поднять(g.setup, g.journal, { turns: g.turns, seatId: g.me.seatId, netWorth: g.me.netWorth })
                             onClose()
                           }}
                           className="btn-primary w-full py-2 text-[13px]"

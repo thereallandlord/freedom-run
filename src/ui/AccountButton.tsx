@@ -35,7 +35,12 @@ export function AccountButton({
   поднять,
 }: {
   /** Поднять незаконченную партию из кабинета. */
-  поднять?: (setup: unknown, journal: unknown) => void
+  поднять?: (
+    setup: unknown,
+    journal: unknown,
+    /** Итог моего места при записи — по нему проверяем, сошлась ли партия после повтора. */
+    ожидание?: { turns: number; seatId: string; netWorth: number },
+  ) => void
 } = {}) {
   const user = useAuthUser()
   const [open, setOpen] = useState<null | 'login' | 'cabinet'>(null)

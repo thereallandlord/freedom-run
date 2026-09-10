@@ -7,6 +7,7 @@ import { Admin, хочетПанель } from './Admin'
 import { JoinRoom, JoinWaiting, Lobby } from './Lobby'
 import { useGame } from './useGame'
 import type { TableEvent } from '../engine/events'
+import { сверитьСКабинетом } from '../engine/сверкаПартии'
 import { useRoom } from './useRoom'
 import { useTheme } from './theme'
 import { createTransport } from '../net/realtime'
@@ -49,8 +50,27 @@ export function App() {
    * а не игра. Стол собирается заново по журналу, дальше можно доиграть за
    * одним экраном или завести комнату и позвать своих.
    */
-  const поднятьИзКабинета = (setup: unknown, journal: unknown) => {
-    game.resume(setup as never, (journal ?? []) as never)
+  const [кабинетУстарела, setКабинетУстарела] = useState<{ ходов: number } | null>(null)
+  const поднятьИзКабинета = (
+    setup: unknown,
+    journal: unknown,
+    ожидание?: { turns: number; seatId: string; netWorth: number },
+  ) => {
+    const ходы = (journal ?? []) as TableEvent[]
+    /*
+     * 🔴 СВЕРКА ПЕРЕД ПОДЪЁМОМ. У кабинетных партий нет отпечатка правил, и
+     * после правки колод или профессий журнал молча переигрывался в другую
+     * партию — с другими картами и деньгами. Кабинет хранит итог моего места
+     * (ход и капитал): повтор к нему не пришёл — партию не поднимаем и честно
+     * говорим об этом на главной. Текущая игра при этом не теряется: её
+     * местное сохранение остаётся на месте.
+     */
+    if (ожидание && !сверитьСКабинетом(setup as never, ходы, ожидание).сошлась) {
+      setКабинетУстарела({ ходов: ожидание.turns })
+      setScreen('landing')
+      return
+    }
+    game.resume(setup as never, ходы as never)
     setScreen('game')
   }
   // Транспорт создаётся один раз: Supabase, если заданы ключи, иначе вкладки одного браузера.
@@ -519,7 +539,9 @@ export function App() {
       устарела={
         game.устарела
           ? { ходов: game.устарела.ходов, onOk: game.забытьУстаревшую }
-          : undefined
+          : кабинетУстарела
+            ? { ходов: кабинетУстарела.ходов, onOk: () => setКабинетУстарела(null), изКабинета: true }
+            : undefined
       }
       войти={authAvailable() && !вошёл ? openLogin : undefined}
       saved={
