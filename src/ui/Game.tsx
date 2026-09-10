@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { итоговыйПорядок } from '../engine/итоги'
 import type { Table, Seat } from '../engine/types'
 import type { TableEvent } from '../engine/events'
 import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow,
@@ -360,7 +361,11 @@ function WinScreen({
   onRematch: () => void
 }) {
   const winner = table.seats.find((s) => s.id === table.winnerId)
-  const standings = [...table.seats].sort((a, b) => netWorth(b.ledger) - netWorth(a.ledger))
+  /*
+   * 🔴 Раньше — сортировка по капиталу, и победитель мог стоять в своём же
+   * списке третьим. Порядок и подписи теперь считает движок (итоги.ts).
+   */
+  const standings = итоговыйПорядок(table)
   return (
     <div className="modal-layer fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4">
       <div className="pop-in panel w-full max-w-md rounded-2xl p-6 text-center">
@@ -403,16 +408,24 @@ function WinScreen({
         )}
 
         <div className="mt-5 space-y-1 text-left">
-          {standings.map((s, i) => (
-            <div key={s.id} className="panel-2 flex items-center justify-between rounded-lg px-3 py-2 text-sm">
-              <span className="flex items-center gap-2">
+          {standings.map(({ seat: s, почему }, i) => (
+            <div key={s.id} className="panel-2 flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm">
+              <span className="flex min-w-0 items-center gap-2">
                 <span className="text-[var(--t-muted, var(--muted))]">{i + 1}.</span>
-                <span className="size-2.5 rounded-full" style={{ background: s.color }} />
-                {s.name}
-                {s.won && <span className="text-xs text-emerald-400">🏆</span>}
-                {s.outOfGame && <span className="text-xs text-rose-400">(банкрот)</span>}
+                <span className="size-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+                <span className="min-w-0">
+                  <span className="block truncate">
+                    {s.name}
+                    {s.won && <span className="ml-1 text-xs text-emerald-400">🏆</span>}
+                  </span>
+                  <span
+                    className={`block text-[11px] ${s.outOfGame ? 'text-rose-400' : 'text-[var(--t-muted, var(--muted))]'}`}
+                  >
+                    {почему}
+                  </span>
+                </span>
               </span>
-              <span className="tabnum text-[var(--t-muted, var(--muted))]">
+              <span className="tabnum shrink-0 text-[var(--t-muted, var(--muted))]">
                 капитал {money(netWorth(s.ledger))}
               </span>
             </div>

@@ -1201,7 +1201,7 @@ function короновать(t: Table, i: number) {
     if (долг > 0) return
     // Выведенный из гонки цели достигает, но титул ему не засчитывается.
     if (t.seats[i].внеГонки) return
-    t.seats[i] = { ...t.seats[i], won: true }
+    t.seats[i] = { ...t.seats[i], won: true, победаНаХоду: t.turnCounter }
     t.winnerId ??= t.seats[i].id
     log(t, t.seats[i].id, `🏆 ${t.seats[i].name} достиг цели!`)
     // Остальные доигрывают — как в живой игре. Финиш, когда активных не осталось.
