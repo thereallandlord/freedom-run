@@ -235,6 +235,18 @@ const SCENES_SMALL_RE = {  /* Зарубежное расширение: Бал�
     'A very small top-floor studio flat in Mersin, Turkey: a single bed, a student’s desk with an open laptop, a two-ring cooker in the corner, laundry drying on the balcony rail, sea haze and apartment blocks beyond, strong afternoon sun',
   'sd-park-kzn-two':
     'Two adjacent numbered parking bays in a new Kazan underground garage, both occupied by identical white car-sharing hatchbacks, clean sealed floor, bright even LED light',
+  /* Эмираты вне Дубая — по живым объявлениям, 11.09 (просьба Камиля 16–19.08). */
+  'sd-re-ajm-downtown':
+    'Compact residential towers in downtown Ajman near the beach at sunset, a shopping mall entrance and a palm-lined road below, one person resting on a balcony',
+  'sd-re-shj-nahda':
+    'An older mid-rise residential tower in a busy Sharjah district at dusk, balconies with air-conditioning units, a jammed road with cars heading towards the city, warm streetlights',
+  'sd-re-ajm-nuaimiya':
+    'A dense residential street in Ajman in the evening, mid-rise apartment blocks, families walking past small shops, traffic building up at an intersection',
+  'sd-re-shj-aljada':
+    'A brand-new residential block in a modern master-planned district of Sharjah, landscaped walkways, a young couple carrying boxes into the lobby, clean afternoon light, campus buildings in the distance',
+  'sd-re-auh-reem':
+    'Glass residential towers on an island in Abu Dhabi seen across calm water at golden hour, construction cranes on new towers nearby, a promenade with palm trees',
+
 }
 
 /** Малые сделки — акции и активы. Одна картинка на ТИКЕР. */
@@ -1462,6 +1474,14 @@ const SCENES_BIG_BIZ = {
     'A bright meeting room table covered with a full range of product boxes and bottles: an experienced mentor and a newcomer going through a printed catalogue together, notebooks and a phone on the table, daylight',
   'big-partner-expand-leader':
     'A small training session in an airy room: a woman standing beside a flip chart with simple abstract diagrams teaching six people seated in a semicircle, product boxes on a side table, notebooks on laps, bright daylight',
+  /* Франшизы и мини-производство — настоящая экономика, 11.09 (просьба Камиля 16–19.08). */
+  'sd-biz-franch-coffee-kzn':
+    'A tiny takeaway coffee kiosk at a bus stop on a cold morning, a barista handing a paper cup through the window, a short queue of commuters, steam in the air',
+  'big-biz-ceh-pelmeni':
+    'A small food workshop: workers in white coats and caps shaping dumplings at stainless steel tables, trays of frozen products, a delivery van being loaded at the loading door, cool light',
+  'big-biz-franch-pizza':
+    'A bright pizzeria kitchen with an open oven, cooks stretching dough, stacks of delivery boxes and couriers with thermal bags waiting by the door, evening rush',
+
 }
 
 /** Расходы (doodads). */
