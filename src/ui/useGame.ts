@@ -21,12 +21,13 @@ import {
   полнаяПолоса,
   PROFESSIONS_RU,
 } from '../engine/data'
+import * as правилаДела from '../engine/своёДело'
 import { botOfferReply } from './tradeHelpers'
 import { saveGame } from '../net/gamesApi'
 import { currentUser } from '../net/auth'
 import { scheduleWorldEvent } from './worldClock'
 import { завестиЧасыХода, срокНаХод } from './ходЧасы'
-import { diceCountFor } from '../engine/table'
+import { diceCountFor, THEME_RULES } from '../engine/table'
 
 const STORAGE_KEY = 'freedom-run:save:v2'
 
@@ -106,6 +107,22 @@ function отпечатокПравил(): string {
      * профессий подняли до 60% зарплаты.
      */
     PROFESSIONS_RU,
+    /*
+     * 🔴 ПРАВИЛА РОСТА СВОЕГО ДЕЛА — тоже данные партии (решение Камиля 11.09).
+     * Цену точки и роялти франшизы подгоняю замером; без них в отпечатке партия
+     * с открытой точкой после такой правки переигралась бы по новым цифрам молча.
+     * Числа из модуля попадают сюда сами, функции JSON отбрасывает.
+     */
+    правилаДела,
+    /*
+     * 🔴 ПРАВИЛА РЕЖИМА — рост трат за доходом, закят, множители. Их в отпечатке
+     * не было: правка доли роста трат переиграла бы каждую сохранённую партию
+     * по новым тратам молча. Правки из панели хозяина сюда НЕ кладу: они
+     * приезжают с сервера и могут не успеть к первому расчёту — отпечаток
+     * зависел бы от того, что успело прийти, и живая партия стиралась бы
+     * по случайности.
+     */
+    THEME_RULES,
   ])
   let h = 0x811c9dc5
   for (let i = 0; i < всё.length; i++) {

@@ -12,7 +12,7 @@ import { decideBotEvent } from './bots'
 import { netWorth } from './ledger'
 import type { Table, BotDifficulty } from './types'
 
-const ПАРТИЙ = Number(process.env.G || 30)
+const ПАРТИЙ = Number((globalThis as { process?: { env?: Record<string, string> } }).process?.env?.G || 30)
 /*
  * Страны через переменную окружения: `M=RU,TUR npm run bots` меряет стол,
  * собранный только этими рынками. Пусто — играем всеми, как раньше.

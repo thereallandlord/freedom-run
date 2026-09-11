@@ -53,7 +53,7 @@ export type LedgerEvent =
       /** Списанная незаработанная наценка при досрочном закрытии рассрочки. */
       rebate?: number
     }
-  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; glPackage?: import('./greenleaf').GlPackageId; glLuck?: number; value?: number; profitShareTo?: string; profitSharePct?: number }
+  | { type: 'BUY_BUSINESS'; id: string; name: string; cost: number; downPayment: number; liability: number; cashFlow: number; category: string; investorShare?: number; growthPerPayday?: number; growthCap?: number; installmentMonthly?: number; partnerId?: string; paidIn?: number; glPackage?: import('./greenleaf').GlPackageId; glLuck?: number; value?: number; profitShareTo?: string; profitSharePct?: number; точкаОт?: string; франшизаОт?: string; пассивное?: boolean }
   | { type: 'SELL_BUSINESS'; assetId: string; salePrice: number; debtTransfers?: boolean; rebate?: number }
   | { type: 'DOODAD'; amount: number }
   | { type: 'FINANCE_DOODAD'; amount: number }
@@ -237,6 +237,10 @@ export type TableEventBody =
   | { type: 'SET_ACCESS'; access: import('./types').DealAccess | null }
   /** Нанять управляющего в бизнес: доход начинает работать без тебя. */
   | { type: 'HIRE_MANAGER'; assetId: string; pct: number }
+  /** Ещё одна точка своего дела — сразу с управляющим (решение Камиля 11.09). */
+  | { type: 'OPEN_BRANCH'; assetId: string }
+  /** Франшиза своего дела — когда своих точек не меньше трёх. */
+  | { type: 'FRANCHISE_OWN'; assetId: string }
   /** Промоушен: забрать деньгами или поехать. Поездка даёт скрытую прибавку. */
   | { type: 'GL_PROMO_TAKE'; promo: 'travel' | 'auto'; go?: boolean }
   | { type: 'BUY_STOCK_SHARES'; shares: number; seatId?: string }

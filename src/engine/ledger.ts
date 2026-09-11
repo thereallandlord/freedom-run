@@ -41,6 +41,15 @@ export interface Rules {
   zakat: { enabled: boolean; pct: number; everyPaydays: number }
   /** Какая доля прироста дохода уходит в расходы. 0 — уровень жизни не растёт. */
   lifestyleCreepPct?: number
+  /**
+   * От какого дохода растут траты: `all` — от всего (по умолчанию), `active` —
+   * только от дохода с работы: зарплата и дела без управляющего. Заведено 11.09
+   * для замера: при 55% от ВСЕГО дохода своё дело не может обогнать свои же
+   * траты, их обгоняет только структура GreenLeaf. Выбор — за Камилем.
+   */
+  creepBase?: 'all' | 'active' | 'activeGl' // activeGl — работа и GreenLeaf; доход от активов траты не раздувает
+  /** Потолок роста трат: во сколько раз они могут вырасти от стартовых. Не задано — без потолка. */
+  creepCapMul?: number
   /** Во сколько раз доход должен перекрыть расходы для победы на Полосе. */
   freedomMultiple?: number
 }
@@ -229,6 +238,19 @@ export const РОСТ_РАСХОДОВ_ЗА_ДОХОДОМ_PCT = 33
  * иначе просадка рынка «возвращала» бы уровень жизни назад, а в жизни от
  * привычек так просто не отказываются.
  */
+/** Доход с работы: зарплата и дела, где работаешь сам, — без управляющего. */
+function доходСРаботы(l: Ledger, m?: FlowMul): number {
+  return (
+    l.salary +
+    l.businesses.filter((b) => !b.gl && !b.managerPct && !b.пассивное).reduce((s, b) => s + ownShareAt(b, m), 0)
+  )
+}
+
+/** Доход структуры GreenLeaf: растёт вместе с работой над ней. */
+function доходGreenleaf(l: Ledger, m?: FlowMul): number {
+  return l.businesses.filter((b) => b.gl).reduce((s, b) => s + ownShareAt(b, m), 0)
+}
+
 export function подтянутьРасходы(l: Ledger, m?: FlowMul): number {
   /*
    * 🔴 ДОХОД БЕРЁМ ПО ТЕКУЩЕМУ РЫНКУ. Зарплата приходит с множителем мирового
@@ -237,14 +259,24 @@ export function подтянутьРасходы(l: Ledger, m?: FlowMul): number
    * и в incomePeak записывалась величина без рынка. На бычьем рынке разрыв
    * «доход минус расходы» рос быстрее, чем задумано.
    */
-  const доход = totalIncome(l, m)
+  const доход =
+    RULES.creepBase === 'active'
+      ? доходСРаботы(l, m)
+      : RULES.creepBase === 'activeGl'
+        ? доходСРаботы(l, m) + доходGreenleaf(l, m)
+        : totalIncome(l, m)
   const пик = l.incomePeak ?? доход
   if (доход <= пик) {
     l.incomePeak = пик
     return 0
   }
   const доля = RULES.lifestyleCreepPct ?? РОСТ_РАСХОДОВ_ЗА_ДОХОДОМ_PCT
-  const добавка = Math.round(((доход - пик) * доля) / 100 / 100) * 100
+  let добавка = Math.round(((доход - пик) * доля) / 100 / 100) * 100
+  if (RULES.creepCapMul && l.profession) {
+    // Потолок: траты растут, пока не вырастут в creepCapMul раз от стартовых.
+    const старт = Object.values(l.profession.expenses).reduce((a, b) => a + (b as number), 0)
+    добавка = Math.min(добавка, Math.max(0, Math.round(старт * RULES.creepCapMul) - totalExpenses(l)))
+  }
   l.incomePeak = доход
   if (добавка > 0) l.expenses.otherExpenses += добавка
   return добавка
@@ -330,6 +362,14 @@ export function freedomBreakdown(
       const сумма = Math.round((mine * доля) / 100)
       if (сумма)
         out.push({ name: `${a.name} · ${доля}% структуры`, amount: сумма, kind: 'gl' })
+      continue
+    }
+    /*
+     * 🔴 Франшиза своего дела — доход без управляющего: роялти платят чужие
+     * точки. Решение Камиля 11.09: своё дело растёт, как структура.
+     */
+    if (a.пассивное && mine) {
+      out.push({ name: `${a.name} · роялти`, amount: mine, kind: 'business' })
       continue
     }
     if (a.managerPct && mine) out.push({ name: `${a.name} · с управляющим`, amount: mine, kind: 'business' })

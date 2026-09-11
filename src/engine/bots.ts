@@ -19,6 +19,7 @@ const ОКУПАЕМОСТЬ_ПАКЕТА = 18
 import botProfilesJson from '../data/bot-profiles.json'
 import type { BotDifficulty, Seat, StockCard, Table } from './types'
 import type { TableEvent } from './events'
+import { доходТочки, почемуНельзяТочку, почемуНельзяФраншизу, ценаТочки, ценаФраншизы } from './своёДело'
 import {
   charityCost,
   currentSeat,
@@ -272,6 +273,27 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
       const cost = Math.max(30_000, Math.round((hireable.cashFlow * pct * 3) / 100 / 1000) * 1000)
       if (seat.ledger.cash - cost >= cashBuffer(seat, p)) {
         return { type: 'HIRE_MANAGER', assetId: hireable.id, pct }
+      }
+    }
+    /*
+     * 🔴 СВОЁ ДЕЛО РАСТЁТ (решение Камиля 11.09). Бот обязан уметь то же, что
+     * человек, — иначе замер слеп к механике: вторую точку и франшизу он не
+     * открыл бы никогда, и «без GreenLeaf выходят 5%» не сдвинулось бы, как ни
+     * лечи. Берём дело с лучшей окупаемостью; франшиза раньше точки — она
+     * растёт сама.
+     */
+    if (seat.track === 'rat') {
+      const корни = seat.ledger.businesses
+        .filter((b) => !b.gl && !b.точкаОт && !b.франшизаОт && !(b.partnerId && !b.investorShare))
+        .sort(
+          (a, b) =>
+            (a.value ?? a.cost) / Math.max(1, доходТочки(a)) - (b.value ?? b.cost) / Math.max(1, доходТочки(b)),
+        )
+      for (const b of корни) {
+        if (!почемуНельзяФраншизу(seat.ledger, b) && seat.ledger.cash - ценаФраншизы(b) >= cashBuffer(seat, p))
+          return { type: 'FRANCHISE_OWN', assetId: b.id }
+        if (!почемуНельзяТочку(seat.ledger, b) && seat.ledger.cash - ценаТочки(b) >= cashBuffer(seat, p))
+          return { type: 'OPEN_BRANCH', assetId: b.id }
       }
     }
   }

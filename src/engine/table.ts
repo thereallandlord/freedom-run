@@ -70,6 +70,17 @@ import {
 } from './ledger'
 import { mulberry32, shuffleIndices } from './rng'
 import {
+  доходТочки,
+  почемуНельзяТочку,
+  почемуНельзяФраншизу,
+  точекУДела,
+  ценаТочки,
+  ценаФраншизы,
+  ФРАНШИЗА_СТАРТ,
+  ФРАНШИЗА_РОСТ,
+  ФРАНШИЗА_ПОТОЛОК,
+} from './своёДело'
+import {
   GL_LUCK_MAX,
   GL_LUCK_MIN,
   GL_START_FLOW,
@@ -1773,6 +1784,8 @@ const КЛАСС_ДЕЙСТВИЯ: Record<TableEventBody['type'], КлассДе
   TAKE_RIBA: 'своё',
   REPAY_RIBA: 'своё',
   HIRE_MANAGER: 'своё',
+  OPEN_BRANCH: 'своё',
+  FRANCHISE_OWN: 'своё',
   TAKE_LOAN: 'своё',
   REPAY_LOAN: 'своё',
   PAYOFF_ASSET: 'своё',
@@ -5372,6 +5385,73 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
      * Нанять управляющего. Решение, а не удача: в жизни ты решаешь нанять,
      * а потом ищешь. Берёт свою долю навсегда, зато остаток идёт в свободу.
      */
+    /*
+     * 🔴 СВОЁ ДЕЛО РАСТЁТ — решение Камиля 11.09 (вариант Б). Без GreenLeaf из
+     * Круга выходили 5%: настоящие дела за партию до свободы не дорастали, рос
+     * только GreenLeaf. Ещё одна точка открывается СРАЗУ С УПРАВЛЯЮЩИМ — в двух
+     * местах сразу не постоишь, — поэтому сразу идёт в зачёт свободы.
+     */
+    case 'OPEN_BRANCH': {
+      if (seat.track !== 'rat') return prev
+      const b = l.businesses.find((x) => x.id === event.assetId)
+      if (!b || почемуНельзяТочку(l, b)) return prev
+      const цена = ценаТочки(b)
+      const номер = точекУДела(l, b) + 1
+      const id = `${b.id}-точка-${nextId(t)}`
+      seatLedgerEvent(t, seat.id, {
+        type: 'BUY_BUSINESS',
+        id,
+        name: `${b.name} — точка ${номер}`,
+        cost: цена,
+        downPayment: цена,
+        liability: 0,
+        cashFlow: доходТочки(b),
+        category: b.category,
+        growthPerPayday: b.growthPerPayday,
+        growthCap: b.growthCap,
+        installmentMonthly: 0,
+        value: цена,
+        точкаОт: b.id,
+      })
+      seatLedgerEvent(t, seat.id, { type: 'SET_MANAGER', assetId: id, pct: MANAGER_PCT })
+      const чистыми = Math.round((доходТочки(b) * (100 - MANAGER_PCT)) / 100)
+      log(t, seat.id, `${seat.name} открыл точку ${номер} «${b.name}» за ${money(цена)}: +${money(чистыми)}/мес с управляющим, в зачёт свободы`)
+      плашка(t, seat.id, `${seat.name} открыл ещё одну точку «${b.name}» — +${money(чистыми)}/мес без него самого`, 'добро')
+      return t
+    }
+    /*
+     * 🔴 Франшиза своего дела: когда формат проверен на нескольких точках, его
+     * покупают другие. Роялти растут каждую зарплату, как структура, — только
+     * медленнее GreenLeaf и до потолка. Работать там некому, поэтому доход идёт
+     * в зачёт свободы без управляющего.
+     */
+    case 'FRANCHISE_OWN': {
+      if (seat.track !== 'rat') return prev
+      const b = l.businesses.find((x) => x.id === event.assetId)
+      if (!b || почемуНельзяФраншизу(l, b)) return prev
+      const цена = ценаФраншизы(b)
+      const точка = доходТочки(b)
+      const старт = Math.round((точка * ФРАНШИЗА_СТАРТ) / 100) * 100
+      seatLedgerEvent(t, seat.id, {
+        type: 'BUY_BUSINESS',
+        id: `${b.id}-франшиза-${nextId(t)}`,
+        name: `Франшиза «${b.name}»`,
+        cost: цена,
+        downPayment: цена,
+        liability: 0,
+        cashFlow: старт,
+        category: b.category,
+        growthPerPayday: Math.round((точка * ФРАНШИЗА_РОСТ) / 100) * 100,
+        growthCap: Math.round(точка * ФРАНШИЗА_ПОТОЛОК),
+        installmentMonthly: 0,
+        value: цена,
+        франшизаОт: b.id,
+        пассивное: true,
+      })
+      log(t, seat.id, `${seat.name} продаёт франшизу «${b.name}»: упаковка ${money(цена)}, роялти ${money(старт)}/мес и растут каждую зарплату`)
+      плашка(t, seat.id, `${seat.name} продаёт франшизу своего дела «${b.name}» — роялти растут с каждой зарплатой`, 'добро')
+      return t
+    }
     case 'HIRE_MANAGER': {
       const b = l.businesses.find((x) => x.id === event.assetId)
       if (!b || b.gl || b.managerPct) return prev

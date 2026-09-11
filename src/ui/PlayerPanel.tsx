@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { RealEstateAsset, BusinessAsset, Seat, Ledger } from '../engine/types'
 import {
+  доходТочки,
+  почемуНельзяТочку,
+  почемуНельзяФраншизу,
+  точекУДела,
+  ценаТочки,
+  ценаФраншизы,
+  ФРАНШИЗА_ОТ_ТОЧЕК,
+  ФРАНШИЗА_СТАРТ,
+  ТОЧЕК_СВЕРХ_ПЕРВОЙ,
+} from '../engine/своёДело'
+import {
   dividendLines,
   fastTrackIncome,
   fastTrackProgress,
@@ -168,6 +179,7 @@ function AssetRow({
   flowMul,
   priceMul,
   cashOf,
+  ledger,
 }: {
   a: RealEstateAsset | BusinessAsset
   kind: 'realEstate' | 'business'
@@ -176,6 +188,8 @@ function AssetRow({
   flowMul?: Record<string, number>
   priceMul?: Record<string, number>
   cashOf?: (seatId: string) => number | undefined
+  /** Весь портфель — чтобы посчитать точки своего дела и франшизу. */
+  ledger?: Ledger
 }) {
   const [open, setOpen] = useState(false)
   const shot = artById(a.id)
@@ -443,6 +457,64 @@ function AssetRow({
               </button>
             ) : null
           )}
+          {/*
+            🔴 СВОЁ ДЕЛО РАСТЁТ — решение Камиля 11.09 (вариант Б). Без GreenLeaf
+            из Круга выходили 5%: дела до свободы не дорастали. Ещё одна точка
+            открывается сразу с управляющим и идёт в зачёт свободы; франшиза —
+            когда своих точек не меньше трёх. Нельзя — причина прямо на кнопке.
+          */}
+          {kind === 'business' &&
+            dispatch &&
+            !вторая &&
+            ledger &&
+            !(a as BusinessAsset).gl &&
+            !(a as BusinessAsset).точкаОт &&
+            !(a as BusinessAsset).франшизаОт &&
+            (() => {
+              const b = a as BusinessAsset
+              const нельзяТочку = почемуНельзяТочку(ledger, b)
+              const нельзяФраншизу = почемуНельзяФраншизу(ledger, b)
+              const точек = точекУДела(ledger, b)
+              const есть = ledger.businesses.some((x) => x.франшизаОт === b.id)
+              const класс =
+                'mt-1.5 w-full rounded-lg border border-[var(--t-line, var(--line))] px-2 py-1.5 text-[11px] font-semibold leading-snug transition hover:border-emerald-500/60 hover:bg-emerald-500/10 disabled:opacity-40'
+              return (
+                <>
+                  {точек <= ТОЧЕК_СВЕРХ_ПЕРВОЙ && (
+                    <button
+                      disabled={!!нельзяТочку}
+                      onClick={() => dispatch({ type: 'OPEN_BRANCH', assetId: b.id })}
+                      className={класс}
+                    >
+                      Ещё одна точка за {money(ценаТочки(b))}
+                      <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+                        {нельзяТочку ??
+                          `сразу с управляющим: +${money(Math.round((доходТочки(b) * (100 - MANAGER_PCT)) / 100))}/мес в зачёт свободы`}
+                      </span>
+                    </button>
+                  )}
+                  {точек >= ФРАНШИЗА_ОТ_ТОЧЕК - 1 && !есть && (
+                    <button
+                      disabled={!!нельзяФраншизу}
+                      onClick={() => dispatch({ type: 'FRANCHISE_OWN', assetId: b.id })}
+                      className={класс}
+                    >
+                      Продать франшизу за {money(ценаФраншизы(b))}
+                      <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
+                        {нельзяФраншизу ??
+                          `роялти с ${money(Math.round((доходТочки(b) * ФРАНШИЗА_СТАРТ) / 100) * 100)}/мес и растут каждую зарплату`}
+                      </span>
+                    </button>
+                  )}
+                  {точек > 1 && (
+                    <div className="mt-1 text-[10.5px] text-[var(--t-muted, var(--muted))]">
+                      Своих точек: {точек}
+                      {есть ? ' · франшиза продаётся' : ''}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
           {/*
             🔴 ЧАСТЬ РАССРОЧКИ — ОТДЕЛЬНОЙ КНОПКОЙ (просьба Камиля: «давай
             добавим, что можно закрывать частично»). Показываем её, только
@@ -1031,6 +1103,7 @@ export function PlayerPanel({
                 flowMul={flowMul}
                 priceMul={priceMul}
                 cashOf={cashOf}
+                ledger={l}
               />
             ))}
             {/*
