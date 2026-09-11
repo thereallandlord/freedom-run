@@ -41,6 +41,8 @@ import { BOARD_THEMES, setBoardTheme, themeVars, useBoardTheme } from './theme-b
 import { warmNow, warmRestWhenIdle } from './preloadArt'
 import { useTheme } from './theme'
 import { Dropdown } from './Dropdown'
+import { завестиНапоминания, type Напоминания } from '../net/напоминание'
+import { позватьЧеловека, спроситьУведомленияОдинРаз } from './позватьЧеловека'
 
 /**
  * Игроки за столом.
@@ -520,6 +522,45 @@ export function Game({
   const actor = currentSeat(table)
   /** Кем я играю: онлайн — своим местом, на одном устройстве — тем, чей ход. */
   const seat = (meId ? table.seats.find((x) => x.id === meId) : null) ?? actor
+  /*
+   * 🔴 «НАПОМНИТЬ» — решение Камиля 11.09 (было «пнуть игрока», 19.08).
+   * Только в сетевой партии: за одним экраном человек и так рядом. Канал свой,
+   * мимо журнала ходов: напоминание — оклик между людьми, а не событие партии.
+   */
+  const [напоминания, setНапоминания] = useState<Напоминания | null>(null)
+  const [напомнилиМне, setНапомнилиМне] = useState<string | null>(null)
+  const [напомнилКогда, setНапомнилКогда] = useState<Record<string, number>>({})
+  useEffect(() => {
+    if (!голосКомната || !meId) return
+    const н = завестиНапоминания(голосКомната, meId, (от) => {
+      позватьЧеловека(от)
+      setНапомнилиМне(от)
+    })
+    setНапоминания(н)
+    // Разрешение на уведомления браузер покажет только по нажатию — спрашиваем по первому.
+    window.addEventListener('pointerdown', спроситьУведомленияОдинРаз, { once: true })
+    return () => {
+      н?.снять()
+      setНапоминания(null)
+      window.removeEventListener('pointerdown', спроситьУведомленияОдинРаз)
+    }
+  }, [голосКомната, meId])
+  useEffect(() => {
+    if (!напомнилиМне) return
+    const id = window.setTimeout(() => setНапомнилиМне(null), 8000)
+    return () => window.clearTimeout(id)
+  }, [напомнилиМне])
+  const НАПОМНИТЬ_ПАУЗА_МС = 30_000
+  const можноНапомнить = !!напоминания && actor.id !== seat.id && !actor.isBot && !actor.outOfGame
+  const ужеНапомнил = Date.now() - (напомнилКогда[actor.id] ?? 0) < НАПОМНИТЬ_ПАУЗА_МС
+  const напомнить = () => {
+    if (!напоминания || ужеНапомнил) return
+    напоминания.напомнить(actor.id, seat.name)
+    const кому = actor.id
+    setНапомнилКогда((п) => ({ ...п, [кому]: Date.now() }))
+    // Кнопка оживёт сама: без повторной отрисовки она так и осталась бы «Напомнили».
+    window.setTimeout(() => setНапомнилКогда((п) => ({ ...п })), НАПОМНИТЬ_ПАУЗА_МС + 50)
+  }
   /** Мой ли сейчас ход. */
   const myTurn = actor.id === seat.id
   /**
@@ -1016,6 +1057,25 @@ export function Game({
                 >
                   {actor.id === seat.id ? 'ваш ход' : actor.name}
                 </span>
+                {можноНапомнить && (
+                  <button
+                    onClick={напомнить}
+                    disabled={ужеНапомнил}
+                    className="btn-ghost mt-0.5 px-2.5 py-1 text-[11px] disabled:opacity-60"
+                    title={
+                      ужеНапомнил
+                        ? 'Уже напомнили — ещё раз можно через полминуты'
+                        : `Позвать: у ${actor.name} прозвучит сигнал и замигает вкладка`
+                    }
+                  >
+                    {ужеНапомнил ? 'Напомнили' : 'Напомнить'}
+                  </button>
+                )}
+                {напомнилиМне && actor.id === seat.id && (
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--t-accent)' }}>
+                    {напомнилиМне} напоминает о ходе
+                  </span>
+                )}
                 <ЧасыХода />
                 {!seat.isBot && canRoll && (
                   /*
