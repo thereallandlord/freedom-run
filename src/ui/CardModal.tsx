@@ -12,6 +12,7 @@ import {
   ценаТерпения,
   stockHolders,
   canRecover,
+  сколькоУрезать,
   hasConsumerDebt,
   hasSellableAssets,
 } from '../engine/table'
@@ -2862,6 +2863,7 @@ function CardBody({
     case 'bankruptcy': {
       const flow = monthlyCashFlow(l)
       const recover = canRecover(l)
+      const урезать = сколькоУрезать(l)
       return (
         <S
           badge="Банкротство"
@@ -2876,8 +2878,10 @@ function CardBody({
           </div>
           <p className="text-sm text-[var(--muted)]">
             {recover
-              ? 'Вы снова на плаву — можно вернуться в игру.'
-              : 'Продавайте активы банку за полцены, пока поток не станет положительным.'}
+              ? урезать > 0
+                ? `Денег на руках хватает, но месяц уходит в минус. Можно урезать образ жизни на ${money(урезать)} в месяц и вернуться в игру — или продать то, что тянет вниз.`
+                : 'Вы снова на плаву — можно вернуться в игру.'
+              : 'Продавайте активы банку за полцены, пока деньги на руках не выйдут из минуса.'}
           </p>
 
           {/*
@@ -2930,7 +2934,7 @@ function CardBody({
             </div>
           )}
 
-          {!recover && (
+          {(!recover || урезать > 0) && (
             <div className="max-h-52 space-y-1 overflow-auto">
               {l.realEstate.map((a) => (
                 <button
@@ -2970,7 +2974,9 @@ function CardBody({
           <div className="flex flex-col gap-2">
             {recover ? (
               <button onClick={() => dispatch({ type: 'BANKRUPTCY_RECOVER' })} className="btn-primary">
-                Выкарабкаться — пропустить 3 хода
+                {урезать > 0
+                  ? `Урезать образ жизни на ${money(урезать)}/мес и пропустить 3 хода`
+                  : 'Выкарабкаться — пропустить 3 хода'}
               </button>
             ) : (
               <>

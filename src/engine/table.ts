@@ -1896,8 +1896,23 @@ export function dealAffordable(t: Table, card: import('./types').DealCard, deckS
   )
 }
 
+/**
+ * Сколько урезать «образ жизни», чтобы месяц не уходил в минус; 0 — не нужно или
+ * нечем. 🔴 11.09: учитель с 327 000 ₽ на руках и минусом 1 100 ₽ в месяц выбывал
+ * как банкрот — выйти из банкротства разрешалось только с неотрицательным потоком,
+ * а быт за долгую партию перерос зарплату. В жизни в такой момент урезают траты:
+ * переезжают попроще, отказываются от лишнего.
+ */
+export function сколькоУрезать(l: Ledger): number {
+  const поток = monthlyCashFlow(l)
+  if (поток >= 0) return 0
+  const нужно = Math.ceil(-поток / 100) * 100
+  return нужно <= l.expenses.otherExpenses ? нужно : 0
+}
+
 export function canRecover(l: Ledger): boolean {
-  return l.cash >= 0 && monthlyCashFlow(l) >= 0
+  if (l.cash < 0) return false
+  return monthlyCashFlow(l) >= 0 || сколькоУрезать(l) > 0
 }
 
 export function hasSellableAssets(l: Ledger): boolean {
@@ -5149,6 +5164,12 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
 
     case 'BANKRUPTCY_RECOVER': {
       if (t.pending?.kind !== 'bankruptcy' || !canRecover(l)) return prev
+      const урезать = сколькоУрезать(l)
+      if (урезать > 0) {
+        seatLedgerEvent(t, seat.id, { type: 'CUT_LIFESTYLE', amount: урезать })
+        log(t, seat.id, `Пришлось урезать образ жизни: −${money(урезать)}/мес`)
+        плашка(t, seat.id, `${seat.name} урезал образ жизни на ${money(урезать)}/мес, чтобы остаться в игре`, 'нейтр', [seat.id])
+      }
       t.seats[seatIdx] = { ...t.seats[seatIdx], skipTurns: 3 }
       log(t, seat.id, 'Выкарабкался — пропускает 3 хода')
       t.pending = null

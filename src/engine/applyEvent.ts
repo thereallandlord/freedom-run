@@ -513,6 +513,11 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       l.expenses.otherExpenses += e.amount
       return l
 
+    /** Урезал быт, чтобы выбраться из банкротства. Прочие расходы не уходят ниже нуля. */
+    case 'CUT_LIFESTYLE':
+      l.expenses.otherExpenses = Math.max(0, l.expenses.otherExpenses - e.amount)
+      return l
+
     case 'REFUSE_WANT':
       l.wantsRefused = (l.wantsRefused ?? 0) + 1
       return l

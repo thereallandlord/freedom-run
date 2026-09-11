@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "esbuild src/engine/selftest.ts --bundle --platform=node --format=esm --outfile=.selftest.mjs --log-level=error && node .selftest.mjs",
     "test:mech": "esbuild src/engine/mechtest.ts --bundle --platform=node --format=esm --outfile=.mech.mjs --log-level=error && node .mech.mjs",
-    "test:all": "npm run test:mech && npm test && npm run test:phase && npm run test:turn && npm run test:meme && npm run test:stage && npm run test:world && npm run test:events && npm run test:passport && npm run test:biz && npm run test:keys && npm run test:markets && npm run test:aim && npm run test:quotes && npm run test:rank && npm run test:fttrouble && npm run test:pricemul && npm run test:deals && npm run test:lease && npm run test:venture && npm run test:gl && npm run test:gldeck && npm run test:coinvest && npm run test:rost && npm run test:itogi && npm run test:sverka && npm run test:rostdela && npm run test:vse && npm run test:rassrochka && npm run test:voice",
+    "test:all": "npm run test:mech && npm test && npm run test:phase && npm run test:turn && npm run test:meme && npm run test:stage && npm run test:world && npm run test:events && npm run test:passport && npm run test:biz && npm run test:keys && npm run test:markets && npm run test:aim && npm run test:quotes && npm run test:rank && npm run test:fttrouble && npm run test:pricemul && npm run test:deals && npm run test:lease && npm run test:venture && npm run test:gl && npm run test:gldeck && npm run test:coinvest && npm run test:rost && npm run test:itogi && npm run test:sverka && npm run test:rostdela && npm run test:vse && npm run test:rassrochka && npm run test:vyzhit && npm run test:voice",
     "dump:state": "esbuild src/engine/dumpstate.ts --bundle --platform=node --format=esm --outfile=.dump.mjs --log-level=error && node .dump.mjs",
     "test:scen": "npx tsx src/engine/scenarios.ts",
     "fuzz": "npx tsx src/engine/fuzz.ts",
@@ -45,7 +45,8 @@
     "test:lease": "npx tsx src/engine/leasetest.ts",
     "test:venture": "npx tsx src/engine/venturetest.ts",
     "test:vse": "npx tsx src/engine/всевыходяттест.ts",
-    "test:rassrochka": "npx tsx src/engine/рассрочкатест.ts"
+    "test:rassrochka": "npx tsx src/engine/рассрочкатест.ts",
+    "test:vyzhit": "npx tsx src/engine/выкарабкатьсятест.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

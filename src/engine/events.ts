@@ -13,6 +13,7 @@ export type LedgerEvent =
   | { type: 'TAKE_RIBA_L'; amount: number; payment: number; grace: number }
   | { type: 'REPAY_RIBA_L'; amount: number }
   | { type: 'ADD_UPKEEP'; amount: number }
+  | { type: 'CUT_LIFESTYLE'; amount: number }
   | { type: 'REFUSE_WANT' }
   | { type: 'INDULGE' }
   | { type: 'SET_CITIZENSHIP'; name: string; fee: number }
