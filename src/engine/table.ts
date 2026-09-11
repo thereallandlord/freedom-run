@@ -85,6 +85,7 @@ import {
   glUpgradeCost,
   glПришлиЛюди,
   glЛюдиУшли,
+  glНаборыРодне,
   glПереливНаставника,
   glСтадия,
 } from './greenleaf'
@@ -3133,6 +3134,16 @@ function applyMarketAuto(t: Table, card: MarketCard): string[] {
       }
       if (c.mentorPv) {
         const r = glПереливНаставника(g, c.mentorPv)
+        Object.assign(g, r.next)
+        разово += r.деньги
+        объяснения.push(...r.заметки)
+      }
+      /*
+       * 🔴 «Наборы разошлись по родне» — число людей от пакета: Платина 1,
+       * Бриллиант 2, Корона 4 (решение Камиля 11.09). Раньше всем двое.
+       */
+      if (card.людиИзНаборов) {
+        const r = glНаборыРодне(g)
         Object.assign(g, r.next)
         разово += r.деньги
         объяснения.push(...r.заметки)
