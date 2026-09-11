@@ -113,6 +113,20 @@ function cashBuffer(seat: Seat, p: BotProfile): number {
   return Math.round(totalExpenses(seat.ledger) * p.bufferMonths)
 }
 
+/** Взнос, которого хватает на четверть крупной колоды (без партнёрского бизнеса). */
+let порогКэш: { колода: unknown; порог: number } | null = null
+function порогКрупной(t: Table): number {
+  const колода = bigDeals(t.deckTheme)
+  if (порогКэш?.колода === колода) return порогКэш.порог
+  const взносы = колода
+    .filter((c) => !(c as { greenleaf?: boolean }).greenleaf && 'downPayment' in c)
+    .map((c) => (c as { downPayment: number }).downPayment)
+    .sort((a, b) => a - b)
+  const порог = взносы.length ? взносы[Math.floor(взносы.length / 4)] : 0
+  порогКэш = { колода, порог }
+  return порог
+}
+
 /**
  * Решение бота на текущем состоянии стола.
  * Возвращает одно событие; водитель вызывает функцию, пока ход не закончится.
@@ -311,7 +325,16 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
        * (без денег в крупную не лезут), но выше него выбор — монетка с
        * перекосом, и малая колода открывается регулярно.
        */
-      const хватаетНаКрупную = l.cash >= inf(p.bigDealCash)
+      /*
+       * 🔴 ПОРОГ БЫЛ В ДОЛЛАРАХ. `bigDealCash` = 20 000 заведён для классики,
+       * где крупная сделка стоит десятки тысяч долларов. В рублях 20 000 ₽
+       * есть у всех с первого хода, и «средний» бот 60% находок тянул из
+       * крупной колоды, где самый дешёвый взнос — 650 000 ₽, а медиана —
+       * 3,4 млн. Замер 11.09: к 150-му ходу у игрока без GreenLeaf ни дела,
+       * ни квартиры. Человек так не играет: на крупную денег нет — берёт
+       * малую. Порог — взнос, которого хватает на четверть крупной колоды.
+       */
+      const хватаетНаКрупную = l.cash >= Math.max(inf(p.bigDealCash), порогКрупной(t))
       if (!хватаетНаКрупную) return { type: 'CHOOSE_DEAL', size: 'small' }
       return { type: 'CHOOSE_DEAL', size: rnd() < ДОЛЯ_КРУПНОЙ ? 'big' : 'small' }
     }
