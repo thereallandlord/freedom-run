@@ -632,6 +632,13 @@ function watchNote(
   return { watching: null, note: null }
 }
 
+/** «1 раз · 3 раза · 5 раз». */
+function разы(n: number): string {
+  const д = n % 10
+  const дд = n % 100
+  return д >= 2 && д <= 4 && !(дд >= 12 && дд <= 14) ? 'раза' : 'раз'
+}
+
 export function CardModal(props: {
   table: Table
   seat: Seat
@@ -1572,7 +1579,7 @@ function CardBody({
               <div className="tabnum mt-1 text-[24px] font-black leading-none text-amber-600 dark:text-amber-400">
                 {money(p.buyout + (p.бумаги ?? 0))}
               </div>
-              <div className="mt-1 text-[12px] text-[var(--muted)]">выкуп на Полосу свободы</div>
+              <div className="mt-1 text-[12px] text-[var(--muted)]">выкуп на второй круг</div>
             </div>
           ) : (
             <div className="rounded-lg bg-amber-500/10 px-3 py-3 text-center">
@@ -1585,7 +1592,7 @@ function CardBody({
               <div className="mt-1 text-[12px] text-[var(--muted)]">
                 приносят активы — они остаются {mine ? 'вашими' : 'при нём'}
                 {!!p.прибавка && p.прибавка > 0 && (
-                  <>, из них {money(p.прибавка)} добавило то, что теперь дела ведутся вплотную</>
+                  <>, из них {money(p.прибавка)} — прибавка дел: ими теперь занимаются целый день</>
                 )}
               </div>
               <div className="mt-2 border-t border-amber-500/30 pt-2 text-[12px] leading-snug text-[var(--muted)]">
@@ -1640,7 +1647,7 @@ function CardBody({
           </div>
           {p.upkeep ? (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-600 dark:text-amber-400">
-              Расходы вырастут навсегда — до свободы придётся дойти уже с ними.
+              Расходы вырастут навсегда — копить на мечту придётся уже с ними.
             </p>
           ) : null}
           <div className="grid gap-2 sm:grid-cols-2">
@@ -1672,7 +1679,7 @@ function CardBody({
         const хватает = l.cash >= сумма
         return (
           <S
-            badge="Полоса свободы"
+            badge="Второй круг"
             title={p.title}
             flavor={p.text}
             accent="#f43f5e"
@@ -1717,7 +1724,7 @@ function CardBody({
       }
       return (
         <S
-            badge="Полоса свободы"
+            badge="Второй круг"
             title={p.title}
             flavor={p.text}
             accent="#f43f5e"
@@ -2606,7 +2613,7 @@ function CardBody({
       const txt = fastSpaceText(p.space, locale)
       return (
         <S
-          badge="Инвестиция Полосы"
+          badge="Дело второго круга"
           title={txt?.name ?? space.name}
           flavor={txt?.flavor}
           art="🏢"
@@ -2791,7 +2798,14 @@ function CardBody({
         >
           <div className="panel-2 rounded-lg p-3">
             <Stat label="Базовая цена" value={money(space.price)} />
-            {bumps > 0 && <Stat label={`Соперники поднимали ×${bumps}`} value={money(price)} strong />}
+            {bumps > 0 && (
+              // «×1» читалось как загадка: сколько раз вставали чужие и насколько подорожала (12.09).
+              <Stat
+                label={`Чужие вставали на неё: ${bumps} ${разы(bumps)}`}
+                value={`+${Math.round((price / space.price - 1) * 100)}%`}
+                strong
+              />
+            )}
             <Stat label="Цена сейчас" value={money(price)} strong />
             <Stat label="Денег на руках" value={money(l.cash)} />
           </div>

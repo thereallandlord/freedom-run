@@ -310,7 +310,7 @@ export function SeatForm({
       </div>
 
       <p className="text-xs leading-relaxed text-muted">
-        Мечта — клетка на Полосе свободы. Доберётесь и купите её — победа.
+        Мечта — клетка на втором круге. Доберётесь до неё и купите — победа.
       </p>
     </div>
   )

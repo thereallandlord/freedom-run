@@ -52,5 +52,5 @@ function причина(s: Seat, t: Table): string {
   }
   if (s.outOfGame) return 'банкрот'
   if (s.внеГонки) return 'встал из-за стола'
-  return s.track === 'fast' ? 'на Полосе свободы' : 'не вышел на Полосу'
+  return s.track === 'fast' ? 'на втором круге' : 'не вышел на второй круг'
 }
