@@ -579,6 +579,14 @@ export function addBot(
     now?: number
   },
 ): RoomResult {
+  /*
+   * 🔴 ТОТ ЖЕ БОТ ВТОРОЙ РАЗ — НЕ НОВЫЙ БОТ (12.09). Гость, входя, получает
+   * снимок комнаты от хозяина и проигрывает поверх него ВЕСЬ журнал. Бот,
+   * добавленный до снимка, приезжал второй раз — с тем же ключом, но под
+   * следующим свободным именем («Бот Динара»). У гостя за столом сидело
+   * четверо, у хозяина трое, и партия с первого хода шла у каждого своя.
+   */
+  if (findPlayer(room, opts.id)) return { ok: true, room }
   if (room.players.length >= room.settings.maxPlayers) return fail('ROOM_FULL')
 
   const draft: PlayerDraft = {
@@ -659,6 +667,49 @@ export function toTableSetup(room: RoomState): TableSetup {
     deckTheme: room.settings.deckTheme,
     рынки: нормализоватьРынки(room.settings.рынки),
     seats,
+  }
+}
+
+/**
+ * Партия, собранная из журнала канала: состав стола и ходы.
+ *
+ * 🔴 СОСТАВ — ИЗ «__START», А НЕ ИЗ СВОЕЙ КОПИИ КОМНАТЫ (12.09). Стол после
+ * каждого хода пересобирается заново, и раньше каждый собирал его по своей
+ * копии комнаты. Копии расходятся: у гостя задвоился бот, за столом у него
+ * стало четверо, у хозяина трое — хозяин ждал хода гостя, гость смотрел, как
+ * ходит хозяин, и партия встала. Состав, разосланный хозяином при старте,
+ * у всех один и тот же по построению.
+ *
+ * Из комнаты берём только то, что меняется по ходу партии: человек вышел и
+ * оставил бота за себя — место ходит само; вернулся — снова человек.
+ *
+ * Ходы — всё ПОСЛЕ последнего «__START»: что раньше, то прошлая партия.
+ * Записи «__START» нет (так было до неё) — собираем по комнате, как раньше.
+ */
+export function партияИзЖурнала(
+  журнал: unknown[],
+  room: RoomState | null,
+): { setup: TableSetup; ходы: unknown[] } | null {
+  let старт = -1
+  for (let k = журнал.length - 1; k >= 0; k--) {
+    const e = журнал[k] as { type?: string; setup?: unknown } | null
+    if (e?.type === '__START' && e.setup) {
+      старт = k
+      break
+    }
+  }
+  if (старт < 0) return room ? { setup: toTableSetup(room), ходы: журнал } : null
+  const setup = (журнал[старт] as { setup: TableSetup }).setup
+  const вКомнате = new Map((room?.players ?? []).map((p) => [p.id, p]))
+  return {
+    setup: {
+      ...setup,
+      seats: setup.seats.map((s) => {
+        const p = s.id ? вКомнате.get(s.id) : undefined
+        return p ? { ...s, isBot: p.isBot || p.standIn } : s
+      }),
+    },
+    ходы: журнал.slice(старт + 1),
   }
 }
 

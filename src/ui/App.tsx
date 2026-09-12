@@ -11,7 +11,7 @@ import { сверитьСКабинетом } from '../engine/сверкаПар
 import { useRoom } from './useRoom'
 import { useTheme } from './theme'
 import { createTransport } from '../net/realtime'
-import { ROOM_COLOR_VALUES, toTableSetup, type PlayerDraft } from '../engine/room'
+import { ROOM_COLOR_VALUES, toTableSetup, партияИзЖурнала, type PlayerDraft } from '../engine/room'
 import { началоПоследнегоХодаЧеловека } from '../engine/table'
 import { dreamSpaces, professionsFor, setActiveTheme, setFastBoardTheme } from '../engine/data'
 
@@ -221,9 +221,18 @@ export function App() {
     setScreen('landing')
   }
 
-  journalRef.current = () => {
-    const r = room.room
-    if (!r) return
+  /*
+   * Пересобрать стол по журналу канала — один путь на всё: новый ход, снимок
+   * при входе, переигровка порядка.
+   *
+   * 🔴 Состав стола — из «__START», а не из своей копии комнаты (12.09): копии
+   * расходятся, и тогда за столом у каждого сидели разные люди (подробно —
+   * у партияИзЖурнала). Снимок и переигровка раньше шли мимо этого места: по
+   * старой копии комнаты и без отмен — снятый ход воскресал до следующего хода.
+   */
+  const пересобрать = (журнал: unknown[]) => {
+    const партия = партияИзЖурнала(журнал, room.room)
+    if (!партия) return
     /*
      * 🔴 ОТМЕНА — ЧАСТЬ ЖУРНАЛА, а не местное действие. Стол пересобирается
      * по общему журналу, поэтому «просто откатить у себя» бессмысленно:
@@ -247,13 +256,12 @@ export function App() {
      * продажи этого хода откатываются пересбором сами.
      */
     const undone: TableEvent[][] = []
-    const setupКомнаты = toTableSetup(r)
-    for (const raw of room.gameJournal()) {
+    for (const raw of партия.ходы) {
       const type = (raw as { type?: string })?.type
       if (type === '__START') continue
       if (type === '__UNDO') {
         // Ход ЧЕЛОВЕКА вместе с ходами ботов после него: ход бота бот тут же повторил бы (12.09).
-        const i = началоПоследнегоХодаЧеловека(setupКомнаты, moves)
+        const i = началоПоследнегоХодаЧеловека(партия.setup, moves)
         // Броска в журнале нет — отменять нечего, журнал не трогаем.
         if (i >= 0) undone.push(moves.splice(i))
         continue
@@ -266,16 +274,11 @@ export function App() {
       moves.push(raw as TableEvent)
       undone.length = 0
     }
-    game.resume(toTableSetup(r), moves, undone.length)
+    game.resume(партия.setup, moves, undone.length)
     setScreen('game')
   }
-
-  resumeRef.current = (moves) => {
-    const r = room.room
-    if (!r) return
-    game.resume(toTableSetup(r), moves)
-    setScreen('game')
-  }
+  journalRef.current = () => пересобрать(room.gameJournal())
+  resumeRef.current = (moves) => пересобрать(moves)
 
 
   /*
