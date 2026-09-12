@@ -114,8 +114,9 @@ function ПассивныйПоИсточникам({ l, flowMul }: { l: Ledger;
 function Row({ label, value, dim }: { label: string; value: string; dim?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-[3px] text-[13px]">
-      <span className={dim ? 'text-[var(--t-muted, var(--muted))]' : ''}>{label}</span>
-      <span className="tabnum">{value}</span>
+      {/* 🔴 Сумма не переносится (12.09): длинная подпись выдавливала «₽» на отдельную строку. */}
+      <span className={`min-w-0 ${dim ? 'text-[var(--t-muted, var(--muted))]' : ''}`}>{label}</span>
+      <span className="tabnum shrink-0 whitespace-nowrap">{value}</span>
     </div>
   )
 }
