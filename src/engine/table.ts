@@ -2795,6 +2795,16 @@ function resolveLanding(t: Table, seatIdx: number) {
 }
 
 /** «1 месяц / 2 месяца / 5 месяцев» — чтобы в тексте не было «3 месяцов». */
+/** «1 зарплата · 3 зарплаты · 5 зарплат». */
+export function словоЗарплата(n: number): string {
+  const д = n % 10
+  const дд = n % 100
+  if (дд >= 11 && дд <= 14) return 'зарплат'
+  if (д === 1) return 'зарплата'
+  if (д >= 2 && д <= 4) return 'зарплаты'
+  return 'зарплат'
+}
+
 function склонениеЗарплат(n: number): string {
   const д = n % 10
   const дд = n % 100
@@ -4506,7 +4516,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       if (t.pending?.kind !== 'downsized') return prev
       seatLedgerEvent(t, seat.id, { type: 'DOWNSIZED' })
       t.seats[seatIdx] = { ...t.seats[seatIdx], skipTurns: 2 }
-      log(t, seat.id, 'Потерял работу: два месяца без зарплаты, счета идут')
+      log(t, seat.id, 'Потерял работу: два хода без броска и без зарплаты')
       t.pending = null
       t.phase = 'turnEnd'
       return t
@@ -5361,7 +5371,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
           ? (l.ribaGraceLeft ?? 0) > 0
             ? `Добрал кредит ${money(amount)} — тело ${money(былоТело + amount)}, льгота не продлевается`
             : `Добрал кредит ${money(amount)} — платёж вырос до ${money(наПлатёж)}/мес`
-          : `Взял кредит ${money(amount)} — первые ${RIBA.gracePaydays} зарплат без платежей`,
+          : `Взял кредит ${money(amount)} — первые ${RIBA.gracePaydays} ${словоЗарплата(RIBA.gracePaydays)} без платежей`,
       )
       /*
        * 🔴 КРЕДИТ ОБЯЗАН ПОПАСТЬ В ЛЕНТУ. Живая жалоба 31.08: «куда мне
@@ -6561,4 +6571,26 @@ export function replayTable(setup: TableSetup, events: TableEvent[]): Table {
   let t = createTable(setup)
   for (const e of events) t = applyTableEvent(t, e)
   return t
+}
+
+/**
+ * С какого события начался последний ход ЧЕЛОВЕКА — туда откатывает «Отменить».
+ *
+ * 🔴 НЕ ПОСЛЕДНИЙ БРОСОК ЗА СТОЛОМ (12.09). Отмена снимала последний бросок, а в
+ * партии с ботами он почти всегда бота: бот тут же ходил заново, и покупка
+ * человека не отменялась ни с какого нажатия — живой прогон на сайте, шесть
+ * нажатий, касса та же. Ходы ботов после хода человека снимаются вместе с ним.
+ * Считаются только принятые события: отклонённое движком (дубль конца хода,
+ * лишний бросок) ходом не считается. −1 — человек ещё не бросал.
+ */
+export function началоПоследнегоХодаЧеловека(setup: TableSetup, events: TableEvent[]): number {
+  let t = createTable(setup)
+  let индекс = -1
+  for (let k = 0; k < events.length; k++) {
+    const e = events[k]
+    const n = applyTableEvent(t, e)
+    if (e.type === 'ROLL' && n !== t && !t.seats[t.turnIndex]?.isBot) индекс = k
+    t = n
+  }
+  return индекс
 }

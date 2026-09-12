@@ -12,6 +12,7 @@ import { useRoom } from './useRoom'
 import { useTheme } from './theme'
 import { createTransport } from '../net/realtime'
 import { ROOM_COLOR_VALUES, toTableSetup, type PlayerDraft } from '../engine/room'
+import { началоПоследнегоХодаЧеловека } from '../engine/table'
 import { dreamSpaces, professionsFor, setActiveTheme, setFastBoardTheme } from '../engine/data'
 
 type Screen = 'landing' | 'join' | 'create' | 'lobby' | 'local' | 'game'
@@ -246,12 +247,13 @@ export function App() {
      * продажи этого хода откатываются пересбором сами.
      */
     const undone: TableEvent[][] = []
+    const setupКомнаты = toTableSetup(r)
     for (const raw of room.gameJournal()) {
       const type = (raw as { type?: string })?.type
       if (type === '__START') continue
       if (type === '__UNDO') {
-        let i = moves.length - 1
-        while (i >= 0 && moves[i].type !== 'ROLL') i--
+        // Ход ЧЕЛОВЕКА вместе с ходами ботов после него: ход бота бот тут же повторил бы (12.09).
+        const i = началоПоследнегоХодаЧеловека(setupКомнаты, moves)
         // Броска в журнале нет — отменять нечего, журнал не трогаем.
         if (i >= 0) undone.push(moves.splice(i))
         continue

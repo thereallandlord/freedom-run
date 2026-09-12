@@ -361,8 +361,10 @@ function WinScreen({
 }: {
   table: Table
   onNew: () => void
-  onUndo: () => void
-  onRematch: () => void
+  /** Нет — кнопки нет: в сети отменяет только хозяин стола. */
+  onUndo?: () => void
+  /** Нет — кнопки нет: реванш работает только за одним экраном. */
+  onRematch?: () => void
 }) {
   const winner = table.seats.find((s) => s.id === table.winnerId)
   /*
@@ -441,16 +443,28 @@ function WinScreen({
         </div>
 
         <div className="mt-5 space-y-2">
-          <button onClick={onRematch} className="btn-primary w-full py-2.5">
-            🔁 Реванш — те же игроки, свежие колоды
-          </button>
+          {/*
+            🔴 В СЕТИ — ТОЛЬКО ТО, ЧТО РАБОТАЕТ У ВСЕХ (12.09). «Отменить ход»
+            здесь показывался каждому, хотя вверху кнопка только у хозяина, а
+            отмену из общего журнала применяют все: гость одним нажатием
+            откатывал победу всему столу. «Реванш» перезапускал партию только у
+            нажавшего — зерно комнаты общее и не менялось, столы расходились
+            молча. Отмена — хозяину, реванш — за одним экраном.
+          */}
+          {onRematch && (
+            <button onClick={onRematch} className="btn-primary w-full py-2.5">
+              🔁 Реванш — те же игроки, свежие колоды
+            </button>
+          )}
           <div className="flex gap-2">
             <button onClick={onNew} className="btn-ghost flex-1">
               Новая партия
             </button>
-            <button onClick={onUndo} className="btn-ghost">
-              Отменить ход
-            </button>
+            {onUndo && (
+              <button onClick={onUndo} className="btn-ghost">
+                Отменить ход
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -993,7 +1007,7 @@ export function Game({
             бы хода безвозвратно.
           */}
           {canUndo && (
-            <button onClick={undo} className="topbtn" title="Отменить последний ход: бросок и всё, что было после него">
+            <button onClick={undo} className="topbtn" title="Отменить последний ход игрока — вместе с ходами ботов после него">
               ↩️<span className="ml-1 hidden sm:max-lg:inline xl:inline">Отменить</span>
             </button>
           )}
@@ -1594,7 +1608,12 @@ export function Game({
         />
       )}
       {table.phase === 'finished' && (
-        <WinScreen table={table} onNew={reset} onUndo={undo} onRematch={rematch} />
+        <WinScreen
+          table={table}
+          onNew={reset}
+          onUndo={canUndo ? undo : undefined}
+          onRematch={meId ? undefined : rematch}
+        />
       )}
       </div>
     </div>

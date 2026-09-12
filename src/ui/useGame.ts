@@ -7,6 +7,7 @@ import {
   currentSeat,
   nextWorldEventIndex,
   replayTable,
+  началоПоследнегоХодаЧеловека,
   type TableSetup,
 } from '../engine/table'
 import { randomSeed } from '../engine/rng'
@@ -410,9 +411,10 @@ export function useGame(net?: {
       /*
        * Ход = бросок и всё, что после него. Снимать одно событие бессмысленно:
        * это почти всегда конец хода, который автопилот вернёт через секунду.
+       * 🔴 И ход — ЧЕЛОВЕКА, вместе с ходами ботов после него (12.09): иначе
+       * снимался ход бота, бот тут же ходил заново, и кнопка была мёртвой.
        */
-      let i = evs.length - 1
-      while (i >= 0 && evs[i].type !== 'ROLL') i--
+      const i = началоПоследнегоХодаЧеловека(setup, evs)
       if (i < 0) return evs
       const next = evs.slice(0, i)
       setUndone((u) => [...u, evs.slice(i)])

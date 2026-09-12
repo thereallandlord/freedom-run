@@ -15,6 +15,7 @@ import {
   сколькоУрезать,
   hasConsumerDebt,
   hasSellableAssets,
+  словоЗарплата,
 } from '../engine/table'
 import {
   RULES,
@@ -868,6 +869,12 @@ function CardBody({
               денег» неудобно, а решение чаще всего именно в долях: взять
               четверть или зайти на всё.
             */}
+            {/* Проценты — от того, на что хватает денег; без подписи «25%» читалось как загадка (12.09). */}
+            {max > 6 && (
+              <div className="-mb-1 text-[11px] text-[var(--muted)]">
+                Сколько взять — доля от того, на что хватает денег:
+              </div>
+            )}
             {max > 1 &&
               (() => {
                 /*
@@ -1444,7 +1451,7 @@ function CardBody({
               </div>
               {ribaFree > 0 ? (
                 <p className="text-center text-[11px] leading-snug text-[var(--muted)]">
-                  Кредит дают сразу: первые {RIBA.gracePaydays} зарплат без платежей, потом{' '}
+                  Кредит дают сразу: первые {RIBA.gracePaydays} {словоЗарплата(RIBA.gracePaydays)} без платежей, потом{' '}
                   {RIBA.ratePctMonthly}% в месяц от суммы.
                 </p>
               ) : (
@@ -1966,12 +1973,12 @@ function CardBody({
                     p.выбор === 'вложение'
                       ? card.flowPct > 0
                         ? 'Если вложиться — доход навсегда'
-                        : 'Если пройти мимо — доход навсегда'
+                        : 'Если не платить — доход навсегда'
                       : card.flowPct > 0
                         ? 'Доход вырос навсегда'
                         : 'Доход упал навсегда'
                   }
-                  value={`${card.flowPct > 0 ? '+' : ''}${card.flowPct}%`}
+                  value={`${card.flowPct > 0 ? '+' : '−'}${Math.abs(card.flowPct)}%`}
                   strong
                 />
               )}
@@ -2135,14 +2142,15 @@ function CardBody({
                         }`}
                       >
                         <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                          Пройти мимо
+                          {/* Отказ от платежа — «не платить»: «пройти мимо» беды не бывает (12.09). */}
+                          {прибавка ? 'Пройти мимо' : 'Не платить'}
                         </div>
                         <div
                           className={`tabnum mt-0.5 text-lg font-black ${
                             прибавка ? '' : 'text-amber-500'
                           }`}
                         >
-                          {прибавка ? '0 ₽' : `${процент}%`}
+                          {прибавка ? '0 ₽' : `−${Math.abs(процент)}%`}
                         </div>
                         <div className="mt-1 text-[11px] text-[var(--muted)]">
                           {прибавка
@@ -2560,7 +2568,6 @@ function CardBody({
     }
 
     case 'downsized': {
-      const cost = totalExpenses(l)
       return (
         <S
           badge="Увольнение"
@@ -2573,14 +2580,16 @@ function CardBody({
             🔴 Кнопка обещала списать сумму, а движок не списывал ни рубля —
             и правильно делал: расходы и так уходят каждую зарплату, отдельное
             списание было бы двойным счётом. Наказание здесь — простой без
-            зарплаты при живых счетах. Текст приведён в соответствие.
+            зарплаты.
+            🔴 И ТЕКСТ НЕ ОБЕЩАЕТ СЧЕТОВ (12.09). Здесь стояло «счета идут своим
+            чередом» и строка «Расходы за месяц 78 000 ₽» — живой прогон: человек
+            ждёт списания, а его нет. Два хода просто выпадают.
           */}
           <p className="text-sm text-[var(--muted)]">
-            Два месяца без зарплаты, а счета идут своим чередом. Бонус
-            благотворительности сгорает.
+            Два хода вы ищете работу: бросать нельзя, зарплата не приходит, но и
+            денег никто не списывает. Бонус благотворительности сгорает.
           </p>
           <div className="panel-2 rounded-lg p-3">
-            <Stat label="Расходы за месяц" value={money(cost)} />
             <Stat label="Денег на руках" value={money(l.cash)} strong />
           </div>
           <button onClick={() => dispatch({ type: 'PAY_DOWNSIZED' })} className="btn-danger w-full">
