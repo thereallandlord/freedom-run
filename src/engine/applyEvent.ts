@@ -889,11 +889,26 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
      */
     case 'CASHFLOW_DAY': {
       if (!l.fastTrack) return prev
+      /*
+       * 🔴 ДЕЛА ПОЛОСЫ ПЛАТЯТ ЖИВЫМИ ДЕНЬГАМИ (11.09). С 03.09 день потока — это
+       * зарплата без зарплаты, а она видит только активы Круга: доход дел,
+       * купленных на Полосе, и выигранных венчуров показывался на экране, но в
+       * кассу не приходил ни рубля. Замер: боты без GreenLeaf отдали за такие
+       * дела 802 млн ₽ на восьми столах — впустую; игрок видел 202 000 дохода, а
+       * получал 48 000. И просадка от «тянуть беду» резала только число на
+       * экране — тянуть было бесплатно. Теперь просадка режет весь доход Полосы.
+       */
+      const доходКруга = totalIncome(l, e.flowMul)
       const после = applyEvent(l, { type: 'PAYCHECK', flowMul: e.flowMul })
+      const ф = после.fastTrack
+      if (!ф) return после
+      const просадка = (ф.dipLeft ?? 0) > 0 ? (ф.dipMul ?? 1) : 1
+      const доплата = Math.round(fastTrackProgress(после) * просадка - доходКруга * (1 - просадка))
+      после.cash += доплата
+      после.lastPaycheck = (после.lastPaycheck ?? 0) + доплата
       // Просадка от «тянуть беду» тает по месяцу — здесь, а не в зарплате:
       // в Круге её не бывает, и лишний счётчик там только запутал бы.
-      const ф = после.fastTrack
-      if (ф && (ф.dipLeft ?? 0) > 0) {
+      if ((ф.dipLeft ?? 0) > 0) {
         const осталось = (ф.dipLeft ?? 0) - 1
         после.fastTrack = { ...ф, dipLeft: осталось, dipMul: осталось > 0 ? ф.dipMul : 1 }
       }
@@ -912,6 +927,15 @@ export function applyEvent(prev: Ledger, e: LedgerEvent): Ledger {
       // Победа на втором круге одна — мечта. Покупка дела только приближает к ней.
       if (!l.свободенС && свободаДостигнута(l)) l.свободенС = l.paydays
       return l
+
+    case 'SELL_FT_BUSINESS': {
+      if (!l.fastTrack) return prev
+      const i = l.fastTrack.businesses.findIndex((b) => b.id === e.assetId)
+      if (i < 0) return prev
+      l.fastTrack.businesses.splice(i, 1)
+      l.cash += e.salePrice
+      return l
+    }
 
     case 'BUY_DREAM':
       if (!l.fastTrack) return prev

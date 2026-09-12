@@ -34,6 +34,8 @@ import {
   stockPriceNow,
   можноВыйтиИзКруга,
   делоПодходит,
+  sellOfferQuote,
+  СКИДКА_ЗА_СКОРОСТЬ, ценаБыстройПродажиДелаПолосы,
 } from './table'
 import {
   RULES,
@@ -45,6 +47,8 @@ import {
   marketStockPrice,
   ownShare,
   MANAGER_PCT,
+  totalIncome,
+  fastTrackProgress,
 } from './ledger'
 import { TICKERS, bigDeals, fastBoard, smallDeals } from './data'
 import { loanOwed } from './trades'
@@ -71,6 +75,8 @@ export interface BotProfile {
   dumpNegativeFlowAt: number | null
   /** Как часто отказывает себе в хотелке, даже когда деньги есть. */
   skipWantChance: number
+  /** Во сколько раз пассив должен перекрыть расходы, чтобы бот без GreenLeaf уволился. Нет — сразу. */
+  exitMargin?: number
   charity: 'never' | 'sometimes' | 'rich' | 'always'
   ventureCashFraction: number
   laneBuyCashMultiple: number
@@ -131,6 +137,30 @@ function порогКрупной(t: Table): number {
  * Решение бота на текущем состоянии стола.
  * Возвращает одно событие; водитель вызывает функцию, пока ход не закончится.
  */
+/**
+ * Что можно продать быстро, за сколько на руки и сколько оно кормит.
+ * Первым — то, что кормит хуже всего на рубль выручки. Партнёрский бизнес и
+ * общие с другим игроком активы не продаются.
+ */
+function чтоПродатьБыстро(t: Table, l: Table['seats'][number]['ledger']) {
+  const первогоКруга = [...l.realEstate, ...l.businesses]
+    .filter((a) => !(a as { gl?: unknown }).gl && !a.partnerId && !a.investorShare)
+    .map((a) => {
+      const долг = 'mortgage' in a ? a.mortgage : (a as { liability: number }).liability
+      const { price: цена, rebate } = sellOfferQuote(a, долг, СКИДКА_ЗА_СКОРОСТЬ, t.market.price[a.category ?? ''] ?? 1)
+      return { id: a.id, чистыми: цена - (долг - rebate), кормит: ownShare(a), сПолосы: false }
+    })
+  const второгоКруга = (l.fastTrack?.businesses ?? []).map((b) => ({
+    id: b.id,
+    чистыми: ценаБыстройПродажиДелаПолосы(b),
+    кормит: b.cashFlow,
+    сПолосы: true,
+  }))
+  return [...первогоКруга, ...второгоКруга]
+    .filter((x) => x.чистыми > 0)
+    .sort((x, y) => x.кормит / x.чистыми - y.кормит / y.чистыми)
+}
+
 export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
   const seat = currentSeat(t)
   if (!seat.isBot) return null
@@ -156,9 +186,22 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
     return { type: 'BANKRUPTCY_QUIT' }
   }
 
-  // 2. Пора на Полосу свободы — уходим сразу.
+  // 2. Пора на Полосу свободы.
   if (t.phase === 'awaitingRoll' && можноВыйтиИзКруга(t, seat)) {
-    return { type: 'ENTER_FAST_TRACK' }
+    /*
+     * 🔴 БЕЗ GREENLEAF НЕ СПЕШИТЬ УВОЛЬНЯТЬСЯ (11.09). Выйти можно, как только
+     * пассив перекрыл расходы, — но на Полосе зарплаты нет, и игрок без
+     * структуры уходил туда с тонким запасом: 46 000 ₽ в кассу за ход при
+     * мечте в 23 млн. В Круге тот же человек за ход получает вдвое больше —
+     * зарплата плюс пассив. Камиль за столом 31.08 так и сделал: «Нет, я пока
+     * подожду». Структура GreenLeaf растёт и на Полосе — её владельцу ждать
+     * незачем; последний за столом тоже не ждёт — остальные уже купили мечту.
+     */
+    const запас = p.exitMargin ?? 1
+    const сGreenLeaf = l.businesses.some((b) => b.gl)
+    const последний = t.seats.every((s) => s.id === seat.id || s.won || s.outOfGame)
+    const хватает = freedomIncome(l, t.market.flow) >= totalExpenses(l) * запас
+    if (сGreenLeaf || последний || хватает) return { type: 'ENTER_FAST_TRACK' }
   }
 
   // 3. Бросок.
@@ -296,7 +339,14 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
      * лечи. Берём дело с лучшей окупаемостью; франшиза раньше точки — она
      * растёт сама.
      */
-    if (seat.track === 'rat') {
+    /*
+     * На Полосе тоже растим сеть (решение Камиля 01.09: вложиться в бизнес — на
+     * обоих кругах), но только пока до мечты далеко: как накопил половину её
+     * цены — кубышку не трогаем, как и с делами Полосы.
+     */
+    const копитНаМечту =
+      seat.track === 'fast' && seat.ledger.cash >= dreamPriceAt(t, seat.dreamSpace) * 0.5
+    if ((seat.track === 'rat' || seat.track === 'fast') && !копитНаМечту) {
       const корни = seat.ledger.businesses
         .filter((b) => !b.gl && !b.точкаОт && !b.франшизаОт && !(b.partnerId && !b.investorShare))
         .sort(
@@ -496,11 +546,8 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
          * прямо сейчас. Иначе актив нужнее.
          */
         const наПолосе = seat.track === 'fast'
-        const ценаМечты = (() => {
-          if (!наПолосе) return 0
-          const кл = (fastBoard() as { type: string; price?: number }[])[seat.dreamSpace]
-          return кл && кл.type === 'dream' ? (кл.price ?? 0) : 0
-        })()
+        // Цена — с подорожанием от чужих остановок: копить надо на неё, а не на базу.
+        const ценаМечты = наПолосе ? dreamPriceAt(t, seat.dreamSpace) : 0
         for (const m of marketMatches(t, card.category)) {
           if (m.seat.id !== seat.id) continue
           for (const a of m.assets) {
@@ -695,10 +742,20 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
        * Решает как человек: платит, если после расчёта остаётся хотя бы
        * три месяца расходов; иначе тянет и живёт с просадкой.
        */
-      const беда = pending as { выбор?: { сумма: number } }
+      const беда = pending as { выбор?: { сумма: number; просадкаПкт?: number; месяцев?: number } }
       if (беда.выбор) {
-        const запас = seat.ledger.cash - беда.выбор.сумма
-        const тянуть = запас < totalExpenses(seat.ledger) * 3
+        const l2 = seat.ledger
+        const запас = l2.cash - беда.выбор.сумма
+        /*
+         * 🔴 ТЯНУТЬ ТЕПЕРЬ СТОИТ НАСТОЯЩИХ ДЕНЕГ (11.09): просадка режет кассу.
+         * Прежде чем тянуть — прикинуть, не уйдёт ли касса в минус за месяцы
+         * просадки. Уйдёт — платить: оплата берёт не больше, чем есть на руках,
+         * а минус на счету — это банкротство.
+         */
+        const доход = totalIncome(l2, t.market.flow) + fastTrackProgress(l2)
+        const вМесяц = доход * (1 - (беда.выбор.просадкаПкт ?? 0) / 100) - totalExpenses(l2)
+        const тянутьРазорит = l2.cash + вМесяц * (беда.выбор.месяцев ?? 0) < 0
+        const тянуть = !тянутьРазорит && запас < totalExpenses(l2) * 3
         return { type: тянуть ? 'ENDURE_FT_TROUBLE' : 'PAY_FT_TROUBLE' }
       }
       return { type: 'PASS_CARD' }
@@ -721,7 +778,39 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
       const мечта = dreamPriceAt(t, seat.dreamSpace)
       const хватитПотом = l.cash - space.downPayment
       if (мечта > 0 && l.cash >= мечта * 0.5 && хватитПотом < мечта) return { type: 'PASS_CARD' }
-      if (l.cash >= space.downPayment * p.laneBuyCashMultiple) return { type: 'BUY_FT_BUSINESS' }
+      const цель = space.downPayment * p.laneBuyCashMultiple
+      if (l.cash >= цель) return { type: 'BUY_FT_BUSINESS' }
+      /*
+       * 🔴 КАПИТАЛ ПЕРЕКЛАДЫВАЮТ: ИЗ КВАРТИРЫ В ДЕЛО (12.09). Квартира первого
+       * круга кормит около процента своей цены в месяц, дело большого поля —
+       * пять с половиной. Пока дело второго круга нельзя было продать, обмен
+       * запирал деньги: у мечты продавать было уже нечего, и без GreenLeaf до
+       * неё выходило 71 свой ход вместо 49. Теперь дело продаётся так же, как
+       * квартира. Меняем, только если вырученного хватит на взнос, дело кормит
+       * заметно лучше проданного и месяц после обмена остаётся в плюсе. И
+       * только пока до мечты далеко: если продажей всего нажитого она берётся
+       * сейчас или через десяток ходов, обмен лишь дважды отдаст скидку за
+       * скорость — замер: на мечте за 10,5 млн до неё стало 37 ходов вместо 32.
+       */
+      const всё = чтоПродатьБыстро(t, l)
+      const недостаёт = мечта - l.cash - всё.reduce((n, x) => n + x.чистыми, 0)
+      const вМесяцСейчас = totalIncome(l, t.market.flow) + fastTrackProgress(l) - totalExpenses(l)
+      const далеко = мечта > 0 && недостаёт > Math.max(0, вМесяцСейчас) * 15
+      const продажи = всё.filter((x) => !x.сПолосы)
+      let касса = l.cash
+      let теряем = 0
+      let продать = 0
+      for (const x of продажи) {
+        if (касса >= цель) break
+        касса += x.чистыми
+        теряем += x.кормит
+        продать++
+      }
+      const вМесяцПосле =
+        totalIncome(l, t.market.flow) + fastTrackProgress(l) - теряем + space.cashFlow - totalExpenses(l)
+      if (далеко && продать > 0 && касса >= цель && space.cashFlow > теряем * 1.2 && вМесяцПосле > 0) {
+        return { type: 'SELL_ASSET_NOW', assetId: продажи[0].id } as TableEvent
+      }
       return { type: 'PASS_CARD' }
     }
 
@@ -757,6 +846,18 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
         return { type: 'PASS_CARD' }
       }
       if (l.cash >= price) return { type: 'BUY_DREAM' }
+      /*
+       * 🔴 У СВОЕЙ МЕЧТЫ МОЖНО ПРОДАТЬ ТО, ЧТО НАЖИЛ. Человек так и делает: не
+       * хватает — продаёт квартиру или дело быстро, за 85%, и покупает мечту.
+       * Бот этого не умел и проходил мимо мечты с миллионами в активах: замер
+       * 11.09 — без GreenLeaf 11 128 проходов мимо мечты, где продажа закрыла
+       * бы разрыв. Продаём, только если вырученного точно хватит, — начиная с
+       * того, что меньше всего кормит на рубль выручки.
+       */
+      const продажи = чтоПродатьБыстро(t, l)
+      if (продажи.length && l.cash + продажи.reduce((n, x) => n + x.чистыми, 0) >= price) {
+        return { type: 'SELL_ASSET_NOW', assetId: продажи[0].id } as TableEvent
+      }
       return { type: 'PASS_CARD' }
     }
 

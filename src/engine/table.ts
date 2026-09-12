@@ -238,6 +238,20 @@ export const THEME_RULES: Record<DeckTheme, Parameters<typeof setRules>[0]> = {
      * выбывал вместе с концом партии — 57 столов из 60.
      */
     доигрыватьКруг: true,
+    /*
+     * Чужая мечта дорожает на 10% за каждую чужую остановку, но не больше чем на
+     * половину. Было +100% без потолка — правило первой версии клона: за столом
+     * без GreenLeaf мечта убегала к ×7–×10, и её почти не покупали. Замер 11.09,
+     * 30 столов: без GreenLeaf до мечты медиана 56 своих ходов вместо 147.
+     */
+    dreamBumpPct: 10,
+    dreamBumpCapPct: 50,
+    /*
+     * Обязательная трата второго круга — не больше полугода расходов игрока:
+     * свадьба у учителя и у топ-менеджера стоит по-разному. Богатым сумма с
+     * клетки как была — потолок её не трогает.
+     */
+    ftLifeSpendMonths: 6,
   },
 }
 
@@ -1366,6 +1380,8 @@ export function marketMatches(
      * переставала идти вовсе — ноль увольнений на двадцати пяти прогонах.
      */
     if (seat.track === 'fast' && !любой) continue
+    // Предложение клетки Полосы — только тому, кто на неё встал.
+    if (любой && seat.id !== t.seats[t.turnIndex].id) continue
     const assets = [
       ...seat.ledger.realEstate
         .filter((a) => (любой || a.category === category) && !этоВтораяПоловина(a))
@@ -1648,14 +1664,33 @@ export function можноВыйтиИзКруга(t: Table, seat: Seat): boolea
   return seat.track === 'rat' && isOutOfRatRace(l, t.market.flow)
 }
 
+/**
+ * Сколько дадут на руки за дело второго круга при быстрой продаже: та же
+ * скидка за скорость, что у квартиры и дела первого круга, — от вложенного.
+ */
+export function ценаБыстройПродажиДелаПолосы(b: { downPayment: number }): number {
+  return Math.round((b.downPayment * СКИДКА_ЗА_СКОРОСТЬ) / 100 / 1000) * 1000
+}
+
 export function sellOfferPrice(cost: number, multiplierPct: number, marketMul: number): number {
   return Math.round((cost * multiplierPct * marketMul) / 100)
 }
 
+/**
+ * Цена мечты с учётом того, сколько раз на её клетку вставали чужие.
+ * 🔴 Правило пришло с первой версией клона (16.08): +100% базы за каждую чужую
+ * остановку, навсегда и без потолка. Решения Камиля по нему нет. За столом без
+ * GreenLeaf оно уводило мечту к ×7–×10 к моменту покупки, в долгой партии — к
+ * ×57: игрок копил, а цена убегала быстрее. Шаг и потолок — правила режима.
+ */
 export function dreamPriceAt(t: Table, spaceIndex: number): number {
   const s = fastBoard()[spaceIndex]
   if (s.type !== 'dream') return 0
-  return s.price * (1 + (t.dreamBumps[spaceIndex] ?? 0))
+  const надбавка = Math.min(
+    (t.dreamBumps[spaceIndex] ?? 0) * (RULES.dreamBumpPct ?? 100),
+    RULES.dreamBumpCapPct ?? Infinity,
+  )
+  return Math.round((s.price * (100 + надбавка)) / 100 / 1000) * 1000
 }
 
 export function charityCost(l: Ledger): number {
@@ -2115,9 +2150,14 @@ function advance(t: Table, seatIdx: number, steps: number) {
      * кошелёк уже после зарплаты — там подросла структура партнёрского
      * бизнеса и подтянулись расходы, то есть доход СЛЕДУЮЩЕГО месяца.
      */
+    /*
+     * 🔴 И НА ПОЛОСЕ — ТО, ЧТО ПРИШЛО, А НЕ ДОХОД С ЭКРАНА. Здесь стоял
+     * fastTrackIncome: игрок читал «202 000», а в кассу приходило 48 000 —
+     * расходы на втором круге никуда не деваются.
+     */
     const amount =
-      seat.track === 'rat' ? (l.lastPaycheck ?? monthlyCashFlow(l, t.market.flow)) : fastTrackIncome(l)
-    log(t, seat.id, `Зарплата ×${payouts}: ${money(amount)}`)
+      l.lastPaycheck ?? (seat.track === 'rat' ? monthlyCashFlow(l, t.market.flow) : fastTrackIncome(l))
+    log(t, seat.id, `${seat.track === 'rat' ? 'Зарплата' : 'Доход с активов'} ×${payouts}: ${money(amount)}`)
 
     /*
      * 🔴 ОБРАЗ ЖИЗНИ РАСТЁТ ВСЛЕД ЗА ДОХОДОМ (правка Камиля: «расходы должны
@@ -2248,17 +2288,24 @@ function resolveLanding(t: Table, seatIdx: number) {
    */
   const мимоМечты = !!t.прошёлСвоюМечту && seat.track === 'fast' && seat.position !== seat.dreamSpace
   t.прошёлСвоюМечту = false
-  if (мимоМечты) {
-    t.pending = { kind: 'ftDream', space: seat.dreamSpace }
-    t.phase = 'resolving'
-    return
-  }
 
   // Отрицательный чек, который нечем закрыть, — это банкротство.
+  // 🔴 Раньше мечты: проход мимо своей клетки прятал минус на счету.
   if (l.cash < 0) {
     t.pending = { kind: 'bankruptcy' }
     t.phase = 'resolving'
     log(t, seat.id, 'Наличных не хватило — банкротство')
+    return
+  }
+
+  if (мимоМечты) {
+    /*
+     * 🔴 Клетка, на которой он встал, не теряется: не купил мечту — её разбор
+     * идёт следом (см. PASS_CARD). Раньше она не разыгрывалась вовсе, и проход
+     * мимо мечты спасал от беды на этой клетке.
+     */
+    t.pending = { kind: 'ftDream', space: seat.dreamSpace, потомКлетка: true }
+    t.phase = 'resolving'
     return
   }
 
@@ -2428,7 +2475,7 @@ function resolveLanding(t: Table, seatIdx: number) {
          * 71, разрыв до 52 700 ₽.
          */
         const paid =
-          seat.track === 'rat' ? (l.lastPaycheck ?? monthlyCashFlow(l, t.market.flow)) : fastTrackIncome(l)
+          l.lastPaycheck ?? (seat.track === 'rat' ? monthlyCashFlow(l, t.market.flow) : fastTrackIncome(l))
         /*
          * 🔴 ЗАКРЫТИЕ РАНГА — ОТДЕЛЬНАЯ НОВОСТЬ, И ОНА ИДЁТ ПЕРВОЙ.
          *
@@ -2632,7 +2679,17 @@ function resolveLanding(t: Table, seatIdx: number) {
         return
       }
       const before = l.cash
-      const сумма = Math.min(l.cash, space.amount)
+      /*
+       * 🔴 ТРАТА — ПО МАСШТАБУ ЖИЗНИ, как у развода. Свадьба сына у учителя и у
+       * топ-менеджера стоит по-разному, а клетка брала с обоих одну сумму — до
+       * всего, что есть на руках. Замер 11.09: учитель без GreenLeaf получал на
+       * втором круге 27 000 ₽ за ход, а «Хадж всей семьёй» и «Свадьба сына»
+       * раз в полтора десятка ходов обнуляли кассу — копить на мечту было нечем.
+       */
+      const поМасштабу = RULES.ftLifeSpendMonths
+        ? Math.round((totalExpenses(l) * RULES.ftLifeSpendMonths) / 1000) * 1000
+        : Infinity
+      const сумма = Math.min(l.cash, space.amount, поМасштабу)
       seatLedgerEvent(t, seat.id, { type: 'ADJUST_CASH', amount: -сумма })
       if (space.upkeep) seatLedgerEvent(t, seat.id, { type: 'ADD_UPKEEP', amount: space.upkeep })
       log(
@@ -2721,9 +2778,16 @@ function resolveLanding(t: Table, seatIdx: number) {
         t.phase = 'resolving'
         return
       }
-      // Чужая мечта дорожает на 100% от базовой цены.
-      t.dreamBumps[seat.position] = (t.dreamBumps[seat.position] ?? 0) + 1
-      log(t, seat.id, `Чужая мечта «${localizedSpaceName(seat.position)}» подорожала`)
+      // Чужая мечта дорожает — на шаг из правил режима и до потолка (см. dreamPriceAt).
+      const шаг = RULES.dreamBumpPct ?? 100
+      const было = t.dreamBumps[seat.position] ?? 0
+      const потолок = RULES.dreamBumpCapPct
+      if (потолок != null && было * шаг >= потолок) {
+        log(t, seat.id, `Чужая мечта «${localizedSpaceName(seat.position)}» дороже уже не станет`)
+      } else {
+        t.dreamBumps[seat.position] = было + 1
+        log(t, seat.id, `Чужая мечта «${localizedSpaceName(seat.position)}» подорожала на ${шаг}%`)
+      }
       t.phase = 'turnEnd'
       return
     }
@@ -4277,12 +4341,23 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
       if (event.by && event.seatId !== event.by) return prev
       const card = t.pending.card
       const holder = t.seats.find((s) => s.id === event.seatId)
-      if (!holder || holder.outOfGame || holder.track === 'fast') return prev
+      /*
+       * 🔴 КЛЕТКА ПОЛОСЫ «ПРОДАТЬ ВЫШЕ РЫНКА» БЫЛА МЁРТВОЙ (11.09). Её карточка
+       * идёт с категорией «*» — любой актив, — а здесь продавца с Полосы
+       * отклоняли и требовали точного совпадения категории. Замер: 1 035
+       * попыток продать, все отклонены, у человека тоже. Предложение Полосы —
+       * ходящему и на любой его актив; обычные карточки рынка — как прежде.
+       */
+      const сПолосы = card.category === '*'
+      if (!holder || holder.outOfGame) return prev
+      if (сПолосы ? holder.id !== t.seats[t.turnIndex].id : holder.track === 'fast') return prev
 
       const re = holder.ledger.realEstate.find((a) => a.id === event.assetId)
       const biz = holder.ledger.businesses.find((a) => a.id === event.assetId)
       const asset = re ?? biz
-      if (!asset || asset.category !== card.category) return prev
+      if (!asset || (!сПолосы && asset.category !== card.category)) return prev
+      // Партнёрский бизнес не продаётся: это структура, а не заведение.
+      if (biz?.gl) return prev
       // Доля в чужом объекте отдельно не продаётся — выходят только вместе с объектом.
       if (этоВтораяПоловина(asset)) return prev
 
@@ -4325,6 +4400,11 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
         `${holder.name} продал «${asset.name}» за ${money(price)} — это ${card.multiplierPct}% стоимости`,
         card.multiplierPct >= 100 ? 'добро' : 'худо',
       )
+      // Покупатель на Полосе один: продал — карточка закрыта.
+      if (сПолосы) {
+        t.pending = null
+        t.phase = 'turnEnd'
+      }
       return t
     }
 
@@ -4660,6 +4740,28 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
      * Расчёт с партнёром и доля с прибыли за вход — те же, что везде.
      */
     case 'SELL_ASSET_NOW': {
+      /*
+       * 🔴 ДЕЛО ВТОРОГО КРУГА ТОЖЕ ПРОДАЁТСЯ (12.09). На большом поле капитал
+       * перекладывают «из квартиры в дело, из дела в мечту», а купленное там
+       * дело продать было нельзя вовсе: деньги в нём запирались навсегда, и у
+       * своей мечты игроку без GreenLeaf продавать было уже нечего. Цена — та
+       * же скидка за скорость от вложенного; клетка освобождается для других.
+       */
+      const делоПолосы = l.fastTrack?.businesses.find((x) => x.id === event.assetId)
+      if (делоПолосы) {
+        const price = ценаБыстройПродажиДелаПолосы(делоПолосы)
+        seatLedgerEvent(t, seat.id, { type: 'SELL_FT_BUSINESS', assetId: делоПолосы.id, salePrice: price })
+        const клетка = Number(делоПолосы.id.replace(/^ft-/, ''))
+        if (Number.isInteger(клетка) && t.ftOwnership[клетка] === seat.id) delete t.ftOwnership[клетка]
+        log(t, seat.id, `${seat.name} продал «${делоПолосы.name}» без торга за ${money(price)} (${СКИДКА_ЗА_СКОРОСТЬ}% вложенного)`)
+        плашка(
+          t,
+          seat.id,
+          `${seat.name} продал «${делоПолосы.name}» быстро — за ${money(price)}, это ${СКИДКА_ЗА_СКОРОСТЬ}% вложенного`,
+          'нейтр',
+        )
+        return t
+      }
       const re = l.realEstate.find((x) => x.id === event.assetId)
       const biz = l.businesses.find((x) => x.id === event.assetId)
       const asset = re ?? biz
@@ -5466,7 +5568,11 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
      * местах сразу не постоишь, — поэтому сразу идёт в зачёт свободы.
      */
     case 'OPEN_BRANCH': {
-      if (seat.track !== 'rat') return prev
+      /*
+       * 🔴 И НА ПОЛОСЕ ТОЖЕ (11.09). «Вложиться в бизнес — базовое действие на
+       * ОБОИХ кругах» — решение Камиля 01.09. Здесь стоял запрет второго круга, а
+       * кнопка в карточке дела на Полосе показывалась и молча не срабатывала.
+       */
       const b = l.businesses.find((x) => x.id === event.assetId)
       if (!b || почемуНельзяТочку(l, b)) return prev
       const цена = ценаТочки(b)
@@ -5500,7 +5606,7 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
      * в зачёт свободы без управляющего.
      */
     case 'FRANCHISE_OWN': {
-      if (seat.track !== 'rat') return prev
+      // И на Полосе тоже — см. OPEN_BRANCH.
       const b = l.businesses.find((x) => x.id === event.assetId)
       if (!b || почемуНельзяФраншизу(l, b)) return prev
       const цена = ценаФраншизы(b)
@@ -5596,6 +5702,13 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
     case 'PASS_CARD': {
       if (!t.pending) return prev
       if (t.pending.kind === 'doodad' || t.pending.kind === 'bankruptcy') return prev
+      if (t.pending.kind === 'ftDream' && t.pending.потомКлетка && seatIdx === t.turnIndex) {
+        // Прошёл мимо своей мечты и не купил — разбираем клетку, на которой он встал.
+        t.pending = null
+        resolveLanding(t, seatIdx)
+        if (!t.pending) t.phase = 'turnEnd'
+        return t
+      }
       /*
        * 🔴 КАРТОЧКУ С ВЫБОРОМ ХОДЯЩИЙ НЕ СНИМАЕТ «ДАЛЬШЕ». Иначе у беды и у
        * вложения появляется третий, бесплатный выход: не платить и ничего не

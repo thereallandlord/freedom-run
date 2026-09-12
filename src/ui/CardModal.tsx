@@ -684,9 +684,9 @@ function CardBody({
   /*
    * 🔴 ТОЛЬКО ИГРОКИ КРУГА. Долю в сделке Круга предлагали и тому, кто уже на
    * Полосе свободы: он платил деньги, получал зеркальную запись в портфель —
-   * и не получал с неё НИ РУБЛЯ, потому что доход Полосы считает fastTrackIncome,
-   * а realEstate/businesses в него не входят вовсе. Тот же фильтр стоит в
-   * DealTradeActions и в списке покупателей TradesModal.
+   * и не получал с неё НИ РУБЛЯ (так было при выкупе; теперь активы Круга на
+   * Полосе платят, но новые сделки Круга там закрыты правилами). Тот же фильтр
+   * стоит в DealTradeActions и в списке покупателей TradesModal.
    */
   const others = table.seats.filter(
     (x) => x.id !== seat.id && !x.outOfGame && !x.won && x.track === 'rat',
@@ -1589,7 +1589,7 @@ function CardBody({
           )}
           <p className="text-center text-[13px] leading-snug text-[var(--muted)]">
             {mine
-              ? 'Дальше второй круг: цель — довести доход до двойного запаса над расходами. Или купить свою мечту.'
+              ? 'Дальше второй круг: цель — купить свою мечту. Активы платят каждый ход; дойти до своей клетки и накопить на неё — ваше дело.'
               : 'Партия продолжается: остальные доигрывают, как за настоящим столом.'}
           </p>
           <button onClick={() => dispatch({ type: 'PASS_CARD' })} className="btn-primary w-full">
@@ -1751,13 +1751,13 @@ function CardBody({
 
     case 'payday':
       return (
-        <S badge="Зарплата" title="Пришли деньги" accent="#10b981" art="💰" photo={artBySpace('paycheck')}>
+        <S badge={seat.track === 'fast' ? 'Доход с активов' : 'Зарплата'} title="Пришли деньги" accent="#10b981" art="💰" photo={artBySpace('paycheck')}>
           <div className="rounded-lg bg-emerald-500/10 px-3 py-3 text-center">
             <div className="tabnum text-[26px] font-black leading-none text-emerald-600 dark:text-emerald-400">
               {signed(p.amount)}
             </div>
             <div className="mt-1 text-[12px] text-[var(--muted)]">
-              Зарплата минус расходы — то, что реально осталось
+              {seat.track === 'fast' ? 'Доход с активов минус расходы' : 'Зарплата минус расходы'} — то, что реально осталось
             </div>
           </div>
           {/*

@@ -971,7 +971,7 @@ export type Pending =
       before?: number
       after?: number
     }
-  | { kind: 'ftDream'; space: number }
+  | { kind: 'ftDream'; space: number; потомКлетка?: boolean }
   | { kind: 'ftCharity' }
   /*
    * Событие Полосы свободы: проверка, иск, развод, сокращение.

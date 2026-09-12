@@ -31,7 +31,7 @@ import {
   freedomBreakdown,
 } from '../engine/ledger'
 import type { FlowMul } from '../engine/ledger'
-import { МИНИМУМ_ВЛОЖЕНИЯ, СКИДКА_ЗА_СКОРОСТЬ, sellOfferQuote } from '../engine/table'
+import { МИНИМУМ_ВЛОЖЕНИЯ, СКИДКА_ЗА_СКОРОСТЬ, ценаБыстройПродажиДелаПолосы, sellOfferQuote } from '../engine/table'
 import type { TableEvent } from '../engine/events'
 import { вКругах } from './срок'
 import { professionName } from '../engine/data'
@@ -723,6 +723,37 @@ function КнопкаБыстройПродажи({
 }
 
 /**
+ * Быстрая продажа дела второго круга — те же два нажатия и та же скидка за
+ * скорость, что у квартиры, только от вложенного: рыночной цены у такого дела
+ * нет. Цену считает та же функция, что и движок.
+ */
+function КнопкаПродатьДелоПолосы({
+  дело,
+  dispatch,
+}: {
+  дело: { id: string; downPayment: number }
+  dispatch: (e: TableEvent) => void
+}) {
+  const [готов, setГотов] = useState(false)
+  const наСчёт = ценаБыстройПродажиДелаПолосы(дело)
+  if (наСчёт <= 0) return null
+  return (
+    <button
+      onClick={() => (готов ? dispatch({ type: 'SELL_ASSET_NOW', assetId: дело.id }) : setГотов(true))}
+      className={`mb-1 mt-0.5 w-full rounded-lg border px-2 py-1 text-[11px] font-semibold transition ${
+        готов
+          ? 'border-amber-500 bg-amber-500/15'
+          : 'border-[var(--t-line, var(--line))] hover:border-amber-500/60 hover:bg-amber-500/10'
+      }`}
+    >
+      {готов
+        ? `Точно продать? На счёт ${money(наСчёт)}`
+        : `Продать быстро — ${СКИДКА_ЗА_СКОРОСТЬ}% вложенного, ${money(наСчёт)} на счёт`}
+    </button>
+  )
+}
+
+/**
  * Раздел панели. Раньше все четыре блока выглядели одинаково — чёрным по
  * белому, — и глазом не отделялись друг от друга. Теперь у каждого свой цвет:
  * полоса слева и заголовок в тон. Цвет несёт смысл (доход зелёный, расход
@@ -1067,8 +1098,15 @@ export function PlayerPanel({
           />
           {l.fastTrack && l.fastTrack.businesses.length > 0 && (
             <div className="mt-2 space-y-0.5">
+              {/*
+                🔴 Дело второго круга продаётся (12.09): «из дела в мечту». Без
+                кнопки деньги в нём запирались навсегда.
+              */}
               {l.fastTrack.businesses.map((b) => (
-                <Row key={b.id} label={b.name} value={signed(b.cashFlow)} dim />
+                <div key={b.id}>
+                  <Row label={b.name} value={signed(b.cashFlow)} dim />
+                  {dispatch && <КнопкаПродатьДелоПолосы дело={b} dispatch={dispatch} />}
+                </div>
               ))}
             </div>
           )}

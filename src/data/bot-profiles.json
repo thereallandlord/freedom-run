@@ -31,7 +31,8 @@
     "ventureCashFraction": 0,
     "laneBuyCashMultiple": 1,
     "repayIdle": false,
-    "skipWantChance": 0.25
+    "skipWantChance": 0.25,
+    "exitMargin": 1.3
   },
   "high": {
     "buyDealChance": 1,
@@ -48,7 +49,8 @@
     "ventureCashFraction": 0.15,
     "laneBuyCashMultiple": 1,
     "repayIdle": false,
-    "skipWantChance": 0.4
+    "skipWantChance": 0.4,
+    "exitMargin": 1.3
   },
   "unreal": {
     "buyDealChance": 1,
@@ -65,6 +67,7 @@
     "ventureCashFraction": 0.05,
     "laneBuyCashMultiple": 1,
     "repayIdle": true,
-    "skipWantChance": 0.55
+    "skipWantChance": 0.55,
+    "exitMargin": 1.3
   }
 }

@@ -7,6 +7,7 @@ import { currentSeat, diceCountFor, pendingInvolvesOthers, stockPriceNow,
   долгиВедомости,
   можноВыйтиИзКруга,
   dreamPriceAt,
+  ПРИБАВКА_ЗА_УВОЛЬНЕНИЕ,
 } from '../engine/table'
 import {
   RULES,
@@ -17,6 +18,7 @@ import {
   freedomIncome,
   monthlyCashFlow,
   netWorth,
+  ownShareAt,
   passiveIncome,
   totalExpenses,
 } from '../engine/ledger'
@@ -724,8 +726,28 @@ export function Game({
    * продаёт, поэтому честные числа теперь другие — сколько активы приносят и
    * сколько человек тратит.
    */
-  const доходПослеУвольнения = canEscape ? freedomIncome(seat.ledger, table.market.flow) : 0
-  const расходыСейчас = canEscape ? totalExpenses(seat.ledger) : 0
+  /*
+   * 🔴 ЦИФРЫ — ТЕ, ЧТО БУДУТ ПОСЛЕ УВОЛЬНЕНИЯ, И ГЛАВНАЯ ИЗ НИХ — ОСТАТОК (12.09).
+   * На втором круге зарплаты нет: в кассу за ход приходит доход с активов
+   * минус расходы. Строка «активы дают 105 000 · расходы 78 000» читалась как
+   * свобода, а жить предстояло на 27 000 за ход при мечте в 23 миллиона. Бот
+   * без GreenLeaf уходил с таким запасом и стоял на втором круге по полтораста
+   * ходов. Решает человек — но с остатком и ценой мечты перед глазами.
+   * Дела при увольнении подрастают на ПРИБАВКА_ЗА_УВОЛЬНЕНИЕ, налог уходит
+   * вместе с зарплатой — ровно как в ENTER_FAST_TRACK.
+   */
+  const доходПослеУвольнения = canEscape
+    ? passiveIncome(seat.ledger, table.market.flow) +
+      seat.ledger.businesses
+        .filter((b) => !b.gl)
+        .reduce((s, b) => {
+          // Новый доход дела — с тем же округлением до сотни, что и при увольнении.
+          const стало = Math.round((b.cashFlow * (100 + ПРИБАВКА_ЗА_УВОЛЬНЕНИЕ)) / 100 / 100) * 100
+          return s + ownShareAt({ ...b, cashFlow: стало }, table.market.flow) - ownShareAt(b, table.market.flow)
+        }, 0)
+    : 0
+  const расходыПослеУвольнения = canEscape ? totalExpenses(seat.ledger) - seat.ledger.expenses.taxes : 0
+  const ценаМечтыСейчас = canEscape ? dreamPriceAt(table, seat.dreamSpace) : 0
 
   /*
    * 🔴 Прокрутка запрещена ТОЛЬКО на большом экране.
@@ -1143,7 +1165,11 @@ export function Game({
                     <span className="mt-0.5 block text-[11px] font-normal opacity-80">
                       {/* Активы и долги едут с вами: зарплата уходит, остальное остаётся. */}
                       активы дают {money(доходПослеУвольнения)}/мес · расходы{' '}
-                      {money(расходыСейчас)}
+                      {money(расходыПослеУвольнения)}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] font-semibold">
+                      в кассу за ход — {money(доходПослеУвольнения - расходыПослеУвольнения)}
+                      {ценаМечтыСейчас > 0 ? <> · мечта {money(ценаМечтыСейчас)}</> : null}
                     </span>
                   </button>
                   <button

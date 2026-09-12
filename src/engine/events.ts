@@ -116,6 +116,8 @@ export type LedgerEvent =
    */
   | { type: 'CASHFLOW_DAY'; flowMul?: Record<string, number> }
   | { type: 'BUY_FT_BUSINESS'; id: string; name: string; downPayment: number; cashFlow: number }
+  /** Быстрая продажа дела второго круга: цену считает стол. */
+  | { type: 'SELL_FT_BUSINESS'; assetId: string; salePrice: number }
   | { type: 'FT_STAKE_LOST'; amount: number }
   | { type: 'FT_DOWNSIZED'; amount: number }
   | { type: 'BUY_DREAM'; name: string; pricePaid: number }
