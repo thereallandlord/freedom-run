@@ -1157,7 +1157,8 @@ export function Game({
               лежали под доской и съедали высоту, из-за чего доска мельчала.
             */}
             <div className="player-scroll flex flex-col gap-2 overflow-x-hidden pb-4 lg:min-h-0 lg:overflow-y-auto">
-              {actor.isBot ? (
+              {/* Партия окончена — никто не думает: на экране победы висело «Бот Алмаз думает…» (12.09). */}
+              {actor.isBot && table.phase !== 'finished' ? (
                 <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] px-3 py-4 text-center text-[12px] leading-snug text-[var(--t-muted, var(--muted))]">
                   {actor.name} думает…
                 </div>
