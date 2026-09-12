@@ -710,8 +710,13 @@ function CardBody({
   const [coTo, setCoTo] = useState<string | null>(null)
   const [coShare, setCoShare] = useState(50)
   if (!p) return null
-  const l = seat.ledger
   const actor = table.seats[table.turnIndex]
+  /*
+   * 🔴 ЧУЖАЯ КАРТОЧКА — ЧУЖИЕ ДЕНЬГИ (12.09, живой прогон). Зритель видел на
+   * трате соседа «Денег на руках» — СВОИ: сосед платит 9 000, а на карточке
+   * касса смотрящего. Смотришь чужой ход — видишь деньги того, чей он.
+   */
+  const l = (spectate && actor ? actor : seat).ledger
   const locale = 'ru' as const
 
   switch (p.kind) {
