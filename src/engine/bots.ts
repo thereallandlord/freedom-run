@@ -318,9 +318,14 @@ export function decideBotEvent(t: Table, rnd: () => number): TableEvent | null {
      * движок просил 315 000. При наличных 250–314 тыс. бот присылал найм,
      * движок отклонял, и useGame вместо хода слал END_TURN — ход сгорал молча.
      */
+    /*
+     * 🔴 ФРАНШИЗУ НЕ ТРОГАЕМ (12.09): роялти идут в зачёт свободы и так, а
+     * найм в неё движок теперь отклоняет — бот сжигал бы на этом каждый ход.
+     */
     const hireable = seat.ledger.businesses.find(
       (b) =>
         !b.gl &&
+        !b.пассивное &&
         !b.managerPct &&
         !(b.partnerId && !b.investorShare) &&
         (!предложение || подходит(b)),

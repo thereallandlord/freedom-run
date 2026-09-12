@@ -2026,7 +2026,7 @@ function CardBody({
                  * либо списывала 60 000. Нанимает ведущий: у него в панели
                  * кнопка есть, а доля партнёру проставится сама.
                  */
-                .filter((b) => !b.managerPct && !(b.partnerId && !b.investorShare))
+                .filter((b) => !b.gl && !b.пассивное && !b.managerPct && !(b.partnerId && !b.investorShare))
                 .map((b) => {
                   // Та же цена, что и в панели игрока: три месяца его доли.
                   const цена = Math.max(

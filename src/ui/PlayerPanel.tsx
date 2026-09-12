@@ -264,10 +264,21 @@ function AssetRow({
             показывала 0%. Теперь прямо в строке видно, что дело держится на
             тебе, — и понятно, что с этим есть что делать.
           */}
-          {kind === 'business' &&
-          !(a as BusinessAsset).gl &&
-          !(a as BusinessAsset).managerPct &&
-          !вторая ? (
+          {kind === 'business' && (a as BusinessAsset).пассивное ? (
+            /*
+             * 🔴 ФРАНШИЗА — НЕ «РАБОТАЕТЕ САМИ» (12.09). Роялти платят чужие
+             * точки, и движок кладёт их в зачёт свободы без управляющего
+             * (решение Камиля 11.09). Строка же ставила франшизе ту же жёлтую
+             * пометку, что делу, где человек стоит за прилавком, — и звала
+             * нанимать управляющего, который только отнял бы 35%.
+             */
+            <span className="block text-[10.5px] text-emerald-600">
+              роялти — идёт в зачёт свободы
+            </span>
+          ) : kind === 'business' &&
+            !(a as BusinessAsset).gl &&
+            !(a as BusinessAsset).managerPct &&
+            !вторая ? (
             <span className="block text-[10.5px] text-amber-500">
               работаете сами — в зачёт свободы не идёт
             </span>
@@ -437,7 +448,7 @@ function AssetRow({
             ни слова о том, почему. Нанимать по-прежнему может только ведущий,
             а знать обязаны оба — и в чужой карточке тоже.
           */}
-          {kind === 'business' && !(a as BusinessAsset).gl && (
+          {kind === 'business' && !(a as BusinessAsset).gl && !(a as BusinessAsset).пассивное && (
             (a as BusinessAsset).managerPct ? (
               <div className="mt-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[11px] leading-snug">
                 Управляющий забирает {(a as BusinessAsset).managerPct}% чистой прибыли (не выручки)
@@ -588,6 +599,7 @@ function AssetRow({
               */}
               {kind === 'business' &&
                 !(a as BusinessAsset).gl &&
+                !(a as BusinessAsset).пассивное &&
                 !(a as BusinessAsset).managerPct && (
                 <span className="mt-0.5 block font-normal text-[var(--t-muted, var(--muted))]">
                   в зачёт свободы это не пойдёт, пока в бизнесе нет управляющего
@@ -884,7 +896,8 @@ function GoalCard({
       {!onFast &&
         (() => {
           const заперто = l.businesses.reduce(
-            (s, b) => (!b.gl && !b.managerPct ? s + ownShareAt(b, flowMul ?? {}) : s),
+            // Франшиза (роялти) в зачёт идёт и без управляющего — она не «заперта».
+            (s, b) => (!b.gl && !b.managerPct && !b.пассивное ? s + ownShareAt(b, flowMul ?? {}) : s),
             0,
           )
           return заперто > 0 ? (
@@ -911,7 +924,7 @@ function GoalCard({
               const b = a as BusinessAsset
               if (b.gl) return false
               // Дело без управляющего в зачёт свободы не идёт даже без долга.
-              if ('liability' in a && !b.managerPct) return false
+              if ('liability' in a && !b.managerPct && !b.пассивное) return false
               return (a.installmentMonthly ?? 0) * (1 - (a.investorShare ?? 0)) >= разрыв
             })
             .map((a) => ({

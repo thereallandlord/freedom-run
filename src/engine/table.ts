@@ -5634,7 +5634,11 @@ function применитьСобытие(prev: Table, event: TableEvent): Table
     }
     case 'HIRE_MANAGER': {
       const b = l.businesses.find((x) => x.id === event.assetId)
-      if (!b || b.gl || b.managerPct) return prev
+      /*
+       * Франшизе своего дела управляющий не нужен (12.09): роялти платят чужие
+       * точки и в зачёт свободы идут и так — он только забрал бы свою долю.
+       */
+      if (!b || b.gl || b.managerPct || b.пассивное) return prev
       /*
        * 🔴 ДОЛЮ НАЗНАЧАЕТ НЕ КЛИЕНТ. Раньше `pct` приходил из события как есть,
        * и ничто не мешало прислать ноль: управляющий работал бы даром, а бизнес

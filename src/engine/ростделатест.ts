@@ -95,5 +95,15 @@ const франшиза = (t: Table) => applyTableEvent(t, { type: 'FRANCHISE_OWN
   console.log(`  франшиза: старт ${ф?.cashFlow?.toLocaleString('ru')} ₽/мес, +${(90_000 * ФРАНШИЗА_РОСТ).toLocaleString('ru')} за зарплату, потолок ${потом.cashFlow.toLocaleString('ru')} ₽/мес`)
 }
 
+// 5. Во франшизу управляющего не нанять: роялти идут в зачёт и так, он только забрал бы долю (12.09).
+{
+  const безУпр = стол(false)
+  п('в обычное дело управляющий нанимается', applyTableEvent(безУпр, { type: 'HIRE_MANAGER', assetId: 'coffee', pct: MANAGER_PCT } as never) !== безУпр)
+  const t = франшиза(точка(точка(стол(true))))
+  const ф = t.seats[0].ledger.businesses.find((b) => b.франшизаОт === 'coffee')
+  п('франшиза есть', !!ф)
+  п('во франшизу управляющего не нанять', applyTableEvent(t, { type: 'HIRE_MANAGER', assetId: ф?.id ?? '', pct: MANAGER_PCT } as never) === t)
+}
+
 console.log(беды.length ? '\n❌ СВОЁ ДЕЛО РАСТЁТ:\n  ' + беды.join('\n  ') : '\n✅ СВОЁ ДЕЛО РАСТЁТ: точка с управляющим, франшиза от трёх точек, роялти до потолка')
 if (беды.length) (globalThis as { process?: { exit(n: number): void } }).process?.exit(1)

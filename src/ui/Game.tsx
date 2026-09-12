@@ -1159,17 +1159,27 @@ export function Game({
                 <div className="rounded-xl border border-[var(--t-line, var(--line))] bg-[var(--t-glass, var(--panel-2))] p-2">
                   <button
                     onClick={() => dispatch({ type: 'ENTER_FAST_TRACK' })}
-                    className="btn-primary w-full px-3 py-3.5 text-[13px] leading-tight"
+                    className="btn-primary w-full flex-col gap-0 px-3 py-3.5 text-[13px] leading-tight"
                   >
-                    Уволиться и выйти из Круга
+                    {/*
+                      🔴 Строки — столбиком (12.09). Кнопка по умолчанию кладёт всё в
+                      ряд, и три подписи вставали тремя узкими колонками, а «₽»
+                      уезжал на отдельную строку. Суммы не переносятся.
+                    */}
+                    <span>Уволиться и выйти из Круга</span>
                     <span className="mt-0.5 block text-[11px] font-normal opacity-80">
                       {/* Активы и долги едут с вами: зарплата уходит, остальное остаётся. */}
-                      активы дают {money(доходПослеУвольнения)}/мес · расходы{' '}
-                      {money(расходыПослеУвольнения)}
+                      активы дают <span className="whitespace-nowrap">{money(доходПослеУвольнения)}/мес</span>
+                      {' · '}расходы <span className="whitespace-nowrap">{money(расходыПослеУвольнения)}</span>
                     </span>
                     <span className="mt-0.5 block text-[11px] font-semibold">
-                      в кассу за ход — {money(доходПослеУвольнения - расходыПослеУвольнения)}
-                      {ценаМечтыСейчас > 0 ? <> · мечта {money(ценаМечтыСейчас)}</> : null}
+                      в кассу за ход —{' '}
+                      <span className="whitespace-nowrap">{money(доходПослеУвольнения - расходыПослеУвольнения)}</span>
+                      {ценаМечтыСейчас > 0 ? (
+                        <>
+                          {' · '}мечта <span className="whitespace-nowrap">{money(ценаМечтыСейчас)}</span>
+                        </>
+                      ) : null}
                     </span>
                   </button>
                   <button
